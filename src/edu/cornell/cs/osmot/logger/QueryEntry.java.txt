@@ -1,0 +1,818 @@
+package edu.cornell.cs.osmot.logger;
+
+import java.util.Hashtable;
+import java.util.Arrays;
+import edu.cornell.cs.osmot.options.Options;
+
+/**
+ * This class represents an log entry that is for a query run. They can be
+ * sorted by the query time.
+ * 
+ * @author Filip Radlinski
+ * @version 1.0, May 2005
+ */
+
+public class QueryEntry implements Comparable {
+
+	private long time; // Time of query, in milliseconds since epoch
+
+	private String query, ip, session, referer, qid, mode, useragent;
+
+	private String results[], origResults;
+
+	private Hashtable clicks;
+	private Hashtable downloads;
+
+	private int resultRanks1[], resultRanks2[];
+
+	private int clickList[], unclickList[];
+    private long clickTimeList[];
+    private int downloadList[];
+    private long downloadTimeList[];
+
+	private String order;
+	
+	private boolean listsInitialized;
+
+	public QueryEntry(long time, String query, String qid, String ip,
+			String session, String referer, String resultsStr, String order, String mode, String useragent) {
+
+		this.time = time;
+		this.query = query;
+		this.qid = qid;
+		this.ip = ip;
+		this.session = session;
+		this.referer = referer;
+		this.mode = mode;
+		this.useragent = useragent;
+		
+		// This tells us how FairPairs has shuffled the top 10. The 10th
+		// result isn't correctly identified if it was swapped with the
+		// 11th, so we drop the "unknown" marker at the end.
+		this.order = order;
+		if (this.order.length() == 10 && this.order.endsWith("#"))
+			this.order = this.order.substring(0,9);
+		
+		this.origResults = resultsStr;
+
+		this.clicks = new Hashtable();
+        this.downloads = new Hashtable();
+
+		listsInitialized = false;
+		this.clickList = null;
+		this.unclickList = null;
+		this.downloadList = null;
+		this.clickTimeList = null;
+        this.downloadTimeList = null;
+
+		// Parse the results. It might be a combined ranking (stars
+		// within entries, commas between) or a simple ranking (star
+		// separated). i.e. either doc1*doc2*doc3, or something like
+		// 0*0*doc1,1*2*doc2,2*1*doc3 or 0*0*doc1*1,...
+		
+		// TODO: The more than 2*s should also check that the first
+		// entry isn't an integer. Then add a 3 star version for the
+		// new mode 7 style results.
+		
+		if (resultsStr.equals("")) {
+			this.results = new String[0];
+		} else if (resultsStr.indexOf(',') == -1) {
+			// Either doc*doc*doc*... or one entry like 0*0*doc or 0*0*doc*0
+			String[] tmp = resultsStr.split("\\*");
+			if (tmp[0].equals("-1") || tmp[0].matches("[0-9]")) {
+				// It is a single document
+				results = new String[1];
+				results[0] = tmp[2];
+				resultRanks1 = new int[1];
+				resultRanks1[0] = Integer.parseInt(tmp[0]);
+				resultRanks2 = new int[1];
+				resultRanks2[0] = Integer.parseInt(tmp[1]);				
+		 	} else {
+		 		// First entry is not a rank - we have one or more documents separated by stars
+		 		results = resultsStr.split("\\*");
+		 		// Check all is ok, set result ranks
+		 		resultRanks1 = new int[results.length];
+				resultRanks2 = null;
+				for (int i = 0; i < results.length; i++) {
+					if (results[i].equals("")) {
+						log("Error: Error parsing log results length "
+								+ results.length + " from " + resultsStr);
+						log("I think the format is UniqId1*UniqId2*... and you seem to have a blank result.");
+						results = new String[0];
+						return;
+					}
+					resultRanks1[i] = i;
+				}
+		 	}
+		} else if (resultsStr.indexOf('*') == -1) { 
+			// There is at least one comma but no stars, so it is a comma
+			// separated list of documents (shouldn't exist, old format)
+	
+			this.results = resultsStr.split(",");
+			resultRanks1 = new int[this.results.length];
+			resultRanks2 = null;
+			// Check all is ok
+			for (int i = 0; i < this.results.length; i++) {
+				if (this.results[i].equals("")) {
+					log("Error: Error parsing log results length "
+							+ this.results.length + " from " + resultsStr);
+					log("I think the format is UniqId1,UniqId2,... and you seem to have a blank result.");
+					this.results = new String[0];
+					return;
+				}
+				resultRanks1[i] = i;
+			}
+		} else {
+			// There are both commas and stars, so it is a bunch of documents
+			// either 0*0*doc,... or 0*0*doc*0,...
+			// Either way, discard anything after third star. We'll treat
+			// it specially in processing code when needed.
+			String[] tmpResults = resultsStr.split(",");
+			results = new String[tmpResults.length];
+			resultRanks1 = new int[tmpResults.length];
+			resultRanks2 = new int[tmpResults.length];
+			for (int i = 0; i < tmpResults.length; i++) {
+				String[] tmp = tmpResults[i].split("\\*");
+				if (tmp.length < 3 || tmp.length > 4 || tmp[2].equals("")) {
+					log("Error: Error parsing log results length "
+							+ this.results.length + " from " + resultsStr);
+					log("I think the format is rankA1*rankB1*UniqId1,rankA2*rankB2*UniqId2,... Either a rank is missing or I got the format wrong.");
+					this.results = new String[0];
+                    return;
+				}
+				this.results[i] = tmp[2];
+				resultRanks1[i] = Integer.parseInt(tmp[0]);
+				resultRanks2[i] = Integer.parseInt(tmp[1]);
+			}
+		}
+
+	}
+
+	public String toString() {
+		String result;
+
+		result = time + " " + query;//+" ("+time+", "+qid+"),
+									// "+results.length+" results,
+									// "+clicks.size()+" clicks.";
+
+		return result;
+	}
+
+	/**
+	 * Allows us to sort by the time.
+	 */
+	public int compareTo(Object sd) throws ClassCastException {
+		if (!(sd instanceof QueryEntry))
+			throw new ClassCastException("Must compare to a QueryEntry");
+
+		long sdTime = ((QueryEntry) sd).getTime();
+
+		if (this.time < sdTime)
+			return -1;
+		else if (this.time > sdTime)
+			return 1;
+		else {
+			return 0;
+			//String sdQid = ((QueryEntry)sd).getQid();
+			//return this.qid.compareTo(sdQid);
+		}
+	}
+
+	/**
+	 * Makes the click list and viewed-but-not-clicked list.
+	 */
+	public void makeLists() {
+		listsInitialized = true;
+
+
+		ClickEntry ce[];
+
+        // Make the downloadList
+
+        if (downloads.size() > 0) {
+			downloadList = new int[downloads.size()];
+            downloadTimeList = new long[downloads.size()];
+
+			ce = getDownloads();
+            Logger.log("Number of Downloads for " + this.qid + ": " + ce.length);
+
+			int failed = 0;
+			int i = 0;
+			for (i = 0; i < ce.length; i++) {
+                String docname = ce[i].getDoc();
+                int version_loc =docname.length() - 1;
+                while(version_loc >= 0 && docname.charAt(version_loc) != 'v') 
+                    version_loc--;
+                if(version_loc > 0)
+                    docname = docname.substring(0,version_loc);
+
+				int rank = getRank(docname);
+				if (rank == -1) {
+					log("Error: Click " + docname
+							+ " not found in results for query " + getQid());
+					failed++;
+				} else {
+					downloadList[i - failed] = rank;
+                    downloadTimeList[i-failed] = ce[i].getLastTime();
+				}
+			}
+
+			// Remove the failed entries from downloadList
+			if (failed > 0) {
+				int downloadList2[] = new int[downloadList.length - failed];
+				long downloadTimeList2[] = new long[downloadTimeList.length - failed];
+				for (i = 0; i < downloadList2.length; i++)
+                {
+					downloadList2[i] = downloadList[i];
+					downloadTimeList2[i] = downloadTimeList[i];
+                }
+				downloadList = downloadList2;
+				downloadTimeList = downloadTimeList2;
+			}
+
+			//Arrays.sort(downloadList);
+
+		} else {
+			downloadList = new int[0];
+			downloadTimeList = new long[0];
+		}
+
+		// Make the clicklist
+		if (clicks.size() > 0) {
+			clickList = new int[clicks.size()];
+            clickTimeList = new long[clicks.size()];
+
+			ce = getClicks();
+
+			int failed = 0;
+			int i = 0;
+			for (i = 0; i < ce.length; i++) {
+				int rank = getRank(ce[i].getDoc());
+				if (rank == -1) {
+					log("Error: Click " + ce[i].getDoc()
+							+ " not found in results for query " + getQid());
+					failed++;
+				} else {
+					clickList[i - failed] = rank;
+                    clickTimeList[i-failed] = ce[i].getLastTime();
+				}
+			}
+
+			// Remove the failed entries from clickList
+			if (failed > 0) {
+				int clickList2[] = new int[clickList.length - failed];
+				long clickTimeList2[] = new long[clickTimeList.length - failed];
+				for (i = 0; i < clickList2.length; i++)
+                {
+					clickList2[i] = clickList[i];
+					clickTimeList2[i] = clickTimeList[i];
+                }
+				clickList = clickList2;
+				clickTimeList = clickTimeList2;
+			}
+
+			//Arrays.sort(clickList);
+
+		} else {
+			clickList = new int[0];
+			clickTimeList = new long[0];
+		}
+
+		//printList("ClickList", clickList);
+
+		// Make the unclick list (viewed by not clicked documents)
+
+		// Nothing in the clicklist, so saw top two (set to -1 if
+		// there aren't enough results).
+		if (clickList.length == 0) {
+			unclickList = new int[2];
+			for (int i = 0; i < unclickList.length; i++)
+				if (i < results.length)
+					unclickList[i] = i;
+				else
+					unclickList[i] = -1; // "Random document"
+
+		} else {
+			// Saw everything not clicked on up to one past the last
+			// one clicked on.
+			int maxClick = 0;//clickList[clickList.length - 1];
+            for(int i = 0; i < clickList.length; i++)
+            {
+                if(maxClick < clickList[i])
+                    maxClick = clickList[i];
+            }
+			//log("Max click is "+maxClick+", of "+clickList.length);
+			unclickList = new int[maxClick + 2 - clickList.length];
+			int clickIndex = 0;
+			int clickRank = 0;
+			for (int i = 0; i < unclickList.length; i++) {
+				while (clickIndex < clickList.length
+						&& clickList[clickIndex] == clickRank) {
+					clickRank++;
+					clickIndex++;
+				}
+				if (clickRank < results.length)
+					unclickList[i] = clickRank;
+				else
+					unclickList[i] = -1;
+				clickRank++;
+			}
+		}
+
+		//printList("UnclickList", unclickList);
+
+		// Quick sanity check.
+		for (int i = 0; i < clickList.length; i++) {
+			int cRank = clickList[i];
+			if (cRank == -1 || cRank >= results.length) {
+				log("Error: cRank is " + cRank + " while results has length "
+						+ results.length);
+				System.exit(1);
+			}
+		}
+		for (int i = 0; i < unclickList.length; i++) {
+			int uRank = unclickList[i];
+			if (uRank >= results.length) {
+				log("Error: uRank is " + uRank + " while results has length "
+						+ results.length);
+				System.exit(1);
+			}
+		}
+
+	}
+
+	public int[] getClicklist() {
+		if (!listsInitialized)
+			makeLists();
+		return clickList;
+	}
+
+    public long[] getClickTimelist() {
+		if (!listsInitialized)
+			makeLists();
+		return clickTimeList;
+    }
+
+	public int[] getDownloadlist() {
+		if (!listsInitialized)
+			makeLists();
+		return downloadList;
+	}
+
+    public long[] getDownloadTimelist() {
+		if (!listsInitialized)
+			makeLists();
+		return downloadTimeList;
+    }
+
+	public int[] getUnclicklist() {
+		if (!listsInitialized)
+			makeLists();
+		return unclickList;
+	}
+
+	public String getUseragent() {
+		return useragent;
+	}
+	
+	// Unique "user" identifier used for analysis
+	public String getUser() {
+		return ip+useragent;
+	}
+	
+	public void addClick(ClickEntry c) {
+		if (c == null) {
+			log("error: trying to insert a null click.");
+			return;
+		}
+
+		// only add the *first* click on a document
+		if (!clicks.containsKey(c.getDoc())) {
+			clicks.put(c.getDoc(), c);
+			//log("there are now "+clicks.size()+" clicks.");
+		} else {
+            // otherwise, if we have an identical later click, adjust the last click time.
+
+			// get the old click
+		    ClickEntry oldc = (ClickEntry) clicks.get(c.getDoc());
+		    
+		    // check if the necessary click details match: document, type. 
+		    // assuming session, qid ok (since the click qualifies in the first place).
+		    if (oldc.getType().equals(c.getType())) {
+		    
+		    	// add the time to the old click
+		    	oldc.addTime(c.getTime());
+		    
+		    	// put the old click back
+		    	clicks.put(oldc.getDoc(), oldc);
+		    }
+		}
+		
+		listsInitialized = false;
+		clickList = null;
+        clickTimeList = null;
+		unclickList = null;
+	}
+
+	public void addDownload(ClickEntry c) {
+		if (c == null) {
+			log("error: trying to insert a null click.");
+			return;
+		}
+
+        Logger.log("Adding Download: " + c.toString());
+
+		// only add the *first* click on a document
+		if (!downloads.containsKey(c.getDoc())) {
+			downloads.put(c.getDoc(), c);
+			//log("there are now "+clicks.size()+" clicks.");
+		} else {
+            // otherwise, if we have an identical later click, adjust the last click time.
+
+			// get the old click
+		    ClickEntry oldc = (ClickEntry) downloads.get(c.getDoc());
+		    
+		    // check if the necessary click details match: document, type. 
+		    // assuming session, qid ok (since the click qualifies in the first place).
+		    if (oldc.getType().equals(c.getType())) {
+		    
+		    	// add the time to the old click
+		    	oldc.addTime(c.getTime());
+		    
+		    	// put the old click back
+		    	downloads.put(oldc.getDoc(), oldc);
+		    }
+		}
+		
+		listsInitialized = false;
+        downloadList = null;
+        downloadTimeList = null;
+	}
+
+
+	/**
+	 * Gets the offset of a FairPairs experiment
+	 */
+	public int getFPOffset() {
+		if (mode.equals("3a"))
+			return 0;
+		else if (mode.equals("3b"))
+			return 1;
+		else if (mode.equals("4a"))
+			return 0;
+		else if (mode.equals("4b"))
+			return 1;
+		else if (mode.equals("4c"))
+			return 2;
+		else if (mode.equals("4d"))
+			return 3;
+		
+		return -1;
+	}
+	
+	/**
+	 * Get the number of items in a FairPairs set (i.e. 2 in regular FairPairs, 4 in the experimental kind)
+	 */
+	public int getFPSetSize() {
+		if (mode.charAt(0) == '3')
+			return 2;
+		else if (mode.charAt(0) == '4')
+			return 4;
+
+		return -1;
+	}
+	
+	// These next few methods are used for evaluating if FairPairs is indeed bias free
+	
+	/**
+	 * Returns the pairs displayed one after the other.
+	 * 
+	 * @return the pairs displayed one after the other.
+	 */
+	public String[] getPairsDisplayed(int pairOffset) {
+
+		int numPairs = (int)Math.floor((order.length()-pairOffset)/2.0);
+
+		String[] pairsDisplayed = new String[numPairs];
+		for (int i=0; i<numPairs; i++) {
+			pairsDisplayed[i] = order.substring(pairOffset+2*i,pairOffset+2*i+2);
+			
+			// If its n#, only count it if n is at position n, to be fair
+			// since 0# is displayed at position 0 and at position 1 (fairly)
+			// but we compare to 01 which is only ever displayed at position 0
+			// So we check an option - LOGGER_COMPARE50 - to see if we should
+			// count fewer 0# pairs. (if we are only comparing 0# and #0, its
+			// ok to count them at both positions)
+			if (!hidePair(pairsDisplayed[i], pairOffset+2*i))
+				log("Displayed "+pairsDisplayed[i]);
+		}
+		return pairsDisplayed;
+	}
+	
+	/** 
+	 * Says if to hide a pair - if it contains a #:
+	 * If pair is of the form n#, only count it if n is at position n, to be fair
+	 * whenever we want to copmare the click probabilities to pairs of the form
+	 * n(n+1) or n(n-1) since 0# is displayed at position 0 and at position 1 
+	 * (fairly) but we compare to 01 which is only ever displayed at position 0.
+	 * This enabled by LOGGER_COMPARE50 since doing this right means we count
+	 * count fewer 0# pairs. (if we are only comparing 0# and #0, its ok to 
+	 * count them at both positions)
+	 *
+	 */
+	private boolean hidePair(String pair, int topRank) {
+		boolean hide = false;
+		if (Options.getBool("LOGGER_COMPARE50")) {
+			int otherNum;
+			if (pair.charAt(0)== '#') {
+				otherNum = Integer.parseInt(pair.substring(1,2));
+			} else if (pair.charAt(1)=='#') {
+				otherNum = Integer.parseInt(pair.substring(0,1));
+			} else {
+				return false;
+			}
+			
+			// 0# has to appear at 0 (for comparing to 10), etc
+			if (otherNum != topRank)
+				hide = true;
+		}
+
+		return hide;
+	}
+	
+	/**
+	 * Returns the pairs where the second result was clicked on.
+	 * 
+	 * @return the pairs where the second result was clicked on.
+	 */
+	public String[] getPairsClicked(int pairOffset) {
+				
+		if (!listsInitialized)
+			makeLists();
+		
+		int numPairs = 0;
+		
+		for(int i=0; i<clickList.length; i++) {
+			int dispRank = clickList[i];
+			int origRank = 10;
+			String type = "normal";
+			if (dispRank < order.length()) {
+				String origStr = order.substring(clickList[i],clickList[i]+1);
+				if (origStr.equals("#")) {
+					origRank = 50;
+					type = "inserted";
+				} else {
+					origRank = Integer.parseInt(origStr);
+				}
+			}
+			log("Click Details: Originally @ "+origRank+" Displayed @ "+dispRank + " so its "+type);
+			
+			if (clickList[i]<order.length() && clickList[i]>0) {
+				log("Clicked on "+clickList[i]);
+
+				numPairs++;
+			}
+		}
+		
+		log("NumPairs is "+numPairs);
+		
+		String[] pairs = new String[numPairs];
+		numPairs = 0;
+		for(int i=0; i<clickList.length; i++) {
+
+			// Only count the clicks for FairPairs if its within a valid pair
+			if (mod(clickList[i]-1,2)==pairOffset) {			
+				// Print out the counts for regular clicks where the second result is clicked
+				if (clickList[i]<order.length() && clickList[i]>0) {
+					pairs[numPairs] = order.substring(clickList[i]-1, clickList[i]+1);
+					if (!hidePair(pairs[numPairs], clickList[i]-1))
+						log("Click pair is "+pairs[numPairs]);
+					numPairs++;
+				}
+			}
+			
+			if (mod(clickList[i],2)==pairOffset) {
+				// Experiment: See if having something less relevant after a click has an impact
+				if (clickList[i]<order.length()-1) {
+					String tmpPair = order.substring(clickList[i],clickList[i]+2);
+					if (!hidePair(tmpPair, clickList[i]))
+						log("Experiment pair is "+tmpPair);
+				}
+			}
+		}
+		
+		return pairs;
+	}
+	
+	public int mod(int i, int divisor) {
+		return (int)(i - 2*Math.floor(i/2.0));
+	}
+	
+	public long getTime() {
+		return time;
+	}
+
+	public String getQid() {
+		return qid;
+	}
+
+	public String getQuery() {
+		return query;
+	}
+
+	public String getIP() {
+		return ip;
+	}
+
+	public String getSession() {
+		return session;
+	}
+
+	public String getReferer() {
+		return referer;
+	}
+
+	public String[] getResults() {
+		return results;
+	}
+
+	public String getOrigResults() {
+		return origResults;
+	}
+
+	public String getOrder() {
+		return order;
+	}
+	
+	public int getNumResults() {
+		return results.length;
+	}
+
+	public int getNumClicks() {
+		return clicks.size();
+	}
+
+	public int[] getRanks1() {
+		return resultRanks1;
+	}
+
+	public int[] getRanks2() {
+		return resultRanks2;
+	}
+
+	public int maxClickRank1() {
+		return maxClickRank(resultRanks1);
+	}
+
+	public int maxClickRank2() {
+		return maxClickRank(resultRanks2);
+	}
+
+	/**
+	 * Work out the largest rank according to ranking ranks that was clicked on.
+	 * Each entry in ranks corresponds to one document in the result. We use the
+	 * clicklist to work out what was clicked on.
+	 */
+	private int maxClickRank(int[] ranks) {
+
+		if (ranks == null)
+			return -1;
+
+		int[] cl = getClicklist();
+		int max = -1;
+		for (int i = 0; i < cl.length; i++)
+			if (ranks[cl[i]] > max)
+				max = ranks[cl[i]];
+
+		return max;
+	}
+
+	public ClickEntry[] getClicks() {
+		ClickEntry[] c = new ClickEntry[0];
+		return (ClickEntry[]) clicks.values().toArray(c);
+	}
+
+	public ClickEntry[] getDownloads() {
+		ClickEntry[] c = new ClickEntry[0];
+		return (ClickEntry[]) downloads.values().toArray(c);
+	}
+
+	public int getRank(String doc) {
+		for (int i = 0; i < results.length; i++) {
+			if (results[i].equals(doc))
+				return i;
+		}
+		return -1;
+	}
+
+	public int getRank1(String doc) {
+		int r = getRank(doc);
+		if (r == -1)
+			return -1;
+
+		return resultRanks1[r];
+	}
+
+	public int getRank2(String doc) {
+		int r = getRank(doc);
+		if (r == -1)
+			return -1;
+
+		return resultRanks2[r];
+	}
+
+	/**
+	 * Compute the number of documents seen from each ranking. This is the
+	 * minimum rank such that the user has seen all documents above
+	 * or at that rank and not all document below (they might have seen
+	 * some documents below too).
+	 * 
+	 * Return the NUMBER of results seen from each ranking (i.e. the max rank + 1)
+	 */
+	public int[] getMaxSeen() {
+		int seen[] = new int[2];
+
+		int clickList[] = getClicklist();
+		
+		// Nothing clicked, nothing seen (for the purpose of interleaving analysis)
+		if (clickList.length == 0) {
+			seen[0] = 0;
+			seen[1] = 0;
+			return seen;
+		}
+
+		int maxClickRank = clickList[clickList.length-1];
+		int ranks1[] = getRanks1();
+		int ranks2[] = getRanks2();
+
+		int r1 = ranks1[maxClickRank];
+		int r2 = ranks2[maxClickRank];
+		
+		if (r1 == -1 && r2 == -1) {
+			seen[0] = 0;
+			seen[1] = 0;
+		} else {
+			if (r1 == -1) // Set -1s to infinity
+				r1 = Integer.MAX_VALUE;
+			if (r2 == -1)
+				r2 = Integer.MAX_VALUE;
+			seen[0] = Math.min(r1,r2)+1;
+			seen[1] = seen[0];
+		}
+		
+		/** Version that allows k_a and k_b to be different (Joachims'02 paper)
+				
+		// Work out what we have seen from ranking 1
+		int haveSeen1[] = new int[maxClickRank+2];
+		for (int i=0; i<haveSeen1.length; i++)
+			haveSeen1[i] = 0;
+		for (int i=0; i<=maxClickRank; i++) {
+			int r = ranks1[i];
+			if (r != -1 && r<haveSeen1.length)
+				haveSeen1[r] = 1;
+		}
+		seen[0] = 0; 
+		while (haveSeen1[seen[0]] == 1)
+			seen[0]++;			
+
+		// Work out what we have seen from ranking 1
+		int haveSeen2[] = new int[maxClickRank+2];
+		for (int i=0; i<haveSeen2.length; i++)
+			haveSeen2[i] = 0;
+		for (int i=0; i<=maxClickRank; i++) {
+			int r = ranks2[i];
+			if (r != -1 && r<haveSeen2.length)
+				haveSeen2[r] = 1;
+		}
+		seen[1] = 0; 
+		while (haveSeen2[seen[1]] == 1)
+			seen[1]++;			
+		
+		// Now, it is possible that we get the "seens" to differ by more than 1, e.g.
+		// combining ABCD... and CDXY... yielding ACBD.... In this case, the
+		// ranking that went first (i.e. ranking 1) has seen = 3, not 4, since ranking
+		// 2 only has seen = 2.
+		
+		// Shrink the bigger seen count to be legal
+		if (ranks1[0] == 0) {
+			// Ranking 1 went first
+			if (seen[0] > seen[1] + 1)
+				seen[0] = seen[1] + 1;
+			else if (seen[0] < seen[1])
+				seen[1] = seen[0];
+		} else {
+			// Ranking 2 went first
+			if (seen[1] > seen[0] + 1)
+				seen[1] = seen[0] + 1;
+			else if (seen[1] < seen[0])
+				seen[0] = seen[1];
+		}
+		*/
+		
+		return seen;
+	}
+	
+	private void log(String s) {
+		Logger.log(s);
+	}
+}

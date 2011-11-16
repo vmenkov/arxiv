@@ -1,0 +1,3 @@
+1) osmot.conf - paths (2)
+2) connections.properites, persistence.xml ,  context.xml - database stuff
+3) Logging.java - path

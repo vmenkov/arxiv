@@ -1,0 +1,185 @@
+package edu.rutgers.axs.indexer;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.DateTools;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
+
+import edu.cornell.cs.osmot.cache.Cache;
+import edu.cornell.cs.osmot.options.Options;
+import edu.cornell.cs.osmot.logger.Logger;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+
+import java.util.Collection;
+import java.util.Iterator;
+
+import java.util.*;
+//import java.text.SimpleDateFormat;
+import java.util.regex.*;
+import java.io.*;
+
+// stuff for handling XML
+import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+
+
+/** the main class for pulling data from the main arxiv server using the OAI interface, and importing them into our server 
+ */
+
+public class ArxivImporter {
+
+    static private XMLtoLucene  xml2luceneMap = XMLtoLucene.makeMap();
+
+    //static {    }
+
+    static class Tags {
+	final static String RECORD = "record", HEADER="header", METADATA="metadata";
+    }
+
+   
+    public static org.apache.lucene.document.Document parseRecordElement(Element e)  throws IOException {
+	org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
+	XMLUtil.assertElement(e,Tags.RECORD);
+	xml2luceneMap.process(e, doc);
+	return doc;
+
+    }
+
+    /** Parses an OAI-PMH element
+	@return the resumption token
+    */
+    private String parseResponse(Element e)  throws IOException {
+	//org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
+	XMLUtil.assertElement(e,"OAI-PMH");
+	Element listRecordsE = null;
+	for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
+	    if (n instanceof Element && n.getNodeName().equals("ListRecords")) {
+		listRecordsE = ( Element )n;
+		break;
+	    }
+	}
+	String token=null;
+	for(Node n = listRecordsE.getFirstChild(); n!=null; n = n.getNextSibling()) {
+	    if (!(n instanceof Element)) continue;
+	    String name = n.getNodeName();
+	    if (name.equals(Tags.RECORD)) {
+		importRecord((Element)n); 
+	    } else if (name.equals("resumptionToken")) {
+		// <resumptionToken cursor="0" completeListSize="702029">245357|1001</resumptionToken>
+		Node nx = n.getFirstChild();
+		if (nx instanceof Text) {
+		    token=nx.getNodeValue();
+		} else {
+		    System.out.println("cannot parse toiken element: "+n);
+		}
+	    }
+	}
+
+	return token;
+
+    }
+
+
+     private String  bodySrcRoot, bodyCacheRoot=Options.get("CACHE_DIRECTORY"),
+	metaCacheRoot=Options.get("METADATA_CACHE_DIRECTORY");
+
+    private Directory indexDirectory;
+
+    Vector<String> missingBodyIdList=new  Vector<String>();
+    private Analyzer analyzer = new StandardAnalyzer(Common.LuceneVersion);
+
+    public ArxivImporter() throws IOException{
+
+	indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
+    }
+
+    public void setBodySrcRoot(String _bodySrcRoot)  {
+	bodySrcRoot=_bodySrcRoot;
+    }
+
+    /** finds the body file in the specified dir tree, and reads it in if available
+     */
+    private String readBody( String id,  String bodySrcRoot) {
+	String doc_file = Cache.getFilename(id , bodySrcRoot);
+	System.out.println("id="+id+", body at " + doc_file);
+
+	if (doc_file==null) {
+	    System.out.println("No Document file " + doc_file + " missing.");
+	    return null;
+	} 
+	File f = new File( doc_file);
+	if (!f.canRead()) {
+	    System.out.println("Document file " + doc_file + " missing.");   
+	    return null;
+	}
+	try {
+	    return Indexer.parseDocFile(doc_file);
+	} catch (IOException E) {
+	    System.out.println("Failed to read document file " + doc_file);
+	    return null;
+	}	
+    }
+
+    /** to lucene and to cache */
+    public void importRecord(Element record) throws IOException {
+	org.apache.lucene.document.Document doc = ParseAbstractXML.parseRecordElement( record);
+	String paper = doc.get("paper");
+
+	String whole_doc = readBody( paper,  bodySrcRoot);
+   
+	if (whole_doc!=null) {
+	    doc.add(new Field("article", whole_doc, Field.Store.NO, Field.Index.ANALYZED));
+
+	    // Date document was indexed
+	    doc.add(new Field("dateIndexed",
+			      DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND),
+			      Field.Store.YES, Field.Index.NOT_ANALYZED));		
+	    // Set article length
+	    doc.add(new Field("articleLength", Integer.toString(whole_doc.length()), Field.Store.YES, Field.Index.NOT_ANALYZED));
+	}
+	System.out.println("id="+paper);//+", Doc = " + doc);
+
+	//private 
+	IndexWriterConfig iwConf = new IndexWriterConfig(Common.LuceneVersion, analyzer);
+	iwConf.setOpenMode(IndexWriterConfig.OpenMode.APPEND);	
+
+
+	IndexWriter writer = new IndexWriter(indexDirectory, iwConf);
+	// write data to Lucene, and cache the doc body
+	Indexer.processDocument(doc, 
+			whole_doc==null? null: Cache.getFilename(paper, bodySrcRoot),
+			true, writer, bodyCacheRoot);
+	writer.optimize();
+	writer.close();
+	// cache the metadata
+	Cache cache = new Cache(metaCacheRoot);	
+	cache.cacheDocument(paper+".xml", XMLUtil.XMLtoString(record));
+    }
+
+
+    static public void main(String[] argv) throws IOException, SAXException {
+	
+	ArxivImporter imp =new  ArxivImporter();
+	imp.setBodySrcRoot( "../arXiv-text/");
+
+	for(String s: argv) {
+	    System.out.println("Processing " + s);
+	    Element e = XMLUtil.readFileToElement(s);
+	    String tok = imp.parseResponse(e)  ;
+	    System.out.println("token =  " + tok);
+
+	    //	    org.apache.lucene.documenString parseResponse(Element e)  t.Document doc = parseRecordElement( e);
+	    //System.out.println("Doc = " + doc);
+	}
+	System.out.println("missing body files for "+ imp.missingBodyIdList.size() +" docs");
+    }
+
+
+}

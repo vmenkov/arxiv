@@ -1,0 +1,421 @@
+<!-- This is the main build file for use with Apache Ant. It tells Ant
+    how to compile our application from the source code, how to build
+    Javadoc documentation, etc.
+
+    To carry out a particular operation with Ant, you provide the name of the
+    appropriate target. E.g., to compile the code, you type 
+
+      and compile
+
+     Apache Ant is available for most modern operating systems.
+     You can read more about Apache Ant at http://ant.apache.org/manual/index.html
+
+-->
+
+<project name="arxiv-xs" default="jar" basedir=".">
+
+<!-- Property Definitions -->
+
+ <property name="src" location="src"/>
+ <property name="build" location="../classes"/>
+ <property name="lib" location="../lib"/>
+ <!-- Local version of standard tomcat jar files. They don't need
+      to be copied to webapps/arxiv/WEB-INF, as Tomcat already will
+      have access to them in runtime -->
+ <property name="tomcat.lib.copy" location="../tomcat-lib"/>
+ <!-- catalina.jar should be moved to this dir from tomcat-lib on
+      cactuar and scils
+   -->
+ <property name="tomcat.lib.copy2" location="../tomcat-lib-to-copy"/>
+ <!-- property name="boxer.doc" location="../doc"/ -->
+ <!-- property name="boxer.api" location="${boxer.doc}/html/api"/ -->
+
+ <property name="build.tmp" location="/tmp"/>
+
+
+<property name="tomcat.home.scils"  value="/www/icd.rutgers.edu" />
+<property name="tomcat.home.cactuar"  value="/www/my.arxiv.org" />
+
+<condition property="tomcat.home.rutgers" 
+	   value="${tomcat.home.scils}" 
+	   else="${tomcat.home.cactuar}">
+  <available file="${tomcat.home.scils}"/>
+</condition>
+
+<property name="tomcat.home.rutgers"  value="/www/my.arxiv.org" />
+ 
+<condition property="tomcat.home" 
+	   value="${tomcat.home.rutgers}" 
+	   else="/usr/local/tomcat">
+  <available file="${tomcat.home.rutgers}"/>
+</condition>
+<echo message="tomcat.home=${tomcat.home}"/>
+
+<!-- the location of files that will appear at the "root" of our
+     website (regardless of whether it's localhost or
+     my.arxiv.org) -->
+<condition property="tomcat.deploy.docs" value="${tomcat.home}/htdocs" else="${tomcat.home}/webapps/ROOT">
+  <available file="${tomcat.home.rutgers}"/>
+</condition>
+
+<!-- property name="tomcat.home"     value="/www/my.arxiv.org" / -->
+
+<property name="app.name"       value="arxiv"/>
+<property name="deploy.home"    value="${tomcat.home}/webapps/${app.name}"/>
+<property name="dist.home"      value="${deploy.home}"/>
+<property name="dist.src"       value="${app.name}.jar"/>
+<property name="dist.war"       value="${app.name}.war"/>
+<!-- property name="javadoc.home"   value="${deploy.home}/javadoc"/ -->
+<property name="javadoc.home"   value="webroot/javadoc"/>
+
+<!-- Tomcat libraries; for Tomcat 6.* -->
+<property name="tomcat.lib.rutgers"     value="/usr/local/tomcat55/common/lib"/>
+
+<condition property="tomcat.lib" value="${tomcat.lib.rutgers}" else="/usr/local/tomcat/lib">
+  <available file="${tomcat.lib.rutgers}" property="tomcat.lib" value="${tomcat.lib.rutgers}"/>
+</condition>
+
+<echo message="tomcat.lib=${tomcat.lib}"/>
+
+
+<!-- Our web application's library directory and classes directory -->
+<property name="deploy.lib"      value="${deploy.home}/WEB-INF/lib" />
+
+<!-- where to look for OpenJPA, at home and on scils -->
+<condition property="openjpa" 
+	   value="${user.home}/apache-openjpa-2.1.1" 
+	   else="/usr/local/apache-openjpa-2.1.1">
+  <available file="${tomcat.home.rutgers}"/>
+</condition>
+
+
+<path id="classpath"
+       description="The classpath to use for compiling and running AXS">
+   <!-- fileset file="../lucene/lucene-3.3.0/lucene-core-3.3.0.jar"/ -->
+
+   <!--fileset dir="${tomcat.lib}">
+     <include name="servlet-api.jar"/>
+
+   </fileset-->
+     <!-- catalina-ant.jar -->
+
+   <fileset dir="${lib}">  <!-- third-party JAR files, and our axs.jar -->
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${tomcat.lib.copy}">  <!-- Tomcat JAR files, local copy -->
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${tomcat.lib.copy2}">  <!-- More Tomcat JARs, local copy-->
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${openjpa}">
+     <include name="**/*.jar"/>
+   </fileset>
+   <pathelement location="/usr/local/tomcat/bin/tomcat-juli.jar"/>
+ </path>
+
+ <echo message="Path = ${toString:classpath}"/>
+
+ <path id="javaagent">
+   <fileset dir="${openjpa}">
+     <!-- include name="openjpa-*.jar"/ -->
+     <include name="openjpa-all-*.jar"/>
+   </fileset>
+ </path>
+ <pathconvert property="javaagent" refid="javaagent"/>
+
+<!-- An auxiliary target; you aren't likely to use it directly.  It just creates necessary directories -->
+<target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${lib}"/>
+    <mkdir dir="${build}"/>
+    <mkdir dir="${build}/META-INF"/>
+
+    <mkdir  dir="${deploy.home}/META-INF"/>
+    <mkdir  dir="${deploy.home}/WEB-INF"/>
+    <mkdir  dir="${deploy.lib}"/>
+    <!-- mkdir  dir="${javadoc.home}"/ -->
+</target>
+
+
+<!-- This target tells Ant how to compile AXS. We set
+target="1.5", to make it easier for people elsewhere to use our
+code. -->
+<target name="compile" depends="init"
+        description="Compile the source" >
+  <!-- Compile the java code from ${src} into ${build} -->
+  <javac srcdir="${src}" destdir="${build}"
+	 includes="edu/**"  optimize="on"
+	 debug="on" debuglevel="lines,vars,source"
+	 target="1.5"
+	 includeantruntime="false" >
+    <classpath refid="classpath"/>
+  </javac>
+
+</target>
+
+<target name="enhance">
+  <!-- META-INF/persistence.xml should be under a directory that's 
+       in the classpath; so we simply include it into the jar -->
+  <copy  file="META-INF/persistence.xml" todir="${build}/META-INF"/>
+
+  <!-- as per instructions in http://openjpa.apache.org/builds/1.0.2/apache-openjpa-1.0.2/docs/manual/ref_guide_integration.html -->
+  <taskdef name="openjpac" classname="org.apache.openjpa.ant.PCEnhancerTask"/>
+
+  <!-- invoke enhancer on all .java files below the model directory -->
+  <openjpac>
+    <config
+       propertiesFile="${build}/META-INF/persistence.xml"/> 
+    <classpath>
+      <!-- path refid="classpath"/ -->
+      <!-- path refid="entity.cp"/>
+      <path refid="jpa.used.cp"/ -->
+      <pathelement location="${build}"/>
+    </classpath> 
+    <fileset dir="${build}/edu/rutgers/axs/sql">
+      <!-- include name="**/*.class"/ -->
+      <include name="User.class" />
+      <include name="Role.class" />
+      <include name="Action.class" />
+      <include name="EnteredQuery.class" />
+    </fileset>
+  </openjpac>
+
+</target>
+
+<!-- ====================================================
+Building a JAR file
+-->
+<target name="jar" depends="compile,enhance"
+        description="Builds a Jar file">
+
+  <jar destfile="${lib}/axs.jar"   basedir="${build}">
+    <!-- file="manifest-data.dat" mode="replace" -->
+    <!-- manifest> 
+      <attribute name="Main-Class" value="edu.dimacs.mms.borj.Driver"/>
+      <attribute name="Class-Path" value=". xercesImpl.jar xml-apis.jar"/>	
+    </manifest -->
+  </jar>
+</target>
+
+<!-- an alternative to "deploy" -->
+<target name="war" depends="init,jar">
+<war destfile="../arxiv.war" webxml="WEB-INF/web.xml">
+  <fileset dir="web" excludes=".svn" />
+  <lib dir="${lib}"><include name="**/*.jar"/></lib>
+  <lib dir="${openjpa}">    <include name="*.jar"/> </lib>
+  <lib dir="${openjpa}/lib"> <include name="*.jar"/> </lib>
+  <lib dir="${tomcat.lib.copy2}"> <include name="*.jar"/> </lib>
+  <webinf dir="WEB-INF"/>
+  <webinf dir="."><include name="osmot.conf"/></webinf>
+  <metainf dir="META-INF"/>
+</war>
+
+</target>
+
+<!-- web site deployment -->
+<target name="deploy"  depends="init,jar">
+  <copy  file="osmot.conf" tofile="${deploy.home}/WEB-INF/osmot.conf"/>
+  <copy todir="${deploy.lib}">
+    <fileset dir="${lib}"><include name="**/*.jar"/></fileset>
+    <fileset dir="${openjpa}">    <include name="*.jar"/> </fileset>
+    <fileset dir="${openjpa}/lib"> <include name="*.jar"/> </fileset>
+
+    <!-- On scils and cactuar (with tomcat 5.5), but not at home (with
+	 Tomcat 6.0), we must copy catalina.jar, for the RealmBase
+	 class. 2010-06-17, 2011-11-14 -->
+    <fileset dir="${tomcat.lib.copy2}"> <include name="*.jar"/> </fileset>
+  </copy>
+  <!-- copy  file="META-INF/context.html" tofile="${deploy.home}/META-INF/context.html"/ -->
+  <copy todir="${deploy.home}/META-INF">
+	<fileset dir="META-INF"/>
+  </copy>
+
+  <copy todir="${deploy.home}/WEB-INF">
+	<fileset dir="WEB-INF"/>
+  </copy>
+  
+  <echo message="Copying files from web/ to ${deploy.home}" />
+  <copy todir="${deploy.home}">
+    <fileset dir="web" excludes=".svn" />
+  </copy>
+
+  <!-- echo message="Copying files from webroot/ to ${tomcat.deploy.docs}" />
+  <copy todir="${tomcat.deploy.docs}">
+    <fileset dir="webroot" excludes=".svn" />
+  </copy -->
+</target>
+
+<!-- only copies JSP files -->
+<target name="deploy-jsp">     
+  <echo message="Copying files from web/ to ${deploy.home}" />
+  <copy todir="${deploy.home}">
+    <fileset dir="web" excludes=".svn" />
+  </copy>
+</target>
+
+
+<!-- Reports the current version of the source code (as per Version.java) -->
+<!--
+<target name="version">
+  <exec executable="grep" outputproperty="arxiv.ver">
+    <arg line="String.version ${src}/edu/rutgers/axs/Version.java"/>
+    <redirector >
+      <outputfilterchain >
+	<replaceregex pattern="[^0-9\.]" replace="" flags="g"/>
+      </outputfilterchain>
+    </redirector>
+  </exec>
+  <echo message="Assuming the My.Arxiv version is ${arxiv.ver}"/>
+</target>
+-->
+
+<!-- Build the HTML documentation directory by running Javadoc -->
+<!--
+<target name="javadoc" depends="compile,version">
+  <echo message="Javadoc: Assuming the My.Arxiv version is ${arxiv.ver}"/>
+
+  <copy todir="${boxer.doc}">
+    <fileset dir="doc/"/>
+  </copy>
+
+  <copy todir="${boxer.doc}/html">
+    <fileset dir="sample-data/" includes="sample.xml,sample-suite-out.xml,eg-learner-param-1.xml"/>
+  </copy>
+
+  <javadoc packagenames="edu.dimacs.mms.*"
+	   sourcepath="${src}"
+           destdir="${boxer.api}"
+	   author="true"
+           version="true"
+           use="true"
+	   link="http://java.sun.com/j2se/1.5.0/docs/api/"
+	   header="&lt;em&gt;BOXER ${arxiv.ver}&lt;/em&gt;"   
+	   windowtitle="BOXER ${arxiv.ver} API" 
+	   overview="doc/html/api/overview.html">
+    <classpath refid="classpath"/>
+  </javadoc>
+
+  <echo message="Documentation has been assembled in ${boxer.doc}"/>
+
+</target>
+-->
+
+<!-- Deletes the class directory -->
+<target name="clean">
+  <delete dir="${build}"/>
+</target>
+
+<!-- Deletes all files and subdirectories from our web application
+directory. This is essential to do if we e.g. have renamed some of the
+JSP or JAR files, and want to make sure not to have any files with old
+names to hang around. -->
+<target name="clean-web">
+  <delete includeemptydirs="true">
+    <fileset dir="${deploy.home}" includes="**/*"/>
+  </delete>
+</target>
+
+<!-- ======================================================================
+Causing the web server to reload our web application. For how this works, see
+http://tomcat.apache.org/tomcat-6.0-doc/manager-howto.html
+ -->
+
+<property name="reloadclass.correct" value="org.apache.catalina.ant.ReloadTask"/>
+
+<condition property="reloadclass" value="${reloadclass.correct}" else="">
+  <available classname="${reloadclass.correct}"/>
+</condition>
+
+<property name="reload.url" value="http://localhost:8080/manager"/>
+<!-- Or try to run ant as follows:
+      ant -lib ../lib/catalina-ant.jar  , 
+   or place that jar file into ~/.ant/lib
+   see http://ant.apache.org/manual/using.html#external-tasks
+ -->
+
+<taskdef name="reload"    classname="${reloadclass}"
+	 classpathref="classpath"/>
+  
+<!-- The user list, with roles, is stored in /usr/local/tomcat/conf/tomcat-users.xml -->
+<target name="reload" description="Reload web application on localhost"
+        depends="deploy">
+  <reload url="${reload.url}" username="vmenkov2" password="vmenkov2-manager-script" path="/${app.name}"/>
+</target>
+
+
+
+<!-- Sample JPA application -->
+<target name="run-sample" depends="jar"
+        description="Run the example Main program">
+  
+  <java classname="edu.rutgers.axs.sql.Main" 
+	classpathref="classpath" fork="yes"   failonerror="yes">
+    <!--
+       Specifying the openjpa jar as the javaagent argument is
+       necessary in order for automatic class-enhancement to work.
+      -->
+    <!-- jvmarg value="-javaagent:${javaagent}"/ --> 
+    
+    <!--
+       Specify the system properties to use when configuring
+       OpenJPA. Note that these will only be used becuase in the
+       examples, the call to "Persistence.createEntityManagerFactory"
+       is passed "System.getProperties()".
+      -->
+  </java>
+</target>
+
+<target name="run-show" depends="jar"
+        description="Run the ShowAnnotations program">
+  
+  <java classname="edu.rutgers.axs.sql.ShowAnnotations" 
+	classpathref="classpath" fork="yes"   failonerror="yes">
+    <arg value="edu.rutgers.axs.sql.Respondent"/>
+  </java>
+</target>
+
+<target name="run-export" depends="jar" description="Export tables">
+  <java classname="edu.rutgers.axs.sql.Export"
+	classpathref="classpath" fork="yes"   failonerror="yes">
+  </java>
+</target>
+
+<target name="run-create-roles" depends="jar" description="Creates any missing roles in the role table">
+  <java classname="edu.rutgers.axs.sql.CreateRoles"
+	classpathref="classpath" fork="yes"   failonerror="yes">
+  </java>
+</target>
+
+<target name="run-test-edit" depends="jar" description="test AddRespondent">
+  <java classname="edu.rutgers.axs.web.AddRespondent"
+	classpathref="classpath" fork="yes"   failonerror="yes">
+    <arg line="53"/>
+  </java>
+</target>
+
+<!--
+    <target name="run-import" description="CSV import, assuming code already deployed">
+        <java classname="edu.rutgers.comminfo.icd.ImportCSV"
+	      classpathref="classpath.deployed" fork="yes"   failonerror="yes">
+	  <arg line="input.csv"/>
+          <sysproperty key="openjpa.Log"
+                value="DefaultLevel=WARN"/>
+	</java>
+    </target>
+
+    <target name="run-import-local" depends="jar" description="CSV import">
+        <java classname="edu.rutgers.comminfo.icd.ImportCSV"
+	      classpathref="classpath" fork="yes"   failonerror="yes">
+	  <arg line="input.csv"/>
+          <sysproperty key="openjpa.Log"
+                value="DefaultLevel=WARN"/>
+	</java>
+    </target>
+-->
+
+
+</project>
+

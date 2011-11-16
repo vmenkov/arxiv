@@ -1,0 +1,176 @@
+﻿/* LAYOUT */
+
+
+html
+{
+scrollbar-arrow-color:#ff0000;
+}
+
+
+#middle_frame
+{
+height:expression((document.body.clientHeight -93) + 'px');
+width: expression((document.body.clientWidth -0) + 'px');
+}
+
+
+#lower_frame
+{
+bottom:-1px;
+height: 18px;
+}
+
+#wrapping
+{
+text-align:center;
+}
+
+
+#left_frame
+{
+height:expression((document.body.clientHeight -157) + 'px');
+}
+
+
+#right_frame
+{
+width:expression((document.body.clientWidth -190) + 'px');
+height:expression((document.body.clientHeight -157) + 'px');
+text-align:center;
+}
+
+
+h1,h2,h3,h4,h5,h6 {width:100%;}
+
+
+#Layer_Page_Bottom
+{
+right:5px;
+bottom:-2px;
+}
+
+#Search_Box
+{
+bottom:0px;
+height:15px;
+font-size:10px;
+}
+
+#Search_Button
+{
+bottom:0px;
+}
+
+
+/* MENU */
+
+.menu_item_1
+{
+height:32px;
+padding-top:5px;
+line-height:22px;
+}
+
+.menu_item_2
+{
+height:32px;
+line-height:100%;
+}
+
+.menu_item_sub
+{
+height:20px;
+padding-top:2px;
+}
+
+
+
+/* FIXED-SIZE BUTTON start */
+
+.button_div, .button_div_2, .button_grey_div,
+{
+border:0px;
+}
+
+.button_div a:link, .button_div a:visited, .button_div_2 a:link, .button_div_2 a:visited,
+.button_grey_div a:link, .button_grey_div a:visited
+{
+width:100%;
+}
+
+
+.button_div a:hover, .button_div_2 a:hover, .button_grey_div a:hover
+{
+width:100%;
+}
+
+
+.button_div a:active:hover, .button_div_2 a:active:hover, .button_grey_div a:active:hover
+{
+background:#3C73FF;
+padding:3px 1px 1px 3px;
+}
+
+.button_grey_div a:active:hover
+{
+background:#CCCCCC;
+}
+
+
+.button_div_pressed
+{
+padding:2px 0px 0px 0px;
+}
+
+.button_div_2_pressed
+{
+padding:2px 0px 0px 0px;
+}
+
+/* FIXED-SIZE BUTTON end */
+
+
+/* BUTTONS-LINKS */
+
+
+.Adjust_Height
+{
+height:expression(document.getElementById('Right_Frame').offsetHeight+"px");
+}
+
+
+a.address_header, a.address_header_double
+{
+width:100%;
+}
+
+
+/* FORM start */
+
+#form
+{
+width:502px; /* IE: _+2px */
+}
+
+.field
+{
+width:482px; /* IE: _+2px */
+height:52px; /* IE: _+2px */
+}
+
+.input
+{
+width:105px;
+height:22px;
+
+left:50px;
+
+font-size:12px;
+}
+
+/* FORM end */
+
+#back_to_program
+{
+bottom:24px;
+}

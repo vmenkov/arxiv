@@ -1,0 +1,30 @@
+<!-- This file, based on the "jquery-datepicker" googlecode project, (
+     http://www.kelvinluck.com/assets/jquery/datePicker/v2/demo/ )
+     must be included into the HEAD section of every HTML or JSP file
+     that contains an input form with date-picker boxes -->
+
+<!-- firebug lite -->
+<script type="text/javascript" src="firebug/firebug.js"></script>
+
+<!-- jQuery -->
+<script type="text/javascript" src="scripts/jquery.min.js"></script>
+
+<!-- required plugins -->
+<script type="text/javascript" src="scripts/date.js"></script>
+<!--[if IE]><script type="text/javascript" src="scripts/jquery.bgiframe.min.js"></script><![endif]-->
+
+<!-- jquery.datePicker.js -->
+<script type="text/javascript" src="scripts/jquery.datePicker.js"></script>
+  
+<!-- datePicker required styles -->
+<link rel="stylesheet" type="text/css" media="screen" href="styles/datePicker.css">
+
+<!-- page specific styles -->
+<link rel="stylesheet" type="text/css" media="screen" href="styles/calendar.css">
+
+<!-- page specific scripts -->
+<script type="text/javascript" charset="utf-8">
+  $(function()  {
+  $('.date-pick').datePicker({startDate:'01/01/2010'});
+  });
+</script>

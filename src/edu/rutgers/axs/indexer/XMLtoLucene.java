@@ -1,0 +1,165 @@
+package edu.rutgers.axs.indexer;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.DateTools;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
+
+import edu.cornell.cs.osmot.cache.Cache;
+import edu.cornell.cs.osmot.options.Options;
+import edu.cornell.cs.osmot.logger.Logger;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+
+import java.util.Collection;
+import java.util.Iterator;
+
+import java.util.*;
+//import java.text.SimpleDateFormat;
+import java.util.regex.*;
+import java.io.*;
+
+// stuff for handling XML
+import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+
+/** The map describes how various fields of the XML structure are
+    processed */
+class XMLtoLucene {
+
+    private HashMap<String, Xml2Lucene> map = new HashMap<String, Xml2Lucene>();
+
+    /** Flags for Xml2Lucene objects */
+    static class Flags {
+	static final int IGNORE=1, RECURSE=2, FLATTEN=4, NOT_ANALIZED=8;
+    }
+	
+    /** An instance of this class determines how a particular field of
+	the XML file is mapped
+    */
+    static class Xml2Lucene {
+	/** A boolean OR of some Flag constants */
+	int flags;
+	/** The name of the field in the OAI XML feed */
+	String xmlName;
+	/** The name under which we want to store the field in Lucene */
+	String luceneName;
+	Xml2Lucene(String xml,String lu,int  _flags) {
+	    xmlName = xml;
+	    luceneName=lu;
+	    flags=_flags;	
+	}
+	FieldHandler h= FieldHandler.trivial;
+	Xml2Lucene setHandler(FieldHandler _h) {
+	    h = _h;
+	    return this;
+	}
+    }
+
+    XMLtoLucene() {
+	super();
+    }
+
+    Xml2Lucene add(String xmlName, String luceneName, int flags) {
+	    Xml2Lucene e = new  Xml2Lucene( xmlName,luceneName,flags);
+	    map.put( xmlName, e);
+	    return e;
+    } 
+	Xml2Lucene add(String xmlName, String luceneName) {
+	    return add(xmlName, luceneName, 0);
+	}
+	Xml2Lucene add(String sameName) {
+	    return add(sameName, sameName, 0);
+	}
+	Xml2Lucene ignore(String xmlName) {
+	    return add(xmlName, xmlName, Flags.IGNORE);
+	}
+	Xml2Lucene recurse(String xmlName) {
+	    return add(xmlName, xmlName, Flags.RECURSE);
+	}
+
+	void process(Element e, org.apache.lucene.document.Document doc) 
+	    throws IOException  	{
+
+	    String name0 = e.getNodeName();  
+	    // Disposition plan
+	    Xml2Lucene q = map.get(name0);
+	    if (q==null) {
+		Logger.log("There are no instructions for processing XML element '"+name0+"'; ignoring it and any children");
+		return;
+	    }
+	    if ((q.flags & Flags.IGNORE)!=0) return;
+	    if ((q.flags & Flags.RECURSE)!=0) {
+		// expect that all children are elements, and process each one
+		for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
+		    if (n instanceof Text  && n.getNodeValue().trim().equals("")) {
+			// white space; ignore
+		    } else if (n instanceof Element) {
+			process( (Element)n, doc);
+		    } else {
+			throw new IOException("Expected that all children of '" + name0+ 
+					      "' will be elements or white space; found " + n);
+		    }
+		}
+		return;
+	    }
+	    // General or special conversion for XML
+	    String text=q.h.convertElement(e);
+	    // special treatment for some fields 
+	    text = q.h.convertText(text);
+
+	    doc.add(new Field(q.luceneName, text, Field.Store.YES, 
+			      ((q.flags & Flags.NOT_ANALIZED)!=0 ?
+			       Field.Index.NOT_ANALYZED : Field.Index.ANALYZED) ));
+			      
+	}
+
+
+
+    static  XMLtoLucene makeMap( ) {
+	XMLtoLucene  map = new 	XMLtoLucene();
+
+	map.add( "setSpec", "group").
+	    setHandler(new FieldHandler() {
+		    String convertText(String text) {
+			// only save the first half
+			String z[] = text.split(":");
+			return (z.length>0) ? z[0] : text;
+		    }});
+	map.ignore("identifier");
+	map.add("id", "paper", Flags.NOT_ANALIZED);
+	map.add("created", "date", Flags.NOT_ANALIZED).
+	    setHandler(new FieldHandler() {
+		    String convertText(String text) {
+			return text.replaceAll("-", "") + "0000";
+		    }});
+	map.add("authors").
+	    setHandler(new AuthorsHandler());
+	map.add("title");
+	map.add("comments");
+	map.add("journal-ref");
+	map.add("abstract");
+
+	map.add("categories", "category");
+
+
+	map.ignore("updated");
+	map.ignore("datestamp");
+	map.ignore("report-no>");
+	map.ignore("doi");
+
+	map.recurse(ArxivImporter.Tags.RECORD);
+	map.recurse(ArxivImporter.Tags.HEADER);
+	map.recurse(ArxivImporter.Tags.METADATA);
+	map.recurse("arXiv");
+	return map;
+    }
+
+}
+

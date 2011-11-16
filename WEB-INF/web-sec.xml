@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+   version="2.5"> 
+  
+  <description>
+    My.ArXiv.org: Personalized interface for ArXiv.org
+  </description>
+  <display-name>My.ArXiv.org</display-name>
+
+  <taglib>
+    <taglib-uri>
+      http://my.arxiv.org/taglibs/icdtags
+    </taglib-uri>
+    <taglib-location>
+      /WEB-INF/icdtags.tld
+    </taglib-location>
+  </taglib>
+
+<!--
+   <servlet>
+      <servlet-name>GraphServlet</servlet-name>
+      <description>
+        This servlet generates SVG, JPEG, or PNG output to be inserted
+	into the page
+      </description>
+      <servlet-class>dd.web.GraphServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+   </servlet>
+
+   <servlet>
+      <servlet-name>FrontierDescriptionServlet</servlet-name>
+      <description>
+        This servlet generates SVG, JPEG, or PNG output to be inserted
+	into the page
+      </description>
+      <servlet-class>dd.web.FrontierDescriptionServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
+
+   <servlet-mapping>
+      <servlet-name>GraphServlet</servlet-name>
+      <url-pattern>/GraphServlet</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>FrontierDescriptionServlet</servlet-name>
+      <url-pattern>/FrontierDescriptionServlet</url-pattern>
+   </servlet-mapping>
+    -->
+
+<!-- context-param>
+  <param-name>OSMOT_CONFIG</param-name>
+  <param-value></param-value>
+</context-param -->
+
+  <!-- How should users log in? With BASIC, the
+                          browser pops up a window.  The realm-name 
+                          is displayed to the user in the login box. -->
+<!--
+  <login-config>
+      <auth-method>BASIC</auth-method>
+      <realm-name>My.ArXiv.org user authentication</realm-name>
+  </login-config>
+-->
+
+<!-- as per http://www.avajava.com/tutorials/lessons/how-do-i-use-form-authentication-with-tomcat.html -->
+<login-config>
+  <auth-method>FORM</auth-method>
+  <form-login-config>
+    <form-login-page>/login.jsp</form-login-page>
+    <form-error-page>/login-failed.jsp</form-error-page>
+  </form-login-config>
+</login-config>
+
+
+    <servlet>
+      <servlet-name>ArticleServlet</servlet-name>
+      <description>
+	Registers a request for an abstract or PDF, and forwards it to arxiv.org
+      </description>
+      <servlet-class>edu.rutgers.axs.web.ArticleServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>ArticleServlet</servlet-name>
+      <url-pattern>/ArticleServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+      <servlet-name>QueryServlet</servlet-name>
+      <description>
+	Process a SQL or JPQL query for data study
+      </description>
+      <servlet-class>edu.rutgers.axs.web.QueryServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>QueryServlet</servlet-name>
+      <url-pattern>/tools/QueryServlet</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet>
+      <servlet-name>LogoutServlet</servlet-name>
+      <description>
+	This servlet calls request.getSession().invalidate();
+      </description>
+      <servlet-class>edu.rutgers.axs.web.LogoutServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>LogoutServlet</servlet-name>
+      <url-pattern>/LogoutServlet</url-pattern>
+    </servlet-mapping>
+
+    <!-- for  "favicon.ico" -->
+    <mime-mapping>
+        <extension>ico</extension>
+        <mime-type>image/x-icon</mime-type>
+    </mime-mapping>
+
+   <!-- Security roles referenced by this web application -->
+    <security-role>
+      <description>
+	Subscribers are our main user base
+      </description>
+      <role-name>subscriber</role-name>
+    </security-role>
+
+    <security-role>
+      <description>
+	Researchers can do everything except for user administration
+      </description>
+      <role-name>researcher</role-name>
+    </security-role>
+
+    <security-role>
+      <description>
+	Admins can do anything, including user administration
+      </description>
+      <role-name>admin</role-name>
+    </security-role>
+
+   <!-- Pages which only named users (of any kind) can access. This
+   includes the "successful login" page.-->
+
+  <security-constraint>
+      <web-resource-collection>
+	<web-resource-name>Must be named user</web-resource-name>
+	<url-pattern>/personal/*</url-pattern>			
+      </web-resource-collection>
+      <auth-constraint>
+	<role-name>admin</role-name>
+	<role-name>researcher</role-name>
+	<role-name>subscriber</role-name>
+     </auth-constraint>
+    </security-constraint>
+
+
+    <security-constraint>
+      <web-resource-collection>
+	<web-resource-name>Research tools</web-resource-name>
+	<url-pattern>/tools/*</url-pattern>			
+      </web-resource-collection>
+      <auth-constraint>
+	<role-name>admin</role-name>
+	<role-name>researcher</role-name>
+     </auth-constraint>
+    </security-constraint>
+
+   <security-constraint>
+      <web-resource-collection>
+	<web-resource-name>User management</web-resource-name>
+	<url-pattern>/admin/*</url-pattern>			
+      </web-resource-collection>
+      <auth-constraint>
+	<role-name>admin</role-name>
+     </auth-constraint>
+    </security-constraint>
+
+
+</web-app>

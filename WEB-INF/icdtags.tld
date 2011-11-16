@@ -1,0 +1,88 @@
+<!DOCTYPE taglib
+      PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN" 
+     "http://java.sun.com/j2ee/dtds/web-jsptaglib_1_1.dtd">
+
+  <taglib>
+    <!-- The version number of this tag library -->
+    <tlibversion>1.0</tlibversion>
+
+    <!-- The JSP specification version required to function -->
+    <jspversion>1.1</jspversion>
+
+    <!-- The short name of this tag library -->
+    <shortname>icdtags</shortname>
+
+    <!-- Public URI that uniquely identifies this version of the tag library -->
+    <uri>
+	http://my.arxiv.org/taglibs/icdtags
+    </uri>
+
+    <!-- General information about this tag library -->
+    <info>
+          A few convenience tags for the my.arxiv application
+    </info>
+
+      <!-- RU -->
+    <tag>
+      <name>RU</name>
+      <tagclass>edu.rutgers.axs.web.RUTag</tagclass>
+      <bodycontent>empty</bodycontent>
+      <info>
+        Print a project description footer
+      </info>
+    </tag>
+
+    <tag>
+      <name>YouAre</name>
+      <tagclass>edu.rutgers.axs.web.YouAreTag</tagclass>
+      <bodycontent>empty</bodycontent>
+      <info>
+        Prints a message about the user's login status
+      </info>
+    </tag>
+
+    <tag>
+      <name>EntryForm</name>
+      <tagclass>edu.rutgers.axs.web.EntryFormTag</tagclass>
+      <bodycontent>empty</bodycontent>
+      <info>Tag that prints an HTML table with input fields for a given class</info>
+      <attribute>
+	<name>className</name>
+	<required>true</required>
+	<rtexprvalue>false</rtexprvalue>
+      </attribute>
+      <attribute>
+	<name>id</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+      </attribute>
+    </tag>
+
+    <tag>
+      <name>UserEntryForm</name>
+      <tagclass>edu.rutgers.axs.web.UserEntryFormTag</tagclass>
+      <bodycontent>empty</bodycontent>
+      <info>Tag that prints an HTML table with input fields for the User class</info>
+      <attribute>
+	<name>user_name</name>
+	<required>true</required>
+	<rtexprvalue>true</rtexprvalue>
+      </attribute>
+    </tag>
+
+
+    <tag>
+      <name>ScheduledTime</name>
+      <tagclass>edu.rutgers.axs.web.ScheduledTimeTag</tagclass>
+      <bodycontent>empty</bodycontent>
+      <info>Displays date-and-time entry boxes</info>
+      <!-- attribute>
+	<name>main</name>
+	<required>true</required>
+	<rtexprvalue>false</rtexprvalue>
+      </attribute -->
+    </tag>
+
+
+    
+</taglib>

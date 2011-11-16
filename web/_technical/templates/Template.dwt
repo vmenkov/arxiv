@@ -1,0 +1,107 @@
+﻿<?php echo '<', '?xml version="1.0" encoding="UTF-8"?', '>'; ?>
+<!-- © 2011 by AEP & Paul Kantor -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+<!-- #BeginEditable "doctitle" -->
+<title>
+Page Title
+</title>
+<!-- #EndEditable -->
+<meta name="Keywords" content="" />
+<meta name="Description" content="Here goes the description of arXiv for search engines" />
+<meta name="Author" content="pichugin@eden.rutgers.edu" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+
+<link rel="stylesheet" type="text/css" href="../styles/styles_all.css" />
+<!--[if lte IE6]><link rel="stylesheet" type="text/css" href="../styles/styles_ie.css" /><![endif]-->
+
+<script type="text/javascript" src="../scripts/jquery.js"></script>
+<script type="text/javascript" src="../scripts/jquery-transitions.js"></script>
+
+<script type="text/javascript">
+<!--
+function BlurLinks(){
+lnks=document.getElementsByTagName('a');
+for(i=0;i<lnks.length;i++){
+lnks[i].onfocus=new Function("if(this.blur)this.blur()");
+}
+}
+//-->
+</script>
+
+<!-- #BeginEditable "Styles" -->
+<style type="text/css">
+</style>
+<!-- #EndEditable -->
+
+</head>
+
+<body>
+<!--
+<script type="text/javascript">function Gomenu(){return}</script>
+<script type="text/javascript" src="../menu/menu_var.js"></script>
+<script type="text/javascript" src="../menu/menu_com.js"></script>
+<noscript>Your browser does not support scripts in our web site.</noscript>
+-->
+
+<div id="upper_frame">
+
+	<!-- <div id="MenuPos" style="position:absolute; left: 86px; top: 42px; z-index:5000;"></div> -->
+	<img src="../images/bar-rutgers.jpg" style="border:none; width:1000px; height:75px; position:absolute; top:0px; left:0px;" alt="" />
+	<div style="position:absolute; top:10px; left:10px; font-size:4em; font-weight:bold; text-shadow: 2px 2px 2px #000; right: 813px;"><span style="color:#CCCCCC; font-weight:normal;">my:</span>arXiv</div>
+	
+	<div style="width:100%; text-align:center; position:relative; top:25px;">
+		<form name="simple_search" style="position:relative; text-align:center;" action="">
+		
+			<input type="text" name="simple_search" size="25" id="simple_search" />
+			<input type="submit" value="Search" id="search_button_" class="button" style="font-weight:bold; padding:0px; width:75px; height:23px; text-align:center; position:relative; display:inline;" />
+		
+		</form>
+	</div>
+
+	<!-- <img src="../images/face.jpg" style="border:none; position:absolute; left:0px; top:5px;" alt="" /> -->
+	<div id="layer_page_title" style="z-index: 10">
+		<!-- #BeginEditable "Page_Title" -->
+		Page Title
+		<!-- #EndEditable -->
+	</div>
+	
+	<div id="validator" style="width:3px; height:3px; position:absolute; top:0px; right:0px; color:blue;">
+		<a target="_blank" href="http://validator.w3.org/check?uri=referer" style="color:#e51937; background:inherit;">.</a>
+	</div>
+
+	<div id="validator_css" style="width:3px; height:3px; position:absolute; top:0px; left:0px;">
+		<a target="_blank" href="http://jigsaw.w3.org/css-validator/check/referer?profile=css3" style="color:#e51937; background:inherit;">.</a>
+	</div>
+
+</div>
+
+
+<div id="middle_frame">
+	
+	<div id="wrapping"> 
+		<!-- #BeginEditable "Body" -->	
+			<div id="left_frame">Left Frame Text.
+			</div> <!-- Left Frame -->
+	
+			<div id="right_frame">Right Frame Text.
+			</div> <!-- Right Frame -->
+		<!-- #EndEditable -->	
+	</div> <!-- Wrapping -->
+	
+	</div> <!-- Middle frame ends-->
+
+<div id="lower_frame">
+	
+</div> <!-- Lower frame ends -->		
+
+<!-- #BeginEditable "Scripts" -->
+<!-- #EndEditable -->
+
+</body>
+
+</html>

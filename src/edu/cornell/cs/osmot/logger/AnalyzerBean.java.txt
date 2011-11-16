@@ -1,0 +1,124 @@
+package edu.cornell.cs.osmot.logger;
+
+import java.io.File;
+import java.io.IOException;
+
+import javax.servlet.ServletContext;
+
+import edu.cornell.cs.osmot.options.Options;
+
+/**
+ * This class implements the servlet interface for getting log analysis.
+ * 
+ * @author Filip Radlinski
+ * @version 1.0, May 2005
+ */
+
+public class AnalyzerBean {
+
+	private String logDirectory;
+
+	public synchronized static AnalyzerBean get(ServletContext app)
+			throws Exception {
+		AnalyzerBean bean = (AnalyzerBean) app.getAttribute("analyzerBean");
+		if (bean == null) {
+			Logger.log("Creating an AnalyzerBean");
+			bean = new AnalyzerBean();
+			app.setAttribute("analyzerBean", bean);
+			Logger.log("AnalyzerBean created");
+		}
+
+		return bean;
+	}
+
+	public AnalyzerBean() throws Exception {
+		this(Options.get("LOG_DIRECTORY"));
+	}
+
+	public AnalyzerBean(String logDir) throws Exception {
+		logDirectory = logDir;
+	}
+
+	/** Return the file names where we can compare performance (modes 2x). */
+	public String[] getLogs() {
+		File f = new File(logDirectory);
+		String[] files = f.list();
+
+		int count = 0;
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].matches(Options.get("LOG_PREFIX") + ".*\\.1.\\.log"))
+				count++;
+		}
+
+		String logFiles[] = new String[count];
+
+		count = 0;
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].matches(Options.get("LOG_PREFIX") + ".*\\.1.\\.log")) {
+				logFiles[count] = files[i];
+				count++;
+			}
+		}
+
+		return logFiles;
+	}
+
+	/** 
+	 * Load the logs from the database that match this select clause and mode.
+	 * 
+	 * @param selectClause  Added to SQL statement that retrieves log entires, to
+	 *                      allow analysis of only a subset of the logs.
+	 * @param mode          Restrict logs loaded to those with this mode.
+	 * @return the matching queries and clicks from the log.
+	 */
+	public static QueryEntry[] loadLog(String selectClause, String mode) throws IOException {
+		return LogAnalyzer.loadLog(selectClause, mode);
+	}
+	
+	/**
+	 * Compare the performance of two ranking algorithms (that have been presented
+	 * with interleaving).
+	 * 
+	 * @param queries      The queries that were logged
+	 * @return             A count of how often each algorithm is preferred
+	 */
+	public int[] comparePerformance(QueryEntry queries[]) {
+		return LogAnalyzer.comparePerformance(queries);
+	}
+	
+	public String getPerformanceData(QueryEntry queries[]) {
+		return LogAnalyzer.getPerformanceData(queries);
+	}
+	
+	/* For when log files were text files. Now, if you want to use
+	 * text files, first load them then pass to the new code.
+	public int[] comparePerformance(String logFiles[]) throws IOException {
+		for (int i = 0; i < logFiles.length; i++)
+			logFiles[i] = logDirectory + "/" + logFiles[i];
+		
+		return LogAnalyzer.comparePerformance(logFiles);
+	}
+
+	public int[] comparePerformance(String logFile) throws IOException {
+		String logFiles[] = new String[1];
+		logFiles[0] = logFile;
+
+		return comparePerformance(logFiles);
+	}
+    */
+
+	/** Return the p-value of a binomial sign test. */
+	public double pValue(int i1, int i2) {
+		return LogAnalyzer.pValue(i1, i2);
+	}
+
+	public String usageStats() {
+		return LogAnalyzer.usageStats();
+	}
+
+	public void flushLogs() throws IOException {
+		Logger.log("Flushing all log files");
+		Logger.flushAll();
+		Logger.log("Logs flushed");
+	}
+}

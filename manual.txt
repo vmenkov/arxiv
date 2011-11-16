@@ -1,0 +1,6 @@
+MySQL: root@home - my traditional sql password
+-----------------
+Options.java:
+configPath = System.getProperty("OSMOT_CONFIG"); // else ""
+
+read  configPath+"osmot.conf"

@@ -1,0 +1,75 @@
+<%@ page import="java.io.*" %>
+<%@ page import="edu.rutgers.axs.web.*" %>
+<%@ page import="edu.rutgers.axs.sql.*" %>
+<%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
+
+<% 
+   GetUser main=new GetUser(request,response);
+   String id = main.u.getUser_name();
+
+   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
+
+<p>
+To try again, go back to the <a href="manageUsers.jsp">User Management</a>
+main page.
+</p>
+
+<%   } else {      %>
+
+<!-- ${param.id} -->
+
+<html>
+<head>
+<title>Editing a user's record
+</title>
+<jsp:include page="../include/date-head-include.html" />
+</head>
+<body>
+
+<h1>Editing the entry for user <em><%=id%></em></h1>
+
+<p>
+<table border=1>
+<tr><%= main.u.header4cells()  %> </tr>
+<tr><%= main.u.to4cells()  %> </tr>
+</table>
+</p>
+
+<form method=post action="editUser.jsp">
+<%= Tools.inputHidden(EditUser.USER_NAME, id) %> <br>
+
+<h3>Updating user information</h3>
+
+<p>
+<icd:UserEntryForm user_name="<%=id%>"/>
+
+<h3>Updating roles</h3>
+
+<%= main.mkRoleBoxes() %>
+
+<h3>Changing password and status</h3>
+
+<ul>
+<li>To change password for already enabled user, simply type (and re-type) the new password.
+<li>To enable login for a previously disabled user, type (and re-type) the new password for the user, and check the "enabled" button.
+<li>To disable login for the user, check the "disabled" button. The password field will be ignored.
+<li>To make no changes, don't type anything in the password box, and don't touch the radio buttons.
+</ul>
+
+<p>
+<%= main.mkRadioSet() %>
+</p>
+<p>
+<%= EditUser.pwTable() %>
+</p>
+
+<input type="submit" value="Update user record">
+</form>
+</p>
+
+<% } %>
+
+<icd:RU/>
+
+</body>
+</html>
