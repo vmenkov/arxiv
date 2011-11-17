@@ -1,9 +1,0 @@
-#-- this is not used anymore; moved to persistence.xml
-
-openjpa.ConnectionDriverName=org.gjt.mm.mysql.Driver
-openjpa.ConnectionURL=jdbc:mysql://localhost/icd
-openjpa.ConnectionUserName=icd
-openjpa.ConnectionPassword=2eZ#xkw
-openjpa.jdbc.SynchronizeMappings=buildSchema
-openjpa.Log=DefaultLevel=WARN,SQL=TRACE
-
