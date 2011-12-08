@@ -8,9 +8,11 @@
         ResultsBase main=new ResultsBase(request,response);
 %>
 <!-- © 2011 by AEP -->
-</html>
-<h1><title>Checking...</title>
-</h1>
+<html>
+<head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<title>Checking...</title>
+</head>
 <body>
 <pre>
 ver=<%=Version.version%>

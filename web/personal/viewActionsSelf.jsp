@@ -9,7 +9,7 @@
 
 <html>
 <head>
-<link rel="stylesheet" type="text/css" media="screen" href="../styles/survey.css">
+<link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <title>Interaction history for user <%= main.actorUserName %>
 </title>
 </head>

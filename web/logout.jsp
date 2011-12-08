@@ -7,6 +7,7 @@
 %>
 <html>
 <head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
 <title>Logging out</title>
 </head>
 <body>

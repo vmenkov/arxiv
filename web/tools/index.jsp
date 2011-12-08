@@ -5,6 +5,7 @@
 <% ResultsBase main=new ResultsBase(request,response); %>
 <html>
 <head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
 <title>My.arXiv data research main page</title>
 </head>
 <body>

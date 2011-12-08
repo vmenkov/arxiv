@@ -7,6 +7,7 @@
 %>
 <html>
 <head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
 <title>My.arXiv: database query</title>
 </head>
 <body>

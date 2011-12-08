@@ -4,6 +4,7 @@
 
 <html>
 <head>
+<link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <title>Editing account information
 </title>
 <jsp:include page="../include/date-head-include.html" />

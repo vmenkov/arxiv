@@ -10,6 +10,14 @@
   </description>
   <display-name>My.ArXiv.org</display-name>
 
+
+  <!-- 
+     <context-param>
+       <param-name>OSMOT_CONFIG</param-name>
+       <param-value></param-value>
+     </context-param>
+     -->
+
   <taglib>
     <taglib-uri>
       http://my.arxiv.org/taglibs/icdtags
@@ -19,138 +27,127 @@
     </taglib-location>
   </taglib>
 
-<!--
-   <servlet>
-      <servlet-name>GraphServlet</servlet-name>
-      <description>
-        This servlet generates SVG, JPEG, or PNG output to be inserted
-	into the page
-      </description>
-      <servlet-class>dd.web.GraphServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-   </servlet>
 
-   <servlet>
-      <servlet-name>FrontierDescriptionServlet</servlet-name>
-      <description>
-        This servlet generates SVG, JPEG, or PNG output to be inserted
-	into the page
-      </description>
-      <servlet-class>dd.web.FrontierDescriptionServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-   </servlet>
+  <!-- as per http://www.avajava.com/tutorials/lessons/how-do-i-use-form-authentication-with-tomcat.html -->
+  <!--
+     <login-config>
+       <auth-method>FORM</auth-method>
+       <form-login-config>
+	 <form-login-page>/login.jsp</form-login-page>
+	 <form-error-page>/login-failed.jsp</form-error-page>
+       </form-login-config>
+     </login-config>
+     -->
 
-
-   <servlet-mapping>
-      <servlet-name>GraphServlet</servlet-name>
-      <url-pattern>/GraphServlet</url-pattern>
-   </servlet-mapping>
-
-   <servlet-mapping>
-      <servlet-name>FrontierDescriptionServlet</servlet-name>
-      <url-pattern>/FrontierDescriptionServlet</url-pattern>
-   </servlet-mapping>
-    -->
-
-<!-- context-param>
-  <param-name>OSMOT_CONFIG</param-name>
-  <param-value></param-value>
-</context-param -->
-
-
-<!-- as per http://www.avajava.com/tutorials/lessons/how-do-i-use-form-authentication-with-tomcat.html -->
-<!--
-<login-config>
-  <auth-method>FORM</auth-method>
-  <form-login-config>
-    <form-login-page>/login.jsp</form-login-page>
-    <form-error-page>/login-failed.jsp</form-error-page>
-  </form-login-config>
-</login-config>
--->
-
-    <servlet>
-      <servlet-name>ArticleServlet</servlet-name>
-      <description>
-	Registers a request for an abstract or PDF, and forwards it to arxiv.org
-      </description>
-      <servlet-class>edu.rutgers.axs.web.ArticleServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-      <servlet-name>ArticleServlet</servlet-name>
-      <url-pattern>/ArticleServlet</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-      <servlet-name>QueryServlet</servlet-name>
-      <description>
-	Process a SQL or JPQL query for data study
-      </description>
-      <servlet-class>edu.rutgers.axs.web.QueryServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-      <servlet-name>QueryServlet</servlet-name>
-      <url-pattern>/tools/QueryServlet</url-pattern>
-    </servlet-mapping>
-
-
-    <servlet>
-      <servlet-name>LogoutServlet</servlet-name>
-      <description>
-	This servlet calls request.getSession().invalidate();
-      </description>
-      <servlet-class>edu.rutgers.axs.web.LogoutServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-      <servlet-name>LogoutServlet</servlet-name>
-      <url-pattern>/LogoutServlet</url-pattern>
-    </servlet-mapping>
+  <servlet>
+    <servlet-name>BaseArxivServlet</servlet-name>
+    <description>
+      Test
+    </description>
+    <servlet-class>edu.rutgers.axs.web.BaseArxivServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>BaseArxivServlet</servlet-name>
+    <url-pattern>/BaseArxivServlet</url-pattern>
+    <url-pattern>/BaseArxivServlet/*</url-pattern>
+  </servlet-mapping>
   
-    <servlet>
-      <servlet-name>LoginServlet</servlet-name>
-      <description>
-	Login functionality in the absence of server support (no context.xml etc)
-      </description>
-      <servlet-class>edu.rutgers.axs.web.LoginServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-      <servlet-name>LoginServlet</servlet-name>
-      <url-pattern>/LoginServlet</url-pattern>
-    </servlet-mapping>
+  <servlet>
+    <servlet-name>ArticleServlet</servlet-name>
+    <description>
+      Registers a request for an abstract or PDF, and forwards it to arxiv.org
+    </description>
+    <servlet-class>edu.rutgers.axs.web.ArticleServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ArticleServlet</servlet-name>
+    <url-pattern>/ArticleServlet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>FilterServlet</servlet-name>
+    <description>
+      Pulls a page from arxiv.org, re-writes links, and serves the
+      modified page, while registering the request
+    </description>
+    <servlet-class>edu.rutgers.axs.web.FilterServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>FilterServlet</servlet-name>
+    <url-pattern>/FilterServlet/*</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>QueryServlet</servlet-name>
+    <description>
+      Process a SQL or JPQL query for data study
+    </description>
+    <servlet-class>edu.rutgers.axs.web.QueryServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>QueryServlet</servlet-name>
+    <url-pattern>/tools/QueryServlet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>LogoutServlet</servlet-name>
+    <description>
+      This servlet calls request.getSession().invalidate();
+    </description>
+    <servlet-class>edu.rutgers.axs.web.LogoutServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LogoutServlet</servlet-name>
+    <url-pattern>/LogoutServlet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>LoginServlet</servlet-name>
+    <description>
+      Login functionality in the absence of server support (no context.xml etc)
+    </description>
+    <servlet-class>edu.rutgers.axs.web.LoginServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LoginServlet</servlet-name>
+    <url-pattern>/LoginServlet</url-pattern>
+  </servlet-mapping>
+  
+  <!-- for  "favicon.ico" -->
+  <mime-mapping>
+    <extension>ico</extension>
+    <mime-type>image/x-icon</mime-type>
+  </mime-mapping>
+  
+  <!-- Security roles referenced by this web application -->
+  <security-role>
+    <description>
+      Subscribers are our main user base
+    </description>
+    <role-name>subscriber</role-name>
+  </security-role>
+  
+  <security-role>
+    <description>
+      Researchers can do everything except for user administration
+    </description>
+    <role-name>researcher</role-name>
+  </security-role>
 
-    <!-- for  "favicon.ico" -->
-    <mime-mapping>
-        <extension>ico</extension>
-        <mime-type>image/x-icon</mime-type>
-    </mime-mapping>
-
-   <!-- Security roles referenced by this web application -->
-    <security-role>
-      <description>
-	Subscribers are our main user base
-      </description>
-      <role-name>subscriber</role-name>
-    </security-role>
-
-    <security-role>
-      <description>
-	Researchers can do everything except for user administration
-      </description>
-      <role-name>researcher</role-name>
-    </security-role>
-
-    <security-role>
-      <description>
-	Admins can do anything, including user administration
-      </description>
-      <role-name>admin</role-name>
-    </security-role>
-
-   <!-- Pages which only named users (of any kind) can access. This
+  <security-role>
+    <description>
+      Admins can do anything, including user administration
+    </description>
+    <role-name>admin</role-name>
+  </security-role>
+  
+  <!-- Pages which only named users (of any kind) can access. This
    includes the "successful login" page.-->
 <!--
   <security-constraint>

@@ -4,6 +4,7 @@
 <% ResultsBase main=new ResultsBase(request,response); %>
 <html>
 <head>
+<link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <title>Your Account
 </title>
 <jsp:include page="../include/date-head-include.html" />

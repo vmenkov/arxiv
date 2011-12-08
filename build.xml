@@ -396,6 +396,26 @@ http://tomcat.apache.org/tomcat-6.0-doc/manager-howto.html
   </java>
 </target>
 
+ <property name="pvt" location="../private"/>
+
+<target name="getconf">
+    <copy todir=".">
+      <fileset dir="${pvt}">
+	<include name="osmot.conf"/>
+      </fileset>
+    </copy>
+    <copy todir="WEB-INF">
+      <fileset dir="${pvt}/WEB-INF">
+	<include name="connection.properties"/>
+      </fileset>
+    </copy>
+    <copy todir="META-INF">
+      <fileset dir="${pvt}/META-INF">
+	<include name="persistence.xml"/>
+      </fileset>
+    </copy>
+</target>
+
 <!--
     <target name="run-import" description="CSV import, assuming code already deployed">
         <java classname="edu.rutgers.comminfo.icd.ImportCSV"

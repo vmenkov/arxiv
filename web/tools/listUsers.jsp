@@ -7,8 +7,8 @@
 %>
 <html>
 <head>
-<title>List of Users
-</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<title>List of Users</title>
 </head>
 <body>
 

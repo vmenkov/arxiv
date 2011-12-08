@@ -31,6 +31,7 @@
 <!--[if IE]>
 <link rel="stylesheet" type="text/css" href="styles/results_ie.css" />
 <![endif]-->
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
 
 <script type="text/javascript" src="_technical/scripts/jquery.js"></script>
 <script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>

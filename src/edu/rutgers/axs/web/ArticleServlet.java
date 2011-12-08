@@ -17,13 +17,8 @@ import edu.rutgers.axs.sql.*;
 
  /** Records the user's choice, 
  */
-public class ArticleServlet extends HttpServlet {
-
-    /** Artcile ID, in the format used arxiv.org */
-    final static public String ID="id", ACTION="action";
-
-    final static String ARXIV_BASE = "http://arxiv.org";
-
+public class ArticleServlet extends BaseArxivServlet {
+  
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
 
