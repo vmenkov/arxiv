@@ -32,7 +32,6 @@ public class FilterServlet extends  BaseArxivServlet  {
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
 
-	//String sp = request.getParameter(SP);
 	String pi=request.getPathInfo();
 
 	EntityManager em = null;
@@ -58,10 +57,34 @@ public class FilterServlet extends  BaseArxivServlet  {
 		
 		User u = User.findByName(em, user);
 		
-		// FIXME: need to record the viewing act
+		Pattern p = Pattern.compile( "/(abs|format|pdf|ps)/(.+)");
 
-		//u.addAction(id, op);
-		
+		Matcher m = p.matcher(pi);
+		if (m.matches()) {
+		    String prefix = m.group(1);
+		    String idv = m.group(2);
+		    Pattern pv = Pattern.compile("(.+)v(\\d+)");
+		    Matcher mv = pv.matcher(idv);
+		    String id = idv, version = null;
+		    if (mv.matches()) {
+			id = mv.group(1);
+			version = mv.group(2);
+		    }
+
+		    Action.Op op = Action.Op.NONE;
+		    if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
+		    else if (prefix.equals("format")) op=Action.Op.VIEW_FORMATS;
+		    else if (prefix.equals("pdf")) op= Action.Op.VIEW_PDF;
+		    else if (prefix.equals("ps")) op= Action.Op.VIEW_PS;
+		    Logging.info("pi="+pi+", recordable as mode " + op.toString());
+		    if (op !=  Action.Op.NONE) u.addAction(id, op);
+		} else {
+		    Logging.info("pi="+pi+", not a recordable URL");
+		}
+
+		// FIXME: need to record the viewing act for all other pages as well
+
+
 		em.persist(u);
 		em.getTransaction().commit(); 
 		em.close();
@@ -104,7 +127,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 	URL lURL    =new URL( lURLString);
 	Logging.info("FilterServlet requesting URL " + lURL);
 	HttpURLConnection lURLConnection=(HttpURLConnection)lURL.openConnection();	
-	lURLConnection.setFollowRedirects(false);
+
+	lURLConnection.setFollowRedirects(false); 
+
 	if (lPost) {
 	    lURLConnection.setDoOutput(true);
 	    lURLConnection.setRequestMethod("POST");
@@ -119,11 +144,13 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	int code = lURLConnection.getResponseCode();
 	Logging.info("code = " + code);
+	LineConverter conv = new LineConverter(request);
 
-	boolean willParse=false;
+	boolean willParse=false, willAddNote=false;
 	if (code == HttpURLConnection.HTTP_OK) {
 	    // Successful connection (code 200). Default response status
 	    willParse = true;
+	    willAddNote=true;
 	} else {  /* Response code was other than OK */
 	    // Set the status code for the response. We should use
 	    // setStatus and not sendError, because we must use
@@ -131,7 +158,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    // generate a document of our own.
 
 	    response.setStatus(code,lURLConnection.getResponseMessage());
-	    willParse = false;
+
 	    // for "Not Modified", the document request should be
 	    // recorded (even though there is no doc body to parse)
 
@@ -142,7 +169,15 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    
 	    if (code == HttpURLConnection.HTTP_MOVED_TEMP ||
 		code == HttpURLConnection.HTTP_MOVED_PERM ) {
-		/** Redirecting detected (code is 301 or 302) */	
+		/** Redirecting detected (code is 301 or 302) */
+		String location = lURLConnection.getHeaderField("Location");
+		if (location!=null) {
+		    response.setHeader("Location",
+				       conv.convertLink(location, true)); 
+		}
+		willParse=true;
+	    } else {
+		willParse = false;
 	    }
 	}
 
@@ -150,11 +185,12 @@ public class FilterServlet extends  BaseArxivServlet  {
 	int lContentLength = lURLConnection.getContentLength();
 	// e.g.  "Content-Type: text/html; charset=ISO-8859-4"
 	String lContentType = lURLConnection.getContentType();
+	Logging.info("pi=" + pi + ", content-type=" +  lContentType);
 	Charset cs = null;
 	if (lContentType!=null) {
 	    Pattern p = Pattern.compile("charset=([\\w:\\-\\.]+)");
 	    Matcher m = p.matcher(lContentType);
-	    if (m.matches()) {
+	    if (m.find()) {
 		String charsetName = charsetName=m.group(1);
 		try {
 		    cs = Charset.forName( charsetName);
@@ -163,12 +199,18 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    Logging.info("No charset available for name "+charsetName);
 		}
 	    }
+	    // Make sure we don't try to parse PDF, JPG, etc -
+	    // only parse files explicitly declared to contain HTML, and those
+	    // without explicit type description
+	    if (lContentType.indexOf("text/html")<0) {
+		willParse=false;
+	    }
+	    response.setContentType( lContentType);
 	}
 
 	BufferedInputStream in = new BufferedInputStream( lURLConnection.getInputStream(),
 							  ChunkSize);
 
-	response.setContentType( lContentType);
 	OutputStream aout = response.getOutputStream();
 
 	if (!willParse) {
@@ -190,10 +232,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 				     new InputStreamReader(in, cs));
 
 	    PrintWriter w = new PrintWriter(aout);
-	    String s = null;
-	    while((s=r.readLine())!=null) {
-		String z = convertLine(s);
-		w.print(z);
+	    for(String s = null; (s=r.readLine())!=null; ) {
+		String z = conv.convertLine(s, 	    willAddNote);
+		w.println(z);
 	    }
 	    w.flush();
 	}
@@ -225,10 +266,18 @@ public class FilterServlet extends  BaseArxivServlet  {
       }
   }
 
-    /** Returns a URL for this servlet */
-    //static String mkUrl(String cp, String sp) {
-    //	return cp + "/FilterServlet?" +  SP +"="+sp;
-    //}
+    /*
+  static private void  copyResponseHeaders(HttpServletResponse response,
+					  HttpURLConnection aHttpURLConnection){
+
+      Enumeration reqKeys = areq.getHeaderNames();
+      while( reqKeys.hasMoreElements() ) {
+	  String name = (String)(reqKeys.nextElement());
+	  String value = areq.getHeader(name);
+	  aHttpURLConnection.setRequestProperty(name, value);
+      }
+  }
+    */
 
 
     /** The from-client stream should not be closed here, because 
@@ -252,32 +301,43 @@ public class FilterServlet extends  BaseArxivServlet  {
 
   /** Repeats the read() call until the requested number of
 	bytes has been read, or until the end of stream */
-  private static byte[] readFully(InputStream in, int len) 
-      throws IOException {
-      byte[] buf = new byte[len];
-      int pos=0;
-      /** The read() call MUST be repeated until -1 is returned.
-	  (A single call always may return less data than requested!) */
-      while( pos < len) {
-	  int state=in.read( buf, pos, len-pos);
-	  if (state == -1) break;  // end of input
-	  pos += state;
-      }
-      if (pos < len) {
-	  System.err.println("Warning: "+len+" bytes requested, but only "+
-			     pos + " read until the end of stream!");
-	  byte [] newBuf = new byte[ pos];
-	  for(int i=0; i<pos; i++) newBuf[i]=buf[i];
-	  return newBuf;
-      }
-      return buf;
-  }
+    private static byte[] readFully(InputStream in, int len) 
+	throws IOException {
+	byte[] buf = new byte[len];
+	int pos=0;
+	/** The read() call MUST be repeated until -1 is returned.
+	    (A single call always may return less data than requested!) */
+	while( pos < len) {
+	    int state=in.read( buf, pos, len-pos);
+	    if (state == -1) break;  // end of input
+	    pos += state;
+	}
+	if (pos < len) {
+	    System.err.println("Warning: "+len+" bytes requested, but only "+
+			       pos + " read until the end of stream!");
+	    byte [] newBuf = new byte[ pos];
+	    for(int i=0; i<pos; i++) newBuf[i]=buf[i];
+	    return newBuf;
+	}
+	return buf;
+    }
 
-    Pattern pIcon = Pattern.compile("href=\"/favicon.ico\"");
+    final static String FS =  "/FilterServlet";
 
-    Pattern pHref = Pattern.compile("href=\"(.*?)\"");
-    //if (m.matches()) {
-    //	String charsetName = charsetName=m.group(1);
+    private class LineConverter {
+
+	
+	String user;
+	String cp = getContextPath();
+	String fs = cp +  FS;
+
+	LineConverter(HttpServletRequest request) {
+	    try {
+		SessionData sd =  SessionData.getSessionData(request);
+		user = sd.getRemoteUser(request);
+	    } catch(Exception ex) {}
+	}
+
 
     /**
      Typical HTML elements' attributes that need to be converted:
@@ -295,39 +355,92 @@ public class FilterServlet extends  BaseArxivServlet  {
 
      Rewrite with a link to FilterServlet, and "hidden" sp:
      form ... (method="post")  action="/relative"
-
-
-
-
     */    
 
-    private String convertLine(String s) {
-	// <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-	Matcher m = pHref.matcher(s);
-	String fs = getContextPath()+ "/FilterServlet";
-	StringBuffer sb = new StringBuffer();
+	String convertLink(String link, boolean mayRewrite) {
 
-	while (m.find()) {
-	    String link=m.group(1);
-	    String replink = link;
-	    if (link.equals("/favicon.ico")) {
-		replink = getContextPath()+"/filter.ico";
-	    } else if (link.startsWith( ARXIV_BASE )) {
-		replink = link.replace( ARXIV_BASE , fs);
-	    } else if (link.startsWith( "http://")) {
-		// abs link to eslewhere, no change
-		replink = link;
-	    } else {
-		// relative link
-		replink = fs + link;
+	    // some heuristics: never need to proxy some file types
+	    if (mayRewrite) {
+		if (link.endsWith(".css")||link.endsWith(".js") ||
+		    link.endsWith(".jpg")||link.endsWith(".png") ||
+		    link.endsWith(".gif")||link.endsWith(".pdf") ||
+		    link.endsWith(".ps")
+		    ) {
+		    mayRewrite = false;
+		}
 	    }
 
-	    m.appendReplacement(sb, "href=\""+ replink + "\"");
-	}
-	m.appendTail(sb);
-	s = sb.toString();
-	return s;
-    }
 
+
+	    if (link.equals("/favicon.ico")) {
+		return cp+"/filter.ico";
+	    } else if (link.startsWith( "http://") ||
+		       link.startsWith( "https://") ) {
+		// absolute link with a host name
+		if (mayRewrite && link.startsWith( ARXIV_BASE )) {
+		    // abs link to a rewriteable target on arxiv.org
+		    return link.replace( ARXIV_BASE , fs);
+		} else {
+		    // abs link to eslewhere, or to a non-rewriteable
+		    // file on arxiv.org; no change
+		    return link;
+		}
+	    } else if (link.startsWith("/")) {
+		// absolute URL on the same host
+		if (mayRewrite) {
+		    return fs + link;
+		} else {
+		    return ARXIV_BASE + link;
+		}
+	    } else {
+		// relative URL
+		// (convertibg to ARXIV_BASE in the !mayRewrite case would
+		// have been useful, but too much trouble)
+		return link;
+	    }
+	}
+
+	//Pattern pIcon = Pattern.compile("href=\"/favicon.ico\"");
+	Pattern pBody = Pattern.compile("<body\\b.*?>");
+	
+	Pattern pHref = Pattern.compile("(href|action|src)=\"(.*?)\"");
+
+	//if (m.matches()) {
+    //	String charsetName = charsetName=m.group(1);
+
+	String convertLine(String s, boolean	    willAddNote) {
+	    // <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+	    Matcher m = pHref.matcher(s);
+
+	    StringBuffer sb = new StringBuffer();   
+	    while (m.find()) {
+		String tag=m.group(1);
+		String link=m.group(2);
+		String replink = convertLink(link, !tag.equals("src"));
+		m.appendReplacement(sb, tag +  "=\""+ replink + "\"");
+	    }
+	    m.appendTail(sb);
+	    s = sb.toString();
+	    
+	    if (willAddNote) {
+		m = pBody.matcher(s);
+		if (m.find()) {
+		    sb = new StringBuffer();
+		    s = sb.toString();
+		    m.appendReplacement(sb, m.group(0));
+		    String msg = "<div>" + 
+			"Please note: You are browsing arxiv.org via My.arXiv, "+
+			(user==null? "anonymously" : "as user <em>" + user + "</em>") +
+			". You can return to the <a href=\""+cp+"\">My.arXiv main page</a>." + 
+			"</div>";
+
+		    sb.append(msg);
+		    m.appendTail(sb);
+		    s = sb.toString();
+		}
+	    }
+	    return s;
+	}
+    }
 
 }

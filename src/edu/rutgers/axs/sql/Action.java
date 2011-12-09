@@ -58,7 +58,9 @@ import java.lang.reflect.*;
 	/** No operation - this should not normally be recorded */
 	NONE,
 	    /** "View" actions */
-	    VIEW_ABSTRACT, VIEW_PDF,
+	    VIEW_ABSTRACT, VIEW_FORMATS, VIEW_PDF, VIEW_PS,
+	    RESERVED_2,
+	    RESERVED_1,
 	    /** Feedback actions */
 	    INTERESTING_AND_NEW,
 	    INTERESTING_BUT_SEEN_TODAY,

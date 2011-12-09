@@ -86,7 +86,7 @@ public class QueryServlet extends HttpServlet {
 
 	try {
 	    String query = request.getParameter(QUERY);
-	    if (query==null) throw new WebException("No quuery supplied");
+	    if (query==null) throw new WebException("No query supplied");
 	    query = query.trim();
 	    if (query.equals("")) throw new WebException("Empty query");
 

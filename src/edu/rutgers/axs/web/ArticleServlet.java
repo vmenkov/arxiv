@@ -39,6 +39,7 @@ public class ArticleServlet extends BaseArxivServlet {
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
 
+	    /*
 	    if (user!=null) {
 		em = sd.getEM();
 		// Begin a new local transaction so that we can persist a new entity
@@ -52,10 +53,14 @@ public class ArticleServlet extends BaseArxivServlet {
 		em.getTransaction().commit(); 
 		em.close();
 	    }
+	    */
 
+
+	    //String base = ARXIV_BASE;
+	    String base =   getContextPath() +  FilterServlet.FS;
 	    String url = (op==Action.Op.VIEW_ABSTRACT) ?
-		ARXIV_BASE + "/abs/" + id :
-		ARXIV_BASE + "/format/" + id;
+		base + "/abs/" + id :
+		base + "/format/" + id;
 	    
 	    String eurl = response.encodeRedirectURL(url);
 	    response.sendRedirect(eurl);

@@ -61,7 +61,9 @@ public class SessionData {
      * current session, or creates a new one. This is done atomically,
      * synchronized on the session object.
      */
-    static synchronized SessionData getSessionData(HttpServletRequest request) throws WebException,IOException{
+    static synchronized SessionData getSessionData(HttpServletRequest request) 
+				    throws WebException,IOException
+{
 
 	HttpSession session = request.getSession();
 	String name = "sd";
