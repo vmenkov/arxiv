@@ -31,6 +31,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
+	reinit(request);
 
 	String pi=request.getPathInfo();
 

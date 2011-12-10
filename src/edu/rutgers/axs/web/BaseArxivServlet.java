@@ -30,15 +30,25 @@ public class BaseArxivServlet extends HttpServlet {
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
 	ServletContext context=config.getServletContext();
-	cp= context.getContextPath(); 
+	// Alas, this is only available since Servlet API 2.5 (= Tomcat 6)
+	//cp= context.getContextPath(); 
+    }
+
+    /** Every child servlet must call this from service(). This is a cludge,
+	set up due to the absence of ServletContext.getContextPath()
+	in early versions of the Servlet API.
+     */
+    synchronized void reinit(HttpServletRequest request) {
+	    cp=  request.getContextPath();	
     }
 
     String getContextPath() { return cp; }
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
+	reinit(request);
 	try {
-
+	    
 	response.setContentType( "text/plain");
 
 	OutputStream ostream = response.getOutputStream();

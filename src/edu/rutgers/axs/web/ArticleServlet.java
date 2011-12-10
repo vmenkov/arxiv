@@ -21,6 +21,7 @@ public class ArticleServlet extends BaseArxivServlet {
   
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
+	reinit(request);
 
 
 	Action.Op op = (Action.Op)Tools.getEnum(request, Action.Op.class,
