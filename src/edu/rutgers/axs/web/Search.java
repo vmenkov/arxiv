@@ -1,12 +1,9 @@
 package edu.rutgers.axs.web;
 
 import java.net.*;
-//import java.sql.*;
 
 import java.io.*;
 import java.util.*;
-//import java.text.SimpleDateFormat;
-//import java.util.regex.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -57,22 +54,35 @@ public class Search extends ResultsBase {
 	    SessionData sd = SessionData.getSessionData(request);  
             edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 
-
 	    try {
 		startat = Integer.parseInt(request.getParameter("startat"));
 		if (startat<0) startat=0;
 	    } catch(Exception _e) {}
-	    sr  = new SearchResults(query, startat);
 
+	    // Pages the user does not want ever shown (may be empty)
+	    User u = null;
+	    HashMap<String, Action> exclusions = new HashMap<String, Action>();
 	    if (user!=null) {
 		em = sd.getEM();
-		em.getTransaction().begin();
-		User u = User.findByName(em, user);    
+		u = User.findByName(em, user);    
 		if (u!=null) {
+		    exclusions = 
+			u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
+		}
+	    }
+
+	    sr  = new SearchResults(query, exclusions, startat);
+
+	    if (user!=null) {
+		if (u!=null) {
+		    em.getTransaction().begin();
+		    u = User.findByName(em, user); // re-read, just in case   
 		    u.addQuery(query, sr.nextstart, sr.scoreDocs.length);
 		    em.persist(u);
+		    exclusions = 
+			u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
+		    em.getTransaction().commit(); 
 		}
-		em.getTransaction().commit(); 
 		em.close();
 	    }
 
@@ -88,26 +98,6 @@ public class Search extends ResultsBase {
 	}
     }
 
-    /** Data for a single search result (an article) */
-    public static class Entry {
-	/** Sequence number in the overall search result sequence */
-	public int i;
-	public String id, idline, titline, authline, commline, subjline;
-	
-	Entry(int _i, Document doc) {
-	    i = _i;
-	    id=doc.get("paper");
-	    idline="arXiv:" + id;
-	    titline = doc.get("title");
-	    authline=doc.get("authors");
-	    commline="Comments:" + doc.get("comments");
-	    subjline="Subjects:" + doc.get("category");
-	}
-
-    }
-
-
-
     public static class SearchResults {
 
 	/** Search results */
@@ -118,7 +108,9 @@ public class Search extends ResultsBase {
 	public String atleast = "";
 
 	/** Entries to be displayed */
-	public Vector<Entry> entries= new Vector<Entry> ();
+	public Vector<ArticleEntry> entries= new Vector<ArticleEntry> ();
+	/** Entries not to be displayed */	
+	public Vector<ArticleEntry> excludedEntries= new Vector<ArticleEntry> ();
 
 	/** Links to prev/next pages */
 	public int prevstart, nextstart;
@@ -126,7 +118,7 @@ public class Search extends ResultsBase {
 
 	public int reportedLength;
 	    
-	SearchResults(String query, int startat) throws Exception {
+	SearchResults(String query, HashMap<String, Action> exclusions, int startat) throws Exception {
 	    prevstart = Math.max(startat - M, 0);
 	    nextstart = startat + M;
 	    needPrev = (prevstart < startat);
@@ -168,11 +160,21 @@ public class Search extends ResultsBase {
 	    //Document doc = s.doc(scoreDocs[0].doc);
 	    System.out.println("" + scoreDocs.length + " results");
 
-	    
+
+	    int pos = 1;
 	    for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
 		Document doc = searcher.doc(scoreDocs[i].doc);
-		entries.add( new Entry(i+1, doc));
-			     /*
+
+		// check if it's been "removed" by the user.
+		String aid = doc.get("paper");
+		if (exclusions!=null && exclusions.containsKey(aid)) {
+		    int epos = excludedEntries.size()+1;
+		    excludedEntries.add( new ArticleEntry(epos, doc));
+		} else {
+		    entries.add( new ArticleEntry(pos, doc));
+		    pos++;
+		}			
+     /*
 		System.out.println("("+(i+1)+") internal id=" + scoreDocs[i].doc +", id=" + doc.get("paper"));
 		System.out.println("arXiv:" + doc.get("paper"));
 		System.out.println(doc.get("title"));
@@ -182,14 +184,6 @@ public class Search extends ResultsBase {
 			     */
 	    }
 	}
-    }
-
-    public String urlAbstract( String id) {
-	return ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_ABSTRACT);
-    }
-
-    public String urlPDF( String id) {
-	return  ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_PDF);
     }
 
     static void usage() {
@@ -218,7 +212,8 @@ public class Search extends ResultsBase {
 	    if (s.length()>0) s += " ";
 	    s += x;
 	}
-	SearchResults sr = new SearchResults(s, 0);
+	HashMap<String, Action> exc = new HashMap<String, Action>();
+	SearchResults sr = new SearchResults(s, exc, 0);
        
     }
 

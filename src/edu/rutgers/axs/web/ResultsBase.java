@@ -211,4 +211,15 @@ public class ResultsBase {
 	} catch (Exception _e) {}
     }
 
+
+    public  String urlAbstract( String id) {
+	return ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_ABSTRACT);
+    }
+
+    public  String urlPDF( String id) {
+	return  ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_PDF);
+    }
+
+
 }
+

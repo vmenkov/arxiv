@@ -122,6 +122,7 @@ public class QueryServlet extends HttpServlet {
 				    toFile? "text/csv" : "text/plain");
 
 	    if (toFile) {
+		// suggest the destination file name to the user's web browser
 		String f = html? "query-results.html" : "query-results.csv";
 		response.setHeader("Content-Disposition",
 				   "attachment; filename=" + f);

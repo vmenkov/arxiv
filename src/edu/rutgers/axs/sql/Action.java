@@ -14,6 +14,7 @@ import java.lang.reflect.*;
 @Entity
     public class Action  implements Serializable, OurTable  {
 
+    /** Transaction ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=2)
 	private long id;
     public void setId(long val) {        id = val;    }
@@ -66,8 +67,7 @@ import java.lang.reflect.*;
 	    INTERESTING_BUT_SEEN_TODAY,
 	    INTERESTING_BUT_KNOWN,
 	    USELESS,
-	    NOT_SURE,
-	    MOVE_TO_MY_FOLDER,
+	    COPY_TO_MY_FOLDER,
 	    DONT_SHOW_AGAIN;	    	    
     };
 
@@ -135,6 +135,17 @@ import java.lang.reflect.*;
 	Date a = getTime(), b = other.getTime();
 	if (a==null || b==null) throw new IllegalArgumentException("Action.moreRecentThan(): Only responses with endTime can be compared");
 	return a.after(b);
+    }
+
+    /** Is the operation of this action in the specified list? 
+	@param ops The list of operations. Null means "all".
+     */
+    public boolean opInList(Op ops[]) {
+	if (ops==null) return true;
+	for(Op x: ops) {
+	    if (op.equals(x)) return true;
+	}
+	return false;
     }
 
 }

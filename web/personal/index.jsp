@@ -28,6 +28,7 @@
 <ul>
 <li><a href="editUserFormSelf.jsp">Modify your account information</a>
 <li><a href="viewActionsSelf.jsp">Your browsing activity history</a>
+<li><a href="viewFolder.jsp">Your personal folder</a>
 </ul>
 </p>
 

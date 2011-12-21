@@ -67,6 +67,19 @@
   </servlet-mapping>
   
   <servlet>
+    <servlet-name>JudgmentServlet</servlet-name>
+    <description>
+      Records users' actions on ("judgments" about) articles
+    </description>
+    <servlet-class>edu.rutgers.axs.web.JudgmentServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>JudgmentServlet</servlet-name>
+    <url-pattern>/JudgmentServlet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
     <servlet-name>FilterServlet</servlet-name>
     <description>
       Pulls a page from arxiv.org, re-writes links, and serves the

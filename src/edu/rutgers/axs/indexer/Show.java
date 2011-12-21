@@ -33,17 +33,22 @@ import java.util.regex.*;
 import java.io.*;
 
 
-
+/** Used to look up article information in our Lucene data store (a
+ * delayed copy of sorts of what arxiv.org has)
+ */
 class Show {
 
-  // Where our index lives.
+    // Where our index lives.
     private Directory indexDirectory;
     
     
     public Show()  throws IOException {
 	indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
     }
-    
+
+    /**
+       @param id Article id in the Arxiv system
+     */
     void show(String id) throws IOException{
 
 	IndexSearcher s = new IndexSearcher( indexDirectory);

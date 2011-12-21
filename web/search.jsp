@@ -1,4 +1,5 @@
 <%@ page import="edu.rutgers.axs.web.*" %>
+<%@ page import="edu.rutgers.axs.sql.Action" %>
 <%@ page import="org.apache.lucene.search.*" %>
 <%@ page import="java.io.*" %>
 <%@ page import="java.util.*" %>
@@ -113,9 +114,9 @@ window.onload = StartScripts;
 		<%= sr.reportedLength %> matching documents.
 		</p>
 
-		<% for( Search.Entry e: sr.entries) { %>
+		<% for( ArticleEntry e: sr.entries) { %>
 
-		<div class="result">
+		<div class="result" id="result<%=e.i%>">
 			<div class="document">
 			<%= e.i %>. <%= e.idline %> 
 [<a href="<%=main.urlAbstract(e.id)%>">Abstract</a>]
@@ -127,15 +128,40 @@ window.onload = StartScripts;
 			<%= e.subjline %><br />
 			</div>
 
+			<% if (main.user!=null) { %>				
 			<div class="bar_instructions">	
-				<a class="interesting" href="#" title="Mark this document as interesting, relevant, and new"><img alt="Mark this document as interesting, relevant, and new." longdesc="Mark this document as interesting, relevant, and new." src="_technical/images/page_up.png" class="icon_instruction" />&nbsp;Interesting&nbsp;&amp;&nbsp;new</a>&nbsp;&nbsp;
-				<a class="seen_today" href="#" title="Mark this if you have already seen a similar interesting and relevant document during this search session."><img alt="Mark this if you have already seen a similar interesting and relevant document during this search session." longdesc="Mark this if you have already seen a similar interesting and relevant document during this search session." src="_technical/images/pages.png" class="icon_instruction" />&nbsp;Interesting, but seen today</a>&nbsp;&nbsp;
-				<a class="known" href="#" title="Mark this if document is interesting, but contains known information."><img alt="Mark this if document is interesting, but contains known information." longdesc="Mark this if document is interesting, but contains known information" src="_technical/images/page_ok.png" class="icon_instruction" />&nbsp;Interesting,&nbsp;but&nbsp;known</a>&nbsp;&nbsp;
-				<a class="useless" href="#" title="Mark this document as useles or irrelevant for you."><img alt="Mark this document as useles or irrelevant for you" longdesc="Mark this document as useles or irrelevant for you" src="_technical/images/page_down.png" class="icon_instruction" />&nbsp;Useless&nbsp;/&nbsp;Irrelevant</a>&nbsp;&nbsp;
-				<a class="unsure" href="#" title="Mark this if you are not sure if document is useful for you."><img alt="Mark this if you are not sure if document is useful for you." longdesc="Mark this if you are not sure if document is useful for you" src="_technical/images/page_question.png" class="icon_instruction" />&nbsp;Not&nbsp;sure</a>&nbsp;&nbsp;
-				<a class="add" href="#" title="Move this document to your personal folder"><img alt="Move this document to your folder" longdesc="Move this document to your folder" src="_technical/images/folder_page.png" class="icon_instruction" />&nbsp;Move&nbsp;to&nbsp;my&nbsp;folder</a>&nbsp;&nbsp;
-				<a class="remove" href="#" title="Permanently remove this document from the search results"><img alt="Permanently remove this document from the search results" longdesc="Permanently remove this document from the search results" src="_technical/images/bin.png" class="icon_instruction" />&nbsp;Don't&nbsp;show&nbsp;again</a>&nbsp;&nbsp;
+
+			<a class="add" href="#" 
+title="Copy this document to your personal folder"
+onclick="$.get('<%=e.judge(Action.Op.COPY_TO_MY_FOLDER)%>');"
+><img alt="" longdesc="" src="_technical/images/folder_page.png" class="icon_instruction">&nbsp;Copy&nbsp;to&nbsp;my&nbsp;folder</a>&nbsp;&nbsp;
+
+			<a id="rate<%=e.i%>" href="#" title="Rate this document."
+onclick="$('#rate<%=e.i%>').hide(100);    $('#ratings<%=e.i%>').show(500);"
+><img alt="Rate this document." longdesc="Rate this document." src="_technical/images/page_question.png" class="icon_instruction">&nbsp;Rate</a>			
+			<span id="ratings<%=e.i%>" style="display: none;">
+				<a class="interesting" href="#" title="Mark this document as interesting, relevant, and new"
+onclick="$.get('<%=e.judge(Action.Op.INTERESTING_AND_NEW)%>');"
+><img alt="Mark this document as interesting, relevant, and new." longdesc="Mark this document as interesting, relevant, and new." src="_technical/images/page_up.png" class="icon_instruction">&nbsp;Interesting&nbsp;&amp;&nbsp;new</a>&nbsp;&nbsp;
+				<a class="seen_today" href="#" title="Mark this if you have already seen a similar interesting and relevant document during this search session."
+onclick="$.get('<%=e.judge(Action.Op.INTERESTING_BUT_SEEN_TODAY)%>');"
+><img alt="Mark this if you have already seen a similar interesting and relevant document during this search session." longdesc="Mark this if you have already seen a similar interesting and relevant document during this search session." src="_technical/images/pages.png" class="icon_instruction">&nbsp;Interesting, but seen today</a>&nbsp;&nbsp;
+				<a class="known" href="#" title="Mark this if document is interesting, but contains known information."
+onclick="$.get('<%=e.judge(Action.Op.INTERESTING_BUT_KNOWN)%>');"
+><img alt="Mark this if document is interesting, but contains known information." longdesc="Mark this if document is interesting, but contains known information" src="_technical/images/page_ok.png" class="icon_instruction">&nbsp;Interesting,&nbsp;but&nbsp;known</a>&nbsp;&nbsp;
+				<a class="useless" href="#" title="Mark this document as useles or irrelevant for you."
+onclick="$.get('<%=e.judge(Action.Op.USELESS)%>');"
+><img alt="Mark this document as useles or irrelevant for you" longdesc="Mark this document as useles or irrelevant for you" src="_technical/images/page_down.png" class="icon_instruction">&nbsp;Useless&nbsp;/&nbsp;Irrelevant</a>&nbsp;&nbsp;
+			</span>
+
+				<a class="remove" id="remove<%=e.i%>"
+href="#" title="Permanently remove this document from the search results"
+onclick="$.get('<%=e.judge(Action.Op.DONT_SHOW_AGAIN)%>', 
+function(data) { $('#result<%=e.i%>').hide(100);} )"
+><img alt="Permanently remove this document from the search results" longdesc="Permanently remove this document from the search results" src="_technical/images/bin.png" class="icon_instruction">&nbsp;Don't&nbsp;show&nbsp;again</a>&nbsp;&nbsp;
+
 			</div>
+			<% }  %>	<!-- main.user!=null -->
 		</div>
 		<% }%>		
 
@@ -147,6 +173,10 @@ window.onload = StartScripts;
 	<a href="search.jsp?simple_search=<%=main.queryEncoded%>&startat=<%=sr.nextstart%>">[NEXT PAGE]</a> 	 
 	<% }	 %>
 		</div>
+		
+		<% if (sr.excludedEntries.size()>0) { %>
+		<div><small>We have excluded <%=sr.excludedEntries.size()%> articles from the list, because you have earlier asked not to show them anymore.</small></div>
+		<% } %>
 
 		<div><small>System message: <%= main.infomsg%> </small></div>
 

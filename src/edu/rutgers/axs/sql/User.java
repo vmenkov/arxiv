@@ -214,9 +214,25 @@ import org.apache.catalina.realm.RealmBase;
         return actions;
     }
 
+    /** Returns the list of actions, as a HashMap with the article ID
+     * being a key */
+    public HashMap<String, Action> getActionHashMap() {
+	return getActionHashMap(null);
+    }
 
-    public Action addAction(String p, Action.Op op //, Date now
-                                ) {
+    /** Returns the list of actions with the specified operations
+	@param ops List of specified operations. If null, all operations 
+	are included.
+	@return a HashMap with the article ID being a key.  */
+    public HashMap<String, Action> getActionHashMap(Action.Op[] ops) {
+	HashMap<String, Action> h = new HashMap<String, Action>();
+	for( Action a: actions) {
+	    if (a.opInList(ops))  h.put(a.getArticle(), a);
+	}
+	return h;
+    }
+
+    public Action addAction(String p, Action.Op op  ) {
         Action r = new  Action( this, p, op); //, now);
         actions.add(r);
         return r;
@@ -236,7 +252,5 @@ import org.apache.catalina.realm.RealmBase;
 	queries.add(r);	
 	return r;
     }
-
-
 
 }
