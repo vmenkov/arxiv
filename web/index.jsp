@@ -1,9 +1,13 @@
 <!-- © 2011 by AEP -->
-<%@ page import="java.io.*" %>
 <%@ page import="edu.rutgers.axs.web.*" %>
-<%@ page import="edu.rutgers.axs.sql.*" %>
 <%@ page import="edu.rutgers.axs.Version" %>
+<%@ page import="org.apache.lucene.search.*" %>
+<%@ page import="java.io.*" %>
+<%@ page import="java.util.*" %>
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
+<% 
+        ResultsBase main=new ResultsBase(request,response);
+%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -178,14 +182,20 @@ window.onload = StartScripts;
 
       <h2>Personalization tools</h2>
 
+      <% if (main.user==null) { %>
       <div style="text-align:center"><a href="participation.html">Join
-</a> (only show when not logged in)<br />
+</a> <br />
 </div>		
       <br /> 
-
-      <div style="text-align:center"><a href="personal/index.jsp">My account and personalization tools</a> (only show when logged in)<br /> </div>		
+      <% } else { %>
+      <div style="text-align:center"><a href="personal/index.jsp">Your account and personalization tools</a><br /> </div>		
       <br /> 
       
+      <div style="text-align:center"><a href="personal/viewFolder.jsp">Your personal folder</a><br /> </div>		
+      <br /> 
+      
+      <% }  %>
+
       <div style="text-align: center"><a href="interview.html">Interview Page<br /> (do we need this?)</a></div>
       <br />
       
