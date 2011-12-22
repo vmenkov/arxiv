@@ -50,57 +50,63 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    SessionData sd =  SessionData.getSessionData(request);
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
-
-	    if (user!=null) {
-		em = sd.getEM();
-		// Begin a new local transaction so that we can persist a new entity
-		em.getTransaction().begin();
-		
-		User u = User.findByName(em, user);
-		
-		Pattern p = Pattern.compile( "/(abs|format|pdf|ps)/(.+)");
-
-		Matcher m = p.matcher(pi);
-		if (m.matches()) {
-		    String prefix = m.group(1);
-		    String idv = m.group(2);
-		    Pattern pv = Pattern.compile("(.+)v(\\d+)");
-		    Matcher mv = pv.matcher(idv);
-		    String id = idv, version = null;
-		    if (mv.matches()) {
-			id = mv.group(1);
-			version = mv.group(2);
-		    }
-
-		    Action.Op op = Action.Op.NONE;
-		    if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
-		    else if (prefix.equals("format")) op=Action.Op.VIEW_FORMATS;
-		    else if (prefix.equals("pdf")) op= Action.Op.VIEW_PDF;
-		    else if (prefix.equals("ps")) op= Action.Op.VIEW_PS;
-		    Logging.info("pi="+pi+", recordable as mode " + op.toString());
-		    if (op !=  Action.Op.NONE) u.addAction(id, op);
+	    		
+	    Pattern p = Pattern.compile( "/(abs|format|pdf|ps)/(.+)");
+	    Matcher m = p.matcher(pi);
+	    String id=null;
+	    Action.Op op = Action.Op.NONE;
+	    if (m.matches()) {
+		String prefix = m.group(1), idv = m.group(2), version=null;
+		Matcher mv = Pattern.compile("(.+)v(\\d+)").matcher(idv);
+		if (mv.matches()) {
+		    id = mv.group(1);
+		    version = mv.group(2);
 		} else {
-		    Logging.info("pi="+pi+", not a recordable URL");
+		    id = idv;
 		}
 
-		// FIXME: need to record the viewing act for all other pages as well
+		if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
+		else if (prefix.equals("format")) op=Action.Op.VIEW_FORMATS;
+		else if (prefix.equals("pdf")) op= Action.Op.VIEW_PDF;
+		else if (prefix.equals("ps"))  op= Action.Op.VIEW_PS;
 
+		Logging.info("pi="+pi+", recordable as mode " + op.toString());
+	    } else {
+		Logging.info("pi="+pi+", not a recordable URL");
+	    }
+	    
+	    // Some pages (such as "view PDF") we won't "filter", but
+	    // rather will simply redirect to.  This is per Simeon
+	    // Warner's request 2011-12-21
+	    boolean mustRedirect= (op==Action.Op.VIEW_PDF || op==Action.Op.VIEW_PS);
 
+	    // FIXME: need to record the viewing act for all other pages as well
+	    if (user!=null &&  op != Action.Op.NONE)  {
+		em = sd.getEM();
+		em.getTransaction().begin();		
+		User u = User.findByName(em, user);
+		if (op !=  Action.Op.NONE) u.addAction(id, op);
 		em.persist(u);
 		em.getTransaction().commit(); 
 		em.close();
 	    }
 
-	    pullPage(request, response);
+	    Logging.info("pi="+pi+", redirect=" + mustRedirect);
+	    if (mustRedirect) {
+		/*
+		  String url = (op==Action.Op.VIEW_ABSTRACT) ?
+		  "http://arxiv.org/abs/" + id :
+		  "http://arxiv.org/format/" + id;
+		*/
+		String url=ARXIV_BASE +  pi;
+		String eurl = response.encodeRedirectURL(url);
+		Logging.info("sendRedirect to: " + eurl);
+		response.sendRedirect(eurl);
+	    } else {
+		pullPage(request, response);
+	    }
 
-	    /*
-	    String url = (op==Action.Op.VIEW_ABSTRACT) ?
-		"http://arxiv.org/abs/" + id :
-		"http://arxiv.org/format/" + id;
-	    
-	    String eurl = response.encodeRedirectURL(url);
-	    response.sendRedirect(eurl);
-	    */
+
 	} catch (Exception e) {
 	    try {
 		e.printStackTrace(System.out);
@@ -200,9 +206,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    Logging.info("No charset available for name "+charsetName);
 		}
 	    }
-	    // Make sure we don't try to parse PDF, JPG, etc -
-	    // only parse files explicitly declared to contain HTML, and those
-	    // without explicit type description
+	    // Make sure we don't try to parse PDF, JPG, etc: only
+	    // parse files explicitly declared to contain HTML, and
+	    // those without explicit type description.
 	    if (lContentType.indexOf("text/html")<0) {
 		willParse=false;
 	    }
@@ -243,7 +249,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 	aout.close();
     }
   
-/** This function sets the headers of the aHttpURLConnection --
+
+    /** This function sets the headers of the aHttpURLConnection --
     content length, browser type, cookies, and all -- to look as if
     this connection is coming from our user's browser.  This way the
     remote server will send us the same doc the user would get from it
@@ -252,19 +259,44 @@ public class FilterServlet extends  BaseArxivServlet  {
     @param  aHttpURLConnection  HTTP connection whose parameters we're setting
 
     @param areq The request from the browser whose parameters we're reading
-                and using
+    and using
+		
+    @param ipOnly If true, only X-Forwarded-For is set (based on the
+    incoming request's X-Forwarded-For, if supplied, or on the
+    incoming request's own source IP)
+
+    ("127.0.0.1" and "0:0:0:0:0:0:0:1" both mean localhost, so aren't
+    forwarded)
 
     */
 
-  static private void  copyRequestHeaders(HttpServletRequest areq,
+    static private void  copyRequestHeaders(HttpServletRequest areq,
 					  HttpURLConnection aHttpURLConnection){
 
-      Enumeration reqKeys = areq.getHeaderNames();
+      String remoteIP = areq.getRemoteAddr();
+      boolean remoteUseless= remoteIP==null || remoteIP.equals("127.0.0.1") || remoteIP.equals("0:0:0:0:0:0:0:1");
+   
+
+      boolean hasForward = false;
+      final String XFF="X-Forwarded-For";
+      Enumeration reqKeys = areq.getHeaderNames();      
       while( reqKeys.hasMoreElements() ) {
 	  String name = (String)(reqKeys.nextElement());
 	  String value = areq.getHeader(name);
+	  if (name.equals(XFF)) {
+	      hasForward = true;
+	      if (!remoteUseless)   value += ", " + remoteIP;
+	  }
 	  aHttpURLConnection.setRequestProperty(name, value);
+	  Logging.info("Copy header: " + name + ": " + value);
       }
+
+      if (!hasForward && !remoteUseless) {
+	  aHttpURLConnection.setRequestProperty(XFF, remoteIP );
+      }
+      
+      Logging.info("remote IP=" + remoteIP+", useless=" +remoteUseless);
+
   }
 
     /*
