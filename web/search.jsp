@@ -124,7 +124,9 @@ window.onload = StartScripts;
  <br />
 			<%= e.titline %><br />
 			<%= e.authline %><br />
-			<%= e.commline %><br />
+			<% if (!e.commline.equals("")) { %>
+			<%= e.commline %><br />  
+			<%}%>
 			<%= e.subjline %><br />
 			</div>
 
@@ -137,21 +139,20 @@ window.onload = StartScripts;
 			<a class="add" id="add<%=e.i%>" href="#" 
 title="Copy this document to your personal folder"
 onclick="$.get('<%=e.judge(Action.Op.COPY_TO_MY_FOLDER)%>',
-function(data) { alert('Copied!');
-$('#add<%=e.i%>').replaceWith('Copied to your folder!');} )"
+function(data) { $('#add<%=e.i%>').replaceWith('Copied to your folder!');} )"
 ><img src="_technical/images/folder_page.png" class="icon_instruction">&nbsp;Copy&nbsp;to&nbsp;my&nbsp;folder</a>&nbsp;&nbsp;
 			<% }  %>
 
 			<a id="rate<%=e.i%>" href="#" title="Rate this document."
 onclick="$(this).hide(100);    $('#ratings<%=e.i%>').show(500);"
-><img alt="Rate this document." longdesc="Rate this document." src="_technical/images/page_question.png" class="icon_instruction">&nbsp;Rate</a>			
+><img longdesc="Rate this document." src="_technical/images/page_question.png" class="icon_instruction">&nbsp;Rate</a>			
 			<span id="ratings<%=e.i%>" style="display: none;">
 				<a class="interesting" href="#" title="Mark this document as interesting, relevant, and new"
 onclick="$.get('<%=e.judge(Action.Op.INTERESTING_AND_NEW)%>');"
-><img alt="Mark this document as interesting, relevant, and new." longdesc="Mark this document as interesting, relevant, and new." src="_technical/images/page_up.png" class="icon_instruction">&nbsp;Interesting&nbsp;&amp;&nbsp;new</a>&nbsp;&nbsp;
+><img  longdesc="Mark this document as interesting, relevant, and new." src="_technical/images/page_up.png" class="icon_instruction">&nbsp;Interesting&nbsp;&amp;&nbsp;new</a>&nbsp;&nbsp;
 				<a class="seen_today" href="#" title="Mark this if you have already seen a similar interesting and relevant document during this search session."
 onclick="$.get('<%=e.judge(Action.Op.INTERESTING_BUT_SEEN_TODAY)%>');"
-><img alt="Mark this if you have already seen a similar interesting and relevant document during this search session." longdesc="Mark this if you have already seen a similar interesting and relevant document during this search session." src="_technical/images/pages.png" class="icon_instruction">&nbsp;Interesting, but seen today</a>&nbsp;&nbsp;
+><img  longdesc="Mark this if you have already seen a similar interesting and relevant document during this search session." src="_technical/images/pages.png" class="icon_instruction">&nbsp;Interesting, but seen today</a>&nbsp;&nbsp;
 				<a class="known" href="#" title="Mark this if document is interesting, but contains known information."
 onclick="$.get('<%=e.judge(Action.Op.INTERESTING_BUT_KNOWN)%>');"
 ><img alt="Mark this if document is interesting, but contains known information." longdesc="Mark this if document is interesting, but contains known information" src="_technical/images/page_ok.png" class="icon_instruction">&nbsp;Interesting,&nbsp;but&nbsp;known</a>&nbsp;&nbsp;

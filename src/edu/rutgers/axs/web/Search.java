@@ -70,13 +70,12 @@ public class Search extends ResultsBase {
 	    HashMap<String, Action> exclusions = 
 		(u==null) ? new HashMap<String, Action>() :
 		u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
-	    // Pages currently in the user's folder
-	    HashMap<String, Action> folder = 
-		(u==null) ? new HashMap<String, Action>() :
-		new HashMap<String, Action>();
 
 	    sr  = new SearchResults(query, exclusions, startat);
-	    sr.markFolder(folder );
+	    if (u!=null) {
+	    // Mark pages currently in the user's folder
+		sr.markFolder(	u.getFolder());
+	    }
 
 	    if (user!=null) {
 		if (u!=null) {
@@ -162,7 +161,7 @@ public class Search extends ResultsBase {
 	    System.out.println("" + scoreDocs.length + " results");
 
 
-	    int pos = 1;
+	    int pos = startat;
 	    for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
 		Document doc = searcher.doc(scoreDocs[i].doc);
 

@@ -29,7 +29,8 @@ public class ArticleEntry {
 	idline="arXiv:" + id;
 	titline = doc.get("title");
 	authline=doc.get("authors");
-	commline="Comments:" + doc.get("comments");
+	String c= doc.get("comments");
+	commline=(c==null? "": "Comments:" + c);
 	subjline="Subjects:" + doc.get("category");
     }
     
