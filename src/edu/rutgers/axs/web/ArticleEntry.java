@@ -1,41 +1,28 @@
 package edu.rutgers.axs.web;
 
-//import java.net.*;
-
 import java.io.*;
 import java.util.*;
-
-//import javax.servlet.*;
-//import javax.servlet.http.*;
-//import javax.persistence.*;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-
-
-/*
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-
-import edu.cornell.cs.osmot.cache.Cache;
-*/
 import edu.cornell.cs.osmot.options.Options;
 //import edu.cornell.cs.osmot.logger.Logger;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 
-
-
 /** Data for a single search result (an article) */
 public class ArticleEntry {
     /** Sequence number in the overall search result sequence */
     public int i;
-    public String id, idline, titline, authline, commline, subjline;
-    
+    /** Article id, as in the arXiv database */
+    public String id;
+    public String idline, titline, authline, commline, subjline;
+    /** True if this article is in the user's personal folder */
+    public boolean isInFolder=false;
+
     ArticleEntry(int _i, Document doc) {
 	i = _i;
 	id=doc.get("paper");
@@ -46,7 +33,7 @@ public class ArticleEntry {
 	subjline="Subjects:" + doc.get("category");
     }
     
-    /** The URL for recording a judgment on this doc */
+    /** The URL (relative to the CP) for recording a judgment on this doc */
     public String judge(Action.Op op) {
 	return "JudgmentServlet?"+BaseArxivServlet.ID +"=" + id +
 	    "&" +BaseArxivServlet.ACTION+ "=" + op;

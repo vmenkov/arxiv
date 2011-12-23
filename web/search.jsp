@@ -131,13 +131,19 @@ window.onload = StartScripts;
 			<% if (main.user!=null) { %>				
 			<div class="bar_instructions">	
 
-			<a class="add" href="#" 
+			<% if (e.isInFolder) { %>
+			(Already in your folder)
+			<% } else { %>
+			<a class="add" id="add<%=e.i%>" href="#" 
 title="Copy this document to your personal folder"
-onclick="$.get('<%=e.judge(Action.Op.COPY_TO_MY_FOLDER)%>');"
-><img alt="" longdesc="" src="_technical/images/folder_page.png" class="icon_instruction">&nbsp;Copy&nbsp;to&nbsp;my&nbsp;folder</a>&nbsp;&nbsp;
+onclick="$.get('<%=e.judge(Action.Op.COPY_TO_MY_FOLDER)%>',
+function(data) { alert('Copied!');
+$('#add<%=e.i%>').replaceWith('Copied to your folder!');} )"
+><img src="_technical/images/folder_page.png" class="icon_instruction">&nbsp;Copy&nbsp;to&nbsp;my&nbsp;folder</a>&nbsp;&nbsp;
+			<% }  %>
 
 			<a id="rate<%=e.i%>" href="#" title="Rate this document."
-onclick="$('#rate<%=e.i%>').hide(100);    $('#ratings<%=e.i%>').show(500);"
+onclick="$(this).hide(100);    $('#ratings<%=e.i%>').show(500);"
 ><img alt="Rate this document." longdesc="Rate this document." src="_technical/images/page_question.png" class="icon_instruction">&nbsp;Rate</a>			
 			<span id="ratings<%=e.i%>" style="display: none;">
 				<a class="interesting" href="#" title="Mark this document as interesting, relevant, and new"

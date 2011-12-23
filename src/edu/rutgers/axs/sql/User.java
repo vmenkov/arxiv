@@ -220,17 +220,47 @@ import org.apache.catalina.realm.RealmBase;
 	return getActionHashMap(null);
     }
 
-    /** Returns the list of actions with the specified operations
+    /** Returns the list of actions with the specified operations. For
+	each article, only the most recent action (of one of the
+	specified types) on that article is included.
 	@param ops List of specified operations. If null, all operations 
 	are included.
-	@return a HashMap with the article ID being a key.  */
+	@return a HashMap with the article ID being a key, and the most recent operation (of one of the specified type) on that article being the value.
+    */
     public HashMap<String, Action> getActionHashMap(Action.Op[] ops) {
 	HashMap<String, Action> h = new HashMap<String, Action>();
 	for( Action a: actions) {
-	    if (a.opInList(ops))  h.put(a.getArticle(), a);
+	    String aid = a.getArticle();
+	    if (a.opInList(ops))  {
+		Action b = h.get(aid);
+		if (b==null || b.getTime().compareTo(a.getTime())<0) {
+		    h.put(a.getArticle(), a);
+		}
+	    }
 	}
 	return h;
     }
+
+    /** Only articles presently in the user's personal folder (i.e., added
+	but not removed).
+    */
+    public HashMap<String, Action> getFolder() {
+	Action.Op[] ops =  {Action.Op.COPY_TO_MY_FOLDER,
+			    Action.Op.REMOVE_FROM_MY_FOLDER};   
+	HashMap<String, Action> folder = getActionHashMap(ops);
+	Set<String> keys = folder.keySet();
+	//for(String aid: keys) {
+	for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
+	    String aid = it.next();
+	    // removal from the key set is supposed to remove the element
+	    // the underlying HashMap, as per the API
+	    if (folder.get(aid).getOp()==Action.Op.REMOVE_FROM_MY_FOLDER) {
+		it.remove();
+	    }
+	}
+	return folder;
+    }
+
 
     public Action addAction(String p, Action.Op op  ) {
         Action r = new  Action( this, p, op); //, now);

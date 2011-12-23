@@ -68,7 +68,10 @@ import java.lang.reflect.*;
 	    INTERESTING_BUT_KNOWN,
 	    USELESS,
 	    COPY_TO_MY_FOLDER,
-	    DONT_SHOW_AGAIN;	    	    
+	    DONT_SHOW_AGAIN,
+	    /** Activated thru the "view folder" screen */
+	    REMOVE_FROM_MY_FOLDER;
+	
     };
 
     @Display(editable=false, order=4) 

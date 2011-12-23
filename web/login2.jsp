@@ -21,7 +21,8 @@
 <table>
 	<tr>
 		<td colspan="2">
-To use personalized browsing on my.arxiv.org, please login with your user name and password:
+To use personalized browsing features on my.arxiv.org, 
+please login with your user name and password:
 </td>
 	</tr>
 	<tr>

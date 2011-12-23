@@ -59,19 +59,24 @@ public class Search extends ResultsBase {
 		if (startat<0) startat=0;
 	    } catch(Exception _e) {}
 
-	    // Pages the user does not want ever shown (may be empty)
 	    User u = null;
-	    HashMap<String, Action> exclusions = new HashMap<String, Action>();
+
 	    if (user!=null) {
 		em = sd.getEM();
 		u = User.findByName(em, user);    
-		if (u!=null) {
-		    exclusions = 
-			u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
-		}
 	    }
 
+	    // Pages the user does not want ever shown (may be empty)
+	    HashMap<String, Action> exclusions = 
+		(u==null) ? new HashMap<String, Action>() :
+		u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
+	    // Pages currently in the user's folder
+	    HashMap<String, Action> folder = 
+		(u==null) ? new HashMap<String, Action>() :
+		new HashMap<String, Action>();
+
 	    sr  = new SearchResults(query, exclusions, startat);
+	    sr.markFolder(folder );
 
 	    if (user!=null) {
 		if (u!=null) {
@@ -79,14 +84,10 @@ public class Search extends ResultsBase {
 		    u = User.findByName(em, user); // re-read, just in case   
 		    u.addQuery(query, sr.nextstart, sr.scoreDocs.length);
 		    em.persist(u);
-		    exclusions = 
-			u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
 		    em.getTransaction().commit(); 
 		}
 		em.close();
 	    }
-
-
 	}  catch (WebException _e) {
 	    error=true;
 	    errmsg=_e.getMessage();
@@ -184,6 +185,13 @@ public class Search extends ResultsBase {
 			     */
 	    }
 	}
+
+	void markFolder(HashMap<String, Action> folder ) {
+	    for(ArticleEntry e: entries) {
+		e.isInFolder = folder.containsKey(e.id);
+	    }
+	}
+
     }
 
     static void usage() {

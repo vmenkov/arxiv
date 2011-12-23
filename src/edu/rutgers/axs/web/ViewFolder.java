@@ -61,14 +61,15 @@ public class ViewFolder extends ResultsBase {
 	    } catch(Exception ex) {}
 
 	    int cnt=0;
-	    for (Action m : actor.getActions()) {
-		if (m.getOp().equals(Action.Op.COPY_TO_MY_FOLDER)) {
-		    list.add(m);
-		    ArticleEntry e=
-			ArticleEntry.getArticleEntry( s, m.getArticle(), cnt);
-		    entries.add(e); 
-		    cnt++;
-		}
+
+	    HashMap<String, Action> folder = actor.getFolder();
+
+	    for (Action m : folder.values()) {
+		list.add(m);
+		ArticleEntry e=
+		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt);
+		entries.add(e); 
+		cnt++;
 	    }
 
 

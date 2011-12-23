@@ -9,9 +9,14 @@
 
 <html>
 <head>
+<meta name="Description" content="List of articles in the user's personal folder"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <title>Personal folder for user <%= main.actorUserName %>
 </title>
+<script type="text/javascript" src="../_technical/scripts/jquery.js"></script>
+<script type="text/javascript" src="../_technical/scripts/jquery-transitions.js"></script>
 </head>
 <body>
 
@@ -24,9 +29,12 @@
 
 <h2>Pages added to the folder</h2>
 
+<P>Your personal folder contains the following <%=main.list.size()%> articles.</p>
+
 <table border=1>
 <tr>
-<th>Time recorded
+<th>No.
+<th>Time added / Remove?
 <th>Article
 </tr>
  	<!-- %= Reflect.htmlHeaderRow(Action.class, true) % -->
@@ -36,8 +44,17 @@
 	ArticleEntry e = main.entries.elementAt(i);
 %>
 	<!-- %= Reflect.htmlRow(a, true) % -->
-	<tr>
-	<td><%=a.getTime()%>
+	<tr id="result<%=e.i%>">
+	<td><%=(i+1)%>
+	<td><%=a.getTime()%> <br>
+	<a id="remove<%=e.i%>"
+href="#" title="Remove from the folder"
+onclick="$.get('../<%=e.judge(Action.Op. REMOVE_FROM_MY_FOLDER)%>', 
+function(data) { $('#result<%=e.i%>').hide(100);} )"
+><img src="../_technical/images/bin.png" 
+longdesc="Remove this document from your personal folder"
+class="icon_instruction">Remove from the folder</a>
+
 	<td>
 	<% if (e!=null) { %>
 	 <%= e.idline %> 
