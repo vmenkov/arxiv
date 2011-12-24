@@ -233,13 +233,37 @@ import org.apache.catalina.realm.RealmBase;
 	    String aid = a.getArticle();
 	    if (a.opInList(ops))  {
 		Action b = h.get(aid);
-		if (b==null || b.getTime().compareTo(a.getTime())<0) {
-		    h.put(a.getArticle(), a);
+		if (b==null || a.after(b)) {
+		    h.put(aid, a);
 		}
 	    }
 	}
 	return h;
     }
+
+    /** Produces a HashMap which, for each article id (the key) contains
+	a sorted vector of all actions with that page. The vector is sorted by
+	timestamp, in ascending order.
+     */
+    public HashMap<String, Vector<Action>> getAllActionsHashMap() {
+	HashMap<String, Vector<Action>> h = new HashMap<String, Vector<Action>>();
+
+	for( Action a: actions) {
+	    String aid = a.getArticle();
+	    Vector<Action> b = h.get(aid);
+	    if (b==null) {
+		h.put(aid, b = new Vector<Action>());
+		b.add( a);
+	    } else {
+		int pos = b.size(); // ensure ascending order
+		while( pos > 0 && b.elementAt(pos-1).after(a)) pos--;
+		b.insertElementAt(a, pos);
+	    }
+	}
+	return h;
+    }
+
+
 
     /** Only articles presently in the user's personal folder (i.e., added
 	but not removed).

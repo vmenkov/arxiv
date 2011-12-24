@@ -117,7 +117,9 @@ public class Search extends ResultsBase {
 	public boolean needPrev, needNext;
 
 	public int reportedLength;
-	    
+
+	/** @param startat How many top search results to skip (0, 25, ...)
+	 */
 	SearchResults(String query, HashMap<String, Action> exclusions, int startat) throws Exception {
 	    prevstart = Math.max(startat - M, 0);
 	    nextstart = startat + M;
@@ -161,7 +163,7 @@ public class Search extends ResultsBase {
 	    System.out.println("" + scoreDocs.length + " results");
 
 
-	    int pos = startat;
+	    int pos = startat+1;
 	    for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
 		Document doc = searcher.doc(scoreDocs[i].doc);
 

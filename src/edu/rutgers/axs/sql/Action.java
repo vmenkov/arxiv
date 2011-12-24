@@ -12,7 +12,8 @@ import java.lang.reflect.*;
  * usefulness for him. 
  */
 @Entity
-    public class Action  implements Serializable, OurTable  {
+    public class Action  implements Serializable, OurTable, 
+				    Comparable<Action>  {
 
     /** Transaction ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=2)
@@ -59,19 +60,23 @@ import java.lang.reflect.*;
 	/** No operation - this should not normally be recorded */
 	NONE,
 	    /** "View" actions */
-	    VIEW_ABSTRACT, VIEW_FORMATS, VIEW_PDF, VIEW_PS,
+	    VIEW_ABSTRACT,  // +10
+	    VIEW_FORMATS,   // +20
+	    VIEW_PDF,       // +30
+	    VIEW_PS,        // +30
 	    RESERVED_2,
 	    RESERVED_1,
-	    /** Feedback actions */
-	    INTERESTING_AND_NEW,
-	    INTERESTING_BUT_SEEN_TODAY,
-	    INTERESTING_BUT_KNOWN,
-	    USELESS,
-	    COPY_TO_MY_FOLDER,
-	    DONT_SHOW_AGAIN,
+	    /** Feedback actions: only the most recent of this group counts */
+	    INTERESTING_AND_NEW,        // +200
+	    INTERESTING_BUT_SEEN_TODAY, // +150
+	    INTERESTING_BUT_KNOWN,      // +100
+	    USELESS,                    // -200
+	    /** Only counts if not canceled by "remove" */
+	    COPY_TO_MY_FOLDER,          // +1000, if not removed
+	    /** goes with ratings */
+	    DONT_SHOW_AGAIN,            // -50
 	    /** Activated thru the "view folder" screen */
-	    REMOVE_FROM_MY_FOLDER;
-	
+	    REMOVE_FROM_MY_FOLDER;      // see "copy"	
     };
 
     @Display(editable=false, order=4) 
@@ -149,6 +154,11 @@ import java.lang.reflect.*;
 	    if (op.equals(x)) return true;
 	}
 	return false;
+    }
+
+    /** Comparison is by date. This is used in sorting. */
+    public int compareTo(Action other) {
+	return getTime().compareTo(other.getTime());
     }
 
 }
