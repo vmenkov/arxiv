@@ -46,16 +46,18 @@ contribution to the score;
 
 <li>finally, viewing the article's body or abstract contributes an
 even smaller amount to the overall score as well.
-</ul>
-</p>
+
+<li> With all actions on two articles being identical, the one with
+the more recent action appears highers in the list.
+</ul> </p>
 
 <p>You cannot directly control the position of articles in this list,
 but you can affect it by copying the article into your personal folder
 or removing it from it, by rating an article in the search results (or
 clicking on the "don't show it again" button), or by viewing it.
 
-<p>This ranking will be used by my.arxiv.org to infer your interestsm
-in order to generate personalized recommendations.
+<p>This ranking will be used by my.arxiv.org to infer your research
+interests in order to generate personalized recommendations.
 
 <p>There are <%=main.ups.length %> articles on the list.
 </P>

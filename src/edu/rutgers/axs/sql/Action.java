@@ -156,7 +156,8 @@ import java.lang.reflect.*;
 	return false;
     }
 
-    /** Comparison is by date. This is used in sorting. */
+    /** Comparison is by date (in the normal, i.e. ascending,
+     * order). This is used in sorting. */
     public int compareTo(Action other) {
 	return getTime().compareTo(other.getTime());
     }

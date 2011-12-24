@@ -93,8 +93,12 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	if (vReason!=null) reasons.add(vReason);
     }
     
-    /** for descending sort based on the score */
+    /** For descending sort based on the score (and the timestamp of the most
+     * important contributing action as the secondary key).
+     */
     public int compareTo(UserPageScore other) {
-	return other.score - score;
+	int d = other.score - score;
+	return (d==0 && reasons.size()>0 && other.reasons.size()>0) ?
+	    other.reasons.elementAt(0).compareTo(reasons.elementAt(0)) : d;
     }
 }
