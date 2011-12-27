@@ -79,6 +79,11 @@ import java.lang.reflect.*;
 	    REMOVE_FROM_MY_FOLDER;      // see "copy"	
     };
 
+    public static Op[] ratingOps = {Op.INTERESTING_AND_NEW, 
+				  Op.INTERESTING_BUT_SEEN_TODAY,
+				  Op.INTERESTING_BUT_KNOWN, 
+				  Op.USELESS };
+
     @Display(editable=false, order=4) 
 	@Enumerated(EnumType.ORDINAL) 
     	private Op op;   

@@ -114,6 +114,40 @@ window.onload = StartScripts;
 		<%= sr.reportedLength %> matching documents.
 		</p>
 
+<% Action.Op[] ops = {Action.Op.INTERESTING_AND_NEW,
+   Action.Op.INTERESTING_BUT_SEEN_TODAY,
+   Action.Op.INTERESTING_BUT_KNOWN,
+   Action.Op.USELESS};
+   String [][] buttons = {
+   new String[]{   "Interesting and new",
+      "Mark this document as interesting, relevant, and new.",
+      "page_up.png"},
+    new String[]{"Interesting, but seen today",
+       "Mark this if you have already seen a similar interesting and relevant document during this search session.",
+       "pages.png"},
+   new String[]{"Interesting, but known",
+       "Mark this if document is interesting, but contains known information.",
+       "page_ok.png"},
+  new String[]{"Useless",
+      "Mark this document as useles or irrelevant for you.",
+       "page_down.png"}      };
+%>
+
+
+<script type="text/javascript">
+function ratingEntered(i,j) { 
+var k;
+for(k=0; k< <%=buttons.length%>; k++) {
+    if (k==j) {
+      $('#ratings' + i + '_' + k ).hide();
+      $('#ratings' + i + '_' + k + '_checked').show();
+    } else {
+       $('#ratings' + i + '_' + k + '_checked').hide();
+       $('#ratings' + i + '_' + k ).show();   
+    }
+}
+}
+</script>
 		<% for( ArticleEntry e: sr.entries) { %>
 
 		<div class="result" id="result<%=e.i%>">
@@ -134,7 +168,7 @@ window.onload = StartScripts;
 			<div class="bar_instructions">	
 
 			<% if (e.isInFolder) { %>
-			(Already in your folder)
+			<strong>(Already in your folder)</strong>
 			<% } else { %>
 			<a class="add" id="add<%=e.i%>" href="#" 
 title="Copy this document to your personal folder"
@@ -146,20 +180,27 @@ function(data) { $('#add<%=e.i%>').replaceWith('Copied to your folder!');} )"
 			<a id="rate<%=e.i%>" href="#" title="Rate this document."
 onclick="$(this).hide(100);    $('#ratings<%=e.i%>').show(500);"
 ><img longdesc="Rate this document." src="_technical/images/page_question.png" class="icon_instruction">&nbsp;Rate</a>			
-			<span id="ratings<%=e.i%>" style="display: none;">
-				<a class="interesting" href="#" title="Mark this document as interesting, relevant, and new"
-onclick="$.get('<%=e.judge(Action.Op.INTERESTING_AND_NEW)%>');"
-><img  longdesc="Mark this document as interesting, relevant, and new." src="_technical/images/page_up.png" class="icon_instruction">&nbsp;Interesting&nbsp;&amp;&nbsp;new</a>&nbsp;&nbsp;
-				<a class="seen_today" href="#" title="Mark this if you have already seen a similar interesting and relevant document during this search session."
-onclick="$.get('<%=e.judge(Action.Op.INTERESTING_BUT_SEEN_TODAY)%>');"
-><img  longdesc="Mark this if you have already seen a similar interesting and relevant document during this search session." src="_technical/images/pages.png" class="icon_instruction">&nbsp;Interesting, but seen today</a>&nbsp;&nbsp;
-				<a class="known" href="#" title="Mark this if document is interesting, but contains known information."
-onclick="$.get('<%=e.judge(Action.Op.INTERESTING_BUT_KNOWN)%>');"
-><img alt="Mark this if document is interesting, but contains known information." longdesc="Mark this if document is interesting, but contains known information" src="_technical/images/page_ok.png" class="icon_instruction">&nbsp;Interesting,&nbsp;but&nbsp;known</a>&nbsp;&nbsp;
-				<a class="useless" href="#" title="Mark this document as useles or irrelevant for you."
-onclick="$.get('<%=e.judge(Action.Op.USELESS)%>');"
-><img alt="Mark this document as useles or irrelevant for you" longdesc="Mark this document as useles or irrelevant for you" src="_technical/images/page_down.png" class="icon_instruction">&nbsp;Useless&nbsp;/&nbsp;Irrelevant</a>&nbsp;&nbsp;
-			</span>
+
+      		     	  <span id="ratings<%=e.i%>" style="display: none;">
+<%
+   for(int j=0; j<buttons.length; j++) {
+   	   String[] b = buttons[j];
+	   boolean checked= (e.latestRating==ops[j]);
+	   String src="_technical/images/" + b[2];
+	   String text="&nbsp;" + b[0].replaceAll(" ", "&nbsp;");
+%>
+	<span id="ratings<%=e.i%>_<%=j%>_checked"
+	<% if (checked) { %><%} else { %> style="display: none;"<%}%>
+	><img  src="<%=src%>"><strong>(<%=text%>)</strong></span>
+
+	<span id="ratings<%=e.i%>_<%=j%>"
+	<% if (checked) { %>style="display: none;"<%} else { %><%}%>
+	><a href="#" title="<%=b[1]%>"
+	onclick="$.get('<%=e.judge(ops[j])%>',ratingEntered(<%=e.i%>,<%=j%>));"
+	><img  longdesc="<%=b[1]%>" src="<%=src%>" class="icon_instruction">
+	<%=text%></a></span>&nbsp;&nbsp;
+<% } %>
+   </span>		
 
 				<a class="remove" id="remove<%=e.i%>"
 href="#" title="Permanently remove this document from the search results"

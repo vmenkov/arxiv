@@ -338,7 +338,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
     static void usage(String m) {
 	System.out.println("Arxiv Importer Tool");
 	System.out.println("Usage: java [options] ArxivImporter all [max-page-cnt]");
-	System.out.println("Optons:");
+	System.out.println("Options:");
 	System.out.println(" [-Dtoken=xxx]");
 
 	if (m!=null) {

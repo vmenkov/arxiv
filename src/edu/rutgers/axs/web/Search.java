@@ -74,7 +74,9 @@ public class Search extends ResultsBase {
 	    sr  = new SearchResults(query, exclusions, startat);
 	    if (u!=null) {
 	    // Mark pages currently in the user's folder
-		sr.markFolder(	u.getFolder());
+		ArticleEntry.markFolder(sr.entries, u.getFolder());
+		ArticleEntry.markRatings(sr.entries, 
+					 u.getActionHashMap(Action.ratingOps));
 	    }
 
 	    if (user!=null) {
@@ -187,11 +189,6 @@ public class Search extends ResultsBase {
 	    }
 	}
 
-	void markFolder(HashMap<String, Action> folder ) {
-	    for(ArticleEntry e: entries) {
-		e.isInFolder = folder.containsKey(e.id);
-	    }
-	}
 
     }
 
