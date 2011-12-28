@@ -5,6 +5,7 @@ import java.util.*;
 import java.text.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
+import java.net.URLEncoder;
 
 
 import javax.servlet.*;
@@ -107,6 +108,18 @@ public class QueryServlet extends HttpServlet {
 
 
 	    SessionData sd =  SessionData.getSessionData(request);
+
+	    if (!sd.isAuthorized( request)) {
+		String xsp = URLEncoder.encode( request.getServletPath(), "UTF-8");
+		xsp = "/tools"; // LoginServlet's forwarding does not support POST
+
+		String redirect =
+		    request.getContextPath() + "/login2.jsp?sp=" + xsp;
+		//String eurl = response.encodeRedirectURL(redirect);
+		response.sendRedirect(redirect);
+		return;
+	    }
+
 	    em = sd.getEM();
 
 	    String[] colNames = extractColumnNames(query);

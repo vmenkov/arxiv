@@ -15,10 +15,16 @@ import javax.persistence.*;
 import edu.rutgers.axs.sql.*;
 
 
-/** Records the user's "judgment" about an article. The "page" returned by 
-    this servlet is not actually displayed to the user, because this
-    servlet is invoked asynchronously (with something like jQuery's
-    $.get(url); see http://api.jquery.com/jQuery.get/ 
+/** Records the user's "judgment" about an article. A "judgment" results
+    from the user's clicking on one of the action buttons, such as 
+    rating an article, "copying" it in one's personal folder, asking 
+    the server not to show it again, etc.
+
+    <p>
+    The "page" returned by this servlet is not actually
+    displayed to the user, because this servlet is invoked
+    asynchronously (with something like jQuery's $.get(url); see
+    http://api.jquery.com/jQuery.get/ )
  */
 public class JudgmentServlet extends BaseArxivServlet {
   

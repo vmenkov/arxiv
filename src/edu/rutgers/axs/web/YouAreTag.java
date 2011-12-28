@@ -31,7 +31,7 @@ public class YouAreTag extends TagSupport {
 		 "You are not participating in arXiv research. [<a href=\""
 		+cp +  "/personal/logged-in.jsp\">Log in?</a>] [<a href=\""
 		+cp +  "/participation.html\">Join!</a>]" :
-		"You are logged in as <em>" + user + "</em> [<a href=\""+cp+"/personal/index.jsp\">My account</a>] [<a href=\""+cp+"/logout.jsp\">Log out?</a>]";				
+		"You are logged in as <em>" + user + "</em> [<a href=\""+cp+"/personal/index.jsp\">My account</a>] [<a href=\""+cp+"/LogoutServlet\">Log out?</a>]";				
 	    out.println(s);
         } catch (Exception ex) {
             throw new JspException("IO problems");

@@ -6,6 +6,7 @@ import java.text.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 
@@ -17,6 +18,16 @@ public class LogoutServlet extends HttpServlet {
 
 	try {
 	    SessionData sd = SessionData.getSessionData(request);	  
+	    String user = sd.getRemoteUser(request);
+	    EntityManager em = sd.getEM();
+	    User u = User.findByName(em, user);
+	    em.getTransaction().begin();
+	    ExtendedSessionManagement.invalidateEs( u);
+	    em.persist(u);
+	    em.getTransaction().commit(); 
+	    Logging.info("Logout: invalidated ES on user: " + u.reflectToString());
+	    em.close();
+   
 	    sd.storeUserName(null);
 	    request.getSession().invalidate();
 	    String redirect = "index.jsp";	    

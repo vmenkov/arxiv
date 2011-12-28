@@ -21,7 +21,6 @@ public class SessionData {
     /** Back-pointer */
     final private HttpSession session;
 
-    //final private EntityManager em;
     final private EntityManagerFactory factory;// = null;
 
     /** Generates proper link URLs */
@@ -34,8 +33,6 @@ public class SessionData {
 	//-- not used any more: use persistence.xml instead
 	Properties p = //new Properties();  
 	readProperties();
-
-	//	EntityManagerFactory factory = null;
 
         // Create a new EntityManagerFactory using the System properties.
         // The "icd" name will be used to configure based on the
@@ -54,8 +51,7 @@ public class SessionData {
         // the current transaction
         EntityManager em = factory.createEntityManager();
   	return em;
-    }
-
+    }  
 
     /** Looks up the DemoSessionData already associated with the
      * current session, or creates a new one. This is done atomically,
@@ -160,12 +156,70 @@ public class SessionData {
     private String storedUserName = null;
 
     String getRemoteUser(HttpServletRequest request) {    
-	String u =  (relyOnTomcat)? request.getRemoteUser():  storedUserName;
+	String u;
+	if (relyOnTomcat) {
+	    u = request.getRemoteUser();
+	} else {
+	    // first, check this server session
+	    u = storedUserName;
+	    if (u==null) {
+		// maybe there is an extended session?
+		Cookie cookie =  ExtendedSessionManagement.findCookie(request);
+		if(cookie!=null) {
+		    EntityManager em = getEM();
+		    User user=  ExtendedSessionManagement.getValidEsUser( em, cookie);
+		    if (user!=null)  u = user.getUser_name();
+		    em.close();
+		}
+	    }
+	}
 	return  (u!=null)? u : 		defaultUser;
+    }
+
+    /** Returns the user object for the currently logged-in user */
+    public User getUserEntry(String user) {
+	EntityManager em = getEM();
+	User u = User.findByName(em, user);
+	em.close();
+	return u;
     }
 
     void storeUserName(String u) {
 	storedUserName = u;
+    }
+
+    /** Gets the list of authorized roles for this URL, from a
+	hard-coded list. This is a poor substitute for specifiying
+	them in a set of "security-constraint" elements in web.xml
+
+	@return null if no restriction is imposed, or a list of
+	allowed roles (may be empty) otherwise
+     */
+    static Role.Name[] authorizedRoles(String sp) {
+	if (sp.startsWith("/personal")) return new Role.Name[] 
+					    {Role.Name.subscriber,
+					     Role.Name.researcher,
+					     Role.Name.admin};
+	else if (sp.startsWith("/tools")) return new Role.Name[] 
+					      {Role.Name.admin,
+					       Role.Name.researcher};
+	else if (sp.startsWith("/admin")) return new Role.Name[] 
+					      {Role.Name.admin};
+	else return null;
+    }
+
+    /** Is this user authorized to access this url? */
+    boolean isAuthorized(HttpServletRequest request) {
+	return isAuthorized(request, getRemoteUser(request));
+    }
+
+    boolean isAuthorized(HttpServletRequest request, String user) {
+	String sp = request.getServletPath();
+	Role.Name[] ar = authorizedRoles(sp);
+	if (ar==null) return true; // no restrictions
+	if (user==null) return false; // no user 
+	User u = getUserEntry(user);
+	return u!=null && u.hasAnyRole(ar);
     }
 
 }

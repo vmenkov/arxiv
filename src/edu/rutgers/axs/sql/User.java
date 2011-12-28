@@ -2,9 +2,11 @@ package edu.rutgers.axs.sql;
 
 import java.util.*;
 import java.text.*;
+import java.net.*;
 import javax.persistence.*;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
+import javax.servlet.http.Cookie;
 
 import org.apache.catalina.realm.RealmBase;
 
@@ -90,6 +92,23 @@ import org.apache.catalina.realm.RealmBase;
 	String email = ""; 
     public  String getEmail() { return email; }
     public void setEmail(       String x) { email = x; }
+
+    /** Encrypted temporary password, used for extended (persistent)
+	sessions of this user (those started using the "Remember me"
+	checkbox). */
+    @Basic  @Column(length=64) @Display(order=7)
+	String encEsPass="";
+    public  String getEncEsPass() { return encEsPass; }
+    public void setEncEsPass(       String x) { encEsPass = x; }
+
+    /** End time for the current extended (persistent) sessions. If
+	null, or in the past, then there is such session in effect for
+	this user now. */
+    @Display(editable=false, order=6) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+       Date esEnd;
+    public  Date getEsEnd() { return esEnd; }
+    public void setEsEnd(       Date x) { esEnd = x; }
 
     /** This is how it's described in context.xml:
     //	     userRoleTable="user_roles" roleNameCol="role_name"
@@ -306,5 +325,5 @@ import org.apache.catalina.realm.RealmBase;
 	queries.add(r);	
 	return r;
     }
-
+    
 }

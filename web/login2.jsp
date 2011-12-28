@@ -27,14 +27,21 @@ please login with your user name and password:
 	</tr>
 	<tr>
 		<td>Name:</td>
-		<td><input type="text" name="j_username" /></td>
+		<td><input type="text" name="j_username" ></td>
 	</tr>
 	<tr>
 		<td>Password:</td>
-		<td><input type="password" name="j_password"/ ></td>
+		<td><input type="password" name="j_password" ></td>
 	</tr>
 	<tr>
-		<td colspan="2"><input type="submit" value="Log in" /></td>
+	<td colspan="2">
+	Remember me, for up to 24 hours: 
+	<input type="checkbox" name="remember" value="yes"> 
+	(Don't check this if you are on a public computer)
+	</td>
+	</tr>
+	<tr>
+		<td colspan="2"><input type="submit" value="Log in" ></td>
 	</tr>
 </table>
 

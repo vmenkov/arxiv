@@ -42,10 +42,7 @@ public class ResultsBase {
 
     /** Returns the user object for the currently logged-in user */
     public User getUserEntry() {
-	EntityManager em = sd.getEM();
-	User u = User.findByName(em, user);
-	em.close();
-	return u;
+	return sd.getUserEntry(user);
     }
 
     /** Is this command run by an admin? */
@@ -71,27 +68,28 @@ public class ResultsBase {
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 	    user = sd.getRemoteUser(request);
 
-	    if (response!=null && !isAuthorized()) {
+	    if(!sd.isAuthorized(request,user)) {
 		Logging.info("user " + user + " is not authorized to access servlet at " + request.getServletPath());
 		
-		String redirect = cp + "/login2.jsp?sp=" +
-		    URLEncoder.encode( request.getServletPath(), "UTF-8");
-		//String eurl = response.encodeRedirectURL(redirect);
-		response.sendRedirect(redirect);
 
-		/*
+		if (response!=null) {
+		
+		    String redirect = cp + "/login2.jsp?sp=" +
+			URLEncoder.encode( request.getServletPath(), "UTF-8");
+		    //String eurl = response.encodeRedirectURL(redirect);
+		    response.sendRedirect(redirect);
+
+		    /*
 	    String redirect = "index.jsp";	    
 	    RequestDispatcher dis = request.getRequestDispatcher(redirect);
 	    Logging.info("Logout: forward to=" + redirect);	    
 	    dis.forward(request, response);
-		*/
-
+		    */
+		}
 
 		error=true;
 		errmsg="Not authorized";
 		return;
-	    } else {
-		Logging.info("user " + user + " is authorized to access servlet at " + request.getServletPath());
 	    }
 
 	}  catch (Exception _e) {
@@ -99,37 +97,6 @@ public class ResultsBase {
 	}	
     }
 
-    /** Gets the list of authorized roles for this URL, from a
-	hard-coded list. This is a poor substitute for specifiying
-	them in a set of "security-constraint" elements in web.xml
-
-	@return null if no restriction is imposed, or a list of
-	allowed roles (may be empty) otherwise
-     */
-    static Role.Name[] authorizedRoles(String sp) {
-	if (sp.startsWith("/personal")) return new Role.Name[] 
-					    {Role.Name.subscriber,
-					     Role.Name.researcher,
-					     Role.Name.admin};
-	else if (sp.startsWith("/tools")) return new Role.Name[] 
-					      {Role.Name.admin,
-					       Role.Name.researcher};
-	else if (sp.startsWith("/admin")) return new Role.Name[] 
-					      {Role.Name.admin};
-	else return null;
-    }
-
-    /** Is this user authorized to access this url? */
-    private boolean isAuthorized() {
-	String sp = request.getServletPath();
-	Role.Name[] ar = authorizedRoles(sp);
-	if (ar==null) return true; // no restrictions
-	if (user==null) return false; // no user 
-	User u = getUserEntry();
-	if (u==null) return false;
-	return u.hasAnyRole(ar);
-    }
-    
     /** Gets the integer param with the specified value from the
 	request. If no such param is found in the request, returns the
 	specified default value.
