@@ -127,22 +127,44 @@ public class Search extends ResultsBase {
 	    nextstart = startat + M;
 	    needPrev = (prevstart < startat);
 
+	    query=query.trim();
+	    boolean isPhrase= query.length()>=2 &&
+		query.startsWith("\"") && query.endsWith("\"");
+	    if (isPhrase) query = query.substring(1, query.length()-1);
+
+
 	    String terms[]= query.toLowerCase().split("[^a-zA-Z0-9_]+");
 	    BooleanQuery q = new BooleanQuery();
 	    final String [] fields = {"paper", "title", "authors", "abstract", "article"};
-	    int tcnt=0;
-	    for(String t: terms) {
-		if (t.trim().length()==0) continue;
-		BooleanQuery b = new BooleanQuery(); 	
+
+	    if (isPhrase) {
+		// the entire phrase must occur... somewhere
 		for(String f: fields) {
-		    TermQuery tq = new TermQuery(new Term(f, t));
-		    b.add( tq, BooleanClause.Occur.SHOULD);		
+		    PhraseQuery ph = new PhraseQuery();
+		    int tcnt=0;
+		    for(String t: terms) {
+			if (t.trim().length()==0) continue;
+			ph.add( new Term(f, t));
+			tcnt++;
+		    }
+		    q.add( ph, BooleanClause.Occur.SHOULD);
 		}
-		q.add( b,  BooleanClause.Occur.MUST);
-		tcnt++;
-	    }
-	    if (tcnt==0) throw new WebException("Empty query");
-	
+	    } else {
+		// each term must occur... somewhere
+		int tcnt=0;
+		for(String t: terms) {
+		    if (t.trim().length()==0) continue;
+		    BooleanQuery b = new BooleanQuery(); 	
+		    for(String f: fields) {
+			TermQuery tq = new TermQuery(new Term(f, t));
+			b.add( tq, BooleanClause.Occur.SHOULD);		
+		    }
+		    q.add( b,  BooleanClause.Occur.MUST);
+		    tcnt++;
+		}
+		if (tcnt==0) throw new WebException("Empty query");
+	    }	
+
 	    Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	    IndexSearcher searcher = new IndexSearcher( indexDirectory);
 	    
