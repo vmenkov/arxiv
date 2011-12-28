@@ -17,11 +17,14 @@ import edu.rutgers.axs.sql.*;
     me" button on login. The information is stored persistently in a
     User structure in the database,
  */
-class ExtendedSessionManagement {
+public class ExtendedSessionManagement {
 
     /** A random generator initialized at startup */
     static private final Random random= new Random(System.currentTimeMillis());
     public final static String COOKIE_NAME = "MyArxivExtendedSession";
+
+    /** max lifetime of an extended session, in hours */
+    static public final int maxHours = 24;   
 
     /** Creates a cookie with a temporary password for an "extended session",
 	and adds the pertinent information to the user record. This method
@@ -29,7 +32,6 @@ class ExtendedSessionManagement {
 	call.
     */
     static Cookie makeCookie(User u) {
-	final int maxHours = 24; // max lifetime 
 	final int maxSec = 3600 * maxHours;
 
 	String unameEncoded=u.getUser_name();

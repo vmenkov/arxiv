@@ -35,7 +35,7 @@ please login with your user name and password:
 	</tr>
 	<tr>
 	<td colspan="2">
-	Remember me, for up to 24 hours: 
+	Remember me, for up to <%=ExtendedSessionManagement.maxHours%> hours: 
 	<input type="checkbox" name="remember" value="yes"> 
 	(Don't check this if you are on a public computer)
 	</td>
