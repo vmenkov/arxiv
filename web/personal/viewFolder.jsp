@@ -27,7 +27,7 @@
 <%   } else {      %>
 <p>
 
-<h2>Pages added to the folder</h2>
+<h2>Pages currently in the folder</h2>
 
 <P>Your personal folder contains the following <%=main.list.size()%> articles.</p>
 

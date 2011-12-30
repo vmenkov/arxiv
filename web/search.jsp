@@ -135,17 +135,23 @@ window.onload = StartScripts;
 
 
 <script type="text/javascript">
-function ratingEntered(i,j) { 
-var k;
-for(k=0; k< <%=buttons.length%>; k++) {
-    if (k==j) {
-      $('#ratings' + i + '_' + k ).hide();
-      $('#ratings' + i + '_' + k + '_checked').show();
-    } else {
-       $('#ratings' + i + '_' + k + '_checked').hide();
-       $('#ratings' + i + '_' + k ).show();   
-    }
+function flipCheckedOn(prefix) {
+      $(prefix ).hide();
+      $(prefix + '_checked').show();
 }
+function flipCheckedOff(prefix) {
+      $(prefix + '_checked').hide();
+      $(prefix ).show();
+}
+function ratingEntered(i,j) { 
+   var k;
+   for(k=0; k< <%=buttons.length%>; k++) {
+       if (k==j) {
+          flipCheckedOn('#ratings' + i + '_' + k);
+       } else {
+          flipCheckedOff('#ratings' + i + '_' + k);
+       }
+    }
 }
 </script>
 		<% for( ArticleEntry e: sr.entries) { %>
@@ -167,16 +173,23 @@ for(k=0; k< <%=buttons.length%>; k++) {
 			<% if (main.user!=null) { %>				
 			<div class="bar_instructions">	
 
-			<% if (e.isInFolder) { %>
-			<strong>(Already in your folder)</strong>
-			<% } else { %>
-			<a class="add" id="add<%=e.i%>" href="#" 
+
+			<span id="folder<%=e.i%>_checked" 
+			<% if (!e.isInFolder) { %> style="display: none;" <%}%>
+			>
+			<img src="_technical/images/folder_page.png" 
+			class="icon_instruction">
+			<strong>(In your <a href="personal/viewFolder.jsp">folder</a>)</strong>
+			</span>
+			<span id="folder<%=e.i%>" 
+			<% if (e.isInFolder) { %> style="display: none;" <%}%>
+			>
+			<a class="add" href="#" 
 title="Copy this document to your personal folder"
 onclick="$.get('<%=e.judge(Action.Op.COPY_TO_MY_FOLDER)%>',
-function(data) { $('#add<%=e.i%>').replaceWith('Copied to your folder!');} )"
+function(data) { flipCheckedOn('#folder<%=e.i%>')})"
 ><img src="_technical/images/folder_page.png" class="icon_instruction">&nbsp;Copy&nbsp;to&nbsp;my&nbsp;folder</a>&nbsp;&nbsp;
-			<% }  %>
-
+			</span>
 			<a id="rate<%=e.i%>" href="#" title="Rate this document."
 onclick="$(this).hide(100);    $('#ratings<%=e.i%>').show(500);"
 ><img longdesc="Rate this document." src="_technical/images/page_question.png" class="icon_instruction">&nbsp;Rate</a>			
