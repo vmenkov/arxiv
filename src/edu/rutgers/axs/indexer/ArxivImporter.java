@@ -113,8 +113,8 @@ public class ArxivImporter {
     /** Used in rewrite==false mode, to look up already existing entries */
     private IndexSearcher searcher; 
 
-   /** List of doc ids of documents whose metadata we have harvested via OAI, but for which we could not
-       find cached bodies on osmot
+   /** List of doc ids of documents whose metadata we have harvested
+       via OAI, but for which we could not find cached bodies on osmot
       */
     Vector<String> missingBodyIdList=new  Vector<String>();
     private Analyzer analyzer = new StandardAnalyzer(Common.LuceneVersion);
@@ -154,8 +154,26 @@ public class ArxivImporter {
     }
 
     /** Takes an XML "record" element from the OAI feed, finds
-      * matching body file, and puts the data to the Lucene and to the both 
-      * caches */
+	matching body file, and saves all the data as
+	appropriate. This involves creating a Document object (with
+	everything parsed and indexed in it) and storing it in the
+	Lucene index, as well as caching both the abstract and the
+	document body in their respective caches, (We have one cache
+	for doc bodies, and one for metdata/abstracts).
+
+	@param The metadata in the form of an XML format, as received
+	from arxiv.org using the OAI2 inteface.
+
+	@param writer A Lucene IndexWriter for the index to which the
+	document will be added.
+
+	@param rewrite If false, we leave alone documents that are
+	already stored. If true, the stored doc is re-written. (FIXME:
+	We probably should fine-tune this, adding some kind of "smart
+	rewrite" option, when the document will be re-written only 
+	when there are good reasons to believe it has actually changed
+	since the last caching.)
+    */
     public void importRecord(Element record, IndexWriter writer, boolean rewrite) throws IOException {
 	org.apache.lucene.document.Document doc = parseRecordElement( record);
 	if (doc==null) {
@@ -164,7 +182,7 @@ public class ArxivImporter {
 	    return;
 	}
 
-	String paper = doc.get("paper");
+	String paper = doc.get(ArxivFields.PAPER);
 
 	if ( paper==null) {
 	    // an occasional problematic doc, like this one:
@@ -173,14 +191,12 @@ public class ArxivImporter {
 	    return;
 	}
 
-
 	Cache metacache = new Cache(metaCacheRoot);	
 	metacache.setExtension(".xml");
 
-
 	if (!rewrite) {
-	    // see if the doc already exists (both the lucen entry, and the cached body and metadata)
-	    TermQuery tq = new TermQuery(new Term("paper", paper));
+	    // see if the doc already exists (both the Lucene entry, and the cached body and metadata)
+	    TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, paper));
 	    TopDocs 	 top = searcher.search(tq, 1);
 	    if (top.scoreDocs.length >0) {
 		// already exists
@@ -189,7 +205,7 @@ public class ArxivImporter {
 		    System.out.println("skip already stored doc, id=" + paper);
 		    return;
 		} else {
-		    System.out.println("lucene entry exists, but no cached data, for doc id=" + paper);
+		    System.out.println("Lucene entry exists, but no cached data, for doc id=" + paper);
 		}
 	    }
 	}
@@ -197,7 +213,7 @@ public class ArxivImporter {
 	String whole_doc = readBody( paper,  bodySrcRoot);
    
 	if (whole_doc!=null) {
-	    doc.add(new Field("article", whole_doc, Field.Store.NO, Field.Index.ANALYZED));
+	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	    // Date document was indexed
 	    doc.add(new Field("dateIndexed",
@@ -218,8 +234,11 @@ public class ArxivImporter {
 			true, writer, bodyCacheRoot);
 
 	pcnt++;
-	// cache the metadata
-	metacache.cacheDocument(paper, XMLUtil.XMLtoString(record));
+	// cache the metadata - unless, of course, we ARE reading from the 
+	// metadata cache!
+	if (!readingMetacache) {
+	    metacache.cacheDocument(paper, XMLUtil.XMLtoString(record));
+	}
     }
 
     private static boolean mustRetry(HttpURLConnection conn )throws IOException {
@@ -326,12 +345,47 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	} finally {
 	    writer.close();
 	}
-
-
-
     }
 
-   static void usage() {
+    /** A flag that tells the importer not to try to rewrite the
+	metadata cache, because we are reading from the metadata cache
+	now!
+     */
+    private boolean readingMetacache=false;
+    
+    private void processDir( File root,IndexWriter writer, boolean rewrite)
+	throws IOException   {
+	System.out.println("Processing directory " + root);
+	if (!root.isDirectory()) throw new IllegalArgumentException("'" + root + "' is not a directory");
+	File[] children = root.listFiles();
+	for(File f: children) {
+	    if (f.isFile()) {
+		System.out.println("Processing file: " + f);
+		try {
+		    Element e = XMLUtil.readFileToElement(f);
+		    if (e.getNodeName().equals(Tags.RECORD)) {
+			importRecord(e, writer , rewrite);	
+		    } else {
+			System.out.println("Not a 'record' element in file "+f);
+			//tok = imp.parseResponse(e, writer , rewrite);
+			//System.out.println("resumptionToken =  " + tok);
+		    }
+		} catch(Exception ex) {
+		    System.out.println("Failure on file: " + f);
+		    System.out.println(ex);			
+		}
+		
+	    }
+	}
+	for(File f: children) {
+	    if (f.isDirectory()) {
+		processDir( f, writer, rewrite);
+	    }
+	}
+    }
+
+
+    static void usage() {
 	usage(null);
     }
 
@@ -347,7 +401,6 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	System.exit(1);
     }
 
-
     /** Options:
 	<pre>
 	-Dtoken=xxxx   Resume from the specified resumption page
@@ -359,7 +412,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
 	boolean rewrite =ht.getOption("rewrite", true);
-	
+
 	Options.init(); // read the legacy config file
 
 	ArxivImporter imp =new  ArxivImporter();
@@ -371,11 +424,18 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    int max=-1;
 	    if (argv.length>1) {
 		try {
-		   max	=Integer.parseInt(argv[1]);
+		    max	=Integer.parseInt(argv[1]);
 		} catch(Exception ex) {}
 	    }
 	    System.out.println("Processing web data, up to "+max + " pages");
 	    imp.importAll(tok, max, rewrite);
+	} else if (argv[0].equals("allmeta")) {
+	    if (!rewrite) throw new IllegalArgumentException("For a reload from metachache, ought to use -Drewrite=true");
+	    imp.readingMetacache=true;
+	    IndexWriter writer =  imp.makeWriter(); 
+	    imp.processDir( new File(imp.metaCacheRoot), writer, rewrite );
+	    writer.optimize();
+	    writer.close();
 	} else {
 	    // processing files
 	    for(String s: argv) {

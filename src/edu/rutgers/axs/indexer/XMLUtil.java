@@ -146,7 +146,7 @@ class XMLUtil {
 
     static void assertElement(Node n, String expectedName) throws IOException {
 	if (!(n instanceof Element)) {
-	    throw new IOException("Expected to find an XML element, found node: "+n);
+	    throw new IOException("Expected to find an XML element '"+expectedName+"', found node: "+n);
 	}
 	//int type = n.getNodeType();
 	String name = n.getNodeName();

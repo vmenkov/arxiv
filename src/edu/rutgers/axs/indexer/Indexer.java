@@ -83,12 +83,12 @@ public class Indexer {
 
 	Document document = new Document();
 	
-	document.add(new Field("paper", paper, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	document.add(new Field("category", categories, Field.Store.YES, Field.Index.ANALYZED));
-	document.add(new Field("group", groups, Field.Store.YES, Field.Index.ANALYZED));
+	document.add(new Field(ArxivFields.PAPER, paper, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	document.add(new Field("category", categories, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	document.add(new Field("group", groups, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 	
 	// Should be: Field(name, value, Field.Store.YES, Field.Index.ANALYZED)
-	document.add(new Field("from", from, Field.Store.YES, Field.Index.ANALYZED));
+	document.add(new Field("from", from, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	if (date != null) {
 	    document.add(new Field("date",
@@ -96,14 +96,14 @@ public class Indexer {
 				   Field.Store.YES, Field.Index.NOT_ANALYZED));
 	}
 
-	document.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
-	document.add(new Field("authors", authors, Field.Store.YES, Field.Index.ANALYZED));
-	document.add(new Field("comments", comments, Field.Store.YES, Field.Index.ANALYZED));
-	document.add(new Field("article-class", article_class, Field.Store.YES, Field.Index.ANALYZED));
-	document.add(new Field("journal-ref", journal_ref, Field.Store.YES, Field.Index.ANALYZED));
-	document.add(new Field("abstract", abs, Field.Store.YES, Field.Index.ANALYZED));
+	document.add(new Field(ArxivFields.TITLE, title, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	document.add(new Field(ArxivFields.AUTHORS, authors, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	document.add(new Field(ArxivFields.COMMENTS, comments, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	document.add(new Field("article-class", article_class, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	document.add(new Field("journal-ref", journal_ref, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	document.add(new Field(ArxivFields.ABSTRACT, abs, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 	
-	document.add(new Field("article", article, Field.Store.NO, Field.Index.ANALYZED));
+	document.add(new Field(ArxivFields.ARTICLE, article, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	// Date document was indexed
 	document.add(new Field("dateIndexed",
@@ -120,17 +120,15 @@ public class Indexer {
     public boolean indexDocument(Document document) throws Exception {
 	
 	IndexReader reader = IndexReader.open(indexDirectory);
-	reader.deleteDocuments(new Term("paper", document.get("paper")));
+	reader.deleteDocuments(new Term(ArxivFields.PAPER, 
+					document.get(ArxivFields.PAPER)));
 	reader.close();
-	
-
-
 
 	IndexWriter writer = new IndexWriter(indexDirectory, iwConf); //, false);
 	writer.addDocument(document);
 	writer.close();
 	
-	log("ADD: Wrote "+document.get("paper")+" ("+document.get("group")+")");
+	log("ADD: Wrote "+document.get(ArxivFields.PAPER)+" ("+document.get("group")+")");
 	
 	return true;
     }
@@ -145,7 +143,7 @@ public class Indexer {
 
         public void deletePaper(String paperId) throws Exception {
                 IndexReader reader = IndexReader.open(indexDirectory);
-                reader.deleteDocuments(new Term("paper", paperId));
+                reader.deleteDocuments(new Term(ArxivFields.PAPER, paperId));
                 reader.close();
          
 	 	Cache cache = new Cache(cacheDirectory);
@@ -169,7 +167,7 @@ public class Indexer {
                 String line;
 
                 while ((line = in.readLine()) != null) {
-                        reader.deleteDocuments(new Term("paper", line));
+                        reader.deleteDocuments(new Term(ArxivFields.PAPER, line));
                         cache.deleteDocument(line);
                         System.out.println("Paper "+line+" deleted.");
                 }
@@ -207,6 +205,7 @@ public class Indexer {
 	return s;
     }
 
+    /** A wrapper around parse() */
     private Document parseFile(String abs_file, String doc_file)
 			throws Exception {
 
@@ -246,6 +245,7 @@ public class Indexer {
 
 	@param whole_abstract The text of the abstract, in the
 	old-fashioned plain text "Header: Value" format.
+	@param whole_doc The text of the document.
      */
     public Document parse(String whole_abstract, String whole_doc)
 			throws Exception {
@@ -462,14 +462,19 @@ public class Indexer {
 	writer.close();
     }
 
-    /**
-       @param      doc_fil The name of the disk file from which the document body is to be read. If null, there is no document body.
+    /** Given an already fully-constructed Document object, this
+       method uses Lucene's IndexWriter to write it into the index,
+       and caches the document body. This is a top level method, used
+       from ArxivImporter.
+       
+       @param      doc_file The name of the disk file from which the document body is to be read. If null, there is no document body.
      */
     static void processDocument(Document doc, String doc_file, boolean allowUpdate,
 				 IndexWriter writer, String cacheDirectory ) 	throws IOException {
+	String aid =  doc.get(ArxivFields.PAPER);
 	// Remove it if its already there
 	if (allowUpdate) {
-	    writer.deleteDocuments(new Term("paper", doc.get("paper")));
+	    writer.deleteDocuments(new Term(ArxivFields.PAPER, aid));
 	}
 		
 	writer.addDocument(doc);
@@ -477,7 +482,7 @@ public class Indexer {
 	if (doc_file != null) {
 	    // Cache the document
 	    Cache cache = new Cache(cacheDirectory);
-	    cache.cacheDocument(doc.get("paper"), parseDocFile(doc_file));
+	    cache.cacheDocument(aid, parseDocFile(doc_file));
 	}
 	int n = writer.numDocs();
 	if (n % 100 == 0) {
@@ -519,12 +524,12 @@ public class Indexer {
 	System.out.println("Processing XML file " + f);
 	org.w3c.dom.Element e = XMLUtil.readFileToElement(f);
 	Document doc = ArxivImporter.parseRecordElement( e);
-	String paper = doc.get("paper");
+	String paper =	    doc.get(ArxivFields.PAPER);
 
 	String whole_doc = 	readBody( paper,  bodySrcRoot);
    
 	if (whole_doc!=null) {
-	    doc.add(new Field("article", whole_doc, Field.Store.NO, Field.Index.ANALYZED));
+	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	    // Date document was indexed
 	    doc.add(new Field("dateIndexed",
@@ -623,7 +628,10 @@ public class Indexer {
 
 	} else if (args[0].equals("show")) {
 	    Show show = new Show();
-	    show.show(args[1]);
+	    show.show(args[1]);	
+	} else if (args[0].equals("showcoef")) {
+	    Show show = new Show();
+	    show.showCoef(args[1]);
 	} else if (args[0].equals("list")) {
 	    int max=-1;
 	    if (args.length >1) {
@@ -702,13 +710,13 @@ public class Indexer {
 		}
 		if (d.get("category") != null
 		    && !d.get("category").equals("")) {
-		    System.out.println("Paper " + d.get("paper")
+		    System.out.println("Paper " + d.get(ArxivFields.PAPER) 
 				       + " already updated to "
 				       + d.get("category"));
 		    continue;
 		}
 		
-		paper = d.get("paper");
+		paper = d.get(ArxivFields.PAPER);
 		System.out.println("Updating " + paper);
 		
 		changes = true;
@@ -727,7 +735,7 @@ public class Indexer {
 		    continue;
 		}
 		
-		d.add(new Field("article", article, Field.Store.NO, Field.Index.ANALYZED));
+		d.add(new Field("article", article, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 		// re-index it (includes delete)
 		ir.close();

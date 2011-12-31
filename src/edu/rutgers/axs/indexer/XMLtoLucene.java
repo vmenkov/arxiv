@@ -3,21 +3,20 @@ package edu.rutgers.axs.indexer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.DateTools;
+/*
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
+*/
 
 import edu.cornell.cs.osmot.cache.Cache;
 import edu.cornell.cs.osmot.options.Options;
 import edu.cornell.cs.osmot.logger.Logger;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 import java.util.*;
 //import java.text.SimpleDateFormat;
@@ -29,10 +28,16 @@ import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
-/** The map describes how various fields of the XML structure are
-    processed */
+/** This class controls how various fields of the XML structure are
+    processed. The XML element is obtained from arxiv.org via the OAI
+    interface. The processing of the XML element involves finding
+    relevant fields in it, extracting them, and placing them into a
+    Lucene Document object, which can later be indexed and stored in
+    the Lucene datastore,
+ */
 class XMLtoLucene {
-
+/** The map describes how various fields of the XML structure are
+    processed. */
     private HashMap<String, Xml2Lucene> map = new HashMap<String, Xml2Lucene>();
 
     /** Flags for Xml2Lucene objects */
@@ -71,55 +76,57 @@ class XMLtoLucene {
 	    map.put( xmlName, e);
 	    return e;
     } 
-	Xml2Lucene add(String xmlName, String luceneName) {
-	    return add(xmlName, luceneName, 0);
+    Xml2Lucene add(String xmlName, String luceneName) {
+	return add(xmlName, luceneName, 0);
+    }
+    Xml2Lucene add(String sameName) {
+	return add(sameName, sameName, 0);
+    }
+    Xml2Lucene ignore(String xmlName) {
+	return add(xmlName, xmlName, Flags.IGNORE);
+    }
+    Xml2Lucene recurse(String xmlName) {
+	return add(xmlName, xmlName, Flags.RECURSE);
+    }
+    
+    void process(Element e, org.apache.lucene.document.Document doc) 
+	throws IOException  	{
+	
+	String name0 = e.getNodeName();  
+	// Disposition plan
+	Xml2Lucene q = map.get(name0);
+	if (q==null) {
+	    Logger.log("There are no instructions for processing XML element '"+name0+"'; ignoring it and any children");
+	    return;
 	}
-	Xml2Lucene add(String sameName) {
-	    return add(sameName, sameName, 0);
-	}
-	Xml2Lucene ignore(String xmlName) {
-	    return add(xmlName, xmlName, Flags.IGNORE);
-	}
-	Xml2Lucene recurse(String xmlName) {
-	    return add(xmlName, xmlName, Flags.RECURSE);
-	}
-
-	void process(Element e, org.apache.lucene.document.Document doc) 
-	    throws IOException  	{
-
-	    String name0 = e.getNodeName();  
-	    // Disposition plan
-	    Xml2Lucene q = map.get(name0);
-	    if (q==null) {
-		Logger.log("There are no instructions for processing XML element '"+name0+"'; ignoring it and any children");
-		return;
-	    }
-	    if ((q.flags & Flags.IGNORE)!=0) return;
-	    if ((q.flags & Flags.RECURSE)!=0) {
-		// expect that all children are elements, and process each one
-		for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
-		    if (n instanceof Text  && n.getNodeValue().trim().equals("")) {
-			// white space; ignore
-		    } else if (n instanceof Element) {
-			process( (Element)n, doc);
-		    } else {
-			throw new IOException("Expected that all children of '" + name0+ 
-					      "' will be elements or white space; found " + n);
-		    }
+	if ((q.flags & Flags.IGNORE)!=0) return;
+	if ((q.flags & Flags.RECURSE)!=0) {
+	    // expect that all children are elements, and process each one
+	    for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
+		if (n instanceof Text  && n.getNodeValue().trim().equals("")) {
+		    // white space; ignore
+		} else if (n instanceof Element) {
+		    process( (Element)n, doc);
+		} else {
+		    throw new IOException("Expected that all children of '" + name0+ 
+					  "' will be elements or white space; found " + n);
 		}
-		return;
 	    }
-	    // General or special conversion for XML
-	    String text=q.h.convertElement(e);
-	    // special treatment for some fields 
-	    text = q.h.convertText(text);
-
-	    doc.add(new Field(q.luceneName, text, Field.Store.YES, 
-			      ((q.flags & Flags.NOT_ANALIZED)!=0 ?
-			       Field.Index.NOT_ANALYZED : Field.Index.ANALYZED) ));
-			      
+	    return;
 	}
-
+	// General or special conversion for XML
+	String text=q.h.convertElement(e);
+	// special treatment for some fields 
+	text = q.h.convertText(text);
+	
+	boolean doIndex = ((q.flags & Flags.NOT_ANALIZED)==0);
+	Field field =
+	    new Field(q.luceneName, text, Field.Store.YES, 
+		      (doIndex? Field.Index.ANALYZED: Field.Index.NOT_ANALYZED),
+		      (doIndex? Field.TermVector.YES: Field.TermVector.NO));
+	doc.add(field);
+	
+    }
 
 
     static  XMLtoLucene makeMap( ) {
@@ -133,21 +140,20 @@ class XMLtoLucene {
 			return (z.length>0) ? z[0] : text;
 		    }});
 	map.ignore("identifier");
-	map.add("id", "paper", Flags.NOT_ANALIZED);
+	map.add("id", ArxivFields.PAPER, Flags.NOT_ANALIZED);
 	map.add("created", "date", Flags.NOT_ANALIZED).
 	    setHandler(new FieldHandler() {
 		    String convertText(String text) {
 			return text.replaceAll("-", "") + "0000";
 		    }});
-	map.add("authors").
+	map.add(ArxivFields.AUTHORS).
 	    setHandler(new AuthorsHandler());
-	map.add("title");
-	map.add("comments");
+	map.add(ArxivFields.TITLE);
+	map.add(ArxivFields.COMMENTS);
 	map.add("journal-ref");
-	map.add("abstract");
+	map.add(ArxivFields.ABSTRACT);
 
 	map.add("categories", "category");
-
 
 	map.ignore("updated");
 	map.ignore("datestamp");

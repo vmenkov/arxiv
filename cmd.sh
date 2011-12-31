@@ -1,5 +1,11 @@
 #!/bin/csh
 
+# Commands supported: 
+# ... list
+# ... show id
+# ... showcoef id
+# ....
+
 set opt="-DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib

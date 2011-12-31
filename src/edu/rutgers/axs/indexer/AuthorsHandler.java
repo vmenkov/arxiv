@@ -1,21 +1,5 @@
 package edu.rutgers.axs.indexer;
-/*
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.DateTools;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
 
-import edu.cornell.cs.osmot.cache.Cache;
-import edu.cornell.cs.osmot.options.Options;
-import edu.cornell.cs.osmot.logger.Logger;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-*/
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -52,6 +36,11 @@ class AuthorsHandler extends FieldHandler {
 	XMLUtil.assertElement(e,"authors");
 	String s = "";
 	for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
+	    if (n instanceof Text  && n.getNodeValue().trim().equals("")) {
+		// white space; ignore
+		continue;
+	    }
+
 	    XMLUtil.assertElement(n,"author");
 	    HashMap<String, String> map=  processAuthorTool.process((Element)n);
 	    String first=map.get("forenames"), last=map.get("keyname"), suffix=map.get("suffix");

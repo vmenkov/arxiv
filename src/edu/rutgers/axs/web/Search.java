@@ -24,6 +24,7 @@ import edu.cornell.cs.osmot.logger.Logger;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.indexer.ArxivFields;
 
 /** The base class for the classes that are behind the Frontier Finder
  * Lite JSP pages.
@@ -100,6 +101,12 @@ public class Search extends ResultsBase {
 	}
     }
 
+    /** Fields used for searching */
+    public static final String [] searchFields = {
+	ArxivFields.PAPER, ArxivFields.TITLE, 
+	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
+	ArxivFields.ARTICLE};
+
     public static class SearchResults {
 
 	/** Search results */
@@ -135,11 +142,10 @@ public class Search extends ResultsBase {
 
 	    String terms[]= query.toLowerCase().split("[^a-zA-Z0-9_]+");
 	    BooleanQuery q = new BooleanQuery();
-	    final String [] fields = {"paper", "title", "authors", "abstract", "article"};
 
 	    if (isPhrase) {
 		// the entire phrase must occur... somewhere
-		for(String f: fields) {
+		for(String f: searchFields) {
 		    PhraseQuery ph = new PhraseQuery();
 		    int tcnt=0;
 		    for(String t: terms) {
@@ -155,7 +161,7 @@ public class Search extends ResultsBase {
 		for(String t: terms) {
 		    if (t.trim().length()==0) continue;
 		    BooleanQuery b = new BooleanQuery(); 	
-		    for(String f: fields) {
+		    for(String f: searchFields) {
 			TermQuery tq = new TermQuery(new Term(f, t));
 			b.add( tq, BooleanClause.Occur.SHOULD);		
 		    }
@@ -192,7 +198,7 @@ public class Search extends ResultsBase {
 		Document doc = searcher.doc(scoreDocs[i].doc);
 
 		// check if it's been "removed" by the user.
-		String aid = doc.get("paper");
+		String aid = doc.get(ArxivFields.PAPER);
 		if (exclusions!=null && exclusions.containsKey(aid)) {
 		    int epos = excludedEntries.size()+1;
 		    excludedEntries.add( new ArticleEntry(epos, doc));
@@ -201,8 +207,8 @@ public class Search extends ResultsBase {
 		    pos++;
 		}			
      /*
-		System.out.println("("+(i+1)+") internal id=" + scoreDocs[i].doc +", id=" + doc.get("paper"));
-		System.out.println("arXiv:" + doc.get("paper"));
+		System.out.println("("+(i+1)+") internal id=" + scoreDocs[i].doc +", id=" +aid);
+		System.out.println("arXiv:" + aid);
 		System.out.println(doc.get("title"));
 		System.out.println(doc.get("authors"));
 		System.out.println("Comments:" + doc.get("comments"));

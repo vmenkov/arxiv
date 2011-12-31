@@ -11,7 +11,8 @@ set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/co
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 
 
-set opt="-cp ${cp} ${opt} -Drewrite=false"
+#set opt="-cp ${cp} ${opt} -Drewrite=false"
+set opt="-cp ${cp} ${opt} -Drewrite=true"
 
 echo "opt=$opt"
 

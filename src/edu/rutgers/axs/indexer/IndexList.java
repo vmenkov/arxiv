@@ -47,6 +47,13 @@ class IndexList {
     void list(int max) throws IOException{
 
 	IndexReader r =  IndexReader.open( indexDirectory); 
+
+
+	IndexReader[] surs = r.getSequentialSubReaders();
+	for(IndexReader sur: surs) {	    
+	    long utc = sur.getUniqueTermCount();
+	    System.out.println("subindex has "+utc +" unique terms");
+	}
 	int n=	r.numDocs() ;
 	System.out.println("index has "+n +" docs");
 	if (max<0) max=n;
