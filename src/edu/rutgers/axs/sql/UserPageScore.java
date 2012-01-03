@@ -18,6 +18,7 @@ public class UserPageScore implements Comparable<UserPageScore> {
     public String getArticle() { return aid; }
     /** How important is this page */
     public int score=0;
+    public int getScore() { return score; }
     /** Why is it so important */
     public Vector<Action> reasons=new Vector<Action>();
 
@@ -101,4 +102,26 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	return (d==0 && reasons.size()>0 && other.reasons.size()>0) ?
 	    other.reasons.elementAt(0).compareTo(reasons.elementAt(0)) : d;
     }
+
+    /** Generates an ordered list of pages with which the user has interacted.
+
+	@return A list of pages with their scores, ordered (ranked) by
+	score, in descending order. Some scores may be negative.	
+     */
+    static public UserPageScore[] rankPagesForUser(User actor) {
+	HashMap<String,Vector<Action>> ahm=actor.getAllActionsHashMap();
+	Vector<UserPageScore> vups = new Vector<UserPageScore>();
+	for(String aid: ahm.keySet()) {
+	    UserPageScore q	 = new UserPageScore(aid, ahm.get(aid));
+	    if (q.score!=0) vups.add(q);
+	}
+
+	UserPageScore[] ups = vups.toArray(new  UserPageScore[0]);
+	// descending score order
+	Arrays.sort(ups);
+	return ups;
+    }  
+
+
+
 }

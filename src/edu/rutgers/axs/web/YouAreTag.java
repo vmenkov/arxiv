@@ -34,6 +34,8 @@ public class YouAreTag extends TagSupport {
 		"You are logged in as <em>" + user + "</em> [<a href=\""+cp+"/personal/index.jsp\">My account</a>] [<a href=\""+cp+"/LogoutServlet\">Log out?</a>]";				
 	    out.println(s);
         } catch (Exception ex) {
+	    System.out.println(ex);
+	    ex.printStackTrace(System.out);
             throw new JspException("IO problems");
         }
         return SKIP_BODY;

@@ -12,6 +12,7 @@ import javax.servlet.http.*;
 import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.html.RatingButton;
 
 
  /** Pulls in and serves out a page from arxiv.org
@@ -28,6 +29,13 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     /** Artcile ID, in the format used arxiv.org */
     //final static public String SP="sp";
+
+    /** This will be set if the page in question performs some special
+	article-wise operations */
+    Action.Op op = Action.Op.NONE;
+
+    /** A (partial) entry for the article. Only set in article-wise operations */
+    private ArticleEntry  skeletonAE=null;
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
@@ -53,16 +61,15 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    		
 	    Pattern p = Pattern.compile( "/(abs|format|pdf|ps)/(.+)");
 	    Matcher m = p.matcher(pi);
-	    String id=null;
-	    Action.Op op = Action.Op.NONE;
+	    String aid = null;
 	    if (m.matches()) {
 		String prefix = m.group(1), idv = m.group(2), version=null;
 		Matcher mv = Pattern.compile("(.+)v(\\d+)").matcher(idv);
 		if (mv.matches()) {
-		    id = mv.group(1);
+		    aid = mv.group(1);
 		    version = mv.group(2);
 		} else {
-		    id = idv;
+		    aid = idv;
 		}
 
 		if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
@@ -85,9 +92,20 @@ public class FilterServlet extends  BaseArxivServlet  {
 		em = sd.getEM();
 		em.getTransaction().begin();		
 		User u = User.findByName(em, user);
-		if (op !=  Action.Op.NONE) u.addAction(id, op);
+		if (op !=  Action.Op.NONE) u.addAction(aid, op);
 		em.persist(u);
 		em.getTransaction().commit(); 
+
+		skeletonAE = ArticleEntry.getDummyArticleEntry(aid, 1);
+		Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
+		entries.add(skeletonAE);
+
+		// Mark pages currently in the user's folder, or rated by the user
+		ArticleEntry.markFolder(entries, u.getFolder());
+		ArticleEntry.markRatings(entries, 
+					 u.getActionHashMap(Action.ratingOps));
+
+
 		em.close();
 	    }
 
@@ -95,8 +113,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    if (mustRedirect) {
 		/*
 		  String url = (op==Action.Op.VIEW_ABSTRACT) ?
-		  "http://arxiv.org/abs/" + id :
-		  "http://arxiv.org/format/" + id;
+		  "http://arxiv.org/abs/" + aid :
+		  "http://arxiv.org/format/" + aid;
 		*/
 		String url=ARXIV_BASE +  pi;
 		String eurl = response.encodeRedirectURL(url);
@@ -240,6 +258,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	    PrintWriter w = new PrintWriter(aout);
 	    for(String s = null; (s=r.readLine())!=null; ) {
+		String addBefore = getAddBefore(s);
+		if (addBefore!=null) w.println(addBefore);
 		String z = conv.convertLine(s, 	    willAddNote);
 		w.println(z);
 	    }
@@ -354,6 +374,38 @@ public class FilterServlet extends  BaseArxivServlet  {
 	}
 	return buf;
     }
+
+    /** Any additional HTML needs to be inserted before line s? 
+	E.g., in FilterServlet/abs/1110.3154 we'd insert rating
+	buttons for the article 1110.3154.
+    */
+    private String getAddBefore( String nextLine) {
+
+	if (op == Action.Op.VIEW_ABSTRACT ) {
+	    // Judgment buttons in each "View abstract" pages 
+	    if (nextLine.indexOf("<div id=\"footer\">") >= 0) {
+		String cp = getContextPath();
+
+		String s = "\n";
+		final String[] scripts = {
+		    "_technical/scripts/jquery.js",
+		    "_technical/scripts/jquery-transitions.js",
+		    "scripts/buttons_control.js"
+		};
+		for(String x: scripts) {
+		    s += "<script type=\"text/javascript\" src=\""+cp+
+			"/" + x + "\"></script>\n";
+		}
+		s += RatingButton.judgmentBarHTML
+		    (cp, skeletonAE, 
+		     RatingButton.allRatingButtons,
+		     RatingButton.NEED_FOLDER);
+		return s;
+	    }
+	}
+	return null;
+    }
+
 
     final static String FS =  "/FilterServlet";
 

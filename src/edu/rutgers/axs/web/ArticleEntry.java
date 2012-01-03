@@ -46,11 +46,16 @@ public class ArticleEntry {
 	subjline="Subjects:" + doc.get("category");
     }
     
-    /** The URL (relative to the CP) for recording a judgment on this doc */
-    public String judge(Action.Op op) {
-	return "JudgmentServlet?"+BaseArxivServlet.ID +"=" + id +
-	    "&" +BaseArxivServlet.ACTION+ "=" + op;
-    }
+    /** Dummy constructor, leaves most fields blank */
+    private ArticleEntry(int _i, String aid) {
+ 	i = _i;
+	id=aid;
+	idline="arXiv:" + id;
+	titline = "";
+	authline="";
+	commline="";
+	subjline="";
+     }
 
     /** Retrieves article's info from Lucene, and initializes the
      * ArticleEntry object for it. May return null on failure */
@@ -66,7 +71,9 @@ public class ArticleEntry {
 	} catch (Exception ex) { return null; }
     }
 
-
+    static ArticleEntry getDummyArticleEntry(String aid, int pos) {
+	return new ArticleEntry(pos, aid);      
+    }
 
     static public void markFolder( Vector<ArticleEntry> entries,
 				   HashMap<String, Action> folder ) {

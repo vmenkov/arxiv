@@ -1,4 +1,5 @@
 <%@ page import="edu.rutgers.axs.web.*" %>
+<%@ page import="edu.rutgers.axs.html.*" %>
 <%@ page import="edu.rutgers.axs.sql.Action" %>
 <%@ page import="org.apache.lucene.search.*" %>
 <%@ page import="java.io.*" %>
@@ -17,7 +18,7 @@
 
 <head>
 <!-- #BeginEditable "doctitle" -->
-<title>arXiv - Main Page</title>
+<title>My.arXiv - Search results</title>
 <!-- #EndEditable -->
 <meta name="Keywords" content="" />
 <meta name="Description" content="Results of a search against the local copy of the arxiv.org database" />
@@ -37,7 +38,7 @@
 <script type="text/javascript" src="_technical/scripts/jquery.js"></script>
 <script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>
 <script type="text/javascript" src="scripts/blur.js"></script>
-
+<script type="text/javascript" src="scripts/buttons_control.js"></script>
 <script type="text/javascript">
 function StartScripts() { 
 BlurLinks();
@@ -114,46 +115,6 @@ window.onload = StartScripts;
 		<%= sr.reportedLength %> matching documents.
 		</p>
 
-<% Action.Op[] ops = {Action.Op.INTERESTING_AND_NEW,
-   Action.Op.INTERESTING_BUT_SEEN_TODAY,
-   Action.Op.INTERESTING_BUT_KNOWN,
-   Action.Op.USELESS};
-   String [][] buttons = {
-   new String[]{   "Interesting and new",
-      "Mark this document as interesting, relevant, and new.",
-      "page_up.png"},
-    new String[]{"Interesting, but seen today",
-       "Mark this if you have already seen a similar interesting and relevant document during this search session.",
-       "pages.png"},
-   new String[]{"Interesting, but known",
-       "Mark this if document is interesting, but contains known information.",
-       "page_ok.png"},
-  new String[]{"Useless",
-      "Mark this document as useles or irrelevant for you.",
-       "page_down.png"}      };
-%>
-
-
-<script type="text/javascript">
-function flipCheckedOn(prefix) {
-      $(prefix ).hide();
-      $(prefix + '_checked').show();
-}
-function flipCheckedOff(prefix) {
-      $(prefix + '_checked').hide();
-      $(prefix ).show();
-}
-function ratingEntered(i,j) { 
-   var k;
-   for(k=0; k< <%=buttons.length%>; k++) {
-       if (k==j) {
-          flipCheckedOn('#ratings' + i + '_' + k);
-       } else {
-          flipCheckedOff('#ratings' + i + '_' + k);
-       }
-    }
-}
-</script>
 		<% for( ArticleEntry e: sr.entries) { %>
 
 		<div class="result" id="result<%=e.i%>">
@@ -170,59 +131,7 @@ function ratingEntered(i,j) {
 			<%= e.subjline %><br />
 			</div>
 
-			<% if (main.user!=null) { %>				
-			<div class="bar_instructions">	
-
-
-			<span id="folder<%=e.i%>_checked" 
-			<% if (!e.isInFolder) { %> style="display: none;" <%}%>
-			>
-			<img src="_technical/images/folder_page.png" 
-			class="icon_instruction">
-			<strong>(In your <a href="personal/viewFolder.jsp">folder</a>)</strong>
-			</span>
-			<span id="folder<%=e.i%>" 
-			<% if (e.isInFolder) { %> style="display: none;" <%}%>
-			>
-			<a class="add" href="#" 
-title="Copy this document to your personal folder"
-onclick="$.get('<%=e.judge(Action.Op.COPY_TO_MY_FOLDER)%>',
-function(data) { flipCheckedOn('#folder<%=e.i%>')})"
-><img src="_technical/images/folder_page.png" class="icon_instruction">&nbsp;Copy&nbsp;to&nbsp;my&nbsp;folder</a>&nbsp;&nbsp;
-			</span>
-			<a id="rate<%=e.i%>" href="#" title="Rate this document."
-onclick="$(this).hide(100);    $('#ratings<%=e.i%>').show(500);"
-><img longdesc="Rate this document." src="_technical/images/page_question.png" class="icon_instruction">&nbsp;Rate</a>			
-
-      		     	  <span id="ratings<%=e.i%>" style="display: none;">
-<%
-   for(int j=0; j<buttons.length; j++) {
-   	   String[] b = buttons[j];
-	   boolean checked= (e.latestRating==ops[j]);
-	   String src="_technical/images/" + b[2];
-	   String text="&nbsp;" + b[0].replaceAll(" ", "&nbsp;");
-%>
-	<span id="ratings<%=e.i%>_<%=j%>_checked"
-	<% if (checked) { %><%} else { %> style="display: none;"<%}%>
-	><img  src="<%=src%>"><strong>(<%=text%>)</strong></span>
-
-	<span id="ratings<%=e.i%>_<%=j%>"
-	<% if (checked) { %>style="display: none;"<%} else { %><%}%>
-	><a href="#" title="<%=b[1]%>"
-	onclick="$.get('<%=e.judge(ops[j])%>',ratingEntered(<%=e.i%>,<%=j%>));"
-	><img  longdesc="<%=b[1]%>" src="<%=src%>" class="icon_instruction">
-	<%=text%></a></span>&nbsp;&nbsp;
-<% } %>
-   </span>		
-
-				<a class="remove" id="remove<%=e.i%>"
-href="#" title="Permanently remove this document from the search results"
-onclick="$.get('<%=e.judge(Action.Op.DONT_SHOW_AGAIN)%>', 
-function(data) { $('#result<%=e.i%>').hide(100);} )"
-><img alt="Permanently remove this document from the search results" longdesc="Permanently remove this document from the search results" src="_technical/images/bin.png" class="icon_instruction">&nbsp;Don't&nbsp;show&nbsp;again</a>&nbsp;&nbsp;
-
-			</div>
-			<% }  %>	<!-- main.user!=null -->
+			<%= main.user!=null ? main.judgmentBarHTML(e): "" %>
 		</div>
 		<% }%>		
 

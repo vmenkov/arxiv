@@ -22,9 +22,6 @@ import edu.cornell.cs.osmot.logger.Logger;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.util.Collection;
-import java.util.Iterator;
-
 import java.util.*;
 import java.text.SimpleDateFormat;
 //import java.util.regex.*;

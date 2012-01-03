@@ -93,7 +93,9 @@ public class ExtendedSessionManagement {
     }
 
     static Cookie findCookie( HttpServletRequest request) {
-	for(Cookie c: request.getCookies()) {
+	Cookie[] cs = request.getCookies();
+	if (cs==null) return null;
+	for(Cookie c: cs) {
 	    if (c.getName().equals(COOKIE_NAME)) {
 		return c;
 	    }

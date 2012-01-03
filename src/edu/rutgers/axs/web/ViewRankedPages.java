@@ -51,6 +51,9 @@ public class ViewRankedPages extends ResultsBase {
 		return;
 	    }
 
+	    // descending score order
+	    ups =  UserPageScore.rankPagesForUser(actor);
+
 	    IndexSearcher s = null;
 	    try {
 		Directory indexDirectory =  
@@ -58,16 +61,6 @@ public class ViewRankedPages extends ResultsBase {
 		s = new IndexSearcher( indexDirectory);
 	    } catch(Exception ex) {}
 
-	    HashMap<String,Vector<Action>> ahm=actor.getAllActionsHashMap();
-	    Vector<UserPageScore> vups = new Vector<UserPageScore>();
-	    for(String aid: ahm.keySet()) {
-		UserPageScore q	 = new UserPageScore(aid, ahm.get(aid));
-		if (q.score!=0) vups.add(q);
-	    }
-
-	    ups = vups.toArray(new  UserPageScore[0]);
-	    // descending score order
-	    Arrays.sort(ups);
 	    for(int cnt=0; cnt<ups.length; cnt++) {
 		ArticleEntry e=
 		    ArticleEntry.getArticleEntry(s, ups[cnt].getArticle(), cnt+1);
@@ -81,6 +74,5 @@ public class ViewRankedPages extends ResultsBase {
     }
 
     
-
 
 }

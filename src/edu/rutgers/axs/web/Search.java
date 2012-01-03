@@ -25,6 +25,7 @@ import edu.cornell.cs.osmot.logger.Logger;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.indexer.ArxivFields;
+import edu.rutgers.axs.html.RatingButton;
 
 /** The base class for the classes that are behind the Frontier Finder
  * Lite JSP pages.
@@ -74,7 +75,7 @@ public class Search extends ResultsBase {
 
 	    sr  = new SearchResults(query, exclusions, startat);
 	    if (u!=null) {
-	    // Mark pages currently in the user's folder
+		// Mark pages currently in the user's folder, or rated by the user
 		ArticleEntry.markFolder(sr.entries, u.getFolder());
 		ArticleEntry.markRatings(sr.entries, 
 					 u.getActionHashMap(Action.ratingOps));
@@ -100,6 +101,13 @@ public class Search extends ResultsBase {
 	    ResultsBase.ensureClosed( em, false);
 	}
     }
+
+    public String judgmentBarHTML(ArticleEntry entry) {
+	return RatingButton.judgmentBarHTML( cp, entry, 
+					     RatingButton.allRatingButtons,
+					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER);
+    } 
+
 
     /** Fields used for searching */
     public static final String [] searchFields = {
