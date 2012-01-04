@@ -103,7 +103,7 @@ public class RatingButton {
     }
 
     /** The URL (relative to the CP) for recording a judgment on this doc */
-    private static String judge(String cp, String aid, Action.Op op) {
+    public static String judge(String cp, String aid, Action.Op op) {
 	return cp + "/JudgmentServlet?"+BaseArxivServlet.ID +"=" + aid +
 	    "&" +BaseArxivServlet.ACTION+ "=" + op;
     }

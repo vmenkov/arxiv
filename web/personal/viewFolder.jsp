@@ -1,6 +1,7 @@
 <%@ page import="java.io.*" %>
 <%@ page import="edu.rutgers.axs.web.*" %>
 <%@ page import="edu.rutgers.axs.sql.*" %>
+<%@ page import="edu.rutgers.axs.html.RatingButton" %>
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% 
    ViewFolder main=new ViewFolder(request, response, true);
@@ -47,9 +48,10 @@
 	<tr id="result<%=e.i%>">
 	<td><%=(i+1)%>
 	<td><%=a.getTime()%> <br>
+
 	<a id="remove<%=e.i%>"
 href="#" title="Remove from the folder"
-onclick="$.get('../<%=e.judge(Action.Op. REMOVE_FROM_MY_FOLDER)%>', 
+onclick="$.get('<%=RatingButton.judge("..", e.id, Action.Op.REMOVE_FROM_MY_FOLDER)%>', 
 function(data) { $('#result<%=e.i%>').hide(100);} )"
 ><img src="../_technical/images/bin.png" 
 longdesc="Remove this document from your personal folder"

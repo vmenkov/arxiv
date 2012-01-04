@@ -30,12 +30,6 @@ public class FilterServlet extends  BaseArxivServlet  {
     /** Artcile ID, in the format used arxiv.org */
     //final static public String SP="sp";
 
-    /** This will be set if the page in question performs some special
-	article-wise operations */
-    Action.Op op = Action.Op.NONE;
-
-    /** A (partial) entry for the article. Only set in article-wise operations */
-    private ArticleEntry  skeletonAE=null;
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
@@ -54,6 +48,14 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    //String referer =  request.getHeader("Referer");
 
 	    // if ( request.getMethod().equals("GET")) {....}
+
+	    /** This will be set if the page in question performs some special
+		article-wise operations */
+	    Action.Op op = Action.Op.NONE;
+
+	    /** A (partial) entry for the article. Only set in article-wise operations */
+	    ArticleEntry  skeletonAE=null;
+
     
 	    SessionData sd =  SessionData.getSessionData(request);
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
@@ -92,19 +94,20 @@ public class FilterServlet extends  BaseArxivServlet  {
 		em = sd.getEM();
 		em.getTransaction().begin();		
 		User u = User.findByName(em, user);
-		if (op !=  Action.Op.NONE) u.addAction(aid, op);
-		em.persist(u);
-		em.getTransaction().commit(); 
+
+		u.addAction(aid, op);
 
 		skeletonAE = ArticleEntry.getDummyArticleEntry(aid, 1);
 		Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
 		entries.add(skeletonAE);
-
 		// Mark pages currently in the user's folder, or rated by the user
+
 		ArticleEntry.markFolder(entries, u.getFolder());
 		ArticleEntry.markRatings(entries, 
 					 u.getActionHashMap(Action.ratingOps));
 
+		em.persist(u);
+		em.getTransaction().commit(); 
 
 		em.close();
 	    }
@@ -121,14 +124,19 @@ public class FilterServlet extends  BaseArxivServlet  {
 		Logging.info("sendRedirect to: " + eurl);
 		response.sendRedirect(eurl);
 	    } else {
-		pullPage(request, response);
+		pullPage(request, response, op, skeletonAE);
 	    }
 
 
 	} catch (Exception e) {
 	    try {
 		e.printStackTrace(System.out);
-		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "error in FilterServer: " + e); //e.getMessage());
+		String msg = "error in FilterServer: " + e;
+		StringWriter w = new StringWriter();
+		e.printStackTrace(new PrintWriter(w));
+		msg += ";\n" + w; // debug
+		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+				   msg);
 	    } catch(IOException ex) {};
 	} finally {
 	    ResultsBase.ensureClosed( em, false);
@@ -137,7 +145,7 @@ public class FilterServlet extends  BaseArxivServlet  {
     }
 
     
-    private void pullPage(HttpServletRequest request, HttpServletResponse response) 
+    private void pullPage(HttpServletRequest request, HttpServletResponse response, Action.Op op, ArticleEntry ae) 
 	throws WebException, IOException, java.net.MalformedURLException {
 	String pi=request.getPathInfo();
 	String qs=request.getQueryString();
@@ -169,7 +177,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	int code = lURLConnection.getResponseCode();
 	Logging.info("code = " + code);
-	LineConverter conv = new LineConverter(request);
+	LineConverter conv = new LineConverter(request, op, ae);
 
 	boolean willParse=false, willAddNote=false;
 	if (code == HttpURLConnection.HTTP_OK) {
@@ -258,7 +266,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	    PrintWriter w = new PrintWriter(aout);
 	    for(String s = null; (s=r.readLine())!=null; ) {
-		String addBefore = getAddBefore(s);
+		String addBefore = conv.getAddBefore(s);
 		if (addBefore!=null) w.println(addBefore);
 		String z = conv.convertLine(s, 	    willAddNote);
 		w.println(z);
@@ -308,7 +316,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	      if (!remoteUseless)   value += ", " + remoteIP;
 	  }
 	  aHttpURLConnection.setRequestProperty(name, value);
-	  Logging.info("Copy header: " + name + ": " + value);
+	  //Logging.info("Copy header: " + name + ": " + value);
       }
 
       if (!hasForward && !remoteUseless) {
@@ -375,48 +383,22 @@ public class FilterServlet extends  BaseArxivServlet  {
 	return buf;
     }
 
-    /** Any additional HTML needs to be inserted before line s? 
-	E.g., in FilterServlet/abs/1110.3154 we'd insert rating
-	buttons for the article 1110.3154.
-    */
-    private String getAddBefore( String nextLine) {
-
-	if (op == Action.Op.VIEW_ABSTRACT ) {
-	    // Judgment buttons in each "View abstract" pages 
-	    if (nextLine.indexOf("<div id=\"footer\">") >= 0) {
-		String cp = getContextPath();
-
-		String s = "\n";
-		final String[] scripts = {
-		    "_technical/scripts/jquery.js",
-		    "_technical/scripts/jquery-transitions.js",
-		    "scripts/buttons_control.js"
-		};
-		for(String x: scripts) {
-		    s += "<script type=\"text/javascript\" src=\""+cp+
-			"/" + x + "\"></script>\n";
-		}
-		s += RatingButton.judgmentBarHTML
-		    (cp, skeletonAE, 
-		     RatingButton.allRatingButtons,
-		     RatingButton.NEED_FOLDER);
-		return s;
-	    }
-	}
-	return null;
-    }
-
-
     final static String FS =  "/FilterServlet";
 
     private class LineConverter {
-
 	
 	String user;
-	String cp = getContextPath();
-	String fs = cp +  FS;
+	final String cp = getContextPath();
+	final String fs = cp +  FS;
 
-	LineConverter(HttpServletRequest request) {
+	final Action.Op op;
+	final ArticleEntry skeletonAE;
+
+	LineConverter(HttpServletRequest request,
+		      Action.Op _op,
+		      ArticleEntry _ae)  {
+	    op = _op;
+	    skeletonAE = _ae;
 	    try {
 		SessionData sd =  SessionData.getSessionData(request);
 		user = sd.getRemoteUser(request);
@@ -479,7 +461,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		}
 	    } else {
 		// relative URL
-		// (convertibg to ARXIV_BASE in the !mayRewrite case would
+		// (converting to ARXIV_BASE in the !mayRewrite case would
 		// have been useful, but too much trouble)
 		return link;
 	    }
@@ -526,6 +508,43 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 	    return s;
 	}
+
+    /** Any additional HTML needs to be inserted before line s? 
+	E.g., in FilterServlet/abs/1110.3154 we'd insert rating
+	buttons for the article 1110.3154.
+    */
+	String getAddBefore( String nextLine) {
+
+	    if (op == Action.Op.VIEW_ABSTRACT ) {
+
+		// Judgment buttons in each "View abstract" pages 
+		if (nextLine.indexOf("<div id=\"footer\">") >= 0) {
+		    Logging.info("LC.gAB: op=" + Action.Op.VIEW_ABSTRACT + ", ae="+ skeletonAE);
+
+		    String s = "\n";
+		    final String[] scripts = {
+			"_technical/scripts/jquery.js",
+			"_technical/scripts/jquery-transitions.js",
+			"scripts/buttons_control.js"
+		    };
+		    for(String x: scripts) {
+			s += "<script type=\"text/javascript\" src=\""+cp+
+			    "/" + x + "\"></script>\n";
+		    }
+		    s += RatingButton.judgmentBarHTML
+			(cp, skeletonAE, 
+			 RatingButton.allRatingButtons,
+			 RatingButton.NEED_FOLDER);
+		    return s;
+		}
+	    }
+	    return null;
+	}
+
+
+
+
+
     }
 
 }

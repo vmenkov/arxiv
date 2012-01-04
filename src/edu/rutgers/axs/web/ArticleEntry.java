@@ -57,16 +57,23 @@ public class ArticleEntry {
 	subjline="";
      }
 
+    public String toString() {
+	return "ArticleEntry(i="+i+", aid=" + id+")"; 
+    }
+
     /** Retrieves article's info from Lucene, and initializes the
-     * ArticleEntry object for it. May return null on failure */
+	ArticleEntry object for it. If there are no data on the article in
+	the local data store (e.g., becasue it has not been updated),
+	may return a "dummy" entry. */
     static ArticleEntry getArticleEntry(Searcher s, String aid, int pos) {
+	ArticleEntry dummy =  getDummyArticleEntry( aid,  pos);
 	try {
-	    if (s==null) return null;
+	    if (s==null) return dummy;
 	    TermQuery tq = new TermQuery(new Term("paper", aid));
 	    ScoreDoc[] 	scoreDocs = s.search(tq, 1).scoreDocs;
-	    if (scoreDocs.length < 1) return null;
+	    if (scoreDocs.length < 1) return dummy;
 	    Document doc = s.doc(scoreDocs[0].doc);
-	    if (doc==null) return null;
+	    if (doc==null) return dummy;
 	    return new ArticleEntry(pos, doc);
 	} catch (Exception ex) { return null; }
     }
