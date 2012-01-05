@@ -64,8 +64,9 @@ import java.lang.reflect.*;
 	    VIEW_FORMATS,   // +20
 	    VIEW_PDF,       // +30
 	    VIEW_PS,        // +30
-	    RESERVED_2,
-	    RESERVED_1,
+	    VIEW_HTML,      // +30
+	    VIEW_OTHER,     // (dvi etc.) +30
+
 	    /** Feedback actions: only the most recent of this group counts */
 	    INTERESTING_AND_NEW,        // +200
 	    INTERESTING_BUT_SEEN_TODAY, // +150
@@ -77,7 +78,24 @@ import java.lang.reflect.*;
 	    DONT_SHOW_AGAIN,            // -50
 	    /** Activated thru the "view folder" screen */
 	    REMOVE_FROM_MY_FOLDER;      // see "copy"	
+
+	/** Data types for which FilterServlet does not "filter", but
+	 * redirects to the source, as per Simeon Warner, 2012-01-04 */
+	static public final Op[] VIEW_ARICLE_BODY_TYPES = 
+	    {VIEW_PDF,    
+	     VIEW_PS,
+	     VIEW_HTML,
+	     VIEW_OTHER};
+
+	public boolean isViewArticleBody() {
+	    for(Op q: VIEW_ARICLE_BODY_TYPES) {
+		if (this==q) return true;
+	    }
+	    return false;
+	}
+
     };
+
 
     public static Op[] ratingOps = {Op.INTERESTING_AND_NEW, 
 				  Op.INTERESTING_BUT_SEEN_TODAY,

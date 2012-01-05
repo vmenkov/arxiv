@@ -40,7 +40,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	EntityManager em = null;
 	try {
 
-	    if (pi==null)   throw new WebException("No page specified");
+	    if (pi==null) throw new WebException(HttpURLConnection.HTTP_BAD_REQUEST, "No page specified");
 
 	    /* Get the referer (if supplied by the HTTP request header). It
 	       will be null if the header isn't there */
@@ -61,7 +61,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
 	    		
-	    Pattern p = Pattern.compile( "/(abs|format|pdf|ps)/(.+)");
+	    Pattern p = Pattern.compile( "/(abs|format|pdf|ps|html|dvi|e-print|src|PS_cache)/(.+)");
 	    Matcher m = p.matcher(pi);
 	    String aid = null;
 	    if (m.matches()) {
@@ -74,11 +74,19 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    aid = idv;
 		}
 
+		// List of formats as of Simeon Warner, 2012-01-04
 		if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
 		else if (prefix.equals("format")) op=Action.Op.VIEW_FORMATS;
 		else if (prefix.equals("pdf")) op= Action.Op.VIEW_PDF;
 		else if (prefix.equals("ps"))  op= Action.Op.VIEW_PS;
-
+		else if (prefix.equals("html"))  op= Action.Op.VIEW_HTML;
+		else if (prefix.equals("dvi") ||
+			 prefix.equals("e-print")||
+			 prefix.equals("src")||
+			 prefix.equals("PS_cache"))  op= Action.Op.VIEW_OTHER;
+	    }
+	    
+	    if (op != Action.Op.NONE) {
 		Logging.info("pi="+pi+", recordable as mode " + op.toString());
 	    } else {
 		Logging.info("pi="+pi+", not a recordable URL");
@@ -86,8 +94,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    
 	    // Some pages (such as "view PDF") we won't "filter", but
 	    // rather will simply redirect to.  This is per Simeon
-	    // Warner's request 2011-12-21
-	    boolean mustRedirect= (op==Action.Op.VIEW_PDF || op==Action.Op.VIEW_PS);
+	    // Warner's request 2011-12-21, 2012-01-04
+	    boolean mustRedirect= op.isViewArticleBody();
+
 
 	    // FIXME: need to record the viewing act for all other pages as well
 	    if (user!=null &&  op != Action.Op.NONE)  {
@@ -128,7 +137,11 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 
 
-	} catch (Exception e) {
+	} catch (WebException e) {
+	    try { // Here the message is already localized and obvious
+		response.sendError(e.getCode(), e.getMessage());
+	    } catch(IOException ex) {};
+	} catch (Exception e) { // Here, need more debugging info
 	    try {
 		e.printStackTrace(System.out);
 		String msg = "error in FilterServer: " + e;
@@ -144,13 +157,16 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     }
 
-    
+    /** @throws WebException If we have a unique meaningful message
+	and don't need to print a stack trace etc to the end user.
+     */
     private void pullPage(HttpServletRequest request, HttpServletResponse response, Action.Op op, ArticleEntry ae) 
 	throws WebException, IOException, java.net.MalformedURLException {
 	String pi=request.getPathInfo();
 	String qs=request.getQueryString();
 	boolean lPost = request.getMethod().equals("POST");
- 	if (pi==null)   throw new WebException("No page specified");
+ 	if (pi==null)   throw new WebException(HttpURLConnection.HTTP_BAD_REQUEST, "No page specified");
+
 	Logging.info("FilterServlet request for pi=" + pi + ", post=" + lPost);
 
 	String lURLString=ARXIV_BASE +  pi;
@@ -159,7 +175,15 @@ public class FilterServlet extends  BaseArxivServlet  {
 	}
 	URL lURL    =new URL( lURLString);
 	Logging.info("FilterServlet requesting URL " + lURL);
-	HttpURLConnection lURLConnection=(HttpURLConnection)lURL.openConnection();	
+	HttpURLConnection lURLConnection;
+	try {
+	    lURLConnection=(HttpURLConnection)lURL.openConnection();	
+	}  catch(Exception ex) {
+	    String msg= "Failed to open connection to " + lURL;
+	    Logging.error(msg);
+	    ex.printStackTrace(System.out);
+	    throw new WebException(msg);
+	}
 
 	lURLConnection.setFollowRedirects(false); 
 
@@ -169,14 +193,22 @@ public class FilterServlet extends  BaseArxivServlet  {
 	}
 	copyRequestHeaders( request, lURLConnection);
 
-	//System.out.println("Trying connect");
-	lURLConnection.connect();
-	//System.out.println("connect OK");
-	    
+	try {
+	    lURLConnection.connect();
+	} catch(Exception ex) {
+	    String msg= "Failed to connect to " + lURL;
+	    Logging.error(msg);
+	    ex.printStackTrace(System.out);
+	    throw new WebException(msg);
+	}
+    
 	if (lPost) copyRequestBody( request, lURLConnection);
 
 	int code = lURLConnection.getResponseCode();
-	Logging.info("code = " + code);
+	String gotResponseMsg = lURLConnection.getResponseMessage();
+
+
+	Logging.info("code = " + code +", msg=" + gotResponseMsg);
 	LineConverter conv = new LineConverter(request, op, ae);
 
 	boolean willParse=false, willAddNote=false;
@@ -208,6 +240,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    response.setHeader("Location",
 				       conv.convertLink(location, true)); 
 		}
+		willParse=true;
+	    } else  if (code == HttpURLConnection.HTTP_NOT_FOUND) {
+		// 404; there may be error stream 
 		willParse=true;
 	    } else {
 		willParse = false;
@@ -241,9 +276,32 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    response.setContentType( lContentType);
 	}
 
-	BufferedInputStream in = new BufferedInputStream( lURLConnection.getInputStream(),
-							  ChunkSize);
 
+	InputStream is=null;	
+	try {
+	    is = lURLConnection.getInputStream();
+	}  catch(Exception ex) {
+	    String msg= "Failed to obtain data from " + lURL;
+	    Logging.error(msg);
+	    ex.printStackTrace(System.out);
+	}
+	if (is==null) {	// for errors such as 404, we get ErrorStream instead
+	    try {
+		is = lURLConnection.getErrorStream();
+	    }  catch(Exception ex) {
+		String msg= "Failed to obtain error stream from " + lURL;
+		Logging.error(msg);
+		ex.printStackTrace(System.out);
+	    }
+	}
+	if (is==null) {	
+	    String msg= "Failed to obtain any data from " + lURL;
+	    int xcode = (code==HttpURLConnection.HTTP_OK)? 
+		HttpServletResponse.SC_INTERNAL_SERVER_ERROR :  code;
+	    throw new WebException(xcode,  msg);
+	}
+
+	BufferedInputStream in= new BufferedInputStream(is, ChunkSize);
 	OutputStream aout = response.getOutputStream();
 
 	if (!willParse) {
@@ -431,7 +489,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 		if (link.endsWith(".css")||link.endsWith(".js") ||
 		    link.endsWith(".jpg")||link.endsWith(".png") ||
 		    link.endsWith(".gif")||link.endsWith(".pdf") ||
-		    link.endsWith(".ps")
+		    link.endsWith(".ps")|| link.endsWith(".dvi")||
+		    link.endsWith(".gz")
 		    ) {
 		    mayRewrite = false;
 		}
