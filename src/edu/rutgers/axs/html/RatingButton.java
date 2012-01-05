@@ -18,7 +18,8 @@ import edu.rutgers.axs.sql.*;
     One must include scripts/buttons_control.js into the JSP file that
     uses this class.
 */
-public class RatingButton {
+public class RatingButton //extends HTML
+{
    
     static final Action.Op[] ops = {Action.Op.INTERESTING_AND_NEW,
 		       Action.Op.INTERESTING_BUT_SEEN_TODAY,
@@ -108,6 +109,7 @@ public class RatingButton {
 	    "&" +BaseArxivServlet.ACTION+ "=" + op;
     }
 
+
     public static final int NEED_FOLDER=1, NEED_HIDE=2;
 
 
@@ -190,7 +192,11 @@ public class RatingButton {
     }
 
 
+    static public String js_script(String scriptLocation) {
+	return "<script" +
+	    att("type", "text/javascript") +
+	    att("src", scriptLocation)  +
+	    "\"></script>\n";
+    }
+
 }
-
-
-

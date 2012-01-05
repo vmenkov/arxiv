@@ -211,7 +211,8 @@ import org.apache.catalina.realm.RealmBase;
 	    "<td>" + (isEnabled()? "Yes" : "No")  + "</td>\n" ;
     }
 
-    /** Can be used instead of (User)em.find(User.class, un); */
+    /** Can be used instead of (User)em.find(User.class, un);
+     @return The User object with  the matching name, or null if none is found */
     public static User findByName( EntityManager em, String username) {
 	Query q = em.createQuery("select m from User m where m.user_name=:c");
 	q.setParameter("c", username);

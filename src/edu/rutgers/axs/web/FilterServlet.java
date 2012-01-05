@@ -51,76 +51,47 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	    /** This will be set if the page in question performs some special
 		article-wise operations */
-	    Action.Op op = Action.Op.NONE;
+	    //Action.Op op = Action.Op.NONE;
 
-	    /** A (partial) entry for the article. Only set in article-wise operations */
+	    // A (partial) entry for the article. Only set in article-wise operations, and only when there is 
+	    // a real user logged in. 
 	    ArticleEntry  skeletonAE=null;
 
     
 	    SessionData sd =  SessionData.getSessionData(request);
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
-	    		
-	    Pattern p = Pattern.compile( "/(abs|format|pdf|ps|html|dvi|e-print|src|PS_cache)/(.+)");
-	    Matcher m = p.matcher(pi);
-	    String aid = null;
-	    if (m.matches()) {
-		String prefix = m.group(1), idv = m.group(2), version=null;
-		Matcher mv = Pattern.compile("(.+)v(\\d+)").matcher(idv);
-		if (mv.matches()) {
-		    aid = mv.group(1);
-		    version = mv.group(2);
-		} else {
-		    aid = idv;
-		}
 
-		// List of formats as of Simeon Warner, 2012-01-04
-		if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
-		else if (prefix.equals("format")) op=Action.Op.VIEW_FORMATS;
-		else if (prefix.equals("pdf")) op= Action.Op.VIEW_PDF;
-		else if (prefix.equals("ps"))  op= Action.Op.VIEW_PS;
-		else if (prefix.equals("html"))  op= Action.Op.VIEW_HTML;
-		else if (prefix.equals("dvi") ||
-			 prefix.equals("e-print")||
-			 prefix.equals("src")||
-			 prefix.equals("PS_cache"))  op= Action.Op.VIEW_OTHER;
-	    }
+	    Actionable actionable = new Actionable(pi);
 	    
-	    if (op != Action.Op.NONE) {
-		Logging.info("pi="+pi+", recordable as mode " + op.toString());
-	    } else {
-		Logging.info("pi="+pi+", not a recordable URL");
-	    }
-	    
-	    // Some pages (such as "view PDF") we won't "filter", but
-	    // rather will simply redirect to.  This is per Simeon
-	    // Warner's request 2011-12-21, 2012-01-04
-	    boolean mustRedirect= op.isViewArticleBody();
-
-
-	    // FIXME: need to record the viewing act for all other pages as well
-	    if (user!=null &&  op != Action.Op.NONE)  {
+	    // FIXME: need to record the viewing act for all other arxiv.org pages as well
+	    if (user!=null &&  actionable.isActionable())  {
 		em = sd.getEM();
 		em.getTransaction().begin();		
 		User u = User.findByName(em, user);
+		if (u!=null) {
+		    Logging.info("pi="+pi+", recording as " + actionable);
+		    u.addAction(actionable.aid, actionable.op);
+		    skeletonAE = ArticleEntry.getDummyArticleEntry(actionable.aid, 1);
+		    Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
+		    entries.add(skeletonAE);
+		    // Mark pages currently in the user's folder, or rated by the user
 
-		u.addAction(aid, op);
+		    ArticleEntry.markFolder(entries, u.getFolder());
+		    ArticleEntry.markRatings(entries, 
+					     u.getActionHashMap(Action.ratingOps));
 
-		skeletonAE = ArticleEntry.getDummyArticleEntry(aid, 1);
-		Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
-		entries.add(skeletonAE);
-		// Mark pages currently in the user's folder, or rated by the user
-
-		ArticleEntry.markFolder(entries, u.getFolder());
-		ArticleEntry.markRatings(entries, 
-					 u.getActionHashMap(Action.ratingOps));
-
-		em.persist(u);
+		    em.persist(u);
+		}
 		em.getTransaction().commit(); 
-
 		em.close();
 	    }
 
+
+	    // Some pages (such as "view PDF") we won't "filter", but
+	    // rather will simply redirect to.  This is per Simeon
+	    // Warner's request 2011-12-21, 2012-01-04
+	    boolean mustRedirect= actionable.mustRedirect();
 	    Logging.info("pi="+pi+", redirect=" + mustRedirect);
 	    if (mustRedirect) {
 		/*
@@ -133,7 +104,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		Logging.info("sendRedirect to: " + eurl);
 		response.sendRedirect(eurl);
 	    } else {
-		pullPage(request, response, op, skeletonAE);
+		pullPage(request, response, skeletonAE);
 	    }
 
 
@@ -154,13 +125,58 @@ public class FilterServlet extends  BaseArxivServlet  {
 	} finally {
 	    ResultsBase.ensureClosed( em, false);
 	}
-
     }
 
-    /** @throws WebException If we have a unique meaningful message
+    /** Information about whether the currently viewed URL is one of
+	those "view abstract", "view pdf" etc.  pages.
+     */
+    static private class Actionable {
+	String aid=null;
+	Action.Op op = Action.Op.NONE;
+
+	static Pattern p = Pattern.compile( "/(abs|format|pdf|ps|html|dvi|e-print|src|PS_cache)/(.+)");
+
+	Actionable(String pi) {
+	    Matcher m = p.matcher(pi);
+	    String aid = null;
+	    if (!m.matches()) return;
+	    String prefix = m.group(1), idv = m.group(2), version=null;
+	    Matcher mv = Pattern.compile("(.+)v(\\d+)").matcher(idv);
+	    if (mv.matches()) {
+		aid = mv.group(1);
+		version = mv.group(2);
+	    } else {
+		aid = idv;
+	    }
+	    
+	    // List of formats as of Simeon Warner, 2012-01-04
+	    if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
+	    else if (prefix.equals("format")) op=Action.Op.VIEW_FORMATS;
+	    else if (prefix.equals("pdf")) op= Action.Op.VIEW_PDF;
+	    else if (prefix.equals("ps"))  op= Action.Op.VIEW_PS;
+	    else if (prefix.equals("html"))  op= Action.Op.VIEW_HTML;
+	    else if (prefix.equals("dvi") ||
+		     prefix.equals("e-print")||
+		     prefix.equals("src")||
+		     prefix.equals("PS_cache"))  op= Action.Op.VIEW_OTHER;
+
+	}
+
+	boolean isActionable() { return op != Action.Op.NONE; }
+	boolean mustRedirect() { return  op.isViewArticleBody(); }
+	public String toString() { return "" + op + "("+aid+")";}
+    }
+    
+
+    /**
+       @param ae In article-wise pages, when a user is logged in, this
+       should be the information about the currently viewed article.
+       Otherwise, this must be null.
+
+       @throws WebException If we have a unique meaningful message
 	and don't need to print a stack trace etc to the end user.
      */
-    private void pullPage(HttpServletRequest request, HttpServletResponse response, Action.Op op, ArticleEntry ae) 
+    private void pullPage(HttpServletRequest request, HttpServletResponse response, ArticleEntry ae) 
 	throws WebException, IOException, java.net.MalformedURLException {
 	String pi=request.getPathInfo();
 	String qs=request.getQueryString();
@@ -207,9 +223,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 	int code = lURLConnection.getResponseCode();
 	String gotResponseMsg = lURLConnection.getResponseMessage();
 
-
 	Logging.info("code = " + code +", msg=" + gotResponseMsg);
-	LineConverter conv = new LineConverter(request, op, ae);
+	LineConverter conv = new LineConverter(request, ae);
 
 	boolean willParse=false, willAddNote=false;
 	if (code == HttpURLConnection.HTTP_OK) {
@@ -449,13 +464,14 @@ public class FilterServlet extends  BaseArxivServlet  {
 	final String cp = getContextPath();
 	final String fs = cp +  FS;
 
-	final Action.Op op;
 	final ArticleEntry skeletonAE;
 
-	LineConverter(HttpServletRequest request,
-		      Action.Op _op,
-		      ArticleEntry _ae)  {
-	    op = _op;
+	/**
+	   @param _ae In article-wise pages, when a user is logged in,
+	   this should be the information about the currently viewed article.
+	   Otherwise, this must be null.
+	 */
+	LineConverter(HttpServletRequest request, ArticleEntry _ae)  {
 	    skeletonAE = _ae;
 	    try {
 		SessionData sd =  SessionData.getSessionData(request);
@@ -568,18 +584,14 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    return s;
 	}
 
-    /** Any additional HTML needs to be inserted before line s? 
-	E.g., in FilterServlet/abs/1110.3154 we'd insert rating
-	buttons for the article 1110.3154.
-    */
+	/** Any additional HTML needs to be inserted before line s? 
+	    E.g., in FilterServlet/abs/1110.3154 we'd insert rating
+	    buttons for the article 1110.3154.
+	*/
 	String getAddBefore( String nextLine) {
-
-	    if (op == Action.Op.VIEW_ABSTRACT ) {
-
+	    if (skeletonAE != null) {
 		// Judgment buttons in each "View abstract" pages 
 		if (nextLine.indexOf("<div id=\"footer\">") >= 0) {
-		    Logging.info("LC.gAB: op=" + Action.Op.VIEW_ABSTRACT + ", ae="+ skeletonAE);
-
 		    String s = "\n";
 		    final String[] scripts = {
 			"_technical/scripts/jquery.js",
@@ -587,8 +599,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 			"scripts/buttons_control.js"
 		    };
 		    for(String x: scripts) {
-			s += "<script type=\"text/javascript\" src=\""+cp+
-			    "/" + x + "\"></script>\n";
+			s += RatingButton.js_script(cp + "/" + x);
 		    }
 		    s += RatingButton.judgmentBarHTML
 			(cp, skeletonAE, 
@@ -599,10 +610,6 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 	    return null;
 	}
-
-
-
-
 
     }
 
