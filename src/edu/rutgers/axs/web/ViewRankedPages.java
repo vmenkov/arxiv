@@ -69,7 +69,8 @@ public class ViewRankedPages extends ResultsBase {
 	}  catch (Exception _e) {
 	    setEx(_e);
 	} finally {
-	    em.close(); 
+	    ResultsBase.ensureClosed( em, false);
+	    //em.close(); 
 	}
     }
 

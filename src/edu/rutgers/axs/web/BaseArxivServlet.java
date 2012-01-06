@@ -22,15 +22,29 @@ public class BaseArxivServlet extends HttpServlet {
     /** Artcile ID, in the format used arxiv.org */
     final static public String ID="id", ACTION="action";
 
-    final static String ARXIV_BASE = "http://arxiv.org";
+    /** May be changed in init(), by means of parameters supplied from web.xml
+     */
+    String ARXIV_BASE = "http://arxiv.org";
 
     /** E.g., "/arxiv". It is set in init(); */
     private String cp;
   
+    /** This would be a good place to do <pre>
+	//cp= context.getContextPath(); 
+	</pre>
+
+	except that that method is only available since Servlet API
+	2.5 (= Tomcat 6). So we initialize <tt>cp</tt> in reinit() instead.
+	Cludgy, eh?
+    */
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
 	ServletContext context=config.getServletContext();
-	// Alas, this is only available since Servlet API 2.5 (= Tomcat 6)
+
+	String s  = config.getInitParameter("ArxivBaseURL");
+	if (s!=null && !s.equals("")) ARXIV_BASE = s;
+
+	// Alas, this is only available since Servlet API 2.5 (= Tomcat 6);
 	//cp= context.getContextPath(); 
     }
 

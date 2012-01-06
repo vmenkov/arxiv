@@ -27,9 +27,9 @@ import edu.rutgers.axs.html.RatingButton;
  */
 public class FilterServlet extends  BaseArxivServlet  {
 
-    /** Artcile ID, in the format used arxiv.org */
-    //final static public String SP="sp";
-
+    public void init(ServletConfig config)     throws ServletException {
+	super.init(config);
+    }
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
@@ -134,11 +134,11 @@ public class FilterServlet extends  BaseArxivServlet  {
 	String aid=null;
 	Action.Op op = Action.Op.NONE;
 
-	static Pattern p = Pattern.compile( "/(abs|format|pdf|ps|html|dvi|e-print|src|PS_cache)/(.+)");
+	private static Pattern p = Pattern.compile( "/(abs|format|pdf|ps|html|dvi|e-print|src|PS_cache)/(.+)");
 
 	Actionable(String pi) {
 	    Matcher m = p.matcher(pi);
-	    String aid = null;
+	    aid = null;
 	    if (!m.matches()) return;
 	    String prefix = m.group(1), idv = m.group(2), version=null;
 	    Matcher mv = Pattern.compile("(.+)v(\\d+)").matcher(idv);

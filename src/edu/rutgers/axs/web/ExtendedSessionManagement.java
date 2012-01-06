@@ -19,12 +19,13 @@ import edu.rutgers.axs.sql.*;
  */
 public class ExtendedSessionManagement {
 
-    /** A random generator initialized at startup */
+    /** A random number generator initialized at startup */
     static private final Random random= new Random(System.currentTimeMillis());
     public final static String COOKIE_NAME = "MyArxivExtendedSession";
 
     /** max lifetime of an extended session, in hours */
-    static public final int maxHours = 24;   
+    static public final int maxDays = 3;   
+    static private final int maxHours = maxDays*24;   
 
     /** Creates a cookie with a temporary password for an "extended session",
 	and adds the pertinent information to the user record. This method

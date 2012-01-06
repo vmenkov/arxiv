@@ -15,20 +15,23 @@ import edu.rutgers.axs.sql.*;
 public class LogoutServlet extends HttpServlet {
 
     public void	service(HttpServletRequest request,HttpServletResponse response) {
-
+	EntityManager em=null;
 	try {
 	    SessionData sd = SessionData.getSessionData(request);	  
 	    String user = sd.getRemoteUser(request);
-	    EntityManager em = sd.getEM();
-	    User u = User.findByName(em, user);
-	    em.getTransaction().begin();
-	    ExtendedSessionManagement.invalidateEs( u);
-	    em.persist(u);
-	    em.getTransaction().commit(); 
-	    Logging.info("Logout: invalidated ES on user: " + u.reflectToString());
-	    em.close();
-   
-	    sd.storeUserName(null);
+	    if (user!=null) {
+		em = sd.getEM();
+		User u = User.findByName(em, user);
+		if (u!=null) {
+		    em.getTransaction().begin();
+		    ExtendedSessionManagement.invalidateEs( u);
+		    em.persist(u);
+		    em.getTransaction().commit(); 
+		    Logging.info("Logout: invalidated ES on user: " + u.reflectToString());
+		}
+		em.close();
+		sd.storeUserName(null);
+	    }
 	    request.getSession().invalidate();
 	    String redirect = "index.jsp";	    
 	    RequestDispatcher dis = request.getRequestDispatcher(redirect);
@@ -41,6 +44,7 @@ public class LogoutServlet extends HttpServlet {
 		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "error in LogoutServlet: " + e); //e.getMessage());
 	    } catch(IOException ex) {};
 	} finally {
+	    ResultsBase.ensureClosed( em, false);
 	}
     }
 
