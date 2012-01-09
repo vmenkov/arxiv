@@ -35,7 +35,7 @@ public class ArticleEntry {
 	@param doc a Document object, pfobably just retrieved from the
 	Lucene data store.
      */
-    ArticleEntry(int _i, Document doc) {
+    public ArticleEntry(int _i, Document doc) {
 	i = _i;
 	id=doc.get("paper");
 	idline="arXiv:" + id;
