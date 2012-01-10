@@ -144,41 +144,56 @@ public class Test {
 	    // Sort by value, in descending order
 	    Arrays.sort(terms, getByDescVal());
 
+	    // norms for fields that were stored in Lucene
+	    byte norms[][] = new byte[ Search.searchFields.length][];
+
+	    for(int i=0; i<Search.searchFields.length; i++) {
+		String f= Search.searchFields[i];
+		if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
+		norms[i] = dfc.reader.norms(f);
+	    }
+	    IndexSearcher searcher = new IndexSearcher( dfc.reader);
+	    Similarity simi = searcher.getSimilarity(); 
+
 	    int tcnt=0;
 	    for(String t: terms) {
 		double idf = dfc.idf(t);
 		double qval = hq.get(t).doubleValue() * idf;
-		for(String f: Search.searchFields) {
+		for(int i=0; i<Search.searchFields.length; i++) {
+		    String f= Search.searchFields[i];
 		    Term term = new Term(f, t);
 		    TermDocs td = dfc.reader.termDocs(term);
 		    td.seek(term);
 		    while(td.next()) {
 			int p = td.doc();
-			int freq = td.freq();
-			scores[p] += qval * freq;
+			int freq = td.freq();			
+			float normFactor = simi.decodeNormValue( norms[i][p]);
+			scores[p] += qval * freq * normFactor;
 		    }
 		    td.close();
 		}
 		tcnt++;		
 		if (maxTerms>0 && tcnt >= maxTerms) break;
 	    }	    
+	    // qpos[] will contain internal document numbers
 	    Integer qpos[]  = new Integer[numdocs];
-	    int k=0, nnzc=0;
-	    for(; k<scores.length; k++) {
+	    int  nnzc=0;
+	    for(int k=0; k<scores.length; k++) {		
 		if (scores[k]>0) {
 		    qpos[nnzc++] = new Integer(k);
 		}
 	    }
+	    System.out.println("nnzc=" + nnzc);
 	    Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
 
-	    IndexSearcher searcher = new IndexSearcher( dfc.reader);
+
 	    Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
 	    for(int i=0; i< nnzc && i<maxlen; i++) {
-		final int p=qpos[i].intValue();
-		Document doc = searcher.doc(p);
-		String aid = doc.get(ArxivFields.PAPER);
+		final int k=qpos[i].intValue();
+		Document doc = searcher.doc(k);
+		//String aid = doc.get(ArxivFields.PAPER);
 		ArticleEntry ae= new ArticleEntry(i+1, doc);
-		ae.setScore( scores[p]);
+		ae.setScore( scores[k]);
 		entries.add( ae);
 	    }	
 	    return entries;
