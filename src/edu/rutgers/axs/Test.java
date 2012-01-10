@@ -107,7 +107,9 @@ public class Test {
 	    Arrays.sort(terms, new ByDescVal());
 
 	    int maxCC = BooleanQuery.getMaxClauseCount();
-	    System.out.println("Max clause count=" + maxCC +"; profile has " + terms.length + " terms");
+	    int mt = maxCC;
+	    if (maxTerms > 0 && maxTerms < mt) mt = maxTerms;
+	    System.out.println("Max clause count=" + maxCC +", maxTerms="+maxTerms+"; profile has " + terms.length + " terms; using top " + mt);
 
 	    int tcnt=0;
 	    for(String t: terms) {
@@ -118,7 +120,7 @@ public class Test {
 		}
 		q.add( b,  BooleanClause.Occur.SHOULD);
 		tcnt++;
-		if (tcnt >= maxCC) break;
+		if (tcnt >= mt) break;
 	    }	    
 	    return q;
 	}
@@ -364,12 +366,11 @@ public class Test {
 	boolean needNext=(scoreDocs.length > maxlen);
 	
 	int startat=0;
-	int pos = startat+1;
 	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
 	for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
 	    Document doc = searcher.doc(scoreDocs[i].doc);
 	    String aid = doc.get(ArxivFields.PAPER);
-	    ArticleEntry ae= new ArticleEntry(pos, doc);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc);
 	    ae.setScore( scoreDocs[i].score);
 	    entries.add( ae);
 	}	
