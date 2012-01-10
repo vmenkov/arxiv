@@ -123,6 +123,65 @@ public class Test {
 	    return q;
 	}
 
+	private class ScoresComparator implements Comparator<Integer> {
+	    double scores[];
+	    ScoresComparator(double _scores[]) { scores=_scores; }	    
+	    /** descending order */
+	    public int compare(Integer o1,Integer o2) {
+		double d = scores[ o2.intValue()] -
+		    scores[ o1.intValue()];
+		return (d<0)? -1 : (d>0) ? 1 : 0;
+	    }
+    
+	}
+
+	Vector<ArticleEntry> luceneRawSearch() throws IOException {
+	    String [] terms = hq.keySet().toArray(new String[0]);
+
+	    int numdocs = dfc.reader.numDocs() ;
+	    double scores[] = new double[numdocs];	
+
+	    // Sort by value, in descending order
+	    Arrays.sort(terms, getByDescVal());
+
+	    for(String t: terms) {
+		double idf = dfc.idf(t);
+		double qval = hq.get(t).doubleValue() * idf;
+		for(String f: Search.searchFields) {
+		    Term term = new Term(f, t);
+		    TermDocs td = dfc.reader.termDocs(term);
+		    td.seek(term);
+		    while(td.next()) {
+			int p = td.doc();
+			int freq = td.freq();
+			scores[p] += qval * freq;
+		    }
+		    td.close();
+		}
+		//tcnt++;		if (tcnt >= maxCC) break;
+	    }	    
+	    Integer qpos[]  = new Integer[numdocs];
+	    int k=0, nnzc=0;
+	    for(; k<scores.length; k++) {
+		if (scores[k]>0) {
+		    qpos[nnzc++] = new Integer(k);
+		}
+	    }
+	    Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
+
+	    IndexSearcher searcher = new IndexSearcher( dfc.reader);
+	    int startat=0;
+	    int pos = startat+1;
+	    Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
+	    for(int i=startat; i< nnzc && i<maxlen; i++) {
+		Document doc = searcher.doc(qpos[i].intValue());
+		String aid = doc.get(ArxivFields.PAPER);
+		ArticleEntry ae= new ArticleEntry(pos, doc);
+		entries.add( ae);
+	    }	
+	    return entries;
+	}
+
     }
 
     UserProfile buildUserProfile(String uname) throws IOException {
@@ -135,13 +194,11 @@ public class Test {
 	DFCounter dfc=new DFCounter(reader,Search.searchFields);
 	UserProfile upro = new UserProfile(dfc);
 
-
-
 	// descending score order
 	UserPageScore[]  ups =  UserPageScore.rankPagesForUser(actor);
 	int cnt=0;
 	for(UserPageScore up : ups) {
-	    if (up.getScore() <=0) break; 
+	    if (up.getScore() <=0) break; // don't include "negative" pages
 	    String aid = up.getArticle();
 	    HashMap<String, Integer> h = dfc.getCoef(aid);
 	    double gamma = getGamma(cnt);
@@ -179,6 +236,9 @@ public class Test {
 	DFCounter(	IndexReader _reader,String [] _fields ) {
 	    reader =_reader;
 	    surs = reader.getSequentialSubReaders();
+	    if (surs==null) {
+		surs = new IndexReader[]{ reader};
+	    }
 	    fields = _fields;
 	    numdocs = reader.numDocs();
 	}
@@ -274,36 +334,54 @@ public class Test {
 	}
     }
 
+    static final int maxlen = 100;
+
+
+    Vector<ArticleEntry> luceneQuerySearch(UserProfile upro) throws IOException {
+	org.apache.lucene.search.Query q = upro.firstQuery();
+	
+	IndexSearcher searcher = new IndexSearcher( reader);
+	
+	//numdocs = searcher.getIndexReader().numDocs() ;
+	//System.out.println("index has "+numdocs +" documents");
+
+	TopDocs 	 top = searcher.search(q, maxlen + 1);
+	ScoreDoc[] scoreDocs = top.scoreDocs;
+	boolean needNext=(scoreDocs.length > maxlen);
+	
+	int startat=0;
+	int pos = startat+1;
+	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
+	for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
+	    Document doc = searcher.doc(scoreDocs[i].doc);
+	    String aid = doc.get(ArxivFields.PAPER);
+	    ArticleEntry ae= new ArticleEntry(pos, doc);
+	    entries.add( ae);
+	}	
+	return  entries;
+    }
+
     static public void main(String[] argv) throws IOException {
 	Test x = new Test();
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);
-	    UserProfile upro = x.buildUserProfile(uname);	    
-	    org.apache.lucene.search.Query q = upro.firstQuery();
-
-	    IndexSearcher searcher = new IndexSearcher( x.reader);
+	    UserProfile upro = x.buildUserProfile(uname);	   
+ 
+	    //IndexSearcher searcher = new IndexSearcher( x.reader);
 	    
-	    //numdocs = searcher.getIndexReader().numDocs() ;
-	    //System.out.println("index has "+numdocs +" documents");
-	    
-	    int maxlen = 100;
-	    TopDocs 	 top = searcher.search(q, maxlen + 1);
-	    ScoreDoc[] scoreDocs = top.scoreDocs;
-	    boolean needNext=(scoreDocs.length > maxlen);
+	    //Vector<ArticleEntry> entries= x.luceneQuerySearch(upro);
+	    Vector<ArticleEntry> entries=upro.luceneRawSearch();
 
 	    int startat=0;
 	    int pos = startat+1;
-	    Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
-	    for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
-		Document doc = searcher.doc(scoreDocs[i].doc);
-		String aid = doc.get(ArxivFields.PAPER);
-		ArticleEntry ae= new ArticleEntry(pos, doc);
-		entries.add( ae);
+	    for(int i=startat; i< entries.size() ; i++) {
+		ArticleEntry ae= entries.elementAt(i);
 
-		System.out.println("("+(i+1)+") internal id=" + scoreDocs[i].doc +", id=" +aid);
-		System.out.println("arXiv:" + aid);
-		System.out.println(doc.get("title"));
-		System.out.println(doc.get("authors"));
+		//		System.out.println("("+(i+1)+") internal id=" + scoreDocs[i].doc +", id=" +aid);
+		System.out.println("("+(i+1)+") , id=" +ae.id);
+		System.out.println("["+ae.i+"] arXiv:" + ae.id);
+		System.out.println(ae.titline);
+		System.out.println(ae.authline);
 
 
 	    }
