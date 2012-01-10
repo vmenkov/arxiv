@@ -29,6 +29,9 @@ public class ArticleEntry {
     public boolean isInFolder=false;
     /** The most recent rating, if any, given by the user to this article. */
     public Action.Op latestRating = Action.Op.NONE;
+    /** This may be set if the article has come from some kind of a ranked-list
+	search */
+    public double score=0;
 
     /** Initializes an ArticleEntry object based on the data in a Document
 	object.
@@ -56,6 +59,8 @@ public class ArticleEntry {
 	commline="";
 	subjline="";
      }
+
+    public void setScore(double x) { score=x;}
 
     public String toString() {
 	return "ArticleEntry(i="+i+", aid=" + id+")"; 

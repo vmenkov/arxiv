@@ -144,6 +144,7 @@ public class Test {
 	    // Sort by value, in descending order
 	    Arrays.sort(terms, getByDescVal());
 
+	    int tcnt=0;
 	    for(String t: terms) {
 		double idf = dfc.idf(t);
 		double qval = hq.get(t).doubleValue() * idf;
@@ -158,7 +159,8 @@ public class Test {
 		    }
 		    td.close();
 		}
-		//tcnt++;		if (tcnt >= maxCC) break;
+		tcnt++;		
+		if (maxTerms>0 && tcnt >= maxTerms) break;
 	    }	    
 	    Integer qpos[]  = new Integer[numdocs];
 	    int k=0, nnzc=0;
@@ -170,13 +172,13 @@ public class Test {
 	    Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
 
 	    IndexSearcher searcher = new IndexSearcher( dfc.reader);
-	    int startat=0;
-	    int pos = startat+1;
 	    Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
-	    for(int i=startat; i< nnzc && i<maxlen; i++) {
-		Document doc = searcher.doc(qpos[i].intValue());
+	    for(int i=0; i< nnzc && i<maxlen; i++) {
+		final int p=qpos[i].intValue();
+		Document doc = searcher.doc(p);
 		String aid = doc.get(ArxivFields.PAPER);
-		ArticleEntry ae= new ArticleEntry(pos, doc);
+		ArticleEntry ae= new ArticleEntry(i+1, doc);
+		ae.setScore( scores[p]);
 		entries.add( ae);
 	    }	
 	    return entries;
@@ -334,9 +336,6 @@ public class Test {
 	}
     }
 
-    static final int maxlen = 100;
-
-
     Vector<ArticleEntry> luceneQuerySearch(UserProfile upro) throws IOException {
 	org.apache.lucene.search.Query q = upro.firstQuery();
 	
@@ -356,21 +355,33 @@ public class Test {
 	    Document doc = searcher.doc(scoreDocs[i].doc);
 	    String aid = doc.get(ArxivFields.PAPER);
 	    ArticleEntry ae= new ArticleEntry(pos, doc);
+	    ae.setScore( scoreDocs[i].score);
 	    entries.add( ae);
 	}	
 	return  entries;
     }
 
+    static final int maxlen = 100;
+
+    /** 0 means "all" */
+    static int maxTerms = 1024;
+
     static public void main(String[] argv) throws IOException {
+	ParseConfig ht = new ParseConfig();
+	maxTerms = ht.getOption("maxTerms", maxTerms);
+	boolean raw = ht.getOption("raw", true);
+
+	System.out.println("maxTerms=" + maxTerms +", raw=" + raw);
+
 	Test x = new Test();
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);
 	    UserProfile upro = x.buildUserProfile(uname);	   
  
-	    //IndexSearcher searcher = new IndexSearcher( x.reader);
-	    
-	    //Vector<ArticleEntry> entries= x.luceneQuerySearch(upro);
-	    Vector<ArticleEntry> entries=upro.luceneRawSearch();
+	    //IndexSearcher searcher = new IndexSearcher( x.reader);	    
+	    Vector<ArticleEntry> entries=
+		raw ? upro.luceneRawSearch() :
+		x.luceneQuerySearch(upro);
 
 	    int startat=0;
 	    int pos = startat+1;
@@ -378,17 +389,11 @@ public class Test {
 		ArticleEntry ae= entries.elementAt(i);
 
 		//		System.out.println("("+(i+1)+") internal id=" + scoreDocs[i].doc +", id=" +aid);
-		System.out.println("("+(i+1)+") , id=" +ae.id);
-		System.out.println("["+ae.i+"] arXiv:" + ae.id);
-		System.out.println(ae.titline);
+		System.out.println("["+ae.i+"] (score="+ae.score+
+				   ") arXiv:" + ae.id + ", " + ae.titline);
 		System.out.println(ae.authline);
-
-
 	    }
-
-
 	}
     }
-
 
 }
