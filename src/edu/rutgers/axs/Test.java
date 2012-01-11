@@ -27,7 +27,7 @@ public class Test {
     
     public Test()  throws IOException {
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-	reader =  IndexReader.open( indexDirectory);     
+	reader =  IndexReader.open( indexDirectory);            
     }
 
    
@@ -170,7 +170,12 @@ public class Test {
 			int p = td.doc();
 			int freq = td.freq();			
 			float normFactor = simi.decodeNormValue( norms[i][p]);
-			scores[p] += qval * freq * normFactor;
+			double z =qval * Math.sqrt(freq) * normFactor;
+			scores[p] += z;
+			if (debug!=null) {
+			    String aid=debug.getAid(p);
+			    if (aid!=null) System.out.println("CONTR[" + aid + "]("+f+":"+t+")="+z);
+			}
 		    }
 		    td.close();
 		}
@@ -190,7 +195,7 @@ public class Test {
 
 
 	    Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
-	    for(int i=0; i< nnzc && i<maxlen; i++) {
+	    for(int i=0; i< nnzc && i<maxDocs; i++) {
 		final int k=qpos[i].intValue();
 		Document doc = searcher.doc(k);
 		//String aid = doc.get(ArxivFields.PAPER);
@@ -264,17 +269,9 @@ public class Test {
 
 
 	/** Finds a document by ID in the Lucene index */
-	private int find(String id) throws IOException{
+	private int find(String aid) throws IOException{
 	    IndexSearcher s = new IndexSearcher( reader );
-	    TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
-	    System.out.println("query=("+tq+")");
-	    TopDocs 	 top = s.search(tq, 1);
-	    ScoreDoc[] 	scoreDocs = top.scoreDocs;
-	    if (scoreDocs.length < 1) {
-		System.out.println("No document found with paper="+id);
-		throw new IOException("No document found with paper="+id);
-	    }
-	    return scoreDocs[0].doc;
+	    return Test.find(s, aid);
 	}
 
 	private HashMap<String, Integer> h = new HashMap<String, Integer>();
@@ -361,13 +358,13 @@ public class Test {
 	//numdocs = searcher.getIndexReader().numDocs() ;
 	//System.out.println("index has "+numdocs +" documents");
 
-	TopDocs 	 top = searcher.search(q, maxlen + 1);
+	TopDocs 	 top = searcher.search(q, maxDocs + 1);
 	ScoreDoc[] scoreDocs = top.scoreDocs;
-	boolean needNext=(scoreDocs.length > maxlen);
+	boolean needNext=(scoreDocs.length > maxDocs);
 	
 	int startat=0;
 	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
-	for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
+	for(int i=startat; i< scoreDocs.length && i<maxDocs; i++) {
 	    Document doc = searcher.doc(scoreDocs[i].doc);
 	    String aid = doc.get(ArxivFields.PAPER);
 	    ArticleEntry ae= new ArticleEntry(i+1, doc);
@@ -377,19 +374,66 @@ public class Test {
 	return  entries;
     }
 
-    static final int maxlen = 100;
+    /** Find a document by article ID, using a given searcher.
+     @return Lucen internal doc id.*/
+    static int find(IndexSearcher s , String id) throws IOException{
+	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
+	//System.out.println("query=("+tq+")");
+	TopDocs 	 top = s.search(tq, 1);
+	ScoreDoc[] 	scoreDocs = top.scoreDocs;
+	if (scoreDocs.length < 1) {
+	    System.out.println("No document found with paper="+id);
+	    throw new IOException("No document found with paper="+id);
+	}
+	return scoreDocs[0].doc;
+    }
+    
+
+    static int maxDocs = 100;
 
     /** 0 means "all" */
     static int maxTerms = 1024;
 
+    /** Stuff used to control debugging and additional verbose reporting. */
+    static class Debug {
+	static int watchPos[]= {};
+	static String watchAid[]= {};
+	Debug(IndexReader reader, ParseConfig ht) {
+	    String watch = ht.getOption("watch", null);
+	    if (watch==null) return;
+	    watchAid = watch.split(":");
+	    watchPos = new int[watchAid.length];
+	    IndexSearcher s = new IndexSearcher( reader );	    
+	    for(int i=0; i<watchAid.length; i++) {
+		watchPos[i]=-1;
+		try {
+		    watchPos[i] =  Test.find(s, watchAid[i]);
+		} catch (IOException ex) {};
+	    }
+	}
+	String getAid(int pos) {
+	    for(int i=0; i<watchPos.length; i++) {
+		if (pos==watchPos[i]) return watchAid[i];
+	    }
+	    return null;
+	}
+    }
+
+    private static Debug debug=null;
+
+    /**
+       -Dwatch=docid1[:docid2:....]
+     */
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();
 	maxTerms = ht.getOption("maxTerms", maxTerms);
+	maxDocs = ht.getOption("maxDocs", maxTerms);
 	boolean raw = ht.getOption("raw", true);
 
-	System.out.println("maxTerms=" + maxTerms +", raw=" + raw);
+	System.out.println("maxTerms=" + maxTerms +", raw=" + raw + ", maxDocs=" + maxDocs);
 
 	Test x = new Test();
+	debug = new Debug(x.reader, ht);
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);
 	    UserProfile upro = x.buildUserProfile(uname);	   
