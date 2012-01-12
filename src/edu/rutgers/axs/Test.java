@@ -24,7 +24,8 @@ public class Test {
     // Where our index lives.
     //private Directory indexDirectory;
     private IndexReader reader;
-    
+    static Stoplist stoplist;    
+
     public Test()  throws IOException {
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	reader =  IndexReader.open( indexDirectory);            
@@ -43,6 +44,7 @@ public class Test {
     static private boolean isUseless(String t) {
 	if (t.length() <= 2) return true;
 	if (Character.isDigit( t.charAt(0))) return true;
+	if (stoplist.contains(t)) return true;
 
 	// Presently only allow words starting with an English letter,
 	// and including alhanumeric letters and dots.
@@ -430,7 +432,9 @@ public class Test {
 	maxDocs = ht.getOption("maxDocs", maxTerms);
 	boolean raw = ht.getOption("raw", true);
 
-	System.out.println("maxTerms=" + maxTerms +", raw=" + raw + ", maxDocs=" + maxDocs);
+	stoplist = new Stoplist(new File("WEB-INF/stop200.txt"));
+	System.out.println("maxTerms=" + maxTerms +", raw=" + raw + ", maxDocs=" + maxDocs +"; stoplist.size=" + stoplist.size());
+
 
 	Test x = new Test();
 	if (ht.getOption("watch", null)!=null) debug = new Debug(x.reader, ht);
