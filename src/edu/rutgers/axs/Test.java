@@ -109,6 +109,12 @@ public class Test {
 	    Arrays.sort(terms, new ByDescVal());
 
 	    int maxCC = BooleanQuery.getMaxClauseCount();
+	    if (maxTerms > maxCC) {
+		System.out.println("Raising MaxClauseCount from " + maxCC + " to " + maxTerms);
+		BooleanQuery.setMaxClauseCount(maxTerms);
+		maxCC = BooleanQuery.getMaxClauseCount();
+	    }
+
 	    int mt = maxCC;
 	    if (maxTerms > 0 && maxTerms < mt) mt = maxTerms;
 	    System.out.println("Max clause count=" + maxCC +", maxTerms="+maxTerms+"; profile has " + terms.length + " terms; using top " + mt);

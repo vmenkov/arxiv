@@ -20,7 +20,7 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 
-set opt="-cp ${cp} ${opt} -Draw=true -DmaxTerms=100"
+set opt="-cp ${cp} ${opt} -Draw=false -DmaxTerms=4096"
 
 echo "opt=$opt"
 
