@@ -136,11 +136,12 @@ public class Options {
 	if (configPath.length() > 0 && !configPath.endsWith("/"))
 	    configPath += "/";
 
-	System.out.println("Current working directory is "+System.getProperty("user.dir"));
+	//System.out.println("Current working directory is "+System.getProperty("user.dir"));
+
 	//if (reload)
 	//    System.out.println("Osmot reloading config file from "+configPath+"osmot.conf");
 	//else
-	    System.out.println("Osmot loading config file from "+configPath+"osmot.conf");
+	//    System.out.println("Osmot loading config file from "+configPath+"osmot.conf");
 
 	File f = new File(configPath+"osmot.conf");
 	if (!f.exists()) {

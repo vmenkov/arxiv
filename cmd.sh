@@ -19,7 +19,7 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 
 set opt="-cp ${cp} ${opt}"
 
-echo "opt=$opt"
+#echo "opt=$opt"
 
 #echo java $opt edu.cornell.cs.osmot.indexer.Indexer $1 $2 $3
 java $opt edu.rutgers.axs.indexer.Indexer $1 $2 $3

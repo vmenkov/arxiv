@@ -433,7 +433,7 @@ public class Test {
 	System.out.println("maxTerms=" + maxTerms +", raw=" + raw + ", maxDocs=" + maxDocs);
 
 	Test x = new Test();
-	debug = new Debug(x.reader, ht);
+	if (ht.getOption("watch", null)!=null) debug = new Debug(x.reader, ht);
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);
 	    UserProfile upro = x.buildUserProfile(uname);	   

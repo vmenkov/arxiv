@@ -5,11 +5,8 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.*;
 
-import org.apache.lucene.index.Term;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -641,6 +638,16 @@ public class Indexer {
 	    }
 	    IndexList il = new IndexList();
 	    il.list(max);
+	} else if (args[0].equals("listterms")) {
+	    int minFreq=0;
+	    String field=null;
+	    if (args.length >1) field=args[1];	       
+	    if (args.length >2) {		
+		try {
+		    minFreq=Integer.parseInt(args[2]);
+		} catch(Exception ex) {}
+	    }
+	    i.listTerms(field, minFreq);
 	} else {
 	    help();
 	}
@@ -771,6 +778,31 @@ public class Indexer {
 
 		return fields;
 	}
+
+    /** Reports all terms from the Lucene index with df greater or equal than 
+	a specified threshold
+	
+	@param field If non-null, only terms from this field are retrieved.
+	@param minFreq Only terms with the document frequency at least this
+	high are retrieved. (The df count is separate for each field).
+     */
+    void listTerms(String field, int minFreq) throws IOException {
+	IndexReader reader = IndexReader.open(indexDirectory);
+	boolean all = (field==null) || field.equals("all");
+	TermEnum te = all? reader.terms() : reader.terms( new Term(field, ""));
+	    
+	while(te.next()) {
+	    Term term = te.term();
+	    int df = te.docFreq(); 
+
+	    if (!all && !term.field().equals(field)) break;
+
+	    if (df >= minFreq) {
+		System.out.println("" + term + " : " + df);
+	    }
+	}
+	reader.close();
+    }
 
     private static void log(String s) {
 	Logger.log(s);
