@@ -20,7 +20,8 @@ import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
 
 
-/** Tools for computing/extracting DF (document frequency) on the Lucene index,
+/** Tools for getting numbers out of the Lucene index. This includes
+ * computing/extracting DF (document frequency) on the Lucene index,
  * as well as the tf (term frequency) vector for a document.
  */
 class ArticleAnalyzer {
@@ -78,8 +79,8 @@ class ArticleAnalyzer {
 	return sum;
     }
     
-    /** Idf =  	 1 + log ( numDocs/docFreq+1), much like used in Lucene's
-	own searcher as well.
+    /** Computes <em>idf = 1 + log ( numDocs/docFreq+1)</em>, much
+	like it is done in Lucene's own searcher as well.
      */
     double idf(String term) {
 	try {
@@ -183,18 +184,24 @@ class ArticleAnalyzer {
 	}
 
 	if (mustUpdate) { 
-	    double sum=0;
-	    for(String t: h.keySet()) {
-		double q= h.get(t).doubleValue();
-		sum += q*q * idf(t);
-	    }
-	    as.setNorm(Math.sqrt(sum));
+	    double norm=tfNorm(h);
+	    as.setNorm(norm);
 	}
 
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
 	return h;
     }
 
+    /** The idf-weighted 2-norm of a term frequency vector.
+     @param h Represnets the term frequency vector. */
+    double tfNorm(HashMap<String, Double> h) {
+	double sum=0;
+	for(String t: h.keySet()) {
+	    double q= h.get(t).doubleValue();
+	    sum += q*q * idf(t);
+	}
+	return Math.sqrt(sum);
+    }
 
     /* ArticleStats getStats(int docno) throws IOException {
        ArticleStats as = new ArticleStats();
@@ -315,6 +322,43 @@ class ArticleAnalyzer {
 	}
     }
 
+    private static class FsIdOnly implements FieldSelector {
+	public FieldSelectorResult accept(String fieldName) {
+	    return fieldName.equals(ArxivFields.PAPER) ?
+		FieldSelectorResult.LOAD : 
+		FieldSelectorResult.NO_LOAD;
+	}
+    }
+
+    /** @return The index into the array is Lucene's current internal doc id */
+    public static ArticleStats[] getArticleStatsArray( EntityManager em,
+						       IndexReader reader)
+	throws org.apache.lucene.index.CorruptIndexException, IOException
+ {
+	List<ArticleStats> aslist = ArticleStats.getAll( em);
+	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>();
+	for(ArticleStats as: aslist) {
+	    h.put(as.getAid(), as);
+	}
+	int numdocs = reader.numDocs();
+	ArticleStats[] all = new ArticleStats[numdocs];
+	FieldSelector fieldSelector = new FsIdOnly();
+	int foundCnt=0;
+	for(int pos=0; pos<numdocs; pos++) {
+	    if (reader.isDeleted(pos)) continue;
+	    Document doc = reader.document(pos,fieldSelector);
+	    String aid = doc.get(ArxivFields.PAPER);	    
+	    ArticleStats as = h.get(aid);
+	    if (as!=null) {
+		foundCnt++;
+		all[pos] = as;
+	    }
+	}
+	System.out.println("Found pre-computed ArticleStats for " + foundCnt + " docs");
+	return all;
+    }
+
+
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();
 	int maxDocs = ht.getOption("maxDocs", -1);
@@ -328,5 +372,6 @@ class ArticleAnalyzer {
 	z.computeAllMissingNorms(em, maxDocs);
 	em.close();
     }
+
 
 }

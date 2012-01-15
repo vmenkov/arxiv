@@ -27,20 +27,19 @@ class UserProfile {
 
     static Stoplist stoplist=null;   
 
-
-	ArticleAnalyzer dfc;
-	UserProfile(ArticleAnalyzer _dfc) {
-	    dfc = _dfc;
-	}
-
-	/** Maps term to value (cumulative tf) */
-	HashMap<String, Double> hq = new HashMap<String, Double>();	
-	void add(String key, double inc) {
-	    Double val = hq.get(key);
-	    double d = (val==null? 0 : val.doubleValue()) + inc;
-	    hq.put( key, new Double(d));	  
-	}
-
+    ArticleAnalyzer dfc;
+    //UserProfile(ArticleAnalyzer _dfc) {
+    //	dfc = _dfc;
+    //}
+    
+    /** Maps term to value (cumulative tf) */
+    HashMap<String, Double> hq = new HashMap<String, Double>();	
+    void add(String key, double inc) {
+	Double val = hq.get(key);
+	double d = (val==null? 0 : val.doubleValue()) + inc;
+	hq.put( key, new Double(d));	  
+    }
+    
 
     /** Is this term to be excluded from the user profile?
      */
@@ -62,28 +61,26 @@ class UserProfile {
     }
 
 
-
-	void purgeUselessTerms() {
-	    Set<String> keys = hq.keySet();
-	    for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
-		String t = it.next();
-		// removal from the key set is supposed to remove the element
-		// the underlying HashMap, as per the API
-		if (isUseless(t)) {
-		    it.remove();
-		}
+    void purgeUselessTerms() {
+	Set<String> keys = hq.keySet();
+	for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
+	    String t = it.next();
+	    // removal from the key set is supposed to remove the element
+	    // the underlying HashMap, as per the API
+	    if (isUseless(t)) {
+		it.remove();
 	    }
 	}
+    }
 
 
     /** Discount factor for lower-ranking docs in constructing user profiles.
-     @param i Page rank, 0-based*/
+	@param i Page rank, 0-based*/
     static double getGamma(int i) {
 	return 1.0 / (1 + Math.log( 1.0 + i ));
     }
-
-    UserProfile (String uname, IndexReader reader) throws IOException {
-	EntityManager em = Main.getEM();
+    
+    UserProfile(String uname, EntityManager em, IndexReader reader) throws IOException {
 	User actor = User.findByName(em, uname);
 	if (actor == null) {
 	    throw new IllegalArgumentException( "No user with user_name="+ uname+" has been registered");
@@ -97,10 +94,12 @@ class UserProfile {
 	    if (up.getScore() <=0) break; // don't include "negative" pages
 	    String aid = up.getArticle();
 	    HashMap<String, Double> h = dfc.getCoef(aid);
+	    // FIXME: used stored norm instead
+	    double norm = dfc.tfNorm(h);
 	    double gamma = getGamma(cnt);
-	    // ought to normalize
+	    double f = gamma / norm;
 	    for(Map.Entry<String,Double> e: h.entrySet()) {
-		add( e.getKey(), gamma * e.getValue().doubleValue());
+		add( e.getKey(), f * e.getValue().doubleValue());
 	    }
 	    cnt++;
 	}
@@ -122,132 +121,215 @@ class UserProfile {
     }
 
 
-	/** Sorts the keys of the hash table according to the
-	    corresponding values time IDF, in descending order.
-	 */
-	class ByDescVal implements  Comparator<String> {
-	    public int compare(String o1,String o2) {
-		double d = hq.get(o2).doubleValue() * dfc.idf(o2)- 
-		    hq.get(o1).doubleValue() * dfc.idf(o1);
-		return (d<0)? -1 : (d>0) ? 1 : 0;
-	    }
+    /** Sorts the keys of the hash table according to the
+	corresponding values time IDF, in descending order.
+    */
+    class ByDescVal implements  Comparator<String> {
+	public int compare(String o1,String o2) {
+	    double d = hq.get(o2).doubleValue() * dfc.idf(o2)- 
+		hq.get(o1).doubleValue() * dfc.idf(o1);
+	    return (d<0)? -1 : (d>0) ? 1 : 0;
 	}
-
-	Comparator getByDescVal() {
-	    return new  ByDescVal();
-	}
-
-	org.apache.lucene.search.Query firstQuery() {
-	    BooleanQuery q = new BooleanQuery();
-	    String [] terms = hq.keySet().toArray(new String[0]);
-	    // Sort by value, in descending order
-	    Arrays.sort(terms, new ByDescVal());
-
-	    int maxCC = BooleanQuery.getMaxClauseCount();
-	    if (maxTerms > maxCC) {
-		System.out.println("Raising MaxClauseCount from " + maxCC + " to " + maxTerms);
-		BooleanQuery.setMaxClauseCount(maxTerms);
-		maxCC = BooleanQuery.getMaxClauseCount();
-	    }
-
-	    int mt = maxCC;
-	    if (maxTerms > 0 && maxTerms < mt) mt = maxTerms;
-	    System.out.println("Max clause count=" + maxCC +", maxTerms="+maxTerms+"; profile has " + terms.length + " terms; using top " + mt);
-
-	    int tcnt=0;
-	    for(String t: terms) {
-		BooleanQuery b = new BooleanQuery(); 	
-		for(String f: Search.searchFields) {
-		    TermQuery tq = new TermQuery(new Term(f, t));
-		    b.add( tq, BooleanClause.Occur.SHOULD);		
-		}
-		q.add( b,  BooleanClause.Occur.SHOULD);
-		tcnt++;
-		if (tcnt >= mt) break;
-	    }	    
-	    return q;
-	}
-
-	private class ScoresComparator implements Comparator<Integer> {
-	    double scores[];
-	    ScoresComparator(double _scores[]) { scores=_scores; }	    
-	    /** descending order */
-	    public int compare(Integer o1,Integer o2) {
-		double d = scores[ o2.intValue()] -
-		    scores[ o1.intValue()];
-		return (d<0)? -1 : (d>0) ? 1 : 0;
-	    }
+    }
     
+    Comparator getByDescVal() {
+	return new  ByDescVal();
+    }
+    
+    org.apache.lucene.search.Query firstQuery() {
+	BooleanQuery q = new BooleanQuery();
+	String [] terms = hq.keySet().toArray(new String[0]);
+	// Sort by value, in descending order
+	Arrays.sort(terms, new ByDescVal());
+	
+	int maxCC = BooleanQuery.getMaxClauseCount();
+	if (maxTerms > maxCC) {
+	    System.out.println("Raising MaxClauseCount from " + maxCC + " to " + maxTerms);
+	    BooleanQuery.setMaxClauseCount(maxTerms);
+	    maxCC = BooleanQuery.getMaxClauseCount();
 	}
+	
+	int mt = maxCC;
+	if (maxTerms > 0 && maxTerms < mt) mt = maxTerms;
+	System.out.println("Max clause count=" + maxCC +", maxTerms="+maxTerms+"; profile has " + terms.length + " terms; using top " + mt);
+	
+	int tcnt=0;
+	for(String t: terms) {
+	    BooleanQuery b = new BooleanQuery(); 	
+	    for(String f: Search.searchFields) {
+		TermQuery tq = new TermQuery(new Term(f, t));
+		b.add( tq, BooleanClause.Occur.SHOULD);		
+	    }
+	    q.add( b,  BooleanClause.Occur.SHOULD);
+	    tcnt++;
+	    if (tcnt >= mt) break;
+	}	    
+	return q;
+    }
+    
+    private class ScoresComparator implements Comparator<Integer> {
+	double scores[];
+	ScoresComparator(double _scores[]) { scores=_scores; }	    
+	/** descending order */
+	public int compare(Integer o1,Integer o2) {
+	    double d = scores[ o2.intValue()] -
+		scores[ o1.intValue()];
+	    return (d<0)? -1 : (d>0) ? 1 : 0;
+	}	
+    }
 
-    Vector<ArticleEntry> luceneRawSearch(int maxDocs) throws IOException {
-	    String [] terms = hq.keySet().toArray(new String[0]);
-
-	    int numdocs = dfc.reader.numDocs() ;
-	    double scores[] = new double[numdocs];	
-
-	    // Sort by value, in descending order
-	    Arrays.sort(terms, getByDescVal());
-
-	    // norms for fields that were stored in Lucene
-	    byte norms[][] = new byte[ Search.searchFields.length][];
-
+    Vector<ArticleEntry> luceneRawSearch(int maxDocs, ArticleStats[] allStats) throws IOException {
+	String [] terms = hq.keySet().toArray(new String[0]);
+	
+	int numdocs = dfc.reader.numDocs() ;
+	double scores[] = new double[numdocs];	
+	
+	// Sort by value, in descending order
+	Arrays.sort(terms, getByDescVal());
+	
+	// norms for fields that were stored in Lucene
+	byte norms[][] = new byte[ Search.searchFields.length][];
+	
+	for(int i=0; i<Search.searchFields.length; i++) {
+	    String f= Search.searchFields[i];
+	    if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
+	    norms[i] = dfc.reader.norms(f);
+	}
+	IndexSearcher searcher = new IndexSearcher( dfc.reader);
+	Similarity simi = searcher.getSimilarity(); 
+	
+	int tcnt=0,	missingStatsCnt=0;
+	for(String t: terms) {
+	    double idf = dfc.idf(t);
+	    double qval = hq.get(t).doubleValue() * idf;
 	    for(int i=0; i<Search.searchFields.length; i++) {
 		String f= Search.searchFields[i];
-		if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
-		norms[i] = dfc.reader.norms(f);
-	    }
-	    IndexSearcher searcher = new IndexSearcher( dfc.reader);
-	    Similarity simi = searcher.getSimilarity(); 
+		Term term = new Term(f, t);
+		TermDocs td = dfc.reader.termDocs(term);
+		td.seek(term);
+		while(td.next()) {
+		    int p = td.doc();
+		    int freq = td.freq();			
+		    //		    float normFactor = simi.decodeNormValue( norms[i][p]);
 
-	    int tcnt=0;
-	    for(String t: terms) {
-		double idf = dfc.idf(t);
-		double qval = hq.get(t).doubleValue() * idf;
-		for(int i=0; i<Search.searchFields.length; i++) {
-		    String f= Search.searchFields[i];
-		    Term term = new Term(f, t);
-		    TermDocs td = dfc.reader.termDocs(term);
-		    td.seek(term);
-		    while(td.next()) {
-			int p = td.doc();
-			int freq = td.freq();			
-			float normFactor = simi.decodeNormValue( norms[i][p]);
-			double z =qval * Math.sqrt(freq) * normFactor;
-			scores[p] += z;
-			if (debug!=null) {
-			    String aid=debug.getAid(p);
-			    if (aid!=null) System.out.println("CONTR[" + aid + "]("+f+":"+t+")="+z);
-			}
+		    double normFactor = 0;
+		    if (allStats[p]!=null) {
+			// FIMXE: also need the field-specific boost!
+			double norm = allStats[p].getNorm();
+			normFactor = 1/norm;
+		    } else {
+			missingStatsCnt++;
 		    }
-		    td.close();
+
+		    double z =qval * Math.sqrt(freq) * normFactor;
+		    scores[p] += z;
+		    if (debug!=null) {
+			String aid=debug.getAid(p);
+			if (aid!=null) System.out.println("CONTR[" + aid + "]("+f+":"+t+")="+z);
+		    }
 		}
-		tcnt++;		
-		if (maxTerms>0 && tcnt >= maxTerms) break;
-	    }	    
-	    // qpos[] will contain internal document numbers
-	    Integer qpos[]  = new Integer[numdocs];
-	    int  nnzc=0;
-	    for(int k=0; k<scores.length; k++) {		
-		if (scores[k]>0) {
-		    qpos[nnzc++] = new Integer(k);
-		}
+		td.close();
 	    }
-	    System.out.println("nnzc=" + nnzc);
-	    Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
-
-
-	    Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
-	    for(int i=0; i< nnzc && i<maxDocs; i++) {
-		final int k=qpos[i].intValue();
-		Document doc = searcher.doc(k);
-		//String aid = doc.get(ArxivFields.PAPER);
-		ArticleEntry ae= new ArticleEntry(i+1, doc);
-		ae.setScore( scores[k]);
-		entries.add( ae);
-	    }	
-	    return entries;
+	    tcnt++;		
+	    if (maxTerms>0 && tcnt >= maxTerms) break;
+	}	    
+	// qpos[] will contain internal document numbers
+	Integer qpos[]  = new Integer[numdocs];
+	int  nnzc=0;
+	for(int k=0; k<scores.length; k++) {		
+	    if (scores[k]>0) {
+		qpos[nnzc++] = new Integer(k);
+	    }
 	}
+	System.out.println("nnzc=" + nnzc);
+	if (missingStatsCnt>0) {
+	    System.out.println("used zeros for " + missingStatsCnt + " values, because of missing stats");
+	}
+	Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
+	
+
+	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
+	for(int i=0; i< nnzc && i<maxDocs; i++) {
+	    final int k=qpos[i].intValue();
+	    Document doc = searcher.doc(k);
+	    //String aid = doc.get(ArxivFields.PAPER);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc);
+	    ae.setScore( scores[k]);
+	    entries.add( ae);
+	}	
+	return entries;
+    }
+
+
+  Vector<ArticleEntry> luceneRawSearchOrig(int maxDocs) throws IOException {
+	String [] terms = hq.keySet().toArray(new String[0]);
+	
+	int numdocs = dfc.reader.numDocs() ;
+	double scores[] = new double[numdocs];	
+	
+	// Sort by value, in descending order
+	Arrays.sort(terms, getByDescVal());
+	
+	// norms for fields that were stored in Lucene
+	byte norms[][] = new byte[ Search.searchFields.length][];
+	
+	for(int i=0; i<Search.searchFields.length; i++) {
+	    String f= Search.searchFields[i];
+	    if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
+	    norms[i] = dfc.reader.norms(f);
+	}
+	IndexSearcher searcher = new IndexSearcher( dfc.reader);
+	Similarity simi = searcher.getSimilarity(); 
+	
+	int tcnt=0;
+	for(String t: terms) {
+	    double idf = dfc.idf(t);
+	    double qval = hq.get(t).doubleValue() * idf;
+	    for(int i=0; i<Search.searchFields.length; i++) {
+		String f= Search.searchFields[i];
+		Term term = new Term(f, t);
+		TermDocs td = dfc.reader.termDocs(term);
+		td.seek(term);
+		while(td.next()) {
+		    int p = td.doc();
+		    int freq = td.freq();			
+		    float normFactor = simi.decodeNormValue( norms[i][p]);
+		    double z =qval * Math.sqrt(freq) * normFactor;
+		    scores[p] += z;
+		    if (debug!=null) {
+			String aid=debug.getAid(p);
+			if (aid!=null) System.out.println("CONTR[" + aid + "]("+f+":"+t+")="+z);
+		    }
+		}
+		td.close();
+	    }
+	    tcnt++;		
+	    if (maxTerms>0 && tcnt >= maxTerms) break;
+	}	    
+	// qpos[] will contain internal document numbers
+	Integer qpos[]  = new Integer[numdocs];
+	int  nnzc=0;
+	for(int k=0; k<scores.length; k++) {		
+	    if (scores[k]>0) {
+		qpos[nnzc++] = new Integer(k);
+	    }
+	}
+	System.out.println("nnzc=" + nnzc);
+	Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
+	
+
+	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
+	for(int i=0; i< nnzc && i<maxDocs; i++) {
+	    final int k=qpos[i].intValue();
+	    Document doc = searcher.doc(k);
+	    //String aid = doc.get(ArxivFields.PAPER);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc);
+	    ae.setScore( scores[k]);
+	    entries.add( ae);
+	}	
+	return entries;
+    }
+
 
 
     /** Stuff used to control debugging and additional verbose reporting. */

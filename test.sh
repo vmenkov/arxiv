@@ -20,10 +20,11 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 
-set opt="-cp ${cp} ${opt} -Draw=false -DmaxTerms=4096"
+set opt="-cp ${cp} ${opt}  -DmaxTerms=4096"
+
+# -Draw=true -DmaxDocs=10000
 
 echo "opt=$opt"
-
 
 time java $opt $2 $3 edu.rutgers.axs.Test $1 
 

@@ -89,10 +89,11 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	return res;
     }
 
-
     public ArticleStats() {
 	setTime( new Date());
     }
+
+
 
     /*ArticleStats(String _aid) {
 	aid=_aid;

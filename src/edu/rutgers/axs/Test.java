@@ -87,13 +87,18 @@ public class Test {
 	Test x = new Test();
 	UserProfile.setDebug(x.reader, ht);
 
+	EntityManager em = Main.getEM();
+
+	ArticleStats[] allStats = 
+	    ArticleAnalyzer.getArticleStatsArray(em, x.reader);	    
+
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);
-	    UserProfile upro = new UserProfile(uname, x.reader);	   
- 
+	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
+
 	    //IndexSearcher searcher = new IndexSearcher( x.reader);	    
 	    Vector<ArticleEntry> entries=
-		raw ? upro.luceneRawSearch(maxDocs):
+		raw ? upro.luceneRawSearch(maxDocs, allStats ):
 		x.luceneQuerySearch(upro);
 
 	    int startat=0;
