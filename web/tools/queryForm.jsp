@@ -52,6 +52,9 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <tr>
 <td>select x from Action x, User u where x.user=u and u.user_name='vmenkov'
 <td>select x.* from Action x, arxiv_users u where x.user_id=u.id and u.user_name='vmenkov'
+<tr>
+<td>select x from ArticleStats x
+<td>select x.* from ArticleStats x
 <!--
 <tr><td>select x from Respondent x where x.id = 69 <td> select x.* from Respondent x where x.id = 69
 <tr><td>select x from Respondent x where x.id in (69,70,71) <td> select x.* from Respondent x where x.id  in (69,70,71) 
@@ -98,7 +101,7 @@ select x from User x
 <tr><td colspan=3>
 <%= QueryServlet.mkHeadBox() %>
 <tr><td colspan=3>
-Limit to the number of result rows to this number: <input name="<%= QueryServlet.MAX_RESULT %>" size=10>
+Limit the number of displayed result rows to this number: <input name="<%= QueryServlet.MAX_RESULT %>" size=10>
 </table>
 </p>
 
