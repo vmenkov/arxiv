@@ -57,16 +57,39 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public void setLength(int x) { length=x;}
 
     /** When this was last updated */
+    @Basic 
     @Display(editable=false) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
 	Date time;
     public  Date getTime() { return time; }
     public void setTime(       Date x) { time = x; }
 
-    
+    /** Field boost factor divided by the vector norm */
+    @Basic
+	double boost0;
+    public double getBoost0() { return boost0; }
+    public void setBoost0(double x) {boost0 =x;}
+     @Basic
+	double boost1;
+    public double getBoost1() { return boost1; }
+    public void setBoost1(double x) {boost1 =x;}
+    @Basic
+	double boost2;
+    public double getBoost2() { return boost2; }
+    public void setBoost2(double x) {boost2 =x;}
+    @Basic
+	double boost3;
+    public double getBoost3() { return boost3; }
+    public void setBoost3(double x) {boost3 =x;}
 
-   public boolean validate(EntityManager em, StringBuffer errmsg) { 
-       return true; 
+    /** FIXME: should have used an array instead... */
+    public double getBoost(int i) {
+	return (i<2) ? (i==0 ? boost0 : boost1) :
+	    (i==2 ? boost2 : boost3);
+    }
+
+    public boolean validate(EntityManager em, StringBuffer errmsg) { 
+	return true; 
     }
 
    /** Find the matching record.

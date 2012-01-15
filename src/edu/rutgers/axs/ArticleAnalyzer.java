@@ -106,6 +106,8 @@ class ArticleAnalyzer {
 	return getCoef(docno,null);
     }
 
+    static final boolean useSqrt = false;
+
     /** 
 	@param docno Lucene's internal integer ID for the document,
 	@param as This is an output parameter. If non-null, update
@@ -113,7 +115,6 @@ class ArticleAnalyzer {
     */
     HashMap<String, Double> getCoef(int docno, ArticleStats as) 
 	throws IOException {
-	final boolean useSqrt = false;
 	boolean mustUpdate = (as!=null);
 
 	//long utc = sur.getUniqueTermCount();
@@ -151,6 +152,10 @@ class ArticleAnalyzer {
 	    as.setLength(length);
 	    as.setTermCnt(h.size());
 	    as.setNorm(0);
+	    as.setBoost0(0);
+	    as.setBoost1(0);
+	    as.setBoost2(0);
+	    as.setBoost3(0);
 	    as.setTime( new Date());
 	}
 
@@ -186,6 +191,11 @@ class ArticleAnalyzer {
 	if (mustUpdate) { 
 	    double norm=tfNorm(h);
 	    as.setNorm(norm);
+	    as.setBoost0(boost[0]/norm);
+	    as.setBoost1(boost[1]/norm);
+	    as.setBoost2(boost[2]/norm);
+	    as.setBoost3(boost[3]/norm);
+
 	}
 
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");

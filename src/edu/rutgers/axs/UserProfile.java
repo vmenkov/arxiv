@@ -213,15 +213,14 @@ class UserProfile {
 		    //		    float normFactor = simi.decodeNormValue( norms[i][p]);
 
 		    double normFactor = 0;
-		    if (allStats[p]!=null) {
-			// FIMXE: also need the field-specific boost!
-			double norm = allStats[p].getNorm();
-			normFactor = 1/norm;
+		    if (allStats[p]!=null) {			
+			normFactor = allStats[p].getBoost(i);
 		    } else {
 			missingStatsCnt++;
 		    }
 
-		    double z =qval * Math.sqrt(freq) * normFactor;
+		    double z =qval * normFactor * 
+			(ArticleAnalyzer.useSqrt? Math.sqrt(freq) : freq);
 		    scores[p] += z;
 		    if (debug!=null) {
 			String aid=debug.getAid(p);
