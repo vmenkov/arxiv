@@ -61,6 +61,12 @@ class ArticleAnalyzer {
     int totalDF(String t) throws IOException {
 	Integer val = h.get(t);
 	if (val!=null) return val.intValue();
+	
+	if (h.size()> 1000000) {
+	    // FIXME
+	    h.clear(); // trying to prevent OutOfMemoryError
+	}
+
 	int sum=0;
 	for(IndexReader sur: surs) {
 	    for(String name: fields) {
