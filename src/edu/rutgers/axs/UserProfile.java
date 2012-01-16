@@ -178,6 +178,13 @@ class UserProfile {
 	}	
     }
 
+    /** This is an "autonmous" version, which goes for the real cosine
+      similarity, So lots of numbers are precomputed by ourselves,
+      stored in the SQL database, and then pulled with ArticleStats[].
+      
+      @param allStats Structures with pre-computed norms and field
+      boost factors, pulled from the SQL database.
+     */
     Vector<ArticleEntry> luceneRawSearch(int maxDocs, ArticleStats[] allStats) throws IOException {
 	String [] terms = hq.keySet().toArray(new String[0]);
 	
@@ -259,7 +266,9 @@ class UserProfile {
 	return entries;
     }
 
-
+    /** This is the "original" version, that more relies on values
+     * (norms) stored in Lucene.
+     */
   Vector<ArticleEntry> luceneRawSearchOrig(int maxDocs) throws IOException {
 	String [] terms = hq.keySet().toArray(new String[0]);
 	

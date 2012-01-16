@@ -196,15 +196,14 @@ class ArticleAnalyzer {
 	    as.setBoost1(boost[1]/norm);
 	    as.setBoost2(boost[2]/norm);
 	    as.setBoost3(boost[3]/norm);
-
 	}
 
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
 	return h;
     }
 
-    /** The idf-weighted 2-norm of a term frequency vector.
-     @param h Represnets the term frequency vector. */
+    /** Computes the idf-weighted 2-norm of a term frequency vector.
+     @param h Represents the term frequency vector. */
     double tfNorm(HashMap<String, Double> h) {
 	double sum=0;
 	for(String t: h.keySet()) {

@@ -67,7 +67,9 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public  Date getTime() { return time; }
     public void setTime(       Date x) { time = x; }
 
-    /** Field boost factor divided by the vector norm */
+    /** Field boost factor divided by the vector norm. The order is as per 
+	ArticleStats.upFields
+    */
     @Basic	@Display(editable=false, order=10)
 	double boost0;
     public double getBoost0() { return boost0; }
@@ -108,7 +110,11 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }
 
-    /** Retrieves them all from the database. May be expensive. */
+    /** Retrieves them all from the database. May be expensive. 
+	FIXME: we do get an OutOfMemoryError here sometimes. 
+	It may make sense to store data in an array of sorts instead,
+	e.g. norms[], boosts[][]...
+     */
     public static List<ArticleStats> getAll( EntityManager em) {
 	Query q = em.createQuery("select m from ArticleStats m");
 	List<ArticleStats> res = (List<ArticleStats>)q.getResultList();
