@@ -164,7 +164,8 @@ class ArticleAnalyzer {
 	// individual fields' boost factors
 	double boost[] = new double[nf];
 	for(int j=0; j<nf;  j++) {	
-	    boost[j] = (baseBoost[j] * lengths[j] ) / length;
+	    boost[j] = (lengths[j]==0) ? 0 : 
+		(baseBoost[j] * length) / lengths[j];
 	}
 
 	for(int j=0; j<nf;  j++) {	
@@ -219,21 +220,15 @@ class ArticleAnalyzer {
        return as;
        } */
 
+    /** Document fields used in creating the user profile */
+    static final String upFields[] =  {
+	ArxivFields.TITLE, 
+	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
+	ArxivFields.ARTICLE};
 
     private static double[] initBoost(String [] fields) {
-	// Expected fields
-	HashMap<String,Double> hBaseBoost = new HashMap<String,Double> ();
-	hBaseBoost.put(ArxivFields.ARTICLE, new Double( 1));
-	hBaseBoost.put(ArxivFields.ABSTRACT, new Double( 1));
-	hBaseBoost.put(ArxivFields.TITLE, new Double( 0.5));
-	hBaseBoost.put(ArxivFields.AUTHORS, new Double( 0.2));
-
-	double baseBoost[] = new double[fields.length];
-	for(int j=0; j<fields.length;j++) {
-	    String name= fields[j];
-	    baseBoost[j] = hBaseBoost.containsKey(name) ? 
-		hBaseBoost.get(name).doubleValue() : 1;
-	}	    
+	double baseBoost[] = {1 ,1 , 0.5, 0.2};
+	if (baseBoost.length != fields.length) throw new IllegalArgumentException("Expected 4 fields");
 	return baseBoost;
     }
     
@@ -376,7 +371,7 @@ class ArticleAnalyzer {
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	IndexReader reader =  IndexReader.open( indexDirectory);            
 
-	ArticleAnalyzer z = new ArticleAnalyzer(reader, Search.searchFields);
+	ArticleAnalyzer z = new ArticleAnalyzer(reader, upFields);
 
 	EntityManager em  = Main.getEM();
 	z.computeAllMissingNorms(em, maxDocs);

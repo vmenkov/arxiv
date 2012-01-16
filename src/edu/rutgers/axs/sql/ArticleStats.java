@@ -31,12 +31,14 @@ import java.lang.annotation.*;
 http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guide_mapping_jpa.html#ref_guide_mapping_jpa_unique about the '@Index' and '@Unique' annotation.
 */
     @Basic      @Column(length=16) @Index(unique=true)
+	@Display(editable=false, order=2)
 	String aid=null;
     public String getAid() { return aid; }
     public void setAid(String x) { aid=x;}
     /** pre-computed two-norm for the article's feature vectors, used
 	in dot products */
     @Basic
+	@Display(editable=false, order=3)
 	double norm;
     public double getNorm() { return norm; }
     public void setNorm(double x) { norm=x;}
@@ -46,38 +48,39 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	norm is computed.
     */
     @Basic 
+	@Display(editable=false, order=4)
 	int termCnt;
    public void setTermCnt(int x) { termCnt=x;}
     /** The sum of the raw term frequencies of the "counted" terms -
 	i.e., the length of the article, in word tokens, after all
 	invalid tokens and stop words have been excluded. */
     @Basic 
+	@Display(editable=false, order=5)
 	int length;
     public int getLength() { return length;}
     public void setLength(int x) { length=x;}
 
     /** When this was last updated */
-    @Basic 
-    @Display(editable=false) 
+    @Basic 	@Display(editable=false, order=20)
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
 	Date time;
     public  Date getTime() { return time; }
     public void setTime(       Date x) { time = x; }
 
     /** Field boost factor divided by the vector norm */
-    @Basic
+    @Basic	@Display(editable=false, order=10)
 	double boost0;
     public double getBoost0() { return boost0; }
     public void setBoost0(double x) {boost0 =x;}
-     @Basic
-	double boost1;
+     @Basic	@Display(editable=false, order=11)
+	 double boost1;
     public double getBoost1() { return boost1; }
     public void setBoost1(double x) {boost1 =x;}
-    @Basic
+    @Basic	@Display(editable=false, order=12)
 	double boost2;
     public double getBoost2() { return boost2; }
     public void setBoost2(double x) {boost2 =x;}
-    @Basic
+    @Basic	@Display(editable=false, order=13)
 	double boost3;
     public double getBoost3() { return boost3; }
     public void setBoost3(double x) {boost3 =x;}

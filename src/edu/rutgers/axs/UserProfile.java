@@ -31,7 +31,7 @@ class UserProfile {
     //UserProfile(ArticleAnalyzer _dfc) {
     //	dfc = _dfc;
     //}
-    
+
     /** Maps term to value (cumulative tf) */
     HashMap<String, Double> hq = new HashMap<String, Double>();	
     void add(String key, double inc) {
@@ -86,7 +86,7 @@ class UserProfile {
 	    throw new IllegalArgumentException( "No user with user_name="+ uname+" has been registered");
 	}
 
-	dfc=new ArticleAnalyzer(reader,Search.searchFields);
+	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 	// descending score order
 	UserPageScore[]  ups =  UserPageScore.rankPagesForUser(actor);
 	int cnt=0;
@@ -156,7 +156,7 @@ class UserProfile {
 	int tcnt=0;
 	for(String t: terms) {
 	    BooleanQuery b = new BooleanQuery(); 	
-	    for(String f: Search.searchFields) {
+	    for(String f: ArticleAnalyzer.upFields) {
 		TermQuery tq = new TermQuery(new Term(f, t));
 		b.add( tq, BooleanClause.Occur.SHOULD);		
 	    }
@@ -188,10 +188,10 @@ class UserProfile {
 	Arrays.sort(terms, getByDescVal());
 	
 	// norms for fields that were stored in Lucene
-	byte norms[][] = new byte[ Search.searchFields.length][];
+	byte norms[][] = new byte[ ArticleAnalyzer.upFields.length][];
 	
-	for(int i=0; i<Search.searchFields.length; i++) {
-	    String f= Search.searchFields[i];
+	for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
+	    String f= ArticleAnalyzer.upFields[i];
 	    if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
 	    norms[i] = dfc.reader.norms(f);
 	}
@@ -202,8 +202,8 @@ class UserProfile {
 	for(String t: terms) {
 	    double idf = dfc.idf(t);
 	    double qval = hq.get(t).doubleValue() * idf;
-	    for(int i=0; i<Search.searchFields.length; i++) {
-		String f= Search.searchFields[i];
+	    for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
+		String f= ArticleAnalyzer.upFields[i];
 		Term term = new Term(f, t);
 		TermDocs td = dfc.reader.termDocs(term);
 		td.seek(term);
@@ -270,10 +270,10 @@ class UserProfile {
 	Arrays.sort(terms, getByDescVal());
 	
 	// norms for fields that were stored in Lucene
-	byte norms[][] = new byte[ Search.searchFields.length][];
+	byte norms[][] = new byte[ ArticleAnalyzer.upFields.length][];
 	
-	for(int i=0; i<Search.searchFields.length; i++) {
-	    String f= Search.searchFields[i];
+	for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
+	    String f= ArticleAnalyzer.upFields[i];
 	    if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
 	    norms[i] = dfc.reader.norms(f);
 	}
@@ -284,8 +284,8 @@ class UserProfile {
 	for(String t: terms) {
 	    double idf = dfc.idf(t);
 	    double qval = hq.get(t).doubleValue() * idf;
-	    for(int i=0; i<Search.searchFields.length; i++) {
-		String f= Search.searchFields[i];
+	    for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
+		String f= ArticleAnalyzer.upFields[i];
 		Term term = new Term(f, t);
 		TermDocs td = dfc.reader.termDocs(term);
 		td.seek(term);
