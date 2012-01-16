@@ -227,7 +227,7 @@ class ArticleAnalyzer {
 	ArxivFields.ARTICLE};
 
     private static double[] initBoost(String [] fields) {
-	double baseBoost[] = {1 ,1 , 0.5, 0.2};
+	double baseBoost[] = {3, 1, 3, 3};
 	if (baseBoost.length != fields.length) throw new IllegalArgumentException("Expected 4 fields");
 	return baseBoost;
     }
@@ -287,7 +287,7 @@ class ArticleAnalyzer {
 
 	@param maxCnt Max number of docs to analyze. If negative, analyze all.
     */
-    void computeAllMissingNorms(EntityManager em, int maxCnt) throws  org.apache.lucene.index.CorruptIndexException, IOException {
+    void computeAllMissingNorms(EntityManager em, int maxCnt, boolean recompute) throws  org.apache.lucene.index.CorruptIndexException, IOException {
 	List<ArticleStats> aslist = ArticleStats.getAll( em);
 	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>();
 	for(ArticleStats as: aslist) {
@@ -303,11 +303,16 @@ class ArticleAnalyzer {
 	    String aid = doc.get(ArxivFields.PAPER);
 	    ArticleStats as =h.get(aid);
 	    if (as!=null) {
-		// FIMXE: check dates and update perhaps?
-		System.out.println("Already have  document " + aid + ", pos="+docno);
-		continue;
+		if (recompute) {
+		    System.out.println("Will re-do document " + aid + ", pos="+docno);
+		} else {
+		    // FIMXE: check dates and update perhaps?
+		    System.out.println("Already have  document " + aid + ", pos="+docno);
+		    continue;
+		}
+	    } else {
+		as = new ArticleStats();
 	    }
-	    as = new ArticleStats();
 	    as.setAid(aid);
 	    getCoef(docno, as);
 	    System.out.println("Analyzed document " + aid + ", pos="+docno +
@@ -364,17 +369,21 @@ class ArticleAnalyzer {
     }
 
 
+    /** -DmaxDocs=-1 -Drecompute=false
+     */
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();
 	int maxDocs = ht.getOption("maxDocs", -1);
-
+	boolean recompute = ht.getOption("recompute", false);
+	
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	IndexReader reader =  IndexReader.open( indexDirectory);            
 
 	ArticleAnalyzer z = new ArticleAnalyzer(reader, upFields);
 
+
 	EntityManager em  = Main.getEM();
-	z.computeAllMissingNorms(em, maxDocs);
+	z.computeAllMissingNorms(em, maxDocs, recompute);
 	em.close();
     }
 
