@@ -34,9 +34,9 @@ import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
  /** The application for pulling data from the main arxiv server using
-  * the OAI interface, and importing them into our server.
+     the OAI interface, and importing them into our server's Lucene
+     datastore.
  */
-
 public class ArxivImporter {
 
     static private XMLtoLucene  xml2luceneMap = XMLtoLucene.makeMap();
@@ -44,7 +44,6 @@ public class ArxivImporter {
     static class Tags {
 	final static String RECORD = "record", HEADER="header", METADATA="metadata";
     }
-
 
     /** Returns null if doc is deleted */
     public static org.apache.lucene.document.Document parseRecordElement(Element e)  throws IOException {
@@ -304,24 +303,29 @@ public class ArxivImporter {
 
     /** pulls in all pages */
     public void importAll()  throws IOException,  org.xml.sax.SAXException {
-	importAll(null, -1, true);
+	importAll(null, -1, true, null);
     }
 
     /** As per http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm
 
 http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:0901.4014
     */
-    private static String makeURL(String tok) {
+    private static String makeURL(String tok, String from) {
 	String base="http://export.arxiv.org/oai2?verb=ListRecords";
-	return  (tok==null) ?base + "&metadataPrefix=arXiv" :
-	    base + "&resumptionToken="+tok;
+	if  (tok!=null) {
+ 	    return base + "&resumptionToken="+tok;
+	}
+	String s = base + "&metadataPrefix=arXiv";
+	if (from !=null) s +=  "&from="+from;
+	return s;
     }
 
     /** pulls in all pages (or only some)
 	@param tok start harvesting from the beginning (if null), or from this resumption token (otherwise)
-	@param max if max non-negative, then 
+	@param max if max non-negative, then ...; -1 means "all"
+	@param from "YYYY-MM-DD", passed to OAI2 from=... option
      */
-    public void importAll(String tok, int max, boolean rewrite)  throws IOException,  org.xml.sax.SAXException {
+    public void importAll(String tok, int max, boolean rewrite, String from)  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;
 
 	IndexWriter writer =  makeWriter(); 
@@ -329,7 +333,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	try {
 
 	while( max<0 || pagecnt < max) 	 {
-	    String us = makeURL( tok);
+	    String us = makeURL( tok, from);
 	    System.out.println("Requesting: " + us);
 	    Element e = getPage(us);	    
 	    tok = parseResponse(e, writer, rewrite);
@@ -402,6 +406,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	<pre>
 	-Dtoken=xxxx   Resume from the specified resumption page
 	-Drewrite=[true|false]  Default is true; if false, already stored pages are not modified  	
+	-Dfrom=YYYY-MM-DD
 	</pre>
      */
     static public void main(String[] argv) throws IOException, SAXException {
@@ -409,6 +414,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
 	boolean rewrite =ht.getOption("rewrite", true);
+	String from=ht.getOption("from", null);
 
 	Options.init(); // read the legacy config file
 
@@ -425,7 +431,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		} catch(Exception ex) {}
 	    }
 	    System.out.println("Processing web data, up to "+max + " pages");
-	    imp.importAll(tok, max, rewrite);
+	    imp.importAll(tok, max, rewrite, from);
 	} else if (argv[0].equals("allmeta")) {
 	    if (!rewrite) throw new IllegalArgumentException("For a reload from metachache, ought to use -Drewrite=true");
 	    imp.readingMetacache=true;
