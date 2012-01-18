@@ -122,6 +122,83 @@ public class ArxivImporter {
 	searcher = new IndexSearcher( indexDirectory); 
     }
 
+    /** Pulls in the article body over HTTP from
+	search1.rutgers.edu. (This is enabled by them soft-linking
+	their cache directory into their web server's file system, as
+	per VM's request; 2012-01-16.
+     */
+    boolean getBodyFromWeb(String id, File storeTo) throws IOException
+    {
+	String doc_file = Cache.getFilename(id , "arXiv-cache");
+	if (doc_file==null) {
+	    System.out.println("Cannot figure remote file name for article id=" + id);
+	    return false;
+	} 
+	String lURLString= "http://search.arxiv.org:8081/" + doc_file;
+	URL lURL    =new URL( lURLString);
+	//	Logging.info("FilterServlet requesting URL " + lURL);
+	HttpURLConnection lURLConnection;
+	try {
+	    lURLConnection=(HttpURLConnection)lURL.openConnection();	
+	    lURLConnection.setFollowRedirects(false); 
+	    lURLConnection.connect();
+	}  catch(Exception ex) {
+	    String msg= "Failed to open connection to " + lURL;
+	    //  Logging.error(msg);
+	    //ex.printStackTrace(System.out);
+	    System.out.println(msg);
+	    return false;
+	}
+    
+	int code = lURLConnection.getResponseCode();
+	String gotResponseMsg = lURLConnection.getResponseMessage();
+
+	//	Logging.info("code = " + code +", msg=" + gotResponseMsg);
+
+	if (code != HttpURLConnection.HTTP_OK) {
+	    String msg = "Response code=" + code + " for url " + lURL;
+	    System.out.println(msg);
+	    return false;
+	}
+
+	final int ChunkSize = 8192;
+	int lContentLength = lURLConnection.getContentLength();
+	// e.g.  "Content-Type: text/html; charset=ISO-8859-4"
+	String lContentType = lURLConnection.getContentType();
+    //	Logging.info("pi=" + pi + ", content-type=" +  lContentType);
+
+	InputStream is=null;	
+	try {
+	    is = lURLConnection.getInputStream();
+	}  catch(Exception ex) {
+	    String msg= "Failed to obtain data from " + lURL;
+	    System.out.println(msg);
+	    return false;
+	}
+	if (is==null) {	// for errors such as 404, we get ErrorStream instead
+	    String msg= "Failed to obtain data IS from " + lURL;
+	    System.out.println(msg);
+	    return false;
+	}
+
+	// simple bytewise copy
+	int M = 4096;
+
+	BufferedInputStream in= new BufferedInputStream(is, M*4);
+	FileOutputStream aout = new FileOutputStream(storeTo);
+
+	byte [] buf = new byte[ M ];
+	while( true ) {
+	    int n = in.read(buf);
+	    if (n <= 0) break; // eof
+	    aout.write(buf, 0, n);
+	}
+
+	in.close();
+	aout.close();
+	return true;
+    }
+
     public void setBodySrcRoot(String _bodySrcRoot)  {
 	bodySrcRoot=_bodySrcRoot;
     }
@@ -133,10 +210,27 @@ public class ArxivImporter {
 	System.out.println("id="+id+", body at " + doc_file);
 
 	if (doc_file==null) {
-	    System.out.println("No Document file " + doc_file + " missing.");
+	    System.out.println("Cannot figure file name for article id=" + id);
 	    return null;
 	} 
 	File f = new File( doc_file);
+
+	if (!f.exists()) {
+	    // can we get it from the web?
+	    File g = f.getParentFile();
+	    if (g!=null && !g.exists()) {
+		boolean code = g.mkdirs();
+		System.out.println("Creating dir " + g + "; success=" + code);
+	    }
+	    try {
+		boolean code=getBodyFromWeb( id, f);
+		System.out.println("Tried to get data from the web for  document file " + doc_file +", success=" + code);
+	    } catch (IOException E) {
+		System.out.println("Failed to copy data from the web for  document file " + doc_file);
+		return null;
+	    }	
+	}
+
 	if (!f.canRead()) {
 	    System.out.println("Document file " + doc_file + " missing.");   
 	    return null;
@@ -415,6 +509,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	String tok=ht.getOption("token", null);
 	boolean rewrite =ht.getOption("rewrite", true);
 	String from=ht.getOption("from", null);
+	boolean optimize =ht.getOption("optimize", true);
 
 	Options.init(); // read the legacy config file
 
@@ -437,23 +532,32 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    imp.readingMetacache=true;
 	    IndexWriter writer =  imp.makeWriter(); 
 	    imp.processDir( new File(imp.metaCacheRoot), writer, rewrite );
-	    writer.optimize();
+	    if (optimize) {
+		System.out.println("Optimizing index... ");
+		writer.optimize();
+	    }
 	    writer.close();
-	} else {
+	} else if (argv[0].equals("files")) {
 	    // processing files
-	    for(String s: argv) {
+	    IndexWriter writer =  imp.makeWriter(); 
+	    for(int i=1; i<argv.length; i++) {
+		String s= argv[i];
 	 	System.out.println("Processing " + s);
 		Element e = XMLUtil.readFileToElement(s);
-		IndexWriter writer =  imp.makeWriter(); 
 		if (e.getNodeName().equals(Tags.RECORD)) {
 		    imp.importRecord(e, writer , rewrite);
 		} else {
 		    tok = imp.parseResponse(e, writer , rewrite);
 		    System.out.println("resumptionToken =  " + tok);
 		}
-		writer.optimize();
-		writer.close();
 	    }
+	    if (optimize) {
+		System.out.println("Optimizing index... ");
+		writer.optimize();
+	    }
+	    writer.close();
+	} else {
+	    System.out.println("Unrecognized command: " + argv[0]);
 	}
 	System.out.println("imported "+imp.pcnt+" docs, among which missing body files for "+ imp.missingBodyIdList.size() +" docs");
 	PrintWriter fw = new PrintWriter(new FileWriter("missing.txt"));
@@ -466,3 +570,4 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
 
 }
+

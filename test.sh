@@ -6,7 +6,7 @@
 # ... showcoef id
 # ....
 
-set opt="-DOSMOT_CONFIG=."
+set opt="-Xmx1024m -DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib
 
@@ -20,7 +20,7 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 
-set opt="-cp ${cp} ${opt}  -DmaxTerms=4096"
+set opt="-cp ${cp} ${opt}  -DmaxTerms=8192"
 
 # -Draw=true -DmaxDocs=10000
 
