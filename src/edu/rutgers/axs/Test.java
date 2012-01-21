@@ -31,30 +31,6 @@ public class Test {
     }
 
    
-    Vector<ArticleEntry> luceneQuerySearch(UserProfile upro) throws IOException {
-	org.apache.lucene.search.Query q = upro.firstQuery();
-	
-	IndexSearcher searcher = new IndexSearcher( reader);
-	
-	//numdocs = searcher.getIndexReader().numDocs() ;
-	//System.out.println("index has "+numdocs +" documents");
-
-	TopDocs 	 top = searcher.search(q, maxDocs + 1);
-	ScoreDoc[] scoreDocs = top.scoreDocs;
-	boolean needNext=(scoreDocs.length > maxDocs);
-	
-	int startat=0;
-	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
-	for(int i=startat; i< scoreDocs.length && i<maxDocs; i++) {
-	    Document doc = searcher.doc(scoreDocs[i].doc);
-	    String aid = doc.get(ArxivFields.PAPER);
-	    ArticleEntry ae= new ArticleEntry(i+1, doc);
-	    ae.setScore( scoreDocs[i].score);
-	    entries.add( ae);
-	}	
-	return  entries;
-    }
-
     /** Find a document by article ID, using a given searcher.
      @return Lucen internal doc id.*/
     static int find(IndexSearcher s , String id) throws IOException{
@@ -96,10 +72,9 @@ public class Test {
 	    System.out.println("User=" + uname);
 	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
 
-	    //IndexSearcher searcher = new IndexSearcher( x.reader);	    
 	    Vector<ArticleEntry> entries=
 		raw ? upro.luceneRawSearch(maxDocs, allStats ):
-		x.luceneQuerySearch(upro);
+		upro.luceneQuerySearch(maxDocs);
 
 	    int startat=0;
 	    int pos = startat+1;

@@ -213,6 +213,19 @@ class ArticleAnalyzer {
 	return Math.sqrt(sum);
     }
 
+    /** This is the idf-weighted 2-norm of a vector composed of SQUARE
+     ROOTS of term frequencies.
+     @param h Represents the term frequency vector. */ 
+    double sqrtTfNorm(HashMap<String, Double> h) {
+	double sum=0;
+	for(String t: h.keySet()) {
+	    double q= h.get(t).doubleValue();
+	    sum += q * idf(t);
+	}
+	return Math.sqrt(sum);
+    }
+
+
     /* ArticleStats getStats(int docno) throws IOException {
        ArticleStats as = new ArticleStats();
        getCoef(docno, as);

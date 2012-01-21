@@ -32,12 +32,26 @@ class UserProfile {
     //	dfc = _dfc;
     //}
 
+    /** Ordered list by importance, in descending order. */
+    String[] terms;
+
+    static class TwoVal {	
+	/** Coefficients for   phi(t) and sqrt(phi(t)) */
+	double w1, w2;
+	TwoVal(double _w1, double _w2) { w1=_w1; w2=_w2;}
+    }
+
     /** Maps term to value (cumulative tf) */
-    HashMap<String, Double> hq = new HashMap<String, Double>();	
-    void add(String key, double inc) {
-	Double val = hq.get(key);
-	double d = (val==null? 0 : val.doubleValue()) + inc;
-	hq.put( key, new Double(d));	  
+    HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
+
+    void add(String key, double inc1, double inc2) {
+	TwoVal val = hq.get(key);
+	if (val==null) {
+	    hq.put( key, new TwoVal(inc1, inc2));	  
+	} else {
+	    val.w1 += inc1;
+	    val.w2 += inc1;
+	}
     }
     
 
@@ -94,12 +108,18 @@ class UserProfile {
 	    if (up.getScore() <=0) break; // don't include "negative" pages
 	    String aid = up.getArticle();
 	    HashMap<String, Double> h = dfc.getCoef(aid);
+	    // discount factor
+	    double gamma = getGamma(cnt);
 	    // FIXME: used stored norm instead
 	    double norm = dfc.tfNorm(h);
-	    double gamma = getGamma(cnt);
 	    double f = gamma / norm;
+	    // for the "sqrt(phi)" part
+	    double norm2 = dfc.sqrtTfNorm(h);
+	    double f2 = gamma/norm2;
+
 	    for(Map.Entry<String,Double> e: h.entrySet()) {
-		add( e.getKey(), f * e.getValue().doubleValue());
+		double q = e.getValue().doubleValue();
+		add( e.getKey(), f * q, f2 * Math.sqrt(q));
 	    }
 	    cnt++;
 	}
@@ -107,17 +127,54 @@ class UserProfile {
 	
 	purgeUselessTerms();
 
-	String[] terms = hq.keySet().toArray(new String[0]);
+	terms = hq.keySet().toArray(new String[0]);
 	//Arrays.sort(terms);
 	Arrays.sort(terms, getByDescVal());
-	System.out.println( "User profile has " + terms.length + " terms (was "+size0+" before purging)");
+	System.out.println( "User profile has " + terms.length);
+	//save(System.out);
+	save(new File("profile.tmp"));
+    }
+
+    /** Reads the profile from a file */
+    UserProfile(File f, IndexReader reader) throws IOException {
+	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	FileReader fr = new FileReader(f);
+	LineNumberReader r = new LineNumberReader(fr);
+	String s;
+	Vector<String> vterms = new 	Vector<String>();
+	int linecnt = 0;
+	while((s=r.readLine())!=null) {
+	    linecnt++;
+	    s = s.trim();
+	    if (s.equals("") || s.startsWith("#")) continue;
+	    String q[] = s.split("\\s+");
+	    if (q==null || q.length != 4) {
+		throw new IOException("Cannot parse line " + linecnt + " in file " + f);
+	    }
+	    String t = q[0];
+	    vterms.add(t);
+	    hq.put(t, new TwoVal(Double.parseDouble(q[1]), Double.parseDouble(q[2])));
+	    // q[3] is dfc, and can be ignored
+	}
+	r.close();
+    }
+
+    public void save(File f) throws IOException {
+	PrintStream w= new PrintStream(new FileOutputStream(f));
+	save(w);
+	w.close();
+    }
+
+    public void save(PrintStream w) {
+	w.println("#--- Entries are ordered by w(t)*idf(t)");
+	w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
 	for(int i=0; i<terms.length; i++) {
 	    String t=terms[i];
+	    double w1 = hq.get(t).w1;
+	    double w2 = hq.get(t).w2;
 	    double idf=	dfc.idf(t);
-	    System.out.println( t + " : " + hq.get(t) + "*" + idf+
-				"\t="+ hq.get(t)*idf);
+	    w.println(t + "\t" + w1 + "\t"+w2 + "\t" + idf);
 	}
-	//df= +sur.docFreq(term);
     }
 
 
@@ -126,8 +183,8 @@ class UserProfile {
     */
     class ByDescVal implements  Comparator<String> {
 	public int compare(String o1,String o2) {
-	    double d = hq.get(o2).doubleValue() * dfc.idf(o2)- 
-		hq.get(o1).doubleValue() * dfc.idf(o1);
+	    double d = hq.get(o2).w1 * dfc.idf(o2)- 
+		hq.get(o1).w1 * dfc.idf(o1);
 	    return (d<0)? -1 : (d>0) ? 1 : 0;
 	}
     }
@@ -135,7 +192,16 @@ class UserProfile {
     Comparator getByDescVal() {
 	return new  ByDescVal();
     }
-    
+
+    /** Creates a Lucene query that looks for any and all terms
+	from this user profile. Term weights from the user
+	profile are not used, as weight are hard to properly
+	incorporate into a Lucene query. 
+
+	An alternative to this approach is to compute properly weighted
+	dot products over the Lucene index directly, without 
+	using Lucene's query mechanism.
+     */
     org.apache.lucene.search.Query firstQuery() {
 	BooleanQuery q = new BooleanQuery();
 	String [] terms = hq.keySet().toArray(new String[0]);
@@ -178,7 +244,7 @@ class UserProfile {
 	}	
     }
 
-    /** This is an "autonmous" version, which goes for the real cosine
+    /** This is an "autonomous" version, which goes for the real cosine
       similarity, So lots of numbers are precomputed by ourselves,
       stored in the SQL database, and then pulled with ArticleStats[].
       
@@ -195,20 +261,20 @@ class UserProfile {
 	Arrays.sort(terms, getByDescVal());
 	
 	// norms for fields that were stored in Lucene
-	byte norms[][] = new byte[ ArticleAnalyzer.upFields.length][];
+	//byte norms[][] = new byte[ ArticleAnalyzer.upFields.length][];
 	
-	for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
-	    String f= ArticleAnalyzer.upFields[i];
-	    if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
-	    norms[i] = dfc.reader.norms(f);
-	}
+	//for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
+	//    String f= ArticleAnalyzer.upFields[i];
+	//    if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
+	//    norms[i] = dfc.reader.norms(f);
+	//}
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);
 	Similarity simi = searcher.getSimilarity(); 
 	
 	int tcnt=0,	missingStatsCnt=0;
 	for(String t: terms) {
 	    double idf = dfc.idf(t);
-	    double qval = hq.get(t).doubleValue() * idf;
+	    double qval = hq.get(t).w1 * idf;
 	    for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
 		String f= ArticleAnalyzer.upFields[i];
 		Term term = new Term(f, t);
@@ -217,7 +283,7 @@ class UserProfile {
 		while(td.next()) {
 		    int p = td.doc();
 		    int freq = td.freq();			
-		    //		    float normFactor = simi.decodeNormValue( norms[i][p]);
+		    //   float normFactor = simi.decodeNormValue( norms[i][p]);
 
 		    double normFactor = 0;
 		    if (allStats[p]!=null) {			
@@ -292,7 +358,7 @@ class UserProfile {
 	int tcnt=0;
 	for(String t: terms) {
 	    double idf = dfc.idf(t);
-	    double qval = hq.get(t).doubleValue() * idf;
+	    double qval = hq.get(t).w1 * idf;
 	    for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
 		String f= ArticleAnalyzer.upFields[i];
 		Term term = new Term(f, t);
@@ -338,6 +404,32 @@ class UserProfile {
 	return entries;
     }
 
+    /** Uses a Lucene query to create a matching document list. 
+
+	This method builds a Lucene query (using firstQuery()) that
+	pulls all documents from the index that contain some of the
+	terms from the user profile; applies this query, and uses 
+	the scores computed by Lucene based on its own algorithm.
+     */
+    Vector<ArticleEntry> luceneQuerySearch(int maxDocs) throws IOException {
+	org.apache.lucene.search.Query q = firstQuery();
+	
+	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
+	TopDocs 	 top = searcher.search(q, maxDocs + 1);
+	ScoreDoc[] scoreDocs = top.scoreDocs;
+	boolean needNext=(scoreDocs.length > maxDocs);
+	
+	int startat=0;
+	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
+	for(int i=startat; i< scoreDocs.length && i<maxDocs; i++) {
+	    Document doc = searcher.doc(scoreDocs[i].doc);
+	    String aid = doc.get(ArxivFields.PAPER);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc);
+	    ae.setScore( scoreDocs[i].score);
+	    entries.add( ae);
+	}	
+	return  entries;
+    }
 
 
     /** Stuff used to control debugging and additional verbose reporting. */

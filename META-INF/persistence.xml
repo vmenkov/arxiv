@@ -46,6 +46,7 @@
         <class>edu.rutgers.axs.sql.Action</class>
         <class>edu.rutgers.axs.sql.EnteredQuery</class>
         <class>edu.rutgers.axs.sql.ArticleStats</class>
+        <class>edu.rutgers.axs.sql.Task</class>
 
         <properties>
             <!--

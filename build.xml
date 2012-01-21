@@ -181,6 +181,7 @@ code. -->
       <include name="Action.class" />
       <include name="EnteredQuery.class" />
       <include name="ArticleStats.class" />
+      <include name="Task.class" />
     </fileset>
   </openjpac>
 

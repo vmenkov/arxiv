@@ -21,7 +21,7 @@ import java.lang.reflect.*;
     public void setId(long val) {        id = val;    }
     public long getId() {        return id;    }
 
-    // Link to the user whose action this is
+    /** Link to the user whose action this is */
     @ManyToOne
     @Column(nullable=false)
     @Display(editable=false, order=1) 

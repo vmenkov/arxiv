@@ -9,8 +9,10 @@ import org.apache.openjpa.persistence.jdbc.Index;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
-/** Statistical information about an article's content, used for dot
- * products etc */
+/** Statistical information about an article's content, used for
+    ranking search results etc. The idea is we compute such info for 
+    all docs in the index, store it in the SQL database, and later
+    re-use as needed for individual queries. */
 @Entity  
     public class ArticleStats implements OurTable 
 {
@@ -35,8 +37,9 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	String aid=null;
     public String getAid() { return aid; }
     public void setAid(String x) { aid=x;}
-    /** pre-computed two-norm for the article's feature vectors, used
-	in dot products */
+    /** Pre-computed idf-weighted two-norm for the article's feature
+	vectors. It is used e.g. when computing a cosine similarity
+	based on dot products, */
     @Basic
 	@Display(editable=false, order=3)
 	double norm;

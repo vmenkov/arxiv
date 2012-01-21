@@ -33,6 +33,8 @@ import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
+import edu.rutgers.axs.ParseConfig;
+
  /** The application for pulling data from the main arxiv server using
      the OAI interface, and importing them into our server's Lucene
      datastore.
@@ -89,14 +91,15 @@ public class ArxivImporter {
 	    } else if (name.equals("resumptionToken")) {
 		// <resumptionToken cursor="0" completeListSize="702029">245357|1001</resumptionToken>
 		Node nx = n.getFirstChild();
-		if (nx instanceof Text) {
+		if (nx==null) {
+		    System.out.println("Token is null; this must have been the last page");
+		} else  if (nx instanceof Text) {
 		    token=nx.getNodeValue();
 		} else {
 		    System.out.println("cannot parse the 'token' element: "+nx);
 		}
 	    }
 	}
-
 	return token;
 
     }
