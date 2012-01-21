@@ -26,6 +26,6 @@ set opt="-cp ${cp} ${opt}  -DmaxTerms=8192"
 
 echo "opt=$opt"
 
-time java $opt $2 $3 edu.rutgers.axs.Test $1 
+time java $opt $2 $3 edu.rutgers.axs.recommender.Test $1 
 
 

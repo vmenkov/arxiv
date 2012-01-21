@@ -1,4 +1,4 @@
-package edu.rutgers.axs;
+package edu.rutgers.axs.recommender;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
