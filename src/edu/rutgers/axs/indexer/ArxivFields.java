@@ -9,5 +9,6 @@ public class ArxivFields {
 	ABSTRACT = "abstract",
 	TITLE="title",
 	AUTHORS="authors",
-	COMMENTS="comments";
+	COMMENTS="comments",
+	CATEGORY="category";
 }

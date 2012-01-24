@@ -11,12 +11,11 @@ public class Logging {
     public final static String NAME = "arxiv";
 
     static {
-        try {
-            Handler fh = new FileHandler("/mnt/cactext/home/SCILSNET/vmenkov/logs/arxiv1.log");
-            fh.setFormatter(new SimpleFormatter());
-
-            Logger.getLogger(NAME).addHandler(fh);
-        } catch (IOException e) {}
+        //try {
+	    //            Handler fh = new FileHandler("/mnt/cactext/home/SCILSNET/vmenkov/logs/arxiv1.log");
+	    //            fh.setFormatter(new SimpleFormatter());
+	    //            Logger.getLogger(NAME).addHandler(fh);
+        //} catch (IOException e) {}
     }
 
     public static void error(String msg) {

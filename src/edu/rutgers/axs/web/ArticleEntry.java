@@ -40,15 +40,20 @@ public class ArticleEntry {
      */
     public ArticleEntry(int _i, Document doc) {
 	i = _i;
-	id=doc.get("paper");
+	id=doc.get(ArxivFields.PAPER);
 	idline="arXiv:" + id;
-	titline = doc.get("title");
-	authline=doc.get("authors");
-	String c= doc.get("comments");
+	populateOtherFields( doc);
+    }
+
+    void populateOtherFields( Document doc) {
+	titline = doc.get(ArxivFields.TITLE);
+	authline=doc.get(ArxivFields.AUTHORS);
+	String c= doc.get(ArxivFields.COMMENTS);
 	commline=(c==null? "": "Comments:" + c);
-	subjline="Subjects:" + doc.get("category");
+	subjline="Subjects:" + doc.get((ArxivFields.CATEGORY));
     }
     
+
     /** Dummy constructor, leaves most fields blank */
     private ArticleEntry(int _i, String aid) {
  	i = _i;
@@ -69,12 +74,15 @@ public class ArticleEntry {
     /** Retrieves article's info from Lucene, and initializes the
 	ArticleEntry object for it. If there are no data on the article in
 	the local data store (e.g., becasue it has not been updated),
-	may return a "dummy" entry. */
+	may return a "dummy" entry. 
+	@param aid Arxiv id for the article
+	@param pos Position in our list (has nothing to do with Lucene)
+    */
     static ArticleEntry getArticleEntry(Searcher s, String aid, int pos) {
 	ArticleEntry dummy =  getDummyArticleEntry( aid,  pos);
 	try {
 	    if (s==null) return dummy;
-	    TermQuery tq = new TermQuery(new Term("paper", aid));
+	    TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
 	    ScoreDoc[] 	scoreDocs = s.search(tq, 1).scoreDocs;
 	    if (scoreDocs.length < 1) return dummy;
 	    Document doc = s.doc(scoreDocs[0].doc);
@@ -83,6 +91,10 @@ public class ArticleEntry {
 	} catch (Exception ex) { return null; }
     }
 
+    /*
+	@param aid Arxiv id for the article
+	@param pos Position in our list (has nothing to do with Lucene)
+    */
     static ArticleEntry getDummyArticleEntry(String aid, int pos) {
 	return new ArticleEntry(pos, aid);      
     }
@@ -101,6 +113,58 @@ public class ArticleEntry {
 		e.latestRating = ratings.get(e.id).getOp();
 	    }
 	}
+    }
+
+    /** Saves the profile to the specified file. Before doing so, verifies
+	that the necessary directory exists, and if it does not, tries to
+	create it.
+     */
+    static public void save(Vector<ArticleEntry> entries, File f) throws IOException {
+	File g = f.getParentFile();
+	if (g!=null && !g.exists()) {
+	    boolean code = g.mkdirs();
+	    Logging.info("Creating dir " + g + "; success=" + code);
+	}
+
+	PrintWriter w= new PrintWriter(new FileWriter(f));
+	save(entries, w);
+	w.close();
+    }
+
+    static public void save(Vector<ArticleEntry> entries, PrintWriter w) {
+	//	w.println("#--- Entries are ordered by w(t)*idf(t)");
+	//	w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
+	for(int i=0; i<entries.size(); i++) {
+	    ArticleEntry e=entries.elementAt(i);
+	    w.println(e.id + "\t" + e.score);
+	}
+    }
+
+    /** Reads a file saved earlier and creates a vector of "skeleton"
+      entries (just article id)
+     */
+    static public Vector<ArticleEntry> readFile(File f) throws IOException {
+	Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
+	FileReader fr = new FileReader(f);
+	LineNumberReader r = new LineNumberReader(fr);
+	String s;
+	int linecnt = 0, pos=0;
+	while((s=r.readLine())!=null) {
+	    linecnt++;
+	    s = s.trim();
+	    if (s.equals("") || s.startsWith("#")) continue;
+	    String q[] = s.split("\\s+");
+	    if (q==null || q.length != 2) {
+		throw new IOException("Cannot parse line " + linecnt + " in file " + f);
+	    }
+	    pos++;
+	    String aid = q[0];
+	    double score = Double.parseDouble(q[1]);
+	    ArticleEntry e = new ArticleEntry(pos, aid);
+	    entries.add(e);
+	}
+	r.close();
+	return entries;
     }
 
 }

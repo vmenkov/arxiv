@@ -26,7 +26,7 @@ import edu.rutgers.axs.sql.*;
     and ranks them based on these actions.
  */
 public class ViewRankedPages extends ResultsBase {
-    
+    /** The user nae of the user whose activity we reasearch */
     public final String actorUserName;
     public User actor;
 

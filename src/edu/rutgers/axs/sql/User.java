@@ -216,10 +216,14 @@ import org.apache.catalina.realm.RealmBase;
     public static User findByName( EntityManager em, String username) {
 	Query q = em.createQuery("select m from User m where m.user_name=:c");
 	q.setParameter("c", username);
-	List<User> res = (List<User>)q.getResultList();
-	if (res.size() != 0) {
-	    return  res.iterator().next();
-	} else {
+	try {
+	    return (User)q.getSingleResult();
+	} catch(NoResultException ex) { 
+	    // no such user
+	    return null;
+	}  catch(NonUniqueResultException ex) {
+	    // this should not happen, as we have a uniqueness constraint
+	    Logging.error("Non-unique user entry for username='"+username+"'!");
 	    return null;
 	}
     }

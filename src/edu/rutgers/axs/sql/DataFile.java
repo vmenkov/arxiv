@@ -1,0 +1,216 @@
+package edu.rutgers.axs.sql;
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+import javax.persistence.*;
+
+import java.lang.reflect.*;
+
+import edu.cornell.cs.osmot.options.Options;
+
+
+/** Each DataFile instance contains information about one external
+    data file, 
+ */
+@Entity
+    public class DataFile  implements Serializable, OurTable {
+
+  /** Transaction ID */
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
+	private long id;
+    public void setId(long val) {        id = val;    }
+    public long getId() {        return id;    }
+
+    /** Link to the user on whose behalf the task is conducted */
+    //@ManyToOne
+    @Column(nullable=false)
+    @Display(editable=false, order=2) 
+    //User user;
+	@Basic String user;
+ 
+    public String getUser() {
+	return user;
+    }
+
+    public void setUser(String c) {
+	user=c;
+    }
+
+    /** When generated. */
+    @Display(editable=false, order=3) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date time;
+    public  Date getTime() { return time; }
+    public void setTime(       Date x) { time = x; }
+
+    /** The task id of the Task pursuant to which the file was created,
+	If the file was not created via the TaskManager, -1 will be stored here.
+     */
+    @Basic @Display(editable=false, order=4 )
+	@Column(nullable=false)
+	long task=-1;
+    public  long getTask() { return task; }
+    public void setTask(long x) { task = x; }
+
+  
+   /** Various supported task types.  */
+    public static enum Type {
+	USER_PROFILE,
+	    /** Selection based on dot products with the USER_PROFILE */
+	    LINEAR_SUGGESTIONS_1;
+
+	/** What kind of file is created by each task? */
+	static Type outputForOp(Task.Op op) {
+	    if (op == Task.Op.HISTORY_TO_PROFILE) {
+		return Type.USER_PROFILE;
+	    } else if (op == Task.Op.LINEAR_SUGGESTIONS_1) {
+		return Type.LINEAR_SUGGESTIONS_1;
+	    } else {
+		throw new IllegalArgumentException("Don't know what kind of file create for task type=" +op);
+	    }
+	}
+
+   }
+
+    @Display(editable=false, order=6) 
+    	@Enumerated(EnumType.STRING) 
+    	private Type type;   
+
+    public Type getType() { return type; }
+    public void setType(Type x) { type = x; }
+
+    /** Has the physical file been deleted? */
+    @Basic boolean deleted = false;
+    public boolean getDeleted() { return deleted; }
+    public void setDeleted( boolean x) {  deleted = x; }
+
+    /** The input file based on which (if applicable) this one has
+	been generated */
+    @Basic      @Column(length=64) @Display(order=8, editable=false)
+	String inputFile=null;
+    public String getInputFile() { return inputFile; }
+    public void setInputFile( String x) { inputFile = x; }
+
+    /** This file's path name, relative to $DATAFILE_DIRECTORY/$user_ */
+    @Basic      @Column(length=64) @Display(order=9, editable=false)
+	String thisFile=null;
+    public String getThisFile() { return thisFile; }
+    public void setThisFile( String x) { thisFile = x; }
+
+    public boolean validate(EntityManager em, StringBuffer errmsg) { 
+	return true; 
+    }
+
+    public String toString() {
+	return thisFile;
+    }
+
+    /** Gets the most recently generated non-deleted file by a given
+	type for a given username.	
+     */
+    static public DataFile getLatestFile(EntityManager em, String  username, Type t) {
+	Query q = em.createQuery("select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE order by m.time desc");
+
+	q.setParameter("u", username);
+	q.setParameter("t", t);
+
+	q.setMaxResults(1);
+	List<DataFile> res = (List<DataFile>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+
+    /** Maps to a file system file. */
+    public File  getFile() {
+	return new File(getPath());
+    }
+
+    /** Maps to a full file system path. */
+    String  getPath()  {
+	String s = "";
+	try {
+	    s = Options.get("DATAFILE_DIRECTORY") +	File.separator;
+	} catch(IOException ex) {
+	    Logging.error("Don't know where DATAFILE_DIRECTORY is");
+	}
+	return s + getUser() + File.separator + 	    getThisFile();
+    }
+
+    public DataFile() {}
+    
+    /**
+       return "" When no files needed to be created; "profile" etc
+       when files are needed; null on errors
+     */
+    static String givePrefix(Task.Op op) {
+  	if (op == Task.Op.STOP) {
+	    return "";
+	} else 	if (op == Task.Op.HISTORY_TO_PROFILE) {
+	    return "profile";
+	} else 	if (op == Task.Op.LINEAR_SUGGESTIONS_1) {
+	    return "linsug1";
+	} else {
+	    return null;
+	}	 
+    }
+
+    private static int fileCnt = 1;
+
+    private static NumberFormat fmt1 = new DecimalFormat("00000");
+    private static NumberFormat fmt2 = new DecimalFormat("000000");
+    public static final DateFormat dayFmt = new SimpleDateFormat("yyyyMMdd");
+
+    /** Creates a DataFile object describing the output that should be
+	created for the specified task. Picks more or less unique name
+	for it.
+
+	The method is static-synchronized to ensure that the
+	"fileCnt++" thing is atomic.
+
+	FIXME: the name won't be unique if we have 2 processes - some hours
+	apart - with the same pid!
+	
+	@return The DataFile object to be created for the task, or
+	null if no file needs to be created. The object so created
+	needs to be "persisted" later.
+    */
+    static synchronized public DataFile newOutputFile(Task task, int pid) {
+	return  newOutputFile(task,task.getOp(), pid); 
+    }
+
+    /**
+       @param op : may overrides the operator in the task. This is
+       used when a task produces several output files, e.g. an output
+       file for a preliminary included task.
+     */
+    static synchronized public DataFile newOutputFile(Task task, Task.Op op, int pid) {
+
+	String prefix = givePrefix(op);
+	String f = null;
+	Type type = null;
+	Date now = new Date();
+	if ( prefix==null)  {
+	    throw new IllegalArgumentException("Task type " + op + " not supported for file creation!");
+	} else if ( prefix.equals(""))  { // nothing
+	    return null;
+	} else {
+	    f = prefix + File.separator + dayFmt.format(now) + "." +
+		fmt1.format(pid) + "." + fmt2.format(fileCnt++) + ".txt";
+	}
+	DataFile df = new DataFile();
+	df.setType(Type.outputForOp(op));
+	df.setUser(task.getUser());
+	df.setTask(task.getId());	    
+	df.setTime( now);
+	df.setThisFile(f);
+	return df;
+    }
+
+
+ 
+
+}

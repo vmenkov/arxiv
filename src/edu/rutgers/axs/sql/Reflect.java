@@ -297,7 +297,19 @@ public class Reflect {
 	return v;
     }
 
-    /** Formats a single field of an object */
+    /** Formats a single field of an object.
+
+	Note the somewhat peculiar treatment of boolean values in
+	OpenJPA. If the object has been retreived with a query
+	obtained with createQuery() (i.e., a JPQL query), then a
+	boolean value will be retrieved as Boolean object. But if
+	createNativeQuery() (over MySQL, at any rate) has been used -
+	i.e., we have a SQL query - then boolean values will appear as
+	strings, one character long, containing char(0) or char(1)!
+	This is because in MySQL booleans are "synonyms for TINYINT(1)".
+	http://dev.mysql.com/doc/refman/5.0/en/numeric-type-overview.html
+
+     */
     public static String formatAsString(Object val, String quote) {
 	boolean needQuotes = 
 	    !(val instanceof Enum || val instanceof Number || val instanceof Boolean);
@@ -308,10 +320,20 @@ public class Reflect {
 	String s;
 	if (val instanceof OurTable) s = "" + ((OurTable)val).getId();
 	else if (val instanceof Date) {
-	    s = sqlDf.format((Date)val);
+	    s =  sqlDf.format((Date)val);
+	} else if (val instanceof String) {
+	    s = (String) val;
+	    if (s.length()==1) {
+		// special treatment is needed for booleans in native
+		// (SQL) queries over MySQL, to make them human-readable
+		char x = s.charAt(0);
+		if (x==(char)0) s = "false";
+		else if (x==(char)1) s = "true";
+	    }
 	} else {
 	    // FIXME: there should be a better way to escape double quotes
-	    s = val.toString().replace('"', '\'');		
+	    s = // "OTHER["+val.getClass()+"]:" + 
+		val.toString().replace('"', '\'');		
 	}
 	
 	if (needQuotes) s = quote + s + quote;

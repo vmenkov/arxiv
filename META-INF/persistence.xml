@@ -47,6 +47,7 @@
         <class>edu.rutgers.axs.sql.EnteredQuery</class>
         <class>edu.rutgers.axs.sql.ArticleStats</class>
         <class>edu.rutgers.axs.sql.Task</class>
+        <class>edu.rutgers.axs.sql.DataFile</class>
 
         <properties>
             <!--
@@ -69,8 +70,16 @@
 	    <!-- general -->
             <property name="openjpa.jdbc.SynchronizeMappings" 
                 value="buildSchema"/>
-            <property name="openjpa.Log" 
-                value="DefaultLevel=WARN,SQL=TRACE"/>
+	    <!-- One can use value="DefaultLevel=WARN,SQL=TRACE" below
+		 for detailed logging, as per
+		 http://openjpa.apache.org/builds/1.0.1/apache-openjpa-1.0.1/docs/manual/ref_guide_logging_openjpa.html
+		 --> 
+
+	    <property name="openjpa.Log"
+		 value="DefaultLevel=WARN"/>
+
+	    <!-- property name="openjpa.Log"
+		 value="DefaultLevel=WARN,SQL=TRACE"/ -->
 
         </properties>
     </persistence-unit>

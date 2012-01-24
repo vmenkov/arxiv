@@ -14,6 +14,7 @@ import javax.persistence.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
+import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
@@ -24,7 +25,7 @@ import edu.rutgers.axs.web.ArticleEntry;
  * computing/extracting DF (document frequency) on the Lucene index,
  * as well as the tf (term frequency) vector for a document.
  */
-class ArticleAnalyzer {
+public class ArticleAnalyzer {
 
     IndexReader reader;
     private IndexReader[] surs;
@@ -46,12 +47,6 @@ class ArticleAnalyzer {
      */
     private double[] baseBoost;
 
-    
-    /** Finds a document by ID in the Lucene index */
-    private int find(String aid) throws IOException{
-	IndexSearcher s = new IndexSearcher( reader );
-	return Test.find(s, aid);
-    }
     
 
     private HashMap<String, Integer> h = new HashMap<String, Integer>();
@@ -82,7 +77,7 @@ class ArticleAnalyzer {
     /** Computes <em>idf = 1 + log ( numDocs/docFreq+1)</em>, much
 	like it is done in Lucene's own searcher as well.
      */
-    double idf(String term) {
+    public double idf(String term) {
 	try {
 	    return  1+ Math.log(numdocs*fields.length / (1.0 + totalDF(term)));
 	} catch(IOException ex) { 
@@ -100,7 +95,7 @@ class ArticleAnalyzer {
 	try {
 	    docno = find(aid);
 	} catch(Exception ex) {
-	    System.out.println("No document found in Lucene data store for id=" + aid +"; skipping");
+	    Logging.warning("No document found in Lucene data store for id=" + aid +"; skipping");
 	    return new HashMap<String, Double>();
 	}
 	return getCoef(docno,null);
@@ -316,10 +311,10 @@ class ArticleAnalyzer {
 	    ArticleStats as =h.get(aid);
 	    if (as!=null) {
 		if (recompute) {
-		    System.out.println("Will re-do document " + aid + ", pos="+docno);
+		    Logging.info("Will re-do document " + aid + ", pos="+docno);
 		} else {
 		    // FIMXE: check dates and update perhaps?
-		    System.out.println("Already have  document " + aid + ", pos="+docno);
+		    Logging.info("Already have  document " + aid + ", pos="+docno);
 		    continue;
 		}
 	    } else {
@@ -327,7 +322,7 @@ class ArticleAnalyzer {
 	    }
 	    as.setAid(aid);
 	    getCoef(docno, as);
-	    System.out.println("Analyzed document " + aid + ", pos="+docno +
+	    Logging.info("Analyzed document " + aid + ", pos="+docno +
 			       ", length="+as.getLength()+", norm=" + as.getNorm());
 
 
@@ -352,7 +347,8 @@ class ArticleAnalyzer {
 	}
     }
 
-    /** @return The index into the array is Lucene's current internal doc id */
+    /** Reads the pre-computed data from the SQL database.
+	@return The index into the array is Lucene's current internal doc id */
     public static ArticleStats[] getArticleStatsArray( EntityManager em,
 						       IndexReader reader)
 	throws org.apache.lucene.index.CorruptIndexException, IOException
@@ -376,10 +372,36 @@ class ArticleAnalyzer {
 		all[pos] = as;
 	    }
 	}
-	System.out.println("Found pre-computed ArticleStats for " + foundCnt + " docs");
+	Logging.info("Found pre-computed ArticleStats for " + foundCnt + " docs");
 	return all;
     }
 
+    /** Find a document by article ID, using a given searcher.
+     @return Lucene internal doc id.*/
+    static public int find(IndexSearcher s, String id) throws IOException{
+	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
+	//System.out.println("query=("+tq+")");
+	TopDocs 	 top = s.search(tq, 1);
+	ScoreDoc[] 	scoreDocs = top.scoreDocs;
+	if (scoreDocs.length < 1) {
+	    System.out.println("No document found with paper="+id);
+	    throw new IOException("No document found with paper="+id);
+	}
+	return scoreDocs[0].doc;
+    }
+     
+    /** Finds a document by ID in the Lucene index */
+    int find(String aid) throws IOException{
+	IndexSearcher s = new IndexSearcher( reader );
+	return find(s, aid);
+    }
+    
+   
+    static public IndexReader getReader()  throws IOException {
+	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
+	IndexReader reader =  IndexReader.open( indexDirectory);            
+	return reader;
+    }
 
     /** -DmaxDocs=-1 -Drecompute=false
      */
@@ -388,11 +410,8 @@ class ArticleAnalyzer {
 	int maxDocs = ht.getOption("maxDocs", -1);
 	boolean recompute = ht.getOption("recompute", false);
 	
-	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-	IndexReader reader =  IndexReader.open( indexDirectory);            
-
+	IndexReader reader =  getReader();
 	ArticleAnalyzer z = new ArticleAnalyzer(reader, upFields);
-
 
 	EntityManager em  = Main.getEM();
 	z.computeAllMissingNorms(em, maxDocs, recompute);

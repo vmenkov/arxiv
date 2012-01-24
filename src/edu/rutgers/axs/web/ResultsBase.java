@@ -10,6 +10,7 @@ import javax.persistence.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.html.RatingButton;
 
 
 public class ResultsBase {
@@ -39,6 +40,9 @@ public class ResultsBase {
 
     /** User name logged in this session */
     public String user=null;
+
+    final public String USER_NAME = "user_name",
+	FORCE="force";
 
     /** Returns the user object for the currently logged-in user */
     public User getUserEntry() {
@@ -109,7 +113,15 @@ public class ResultsBase {
 	return Tools.getString(request, name, defVal);
     }
 
-    
+    boolean getBoolean(String name, boolean defVal) {
+	return Tools.getBoolean(request, name, defVal);
+    }
+
+    Enum getEnum(Class retType, String name, Enum defVal) {
+	return Tools.getEnum(request, retType, name,  defVal);
+    }
+
+
     void setEx(Exception _e) {
 	error = true;
 	if (_e instanceof edu.rutgers.axs.sql.IllegalInputException ) {
@@ -160,11 +172,11 @@ public class ResultsBase {
     //}
 
     /** This can be put into every "finally" clause ... */
-    static void ensureClosed(EntityManager em) {
+    public static void ensureClosed(EntityManager em) {
 	ensureClosed( em, true);
     }
 
-    static void ensureClosed(EntityManager em, boolean commit ) {
+    public static void ensureClosed(EntityManager em, boolean commit ) {
 	if (em==null) return;
 	if (!em.isOpen()) return;
 	try {
@@ -186,6 +198,13 @@ public class ResultsBase {
     public  String urlPDF( String id) {
 	return  ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_PDF);
     }
+
+    public String judgmentBarHTML(ArticleEntry entry) {
+	return RatingButton.judgmentBarHTML( cp, entry, 
+					     RatingButton.allRatingButtons,
+					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER);
+    } 
+
 
 
 }

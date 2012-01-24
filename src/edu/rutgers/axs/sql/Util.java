@@ -63,7 +63,7 @@ public class Util {
 	return  (EA)f.getAnnotation(EA.class);
     }
 
-
+    /** @param t time interval in seconds */
     private static String long2dhms(long t) {
 	if (t<60) return ""+t + " sec";
 	t /= 60;
@@ -80,14 +80,14 @@ public class Util {
     static public String ago(Date d) {
 	if (d==null) return "never";
 	String s = d.toString();
-	Date now = (new GregorianCalendar()).getTime();
+	Date now = new Date();
 	long t = (now.getTime() - d.getTime())/1000;
 	if (Math.abs(t)<=1) {
-	    return "(right now)";
+	    return s + " (right now)";
 	} else if (t>0) {
-	    return "(" + long2dhms( t) + " ago)";
+	    return s + " (" + long2dhms( t) + " ago)";
 	} else {
-	    return "(" + long2dhms( -t) + " in the future)";
+	    return s + " (" + long2dhms( -t) + " in the future)";
 	}
     }
 

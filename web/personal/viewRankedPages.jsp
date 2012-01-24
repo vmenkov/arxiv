@@ -13,7 +13,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
-<title>Personal folder for user <%= main.actorUserName %>
+<title>Ranked pages for user <%= main.actorUserName %>
 </title>
 <script type="text/javascript" src="../_technical/scripts/jquery.js"></script>
 <script type="text/javascript" src="../_technical/scripts/jquery-transitions.js"></script>

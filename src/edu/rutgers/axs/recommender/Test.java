@@ -14,6 +14,7 @@ import javax.persistence.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
+import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
@@ -26,26 +27,9 @@ public class Test {
     private IndexReader reader;
 
     public Test()  throws IOException {
-	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-	reader =  IndexReader.open( indexDirectory);            
+	reader =  ArticleAnalyzer.getReader();
     }
-
    
-    /** Find a document by article ID, using a given searcher.
-     @return Lucen internal doc id.*/
-    static int find(IndexSearcher s , String id) throws IOException{
-	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
-	//System.out.println("query=("+tq+")");
-	TopDocs 	 top = s.search(tq, 1);
-	ScoreDoc[] 	scoreDocs = top.scoreDocs;
-	if (scoreDocs.length < 1) {
-	    System.out.println("No document found with paper="+id);
-	    throw new IOException("No document found with paper="+id);
-	}
-	return scoreDocs[0].doc;
-    }
-    
-
     static int maxDocs = 100;
 
     /**

@@ -14,35 +14,34 @@ import javax.persistence.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
-import edu.rutgers.axs.indexer.*;
+import edu.rutgers.axs.ParseConfig;
+import edu.rutgers.axs.indexer.ArxivFields;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
 
-
-//    static 
-class UserProfile {
+public class UserProfile {
     /** 0 means "all" */
     static int maxTerms = 1024;
 
     static Stoplist stoplist=null;   
 
-    ArticleAnalyzer dfc;
+    public ArticleAnalyzer dfc;
     //UserProfile(ArticleAnalyzer _dfc) {
     //	dfc = _dfc;
     //}
 
     /** Ordered list by importance, in descending order. */
-    String[] terms;
+    public String[] terms = {};
 
-    static class TwoVal {	
+    public static class TwoVal {	
 	/** Coefficients for   phi(t) and sqrt(phi(t)) */
-	double w1, w2;
+	public double w1, w2;
 	TwoVal(double _w1, double _w2) { w1=_w1; w2=_w2;}
     }
 
     /** Maps term to value (cumulative tf) */
-    HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
+    public HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
 
     void add(String key, double inc1, double inc2) {
 	TwoVal val = hq.get(key);
@@ -130,13 +129,13 @@ class UserProfile {
 	terms = hq.keySet().toArray(new String[0]);
 	//Arrays.sort(terms);
 	Arrays.sort(terms, getByDescVal());
-	System.out.println( "User profile has " + terms.length);
-	//save(System.out);
+	Logging.info( "User profile has " + terms.length + " terms");
+	//save(new PrintWriter(System.out));
 	save(new File("profile.tmp"));
     }
 
     /** Reads the profile from a file */
-    UserProfile(File f, IndexReader reader) throws IOException {
+    public UserProfile(File f, IndexReader reader) throws IOException {
 	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
@@ -157,15 +156,27 @@ class UserProfile {
 	    // q[3] is dfc, and can be ignored
 	}
 	r.close();
+	terms = vterms.toArray(new String[0]);
+	//Logging.info("Read " + linecnt + " lines, " + vterms
     }
 
+    /** Saves the profile to the specified file. Before doing so, verifies
+	that the necessary directory exists, and if it does not, tries to
+	create it.
+     */
     public void save(File f) throws IOException {
-	PrintStream w= new PrintStream(new FileOutputStream(f));
+	File g = f.getParentFile();
+	if (g!=null && !g.exists()) {
+	    boolean code = g.mkdirs();
+	    Logging.info("Creating dir " + g + "; success=" + code);
+	}
+
+	PrintWriter w= new PrintWriter(new FileWriter(f));
 	save(w);
 	w.close();
     }
 
-    public void save(PrintStream w) {
+    public void save(PrintWriter w) {
 	w.println("#--- Entries are ordered by w(t)*idf(t)");
 	w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
 	for(int i=0; i<terms.length; i++) {
@@ -210,14 +221,14 @@ class UserProfile {
 	
 	int maxCC = BooleanQuery.getMaxClauseCount();
 	if (maxTerms > maxCC) {
-	    System.out.println("Raising MaxClauseCount from " + maxCC + " to " + maxTerms);
+	    Logging.info("Raising MaxClauseCount from " + maxCC + " to " + maxTerms);
 	    BooleanQuery.setMaxClauseCount(maxTerms);
 	    maxCC = BooleanQuery.getMaxClauseCount();
 	}
 	
 	int mt = maxCC;
 	if (maxTerms > 0 && maxTerms < mt) mt = maxTerms;
-	System.out.println("Max clause count=" + maxCC +", maxTerms="+maxTerms+"; profile has " + terms.length + " terms; using top " + mt);
+	Logging.info("Max clause count=" + maxCC +", maxTerms="+maxTerms+"; profile has " + terms.length + " terms; using top " + mt);
 	
 	int tcnt=0;
 	for(String t: terms) {
@@ -313,9 +324,9 @@ class UserProfile {
 		qpos[nnzc++] = new Integer(k);
 	    }
 	}
-	System.out.println("nnzc=" + nnzc);
+	Logging.info("nnzc=" + nnzc);
 	if (missingStatsCnt>0) {
-	    System.out.println("used zeros for " + missingStatsCnt + " values, because of missing stats");
+	    Logging.warning("used zeros for " + missingStatsCnt + " values, because of missing stats");
 	}
 	Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
 	
@@ -388,7 +399,7 @@ class UserProfile {
 		qpos[nnzc++] = new Integer(k);
 	    }
 	}
-	System.out.println("nnzc=" + nnzc);
+	Logging.info("nnzc=" + nnzc);
 	Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
 	
 

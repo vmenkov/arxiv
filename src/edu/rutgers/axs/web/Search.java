@@ -102,12 +102,6 @@ public class Search extends ResultsBase {
 	}
     }
 
-    public String judgmentBarHTML(ArticleEntry entry) {
-	return RatingButton.judgmentBarHTML( cp, entry, 
-					     RatingButton.allRatingButtons,
-					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER);
-    } 
-
 
     /** Fields used for searching */
     public static final String [] searchFields = {

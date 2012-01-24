@@ -36,6 +36,19 @@
 <li><a href="viewFolder.jsp">Your personal folder</a>
 <li><a href="viewActionsSelf.jsp">Your browsing activity history</a>
 <li><a href="viewRankedPages.jsp">Pages ranked based on your actions</a>
+<li><a href="viewUserProfile.jsp">"User profile"</a> - weighted list of terms from the articles you've paid attention to.
+</ul>
+</p>
+
+<h2>Recommendation lists</h2>
+
+<p>
+Various algorithms for finding pages possibly interesting to you.
+</p>
+
+<p>
+<ul>
+<li><a href="viewSuggestions.jsp?mode=LINEAR_SUGGESTIONS_1">Suggestions - linear model</a> - applying the user profile vector to the entire data set. (Cosine similarity).
 </ul>
 </p>
 
