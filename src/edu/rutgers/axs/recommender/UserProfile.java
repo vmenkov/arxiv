@@ -456,7 +456,7 @@ public class UserProfile {
 	    for(int i=0; i<watchAid.length; i++) {
 		watchPos[i]=-1;
 		try {
-		    watchPos[i] =  Test.find(s, watchAid[i]);
+		    watchPos[i] =  ArticleAnalyzer.find(s, watchAid[i]);
 		} catch (IOException ex) {};
 	    }
 	}
