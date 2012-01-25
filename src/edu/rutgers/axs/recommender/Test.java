@@ -57,8 +57,8 @@ public class Test {
 	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
 
 	    Vector<ArticleEntry> entries=
-		raw ? upro.luceneRawSearch(maxDocs, allStats ):
-		upro.luceneQuerySearch(maxDocs);
+		raw ? upro.luceneRawSearch(maxDocs, allStats, 0 ):
+		upro.luceneQuerySearch(maxDocs, 0);
 
 	    int startat=0;
 	    int pos = startat+1;

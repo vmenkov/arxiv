@@ -88,7 +88,7 @@ A new task has to generate the user profile has just been created and queued: <%
  <%
      }   else {
 %>
-Presently, no task has been scheduled to (re-)generate the user profile. You may want to request it now.
+Presently, no task has been scheduled to (re-)generate the user profile. If desired, you can request it now.
 </p>
  <%      
       }

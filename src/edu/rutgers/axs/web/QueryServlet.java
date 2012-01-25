@@ -148,7 +148,9 @@ public class QueryServlet extends HttpServlet {
 
 	    if (html) {
 		out.println("<html>");
-		out.println("<head><title>Query results</title></head>");
+		out.println("<head><title>Query results</title>");
+		out.println("<link rel=\"icon\" type=\"image/x-icon\" href=\"../favicon.ico\"/>");
+		out.println("</head>");
 		out.println("<body>");
 		out.println(p + language +" query:<br>");
 		out.println(query);

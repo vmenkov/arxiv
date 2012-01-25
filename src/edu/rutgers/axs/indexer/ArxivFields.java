@@ -11,4 +11,6 @@ public class ArxivFields {
 	AUTHORS="authors",
 	COMMENTS="comments",
 	CATEGORY="category";
+    final static public String DATE_INDEXED="dateIndexed";
 }
+

@@ -43,30 +43,6 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	user=c;
     }
 
-    /** When the web server creates this request. */
-    @Display(editable=false, order=3) 
-	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
-	Date requestTime;
-    public  Date getRequestTime() { return requestTime; }
-    public void setRequestTime(       Date x) { requestTime = x; }
-
-    /** When the background thread accepts the request and starts
-	working on the task. Not yet started tasks have null. */
-    @Display(editable=false, order=4) 
-	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
-	Date startTime;
-    public Date getStartTime() { return startTime; }
-    public void setStartTime( Date x) { startTime = x; }
-
-   /** When the background thread completes the request. Not yet
-    * completed tasks have null. */
-    @Display(editable=false, order=5) 
-	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
-	Date completeTime;
-    public Date getCompleteTime() { return completeTime; }
-    public void setCompleteTime( Date x) { completeTime = x; }
-
-   
    /** Various supported task types.  */
     public static enum Op {
 	/** (Try to) stop the backgorund process */
@@ -77,41 +53,65 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	    LINEAR_SUGGESTIONS_1;
     }
 
-    @Display(editable=false, order=6) 
+    @Display(editable=false, order=3) 
     	@Enumerated(EnumType.STRING) 
     	private Op op;   
 
     public Op getOp() { return op; }
     public void setOp(Op _op) { op = _op; }
 
-    @Basic     @Column(nullable=false)
-	boolean canceled = false;
-    public boolean getCanceled() { return canceled; }
-    public void setCanceled( boolean x) {  canceled = x; }
 
-    /** Set by the web server, if applicable */
-    @Basic      @Column(length=64) @Display(order=8, editable=false)
-	String inputFile=null;
-    public String getInputFile() { return inputFile; }
-    public void setInputFile( String x) { inputFile = x; }
+    /** The time range, in days, used to sub-class certain task, such 
+	as when suggestions need to be generated only from the recently
+	added articles (with dates in this ranged). 0 means "unlimited".
+	Ignored by most other tasks.
+    */
+    @Basic @Display(editable=false, order=4) 
+    	private int days=0;   
+    public int getDays() { return days; }
+    public void setDays(int x) { days = x; }
 
-    /** Set by the computational thread, if applicable */
-    @Basic      @Column(length=64) @Display(order=9, editable=false)
-	String outputFile=null;
-    public String getOutputFile() { return outputFile; }
-    public void setOutputFile( String x) { outputFile = x; }
 
+    /** When the web server creates this request. */
+    @Display(editable=false, order=5) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date requestTime;
+    public  Date getRequestTime() { return requestTime; }
+    public void setRequestTime(       Date x) { requestTime = x; }
+
+    /** When the background thread accepts the request and starts
+	working on the task. Not yet started tasks have null. */
+    @Display(editable=false, order=6) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date startTime;
+    public Date getStartTime() { return startTime; }
+    public void setStartTime( Date x) { startTime = x; }
+
+   /** When the background thread completes the request. Not yet
+    * completed tasks have null. */
+    @Display(editable=false, order=7) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date completeTime;
+    public Date getCompleteTime() { return completeTime; }
+    public void setCompleteTime( Date x) { completeTime = x; }
+
+   
     /** The process ID of the TaskMaster process who did, or is doing,
 	this task.
 
 	FIXME: If the TaskMaster becomes multithreaded, we will need
 	the thread ID as well.
      */
-    @Display(editable=false, order=10) 
+    @Basic @Display(editable=false, order=8) 
     	private int pid=0;   
 
     public int getPid() { return pid; }
     public void setPid(int x) { pid = x; }
+
+    @Basic     @Column(nullable=false) @Display(order=8, editable=false)
+	boolean canceled = false;
+    public boolean getCanceled() { return canceled; }
+    public void setCanceled( boolean x) {  canceled = x; }
 
 
    /** This field is usually 0. It will be incremented if it's 
@@ -120,11 +120,27 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	previous errors, and avoid trying to re-do the same task
 	an infinite number of times.
     */
-    @Basic @Column(nullable=false)    @Display(editable=false, order=11) 
+    @Basic @Column(nullable=false)    @Display(editable=false, order=9) 
     	private boolean failed=false;   
 
     public boolean getFailed() { return failed; }
     public void setFailed(boolean x) { failed = x; }
+
+
+
+    /** Set by the web server, if applicable */
+    @Basic      @Column(length=64) @Display(order=10, editable=false)
+	String inputFile=null;
+    public String getInputFile() { return inputFile; }
+    public void setInputFile( String x) { inputFile = x; }
+
+    /** Set by the computational thread, if applicable */
+    @Basic      @Column(length=64) @Display(order=11, editable=false)
+	String outputFile=null;
+    public String getOutputFile() { return outputFile; }
+    public void setOutputFile( String x) { outputFile = x; }
+
+
 
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 

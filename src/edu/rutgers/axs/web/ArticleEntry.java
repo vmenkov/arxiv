@@ -99,6 +99,8 @@ public class ArticleEntry {
 	return new ArticleEntry(pos, aid);      
     }
 
+    /** Goes through the entries, marks those that have been
+	previously put by the user into his folder. */
     static public void markFolder( Vector<ArticleEntry> entries,
 				   HashMap<String, Action> folder ) {
 	for(ArticleEntry e: entries) {
@@ -106,6 +108,8 @@ public class ArticleEntry {
 	}
     }
 
+    /** Goes through the entries, marks those that have been
+	previously rated by the user */
     static public void markRatings( Vector<ArticleEntry> entries,
 				    HashMap<String, Action> ratings ) {
 	for(ArticleEntry e: entries) {
@@ -159,8 +163,8 @@ public class ArticleEntry {
 	    }
 	    pos++;
 	    String aid = q[0];
-	    double score = Double.parseDouble(q[1]);
 	    ArticleEntry e = new ArticleEntry(pos, aid);
+	    e.setScore( Double.parseDouble(q[1]));
 	    entries.add(e);
 	}
 	r.close();

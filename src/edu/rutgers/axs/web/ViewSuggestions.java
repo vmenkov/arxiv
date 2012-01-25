@@ -112,6 +112,8 @@ public class ViewSuggestions extends ResultsBase {
 		// read the artcile IDs and scores from the file
 		File f = df.getFile();
 		entries = ArticleEntry.readFile(f);
+		
+		applyUserSpecifics(entries, User.findByName(em, actorUserName));
 
 		// In docs to be displayed, populate other fields from Lucene
 		for(int i=0; i<entries.size() && i<maxRows; i++) {
@@ -131,6 +133,27 @@ public class ViewSuggestions extends ResultsBase {
 	}
     }
 
+    /** Applies this user's exclusions, folder inclusions, and ratings */
+    void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
+	if (u==null) return;
     
+	HashMap<String, Action> exclusions = 
+	    u.getActionHashMap(new Action.Op[]{Action.Op.DONT_SHOW_AGAIN});
+		    
+	// exclude some...
+	// FIXME: elsewhere, this can be used as a strong negative
+	// auto-feedback (e.g., Throsten's two-pager's Algo 2)
+	for(int i=0; i<entries.size(); i++) {
+	    if (exclusions.containsKey(entries.elementAt(i).id)) {
+		entries.removeElementAt(i); 
+		i--;
+	    }
+	}
+
+	// Mark pages currently in the user's folder, or rated by the user
+	ArticleEntry.markFolder(entries, u.getFolder());
+	ArticleEntry.markRatings(entries, 
+				 u.getActionHashMap(Action.ratingOps));
+    }
 
 }

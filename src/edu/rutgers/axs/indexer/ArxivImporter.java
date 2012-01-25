@@ -6,12 +6,6 @@ import org.apache.lucene.document.DateTools;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
-/*
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
-*/
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
@@ -309,7 +303,7 @@ public class ArxivImporter {
 	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	    // Date document was indexed
-	    doc.add(new Field("dateIndexed",
+	    doc.add(new Field(ArxivFields.DATE_INDEXED,
 			      DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND),
 			      Field.Store.YES, Field.Index.NOT_ANALYZED));		
 	    // Set article length

@@ -259,10 +259,15 @@ public class UserProfile {
       similarity, So lots of numbers are precomputed by ourselves,
       stored in the SQL database, and then pulled with ArticleStats[].
       
+      @param  maxDocs Max length of the list to return.
+
       @param allStats Structures with pre-computed norms and field
       boost factors, pulled from the SQL database.
+
+      @param days Article date range (so many most recent days).  0
+      means "all dates".
      */
-    Vector<ArticleEntry> luceneRawSearch(int maxDocs, ArticleStats[] allStats) throws IOException {
+    Vector<ArticleEntry> luceneRawSearch(int maxDocs, ArticleStats[] allStats, int days) throws IOException {
 	String [] terms = hq.keySet().toArray(new String[0]);
 	
 	int numdocs = dfc.reader.numDocs() ;
@@ -271,16 +276,7 @@ public class UserProfile {
 	// Sort by value, in descending order
 	Arrays.sort(terms, getByDescVal());
 	
-	// norms for fields that were stored in Lucene
-	//byte norms[][] = new byte[ ArticleAnalyzer.upFields.length][];
-	
-	//for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
-	//    String f= ArticleAnalyzer.upFields[i];
-	//    if (!dfc.reader.hasNorms(f)) throw new IllegalArgumentException("Lucene index has no norms stored for field '"+f+"'");
-	//    norms[i] = dfc.reader.norms(f);
-	//}
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);
-	Similarity simi = searcher.getSimilarity(); 
 	
 	int tcnt=0,	missingStatsCnt=0;
 	for(String t: terms) {
@@ -294,7 +290,6 @@ public class UserProfile {
 		while(td.next()) {
 		    int p = td.doc();
 		    int freq = td.freq();			
-		    //   float normFactor = simi.decodeNormValue( norms[i][p]);
 
 		    double normFactor = 0;
 		    if (allStats[p]!=null) {			
@@ -320,9 +315,7 @@ public class UserProfile {
 	Integer qpos[]  = new Integer[numdocs];
 	int  nnzc=0;
 	for(int k=0; k<scores.length; k++) {		
-	    if (scores[k]>0) {
-		qpos[nnzc++] = new Integer(k);
-	    }
+	    if (scores[k]>0) qpos[nnzc++] = new Integer(k);
 	}
 	Logging.info("nnzc=" + nnzc);
 	if (missingStatsCnt>0) {
@@ -330,12 +323,10 @@ public class UserProfile {
 	}
 	Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
 	
-
 	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
 	for(int i=0; i< nnzc && i<maxDocs; i++) {
 	    final int k=qpos[i].intValue();
 	    Document doc = searcher.doc(k);
-	    //String aid = doc.get(ArxivFields.PAPER);
 	    ArticleEntry ae= new ArticleEntry(i+1, doc);
 	    ae.setScore( scores[k]);
 	    entries.add( ae);
@@ -343,10 +334,51 @@ public class UserProfile {
 	return entries;
     }
 
-    /** This is the "original" version, that more relies on values
-     * (norms) stored in Lucene.
+    /*
+    Vector<ArticleEntry> luceneRawSearchDateRange(int maxDocs, ArticleStats[] allStats, int days) throws IOException {
+	Date now = new Date();
+	long msec = now.getTime() - 24*3600*1000 * days;
+	Query q = 
+	    TermRangeQuery(ArxivFields.DATE_INDEXED,
+			   DateTools.timeToString(msec, DateTools.Resolution.SECOND),
+			   null, true, true);
+	
+	final int M = 10000; // well, the range is supposed to be narrow...
+	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
+	TopDocs 	 top = searcher.search(q, M+1);
+	ScoreDoc[] scoreDocs = top.scoreDocs;
+	boolean needNext=(scoreDocs.length > M);
+	Logging.info("Search over the range of " + days + " days; found " + scoreDocs.length + " docs in range");
+	if (neexNext) Logging.warning("Dropped some docs in range search (more results than " + M);
+	
+	for(int i=startat; i< scoreDocs.length ; i++) {
+	    int docno = scoreDocs[i].doc;
+
+	}	
+	return  entries;
+    }
+*/
+    /*
+    private double cosSim(into docno, ArticleStats[] allStats) {
+	if (docno > allStats.length) {
+	    Logging.warning("cosSim: no stats for docno=" + docno + " (out of range)");
+	    return 0;
+	} 
+	ArticleStats as =allStats[docno];
+	if (as==null) {
+	    Logging.warning("cosSim: no stats for docno=" + docno + " (gap)");
+	    return 0;
+	} 
+
+	HashMap<String, Double> coef = ArticleAnalyzer.getCoef(docno, as);
+
+    }
+*/
+
+    /** This is the "original" version, that relies to a large extent
+     * on values (norms) stored in Lucene.
      */
-  Vector<ArticleEntry> luceneRawSearchOrig(int maxDocs) throws IOException {
+    Vector<ArticleEntry> luceneRawSearchOrig(int maxDocs) throws IOException {
 	String [] terms = hq.keySet().toArray(new String[0]);
 	
 	int numdocs = dfc.reader.numDocs() ;
@@ -421,8 +453,10 @@ public class UserProfile {
 	pulls all documents from the index that contain some of the
 	terms from the user profile; applies this query, and uses 
 	the scores computed by Lucene based on its own algorithm.
+
+	@param Date range, in days. (FIXME: not supported yet!)
      */
-    Vector<ArticleEntry> luceneQuerySearch(int maxDocs) throws IOException {
+    Vector<ArticleEntry> luceneQuerySearch(int maxDocs, int days) throws IOException {
 	org.apache.lucene.search.Query q = firstQuery();
 	
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	

@@ -27,19 +27,19 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
 
-<link rel="stylesheet" type="text/css" href="_technical/styles/styles_all.css" />
+<link rel="stylesheet" type="text/css" href="../_technical/styles/styles_all.css" />
 <!--[if lte IE6]>
-<link rel="stylesheet" type="text/css" href="_technical/styles/styles_ie.css" /><![endif]-->
-<link rel="stylesheet" type="text/css" href="styles/results.css" />
+<link rel="stylesheet" type="text/css" href="../_technical/styles/styles_ie.css" /><![endif]-->
+<link rel="stylesheet" type="text/css" href=../"styles/results.css" />
 <!--[if IE]>
-<link rel="stylesheet" type="text/css" href="styles/results_ie.css" />
+<link rel="stylesheet" type="text/css" href="../styles/results_ie.css" />
 <![endif]-->
-<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<link rel="icon" type="image/x-icon" href="../favicon.ico" />
 
-<script type="text/javascript" src="_technical/scripts/jquery.js"></script>
-<script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>
-<script type="text/javascript" src="scripts/blur.js"></script>
-<script type="text/javascript" src="scripts/buttons_control.js"></script>
+<script type="text/javascript" src="../_technical/scripts/jquery.js"></script>
+<script type="text/javascript" src="../_technical/scripts/jquery-transitions.js"></script>
+<script type="text/javascript" src="../scripts/blur.js"></script>
+<script type="text/javascript" src="../scripts/buttons_control.js"></script>
 
 <!-- #EndEditable -->
 
@@ -54,7 +54,7 @@
      if (main.entries!=null) {
  %>
 	
-		<div id="wrapping"> 
+		<div> <!-- id="wrapping" --> 
 		<!-- #BeginEditable "Body" -->	
 	
 		<h1>Suggestions</h1>
@@ -62,7 +62,7 @@
 <p>Suggestion liste <%=main.df.getThisFile() %> was generated for user
 <%=main.df.getUser() %> at: <%=Util.ago(main.df.getTime())%>. (Is this
 too long ago? You can <a href="#tasks">update</a> the profile to
-account for your activity and new article submission since this
+account for your activity and new article submissions since this
 list has been generated).  </p>
 		
 		<% 
@@ -120,7 +120,7 @@ A new task has to generate the suggestion list has just been created and queued:
  <%
      }   else {
 %>
-Presently, no task has been scheduled to (re-)generate the suggestion list. You may want to request it now.
+Presently, no task has been scheduled to (re-)generate the suggestion list. If desired, you can request it now.
 </p>
  <%      
       }
@@ -138,6 +138,8 @@ the suggestion list for <em><%= main.actorUserName %></em>, click on the button 
 <input type="submit" value="Create task">
 </form>
 </p>
+<%  }  %>
+
 
 <hr>
 <p>
@@ -147,9 +149,6 @@ the suggestion list for <em><%= main.actorUserName %></em>, click on the button 
 <a name="refresh"><input type="submit" value="Refresh view"></a>
 </form>
 </p>
-
-<%  }  %>
-
 
 <%  }  %>
 
