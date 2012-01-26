@@ -147,7 +147,9 @@ public class RatingButton //extends HTML
 
 
 	if (buttons!=null && buttons.length>0) {
-	    s+= "<a id=\"rate"+e.i+"\"  title=\"Rate this document.\""+
+	    s+= "<a" + 
+		att("id", "rate"+e.i) +
+		att("title", "Rate this document.") +
 		att("onclick",
 		    "$(this).hide(100); $('#ratings"+e.i+"').show(500);") +
 		">";

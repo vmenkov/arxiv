@@ -96,6 +96,14 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	    (i==2 ? boost2 : boost3);
     }
 
+    public void setBoost(int i, double x) {
+	if (i<2) {
+	    if (i==0) setBoost0(x); else setBoost1(x);
+	} else {
+	    if (i==2) setBoost2(x); else setBoost3(x);
+	}
+    }
+
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	return true; 
     }

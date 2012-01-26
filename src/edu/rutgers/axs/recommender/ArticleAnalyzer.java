@@ -107,6 +107,9 @@ public class ArticleAnalyzer {
 	@param docno Lucene's internal integer ID for the document,
 	@param as This is an output parameter. If non-null, update
 	this object with the feature vector's statistics
+
+	@param The frequency vector, which incorporates boost factors
+	for different fields, but no idf.
     */
     HashMap<String, Double> getCoef(int docno, ArticleStats as) 
 	throws IOException {
@@ -147,10 +150,7 @@ public class ArticleAnalyzer {
 	    as.setLength(length);
 	    as.setTermCnt(h.size());
 	    as.setNorm(0);
-	    as.setBoost0(0);
-	    as.setBoost1(0);
-	    as.setBoost2(0);
-	    as.setBoost3(0);
+	    for(int j=0; j<nf; j++)  as.setBoost(j,0);
 	    as.setTime( new Date());
 	}
 
@@ -187,15 +187,51 @@ public class ArticleAnalyzer {
 	if (mustUpdate) { 
 	    double norm=tfNorm(h);
 	    as.setNorm(norm);
-	    as.setBoost0(boost[0]/norm);
-	    as.setBoost1(boost[1]/norm);
-	    as.setBoost2(boost[2]/norm);
-	    as.setBoost3(boost[3]/norm);
+	    for(int j=0; j<nf; j++)  as.setBoost(j,boost[j]/norm);
 	}
 
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
 	return h;
     }
+
+
+    /** Computes (u*d)/|d|, where u=user profile (specified by hq),
+	d=document(docno) with field boosts, (u*d)=idf-weighted dot
+	product, |d|=idf-weighted two-norm of d. 
+
+	@param docno=document position (internal id) in the Lucene index.
+
+	@param as Contains precomputed stats for document(docno), in particular,
+	boost factors for the fields of d, already nortmalized by |d|
+
+	@param hq Represents the user vector.
+	
+     */
+    double linSim(int docno, ArticleStats as, HashMap<String, UserProfile.TwoVal> hq) 
+	throws IOException {
+	
+	double sum=0;
+	
+	for(int j=0; j<fields.length;  j++) {	
+	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
+	    if (tfv==null) continue;
+	    double boost =  as.getBoost(j);
+
+	    //System.out.println("--Terms--");
+	    int[] freqs=tfv.getTermFrequencies();
+	    String[] terms=tfv.getTerms();	    
+	    for(int i=0; i<terms.length; i++) {
+		UserProfile.TwoVal q=hq.get(terms[i]);
+		if (q==null) continue;
+
+		double z = useSqrt? Math.sqrt(freqs[i]) : freqs[i];
+		sum += z * boost * q.w1 *idf(terms[i]);
+	    }
+	}
+	return sum;
+    }
+
+
 
     /** Computes the idf-weighted 2-norm of a term frequency vector.
      @param h Represents the term frequency vector. */
@@ -320,17 +356,9 @@ public class ArticleAnalyzer {
 	    } else {
 		as = new ArticleStats();
 	    }
-	    as.setAid(aid);
-	    getCoef(docno, as);
+	    computeAndSaveStats(em,docno,as);
 	    Logging.info("Analyzed document " + aid + ", pos="+docno +
 			       ", length="+as.getLength()+", norm=" + as.getNorm());
-
-
-	    // now, put the new record into the database...
-	    em.getTransaction().begin();
-	    em.persist(as);
-	    em.getTransaction().commit();
-	    //em.close();
 
 	    doneCnt++;
 	    if (maxCnt>=0 && doneCnt>=maxCnt) {
@@ -339,13 +367,41 @@ public class ArticleAnalyzer {
 	}
     }
 
-    private static class FsIdOnly implements FieldSelector {
+    /** Computes and records in the database the stats for one document */
+    ArticleStats computeAndSaveStats(EntityManager em, int docno) throws  org.apache.lucene.index.CorruptIndexException, IOException {
+	Document doc = reader.document(docno,fieldSelectorAid);
+	String aid = doc.get(ArxivFields.PAPER);
+	ArticleStats as = new ArticleStats();
+	as.setAid(aid);	
+	computeAndSaveStats(em,docno,as);
+	return as;
+    }
+
+    /** Computes and records in the database the stats for one document.
+	
+	@param as A structure with an already set aid. This method
+	will compute and put the norm and boosts into this structure.
+     */
+    private void computeAndSaveStats(EntityManager em, int docno, ArticleStats as)  throws  org.apache.lucene.index.CorruptIndexException, IOException {
+	getCoef(docno, as);
+	// now, put the new record into the database...
+	em.getTransaction().begin();
+	em.persist(as);
+	em.getTransaction().commit();	
+    }
+
+
+    private static class FsAidOnly implements FieldSelector {
 	public FieldSelectorResult accept(String fieldName) {
 	    return fieldName.equals(ArxivFields.PAPER) ?
 		FieldSelectorResult.LOAD : 
 		FieldSelectorResult.NO_LOAD;
 	}
     }
+
+    /** Used as a cost-saving measure when we only need to retrieve
+     * the Article ID from Lucene */
+    private static FieldSelector fieldSelectorAid = new FsAidOnly();
 
     /** Reads the pre-computed data from the SQL database.
 	@return The index into the array is Lucene's current internal doc id */
@@ -360,11 +416,10 @@ public class ArticleAnalyzer {
 	}
 	int numdocs = reader.numDocs();
 	ArticleStats[] all = new ArticleStats[numdocs];
-	FieldSelector fieldSelector = new FsIdOnly();
 	int foundCnt=0;
 	for(int pos=0; pos<numdocs; pos++) {
 	    if (reader.isDeleted(pos)) continue;
-	    Document doc = reader.document(pos,fieldSelector);
+	    Document doc = reader.document(pos,fieldSelectorAid);
 	    String aid = doc.get(ArxivFields.PAPER);	    
 	    ArticleStats as = h.get(aid);
 	    if (as!=null) {

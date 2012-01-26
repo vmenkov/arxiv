@@ -49,6 +49,7 @@ Various algorithms for finding pages possibly interesting to you.
 <p>
 <ul>
 <li><a href="viewSuggestions.jsp?mode=LINEAR_SUGGESTIONS_1">Suggestions - linear model</a> - applying the user profile vector to the entire data set. (Cosine similarity).
+<li><a href="viewSuggestions.jsp?mode=LINEAR_SUGGESTIONS_1&days=7">Suggestions - linear model - last 7 days</a> - applying the user profile vector to the most recent articles (the last 7 days). (Cosine similarity).
 </ul>
 </p>
 

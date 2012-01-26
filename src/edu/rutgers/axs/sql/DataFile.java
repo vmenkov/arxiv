@@ -80,6 +80,18 @@ import edu.cornell.cs.osmot.options.Options;
     public Type getType() { return type; }
     public void setType(Type x) { type = x; }
 
+   /** The time range, in days, used to sub-class certain task, such 
+	as when suggestions need to be generated only from the recently
+	added articles (with dates in this ranged). 0 means "unlimited".
+	Ignored by most other tasks.
+    */
+    @Basic @Display(editable=false, order=6.1)     @Column(nullable=false)
+    	private int days=0;   
+    public int getDays() { return days; }
+    public void setDays(int x) { days = x; }
+
+
+
     /** Has the physical file been deleted? */
     @Basic boolean deleted = false;
     public boolean getDeleted() { return deleted; }
@@ -110,10 +122,23 @@ import edu.cornell.cs.osmot.options.Options;
 	type for a given username.	
      */
     static public DataFile getLatestFile(EntityManager em, String  username, Type t) {
-	Query q = em.createQuery("select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE order by m.time desc");
+	return  getLatestFile( em, username,  t, -1);
+    }
+
+    /** Gets the most recently generated non-deleted file by a given
+	type for a given username, with a given days range.	
+	@param days The day range. If a negative value is given, it's
+	ignored.
+     */
+    static public DataFile getLatestFile(EntityManager em, String  username, Type t, int days) {
+	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
+	if (days>=0) qs += " and m.days=:d";
+	qs += " order by m.time desc";
+	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
 	q.setParameter("t", t);
+	if (days>=0) 	q.setParameter("d", days);
 
 	q.setMaxResults(1);
 	List<DataFile> res = (List<DataFile>)q.getResultList();

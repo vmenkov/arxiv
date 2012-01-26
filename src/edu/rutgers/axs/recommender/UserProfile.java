@@ -43,6 +43,7 @@ public class UserProfile {
     /** Maps term to value (cumulative tf) */
     public HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
 
+
     void add(String key, double inc1, double inc2) {
 	TwoVal val = hq.get(key);
 	if (val==null) {
@@ -93,6 +94,8 @@ public class UserProfile {
 	return 1.0 / (1 + Math.log( 1.0 + i ));
     }
     
+    /**
+     */
     UserProfile(String uname, EntityManager em, IndexReader reader) throws IOException {
 	User actor = User.findByName(em, uname);
 	if (actor == null) {
@@ -127,10 +130,8 @@ public class UserProfile {
 	purgeUselessTerms();
 
 	terms = hq.keySet().toArray(new String[0]);
-	//Arrays.sort(terms);
 	Arrays.sort(terms, getByDescVal());
 	Logging.info( "User profile has " + terms.length + " terms");
-	//save(new PrintWriter(System.out));
 	save(new File("profile.tmp"));
     }
 
@@ -192,7 +193,7 @@ public class UserProfile {
     /** Sorts the keys of the hash table according to the
 	corresponding values time IDF, in descending order.
     */
-    class ByDescVal implements  Comparator<String> {
+    private class TermsByDescVal implements  Comparator<String> {
 	public int compare(String o1,String o2) {
 	    double d = hq.get(o2).w1 * dfc.idf(o2)- 
 		hq.get(o1).w1 * dfc.idf(o1);
@@ -201,7 +202,7 @@ public class UserProfile {
     }
     
     Comparator getByDescVal() {
-	return new  ByDescVal();
+	return new  TermsByDescVal();
     }
 
     /** Creates a Lucene query that looks for any and all terms
@@ -215,9 +216,6 @@ public class UserProfile {
      */
     org.apache.lucene.search.Query firstQuery() {
 	BooleanQuery q = new BooleanQuery();
-	String [] terms = hq.keySet().toArray(new String[0]);
-	// Sort by value, in descending order
-	Arrays.sort(terms, new ByDescVal());
 	
 	int maxCC = BooleanQuery.getMaxClauseCount();
 	if (maxTerms > maxCC) {
@@ -244,7 +242,12 @@ public class UserProfile {
 	return q;
     }
     
-    private class ScoresComparator implements Comparator<Integer> {
+    /** A comparator used to order integer values, interpreted as
+	indexes into the score array, based on the values of the
+	corresponding elements in that score array. The ordering is
+	in the descending order of the scores.
+    */
+    private static class ScoresComparator implements Comparator<Integer> {
 	double scores[];
 	ScoresComparator(double _scores[]) { scores=_scores; }	    
 	/** descending order */
@@ -255,6 +258,19 @@ public class UserProfile {
 	}	
     }
 
+    static private class OurScoreDoc implements Comparable<OurScoreDoc> {
+	int docno;
+	double score;
+	OurScoreDoc(int _docno, 	double _score) {
+	    docno=_docno;  score=_score;
+	}
+	/** Descending order! */
+	public int compareTo(OurScoreDoc  other) {
+	    double d = other.score - score; 
+	    return (d<0) ? -1 : (d>0) ? 1: 0;
+	}
+    }
+     
     /** This is an "autonomous" version, which goes for the real cosine
       similarity, So lots of numbers are precomputed by ourselves,
       stored in the SQL database, and then pulled with ArticleStats[].
@@ -267,17 +283,15 @@ public class UserProfile {
       @param days Article date range (so many most recent days).  0
       means "all dates".
      */
-    Vector<ArticleEntry> luceneRawSearch(int maxDocs, ArticleStats[] allStats, int days) throws IOException {
-	String [] terms = hq.keySet().toArray(new String[0]);
-	
+    Vector<ArticleEntry> luceneRawSearch(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
+
+	if (days>0) {
+	    return luceneRawSearchDateRange(maxDocs, allStats, em, days);
+	}
+
 	int numdocs = dfc.reader.numDocs() ;
 	double scores[] = new double[numdocs];	
-	
-	// Sort by value, in descending order
-	Arrays.sort(terms, getByDescVal());
-	
-	IndexSearcher searcher = new IndexSearcher( dfc.reader);
-	
+		
 	int tcnt=0,	missingStatsCnt=0;
 	for(String t: terms) {
 	    double idf = dfc.idf(t);
@@ -311,37 +325,24 @@ public class UserProfile {
 	    tcnt++;		
 	    if (maxTerms>0 && tcnt >= maxTerms) break;
 	}	    
-	// qpos[] will contain internal document numbers
-	Integer qpos[]  = new Integer[numdocs];
+	OurScoreDoc[] sd = new OurScoreDoc[numdocs];
 	int  nnzc=0;
 	for(int k=0; k<scores.length; k++) {		
-	    if (scores[k]>0) qpos[nnzc++] = new Integer(k);
+	    if (scores[k]>0) sd[nnzc++] = new OurScoreDoc(k, scores[k]);
 	}
 	Logging.info("nnzc=" + nnzc);
 	if (missingStatsCnt>0) {
 	    Logging.warning("used zeros for " + missingStatsCnt + " values, because of missing stats");
 	}
-	Arrays.sort( qpos, 0, nnzc, new  ScoresComparator(scores));
-	
-	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
-	for(int i=0; i< nnzc && i<maxDocs; i++) {
-	    final int k=qpos[i].intValue();
-	    Document doc = searcher.doc(k);
-	    ArticleEntry ae= new ArticleEntry(i+1, doc);
-	    ae.setScore( scores[k]);
-	    entries.add( ae);
-	}	
-	return entries;
+	return sortAndPackageEntries( sd, nnzc, maxDocs);
     }
 
-    /*
-    Vector<ArticleEntry> luceneRawSearchDateRange(int maxDocs, ArticleStats[] allStats, int days) throws IOException {
-	Date now = new Date();
-	long msec = now.getTime() - 24*3600*1000 * days;
-	Query q = 
-	    TermRangeQuery(ArxivFields.DATE_INDEXED,
-			   DateTools.timeToString(msec, DateTools.Resolution.SECOND),
-			   null, true, true);
+    Vector<ArticleEntry> luceneRawSearchDateRange(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
+	long msec = (new Date()).getTime() - 24*3600*1000 * days;
+	TermRangeQuery q = 
+	    new TermRangeQuery(ArxivFields.DATE_INDEXED,
+			       DateTools.timeToString(msec, DateTools.Resolution.SECOND),
+			       null, true, true);
 	
 	final int M = 10000; // well, the range is supposed to be narrow...
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
@@ -349,32 +350,53 @@ public class UserProfile {
 	ScoreDoc[] scoreDocs = top.scoreDocs;
 	boolean needNext=(scoreDocs.length > M);
 	Logging.info("Search over the range of " + days + " days; found " + scoreDocs.length + " docs in range");
-	if (neexNext) Logging.warning("Dropped some docs in range search (more results than " + M);
-	
-	for(int i=startat; i< scoreDocs.length ; i++) {
+	if (needNext) Logging.warning("Dropped some docs in range search (more results than " + M);
+
+	OurScoreDoc[] scores = new OurScoreDoc[scoreDocs.length];
+	int  nnzc=0;
+	int missingStatsCnt =0;
+
+	for(int i=0; i< scoreDocs.length ; i++) {
 	    int docno = scoreDocs[i].doc;
 
+	    if (docno > allStats.length) {
+		Logging.warning("linSim: no stats for docno=" + docno + " (out of range)");
+		missingStatsCnt ++;
+		continue;
+	    } 
+	    ArticleStats as =allStats[docno];
+	    if (as==null) {
+		as = allStats[docno] = dfc.computeAndSaveStats(em, docno);
+		Logging.info("linSim: Computed and saved missing stats for docno=" + docno + " (gap)");
+	    } 
+	    double sim = dfc.linSim(docno, as, hq);
+	    if (sim>0) 	scores[nnzc++]= new OurScoreDoc(docno, sim);
+	}
+
+	Logging.info("nnzc=" + nnzc);
+	if (missingStatsCnt>0) {
+	    Logging.warning("used zeros for " + missingStatsCnt + " docs, because of missing stats");
+	}
+	return sortAndPackageEntries( scores, nnzc, maxDocs);
+    }
+
+    private Vector<ArticleEntry> sortAndPackageEntries(OurScoreDoc[] scores, int nnzc, int  maxDocs)  
+	throws IOException, org.apache.lucene.index.CorruptIndexException{
+	Arrays.sort( scores, 0, nnzc);
+	
+	int maxCnt = Math.min(nnzc, maxDocs);
+	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>(maxCnt);
+	for(int i=0; i< maxCnt; i++) {
+	    OurScoreDoc sd = scores[i];
+	    Document doc = dfc.reader.document( sd.docno);
+	    // FIXME: could use  "skeleton" constructor instead to save time   
+	    ArticleEntry ae= new ArticleEntry(i+1, doc);
+	    ae.setScore( sd.score);
+	    entries.add( ae);
 	}	
-	return  entries;
+	return entries;
     }
-*/
-    /*
-    private double cosSim(into docno, ArticleStats[] allStats) {
-	if (docno > allStats.length) {
-	    Logging.warning("cosSim: no stats for docno=" + docno + " (out of range)");
-	    return 0;
-	} 
-	ArticleStats as =allStats[docno];
-	if (as==null) {
-	    Logging.warning("cosSim: no stats for docno=" + docno + " (gap)");
-	    return 0;
-	} 
-
-	HashMap<String, Double> coef = ArticleAnalyzer.getCoef(docno, as);
-
-    }
-*/
-
+  
     /** This is the "original" version, that relies to a large extent
      * on values (norms) stored in Lucene.
      */

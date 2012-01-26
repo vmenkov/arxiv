@@ -31,19 +31,22 @@ public class ViewSuggestions extends ResultsBase {
     public Vector<ArticleEntry> entries = null;//new Vector<ArticleEntry>();
 
     public DataFile df =null;
-    static final String MODE="mode";
+    public static final  String MODE="mode", DAYS="days";
 
     /** The type of the suggestion list, as specified by the HTTP query string*/
     public DataFile.Type mode= DataFile.Type.LINEAR_SUGGESTIONS_1;
+    public int days=0;
 
     public static final int maxRows = 100;
     
-    public boolean isSelf = false;
+    public boolean isSelf = false, force=false;
+    
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
-	boolean force= getBoolean(FORCE, false);
+	force= getBoolean(FORCE, false);
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
+	days = (int)getLong(DAYS, days);
 	if (error) return; // authentication error?
 
 	actorUserName =  getString(USER_NAME, user);
@@ -53,18 +56,22 @@ public class ViewSuggestions extends ResultsBase {
 
 	EntityManager em = sd.getEM();
 	try {
+	    final int maxDays=30;
+
+	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
 
 	    if (actorUserName==null) throw new WebException("No user name specified!");
+
 	    em.getTransaction().begin();
 	    
-	    // FIXME: need to support date ranges
-	    df = DataFile.getLatestFile(em, actorUserName, mode);
+	    df = DataFile.getLatestFile(em, actorUserName, mode, days);
 
 	    List<Task> tasks = 
 		Task.findOutstandingTasks(em, actorUserName, taskOp);
 
 	    if (tasks != null) {
 		for(Task t: tasks) {
+		    if (t.getDays()!=days) continue; // range mismatch
 		    if (t.appearsActive()) {
 			activeTask=t; 
 			break;
@@ -87,7 +94,8 @@ public class ViewSuggestions extends ResultsBase {
 		    long sec = ((new Date()).getTime() - df.getTime().getTime())/1000;
 		    final int minMinutesAllowed = 10;
 		    if (sec < minMinutesAllowed * 60) {
-			infomsg += "Update task not created, because the most recent update was completed less than " + minMinutesAllowed + " minutes ago. (Loadf control).";
+			infomsg += "Update task not created, because the most recent update was completed less than " + minMinutesAllowed + 
+			    " minutes ago. (Load control).";
 		    } else {
 			needNewTask = true;
 			infomsg += "Update task created as per request";
@@ -100,6 +108,7 @@ public class ViewSuggestions extends ResultsBase {
 
 	    if (needNewTask) {
 		newTask = new Task(actorUserName, taskOp);
+		newTask.setDays(days);
 		em.persist(newTask);
 	    }
 
@@ -154,6 +163,14 @@ public class ViewSuggestions extends ResultsBase {
 	ArticleEntry.markFolder(entries, u.getFolder());
 	ArticleEntry.markRatings(entries, 
 				 u.getActionHashMap(Action.ratingOps));
+    }
+
+    public String forceUrl() {
+	String s = cp + "/viewSuggestions.jsp?" + USER_NAME + "=" + actorUserName;
+	s += "&" + FORCE + "=true";
+	s += "&" + MODE + "=" +mode;
+	if (days!=0) 	    s +=  "&" + DAYS+ "=" +days;
+	return s;
     }
 
 }

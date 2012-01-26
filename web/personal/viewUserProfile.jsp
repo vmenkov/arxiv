@@ -79,12 +79,12 @@ Presently, a task is running to generate the user profile: <%= main.activeTask%>
       } else if (main.queuedTask!=null) {
 %>
 <p>
-Presently, a task is queued to generate the user profile: <%= main.queuedTask%>. You may wait for a few minutes, and then reload this page to see if it has started and completed.</p>
+Presently, a task is queued to generate the user profile: <%= main.queuedTask%>. You may wait for a few minutes, and then refresh this page to see if it has started and completed.</p>
  <%
        } else if (main.newTask!=null) {
 %>
 <p>
-A new task has to generate the user profile has just been created and queued: <%= main.newTask%>. You may wait for a couple minutes, and then reload this page to see if it has started and completed.</p>
+A new task to generate the user profile has just been created and queued: <%= main.newTask%>. You may wait for a couple minutes, and then reload this page to see if it has started and completed.</p>
  <%
      }   else {
 %>

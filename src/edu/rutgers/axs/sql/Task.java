@@ -66,7 +66,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	added articles (with dates in this ranged). 0 means "unlimited".
 	Ignored by most other tasks.
     */
-    @Basic @Display(editable=false, order=4) 
+    @Basic @Display(editable=false, order=4)  @Column(nullable=false)
     	private int days=0;   
     public int getDays() { return days; }
     public void setDays(int x) { days = x; }
@@ -148,10 +148,12 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
     }
 
     public String toString() {
-	return "(Task(id="+getId()+", "+getOp()+"), canceled="+
+	String s = "(Task(id="+getId()+", "+getOp()+ " | " + getDays()+" days)";
+	s += ", canceled="+
 	    getCanceled()+", failed="+getFailed()+", entered " +
 	    getRequestTime()+", done="+getCompleteTime()+"; pid="+
 	    getPid()+")";
+	return s;
     }
 
     /** Get the next task from the queue.  If there is none, return

@@ -171,12 +171,13 @@ public class TaskMaster {
 		    final boolean raw=true;
 		    ArticleStats[] allStats = asr.getResults();
 		    
-		    int days = task.getDays();
+		    int days = task.getDays();		    
 		    Vector<ArticleEntry> entries=
-			raw ? upro.luceneRawSearch(maxDocs, asr.allStats, days):
+			raw ? upro.luceneRawSearch(maxDocs, asr.allStats, em, days):
 			upro.luceneQuerySearch(maxDocs, days);
 
 		    outputFile=DataFile.newOutputFile(task, pid);
+		    outputFile.setDays(days);
 		    ArticleEntry.save(entries, outputFile.getFile());
 		}
 		success=true;
