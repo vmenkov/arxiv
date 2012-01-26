@@ -67,7 +67,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	Ignored by most other tasks.
     */
     @Basic @Display(editable=false, order=4)  @Column(nullable=false)
-    	private int days=0;   
+    	private int days;   
     public int getDays() { return days; }
     public void setDays(int x) { days = x; }
 
@@ -139,9 +139,6 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	String outputFile=null;
     public String getOutputFile() { return outputFile; }
     public void setOutputFile( String x) { outputFile = x; }
-
-
-
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	return true; 
