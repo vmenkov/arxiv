@@ -498,6 +498,17 @@ public class UserProfile {
 	return  entries;
     }
 
+    /** Produces a list of articles sorted in accordance with Thorsten's
+	Algorithm 1 
+
+    @param le Entries sorted by their linear contribution */
+    /*
+    Vector<ArticleEntry> tjAlgo1(Vector<ArticleEntry> le) {
+	double psi = 0;
+	
+
+    }
+    */
 
     /** Stuff used to control debugging and additional verbose reporting. */
     static class Debug {
@@ -531,7 +542,5 @@ public class UserProfile {
 	    debug = new UserProfile.Debug(reader, ht);
 	}
     }
-
-
 
 }

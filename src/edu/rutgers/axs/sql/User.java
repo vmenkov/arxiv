@@ -174,7 +174,7 @@ import org.apache.catalina.realm.RealmBase;
 	for(Role r: getRoles()) {
 	    n++;
 	}
-	Logging.info("Loaded a user entry with "+n +" roles: " + reflectToString());
+	//Logging.info("Loaded a user entry with "+n +" roles: " + reflectToString());
     }
 
     public String reflectToString() {

@@ -89,7 +89,7 @@ public class ExtendedSessionManagement {
 	    Logging.info("Extended session expired; ignoring cookie");
 	    return null;	    
 	}
-	Logging.info("Identified user " +uname + " from a valid extended session cookie");
+	//Logging.info("Identified user " +uname + " from a valid extended session cookie");
 	return u;
     }
 
