@@ -6,7 +6,8 @@
 # ... showcoef id
 # ....
 
-set opt="-DOSMOT_CONFIG=."
+# set opt="-DOSMOT_CONFIG=."
+set opt="-Xmx1024m -DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib
 
@@ -26,5 +27,6 @@ echo "opt=$opt"
 
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.TaskMaster
+
 
 
