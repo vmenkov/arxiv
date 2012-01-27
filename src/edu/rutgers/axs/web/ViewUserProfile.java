@@ -28,13 +28,17 @@ public class ViewUserProfile extends ResultsBase {
 
     public DataFile df =null;
 
-    public ViewUserProfile(HttpServletRequest _request, HttpServletResponse _response, boolean self) {
+    public boolean isSelf = false, force=false;
+    
+
+
+    public ViewUserProfile(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
+	force= getBoolean(FORCE, false);
+
 	if (error) return;
-
-	actorUserName = self ? user :  getString(USER_NAME, null);
-
-	boolean force= getBoolean(FORCE, false);
+	actorUserName =  getString(USER_NAME, user);
+	isSelf = (actorUserName.equals(user));
 
 	EntityManager em = sd.getEM();
 	try {

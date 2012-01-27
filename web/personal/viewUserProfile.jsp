@@ -4,7 +4,7 @@
 <%@ page import="edu.rutgers.axs.recommender.*" %>
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% 
-   ViewUserProfile main=new ViewUserProfile(request, response, true);
+   ViewUserProfile main=new ViewUserProfile(request, response);
    User actor = main.actor;
 %>
 
@@ -28,7 +28,7 @@
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else {
 
-     if (main.upro!=null) {      %>
+     if (!main.force && main.upro!=null) {      %>
 
 
 <p>User profile <%=main.df.getThisFile() %> was generated for user  
@@ -64,7 +64,7 @@ UserProfile.TwoVal h= main.upro.hq.get(t);
 </table>
 </p>
 
-<% } else { %>
+<% } else if (!main.force)  { %>
 <P>No user profile for user <em><%= main.actorUserName %></em> has been generated yet. 
 </p>
 <% } %>
@@ -105,6 +105,7 @@ the user profile for <em><%= main.actorUserName %></em>, click on the button bel
 <input type="submit" value="Create task">
 </form>
 </p>
+<%  }  %>
 
 <hr>
 <p>
@@ -113,8 +114,6 @@ the user profile for <em><%= main.actorUserName %></em>, click on the button bel
 <input type="submit" value="Refresh view">
 </form>
 </p>
-
-<%  }  %>
 
 
 
