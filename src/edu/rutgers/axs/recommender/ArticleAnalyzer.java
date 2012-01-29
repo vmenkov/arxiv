@@ -29,16 +29,16 @@ public class ArticleAnalyzer {
 
     IndexReader reader;
     private IndexReader[] surs;
-    private String [] fields;
+    final String [] fields;
     /** Collection size */
     private int numdocs;
     ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
+	fields = _fields;
 	reader =_reader;
 	surs = reader.getSequentialSubReaders();
 	if (surs==null) {
 	    surs = new IndexReader[]{ reader};
 	}
-	fields = _fields;
 	numdocs = reader.numDocs();
 	baseBoost= initBoost(fields);
     }
@@ -431,24 +431,10 @@ public class ArticleAnalyzer {
 	return all;
     }
 
-    /** Find a document by article ID, using a given searcher.
-     @return Lucene internal doc id.*/
-    static public int find(IndexSearcher s, String id) throws IOException{
-	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
-	//System.out.println("query=("+tq+")");
-	TopDocs 	 top = s.search(tq, 1);
-	ScoreDoc[] 	scoreDocs = top.scoreDocs;
-	if (scoreDocs.length < 1) {
-	    System.out.println("No document found with paper="+id);
-	    throw new IOException("No document found with paper="+id);
-	}
-	return scoreDocs[0].doc;
-    }
-     
     /** Finds a document by ID in the Lucene index */
     int find(String aid) throws IOException{
 	IndexSearcher s = new IndexSearcher( reader );
-	return find(s, aid);
+	return ArticleEntry.find(s, aid);
     }
     
    

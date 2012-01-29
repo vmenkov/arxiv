@@ -37,7 +37,9 @@ public class UserProfile {
     public static class TwoVal {	
 	/** Coefficients for   phi(t) and sqrt(phi(t)) */
 	public double w1, w2;
-	TwoVal(double _w1, double _w2) { w1=_w1; w2=_w2;}
+	TwoVal(double _w1, double _w2) { 
+	    w1=_w1; w2=_w2;
+	}
     }
 
     /** Maps term to value (cumulative tf) */
@@ -390,7 +392,7 @@ public class UserProfile {
 	    OurScoreDoc sd = scores[i];
 	    Document doc = dfc.reader.document( sd.docno);
 	    // FIXME: could use  "skeleton" constructor instead to save time   
-	    ArticleEntry ae= new ArticleEntry(i+1, doc);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc, sd.docno);
 	    ae.setScore( sd.score);
 	    entries.add( ae);
 	}	
@@ -462,7 +464,7 @@ public class UserProfile {
 	    final int k=qpos[i].intValue();
 	    Document doc = searcher.doc(k);
 	    //String aid = doc.get(ArxivFields.PAPER);
-	    ArticleEntry ae= new ArticleEntry(i+1, doc);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc, k);
 	    ae.setScore( scores[k]);
 	    entries.add( ae);
 	}	
@@ -489,14 +491,27 @@ public class UserProfile {
 	int startat=0;
 	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>();
 	for(int i=startat; i< scoreDocs.length && i<maxDocs; i++) {
-	    Document doc = searcher.doc(scoreDocs[i].doc);
+	    int docno=scoreDocs[i].doc;
+	    Document doc = searcher.doc(docno);
 	    String aid = doc.get(ArxivFields.PAPER);
-	    ArticleEntry ae= new ArticleEntry(i+1, doc);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc, docno);
 	    ae.setScore( scoreDocs[i].score);
 	    entries.add( ae);
 	}	
 	return  entries;
     }
+
+    /** Creates a map that maps terms to their position in the terms[]
+     * array. */
+    HashMap<String,Integer> mkTermMapper() {
+	HashMap<String,Integer> h = new HashMap<String,Integer>();
+	for(int i=0; i<terms.length; i++) {
+	    h.put( terms[i], new Integer(i));
+	}
+	return h;
+    }
+
+
 
     /** Produces a list of articles sorted in accordance with Thorsten's
 	Algorithm 1 
@@ -523,7 +538,7 @@ public class UserProfile {
 	    for(int i=0; i<watchAid.length; i++) {
 		watchPos[i]=-1;
 		try {
-		    watchPos[i] =  ArticleAnalyzer.find(s, watchAid[i]);
+		    watchPos[i] =  ArticleEntry.find(s, watchAid[i]);
 		} catch (IOException ex) {};
 	    }
 	}
@@ -542,5 +557,7 @@ public class UserProfile {
 	    debug = new UserProfile.Debug(reader, ht);
 	}
     }
+
+
 
 }

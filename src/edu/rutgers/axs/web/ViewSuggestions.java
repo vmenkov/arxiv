@@ -127,7 +127,7 @@ public class ViewSuggestions extends ResultsBase {
 		// In docs to be displayed, populate other fields from Lucene
 		for(int i=0; i<entries.size() && i<maxRows; i++) {
 		    ArticleEntry e = entries.elementAt(i);
-		    int docno = ArticleAnalyzer.find(s, e.id);		    
+		    int docno = e.getCorrectDocno(s);		    
 		    Document doc = reader.document(docno);
 		    e.populateOtherFields(doc);
 		}

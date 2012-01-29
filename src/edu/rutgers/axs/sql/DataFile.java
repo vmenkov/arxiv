@@ -58,14 +58,16 @@ import edu.cornell.cs.osmot.options.Options;
     public static enum Type {
 	USER_PROFILE,
 	    /** Selection based on dot products with the USER_PROFILE */
-	    LINEAR_SUGGESTIONS_1;
-
+	    LINEAR_SUGGESTIONS_1,
+	    TJ_ALGO_1_SUGGESTIONS_1;
 	/** What kind of file is created by each task? */
 	static Type outputForOp(Task.Op op) {
 	    if (op == Task.Op.HISTORY_TO_PROFILE) {
 		return Type.USER_PROFILE;
 	    } else if (op == Task.Op.LINEAR_SUGGESTIONS_1) {
 		return Type.LINEAR_SUGGESTIONS_1;
+	    } else if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
+		return Type.TJ_ALGO_1_SUGGESTIONS_1;
 	    } else {
 		throw new IllegalArgumentException("Don't know what kind of file create for task type=" +op);
 	    }
@@ -178,6 +180,8 @@ import edu.cornell.cs.osmot.options.Options;
 	    return "profile";
 	} else 	if (op == Task.Op.LINEAR_SUGGESTIONS_1) {
 	    return "linsug1";
+	} else 	if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
+	    return "algo1sug1";
 	} else {
 	    return null;
 	}	 

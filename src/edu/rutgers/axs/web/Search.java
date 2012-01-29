@@ -197,15 +197,16 @@ public class Search extends ResultsBase {
 
 	    int pos = startat+1;
 	    for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
-		Document doc = searcher.doc(scoreDocs[i].doc);
+		int docno=scoreDocs[i].doc;
+		Document doc = searcher.doc(docno);
 
 		// check if it's been "removed" by the user.
 		String aid = doc.get(ArxivFields.PAPER);
 		if (exclusions!=null && exclusions.containsKey(aid)) {
 		    int epos = excludedEntries.size()+1;
-		    excludedEntries.add( new ArticleEntry(epos, doc));
+		    excludedEntries.add( new ArticleEntry(epos, doc, docno));
 		} else {
-		    entries.add( new ArticleEntry(pos, doc));
+		    entries.add( new ArticleEntry(pos, doc, docno));
 		    pos++;
 		}			
      /*

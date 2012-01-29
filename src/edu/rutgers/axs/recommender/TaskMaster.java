@@ -146,7 +146,8 @@ public class TaskMaster {
 			new UserProfile(task.getUser(), em, reader);	   
 		    outputFile=DataFile.newOutputFile(task, pid);
 		    upro.save(outputFile.getFile());
-		} else if (task.getOp() == Task.Op.LINEAR_SUGGESTIONS_1) {
+		} else if (task.getOp() == Task.Op.LINEAR_SUGGESTIONS_1
+			   || task.getOp() == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 		    // FIXME: should also support individual file specs
 		    inputFile = 
 			//			(task.getInputFile()) != null ?
@@ -172,9 +173,14 @@ public class TaskMaster {
 		    ArticleStats[] allStats = asr.getResults();
 		    
 		    int days = task.getDays();		    
-		    Vector<ArticleEntry> entries=
+		    Vector<ArticleEntry> entries = 
 			raw ? upro.luceneRawSearch(maxDocs, asr.allStats, em, days):
 			upro.luceneQuerySearch(maxDocs, days);
+
+		    if (task.getOp() == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
+			TjAlgorithm1 algo = new TjAlgorithm1();
+			entries = algo.rank( upro, entries, asr.allStats, em, maxDocs);
+		    }
 
 		    outputFile=DataFile.newOutputFile(task, pid);
 		    outputFile.setDays(days);

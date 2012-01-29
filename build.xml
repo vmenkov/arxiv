@@ -60,7 +60,7 @@
 
 <!-- property name="tomcat.home"     value="/www/my.arxiv.org" / -->
 
-<property name="app.name"       value="arxiv.tmp"/>
+<property name="app.name"       value="arxiv"/>
 <property name="deploy.home"    value="${tomcat.home}/webapps/${app.name}"/>
 <property name="dist.home"      value="${deploy.home}"/>
 <property name="dist.src"       value="${app.name}.jar"/>

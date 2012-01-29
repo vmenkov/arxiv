@@ -50,7 +50,9 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	/** Review user's action history, generate profile */
 	HISTORY_TO_PROFILE,
 	    /** Linear model suggestions */
-	    LINEAR_SUGGESTIONS_1;
+	    LINEAR_SUGGESTIONS_1,
+        /** Thorsten Joachims' Algorithm 1 */
+	    TJ_ALGO_1_SUGGESTIONS_1;
     }
 
     @Display(editable=false, order=3) 

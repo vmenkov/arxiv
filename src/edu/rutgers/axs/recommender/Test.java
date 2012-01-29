@@ -57,8 +57,15 @@ public class Test {
 	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
 
 	    Vector<ArticleEntry> entries=
-		raw ? upro.luceneRawSearch(maxDocs, allStats, em, 0 ):
-		upro.luceneQuerySearch(maxDocs, 0);
+		raw ? upro.luceneRawSearch(maxDocs *10, allStats, em, 0 ):
+		upro.luceneQuerySearch(maxDocs * 10, 0);
+
+	    ArticleEntry.save(entries, new File("linsug.txt"));
+
+	    TjAlgorithm1 algo = new TjAlgorithm1();
+	    entries = algo.rank( upro, entries, allStats, em, maxDocs);
+
+	    ArticleEntry.save(entries, new File("algo1.txt"));
 
 	    int startat=0;
 	    int pos = startat+1;

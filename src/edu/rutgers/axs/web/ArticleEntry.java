@@ -33,13 +33,20 @@ public class ArticleEntry {
 	search */
     public double score=0;
 
+    /** This field may be used in some applications to store the
+      Lucene internal (ephemeral) document number. We put -1 to mean
+      "unknown". */
+    public int docno=-1;
+
     /** Initializes an ArticleEntry object based on the data in a Document
 	object.
-	@param doc a Document object, pfobably just retrieved from the
+	@param doc a Document object, probably just retrieved from the
 	Lucene data store.
+	@param docno Lucene's internal doc id
      */
-    public ArticleEntry(int _i, Document doc) {
+    public ArticleEntry(int _i, Document doc, int _docno) {
 	i = _i;
+	docno = _docno;
 	id=doc.get(ArxivFields.PAPER);
 	idline="arXiv:" + id;
 	populateOtherFields( doc);
@@ -54,7 +61,7 @@ public class ArticleEntry {
     }
     
 
-    /** Dummy constructor, leaves most fields blank */
+    /** Dummy constructor, leaves most fields (included docno) blank */
     private ArticleEntry(int _i, String aid) {
  	i = _i;
 	id=aid;
@@ -76,7 +83,7 @@ public class ArticleEntry {
 	the local data store (e.g., becasue it has not been updated),
 	may return a "dummy" entry. 
 	@param aid Arxiv id for the article
-	@param pos Position in our list (has nothing to do with Lucene)
+	@param pos Position in our list (has nothing to do with Lucene!)
     */
     static ArticleEntry getArticleEntry(Searcher s, String aid, int pos) {
 	ArticleEntry dummy =  getDummyArticleEntry( aid,  pos);
@@ -85,9 +92,10 @@ public class ArticleEntry {
 	    TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
 	    ScoreDoc[] 	scoreDocs = s.search(tq, 1).scoreDocs;
 	    if (scoreDocs.length < 1) return dummy;
-	    Document doc = s.doc(scoreDocs[0].doc);
+	    int docno = scoreDocs[0].doc;
+	    Document doc = s.doc(docno);
 	    if (doc==null) return dummy;
-	    return new ArticleEntry(pos, doc);
+	    return new	ArticleEntry(pos, doc, docno);
 	} catch (Exception ex) { return null; }
     }
 
@@ -170,6 +178,38 @@ public class ArticleEntry {
 	r.close();
 	return entries;
     }
+
+    /** Find a document by article ID, using a given searcher.
+     @return Lucene internal doc id.*/
+    static public int find(IndexSearcher s, String aid) throws IOException
+{
+	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
+	//System.out.println("query=("+tq+")");
+	TopDocs 	 top = s.search(tq, 1);
+	ScoreDoc[] 	scoreDocs = top.scoreDocs;
+	if (scoreDocs.length < 1) {
+	    System.out.println("No document found with paper="+aid);
+	    throw new IOException("No document found with paper="+aid);
+	}
+	return scoreDocs[0].doc;
+    }
+
+    /** @return the Lucene doc no, or -1 (if we have not queried Lucene yet) 
+     */
+    public int getStoredDocno() {
+	return docno;
+    }
+     
+    /** Checks if the Lucene docno is set in this entry, sets it if it
+	is not, and returns it.
+     */
+    public int getCorrectDocno(IndexSearcher s) throws IOException {
+	if (docno < 0) {
+	    docno = find(s, id);		    
+	}
+	return docno;
+    }
+
 
 }
 
