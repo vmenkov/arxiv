@@ -22,24 +22,31 @@ import edu.rutgers.axs.recommender.*;
     and ranks them based on these actions.
  */
 public class ViewSuggestions extends ResultsBase {
-    /** The user name of the user whose activity we reasearch */
+    /** The user name of the user whose activity we research */
     public String actorUserName;
     public User actor;
     public Task activeTask = null, queuedTask=null, newTask=null;
 
     /** Null indicates that no file has been found */
     public Vector<ArticleEntry> entries = null;//new Vector<ArticleEntry>();
-
+    /** Data file whose content is to be displayed */
     public DataFile df =null;
     public static final  String MODE="mode", DAYS="days";
 
-    /** The type of the suggestion list, as specified by the HTTP query string*/
+    /** The type of the requested suggestion list, as specified by the
+     * HTTP query string*/
     public DataFile.Type mode= DataFile.Type.LINEAR_SUGGESTIONS_1;
+    /** Date range on which is the list should be based. (0=all time). */
     public int days=0;
-
+    /** Max length to display. (Note that the suggestion list
+     * generator may have its own truncatin criteria!)  */
     public static final int maxRows = 100;
     
-    public boolean isSelf = false, force=false;
+    /** Is the user requesting a list for his own activity (rather
+     * than for someone's else, as a researcher)? */
+    public boolean isSelf = false;
+    /** User has requested to create a new task. */
+    public boolean force=false;
     
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
@@ -52,7 +59,7 @@ public class ViewSuggestions extends ResultsBase {
 	actorUserName =  getString(USER_NAME, user);
 	isSelf = (actorUserName.equals(user));
 
-	Task.Op taskOp = Task.Op.LINEAR_SUGGESTIONS_1;
+	Task.Op taskOp = mode.producerFor(); // producer task type
 
 	EntityManager em = sd.getEM();
 	try {

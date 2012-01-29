@@ -50,6 +50,9 @@ Various algorithms for finding pages possibly interesting to you.
 <ul>
 <li><a href="viewSuggestions.jsp?mode=LINEAR_SUGGESTIONS_1">Suggestions - linear model</a> - applying the user profile vector to the entire data set. (Cosine similarity).
 <li><a href="viewSuggestions.jsp?mode=LINEAR_SUGGESTIONS_1&days=7">Suggestions - linear model - last 7 days</a> - applying the user profile vector to the most recent articles (the last 7 days). (Cosine similarity).
+<li><a href="viewSuggestions.jsp?mode=TJ_ALGO_1_SUGGESTIONS_1">Suggestions - Thorsten's Algorthm 1</a> - applying Algortithm 1 to rank the entire data set.
+<li><a href="viewSuggestions.jsp?mode=TJ_ALGO_1_SUGGESTIONS_1&days=7">Suggestions - Thorsten's Algorthm 1 - last 7 days</a> - applying Algortithm 1 to rank the most recent articles (the last 7 days). 
+
 </ul>
 </p>
 

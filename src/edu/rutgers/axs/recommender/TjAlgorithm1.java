@@ -135,9 +135,8 @@ class TjAlgorithm1 {
 		tjEntries[usedCnt] = tje;		
 	    }
 
-	    usedCnt++;
-
 	    Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=" + utility + ", du=" + maxdu);
+	    usedCnt++;
 	    
 	    finishSort(tjEntries, usedCnt, undisturbed, storedCnt);
 

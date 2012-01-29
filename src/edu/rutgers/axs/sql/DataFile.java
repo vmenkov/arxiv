@@ -73,9 +73,27 @@ import edu.cornell.cs.osmot.options.Options;
 	    }
 	}
 
+	/** What task should we run to produce this kind of data? */
+	public Task.Op producerFor() {
+	    if (this == USER_PROFILE) return Task.Op.HISTORY_TO_PROFILE;
+	    else if (this == LINEAR_SUGGESTIONS_1) return Task.Op.LINEAR_SUGGESTIONS_1;
+	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return Task.Op.TJ_ALGO_1_SUGGESTIONS_1;
+	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
+	}
+
+	/** A human-readable description of the type of content this
+	 * file includes.
+	 */
+	public String description() {
+	    if (this == USER_PROFILE) return "User profile, which includes terms from the documents the user interacted with.";
+	    else if (this == LINEAR_SUGGESTIONS_1) return "Linear similarity: dot product of documents with the user profile. Reported scores are dot products";
+	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return  "Joachims' Algorithm 1: ranking documents to maximize the utility function. Reported 'scores' are documents' increments to the utility function.";
+	    else return "unknown";
+	}
+
    }
 
-    @Display(editable=false, order=6) 
+    @Display(editable=false, order=6) 	@Column(length=32) 
     	@Enumerated(EnumType.STRING) 
     	private Type type;   
 

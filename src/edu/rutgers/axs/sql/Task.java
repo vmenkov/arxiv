@@ -56,7 +56,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
     }
 
     @Display(editable=false, order=3) 
-    	@Enumerated(EnumType.STRING) 
+  	@Enumerated(EnumType.STRING)  	@Column(length=32) 
     	private Op op;   
 
     public Op getOp() { return op; }
