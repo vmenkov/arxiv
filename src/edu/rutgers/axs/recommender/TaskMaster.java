@@ -85,12 +85,58 @@ public class TaskMaster {
 
     }
 
+    private static class ShutDownThread extends Thread 	    {
+	final Thread mainThread;
+	final Date exitAfterTime;
+	boolean interrupted = false;
+
+	ShutDownThread(Thread _mainThread, Date _exitAfterTime) {
+	    mainThread = _mainThread;
+	    exitAfterTime=   _exitAfterTime;
+	}
+
+	/** This gets invoked on Ctrl-C, etc.
+	    // FIXME: maybe should put a "failed" flag on the current task,
+	    // and do other niceties...
+	 */
+	@Override
+	    public void run()
+	{
+	    interrupted = true;
+	    Logging.info("Shutdown signal received; will exit");
+	    mainThread.interrupt();
+	    //System.out.println("Shutdown hook ran!");
+	}
+
+	/** Check if the current time is after the specified "end time" */
+	boolean timeOut() {
+	    Date now = new Date();
+	    if (exitAfterTime!=null && now.after(exitAfterTime)) {
+		Logging.info("The time limit reached; will exit");
+		return true;
+	    } else {
+		return false;
+	    }
+	}
+
+	boolean mustExit() {
+	    return interrupted || timeOut();
+	}	
+    };
+
     /**
-       -D...
+       -DexitAfter=24  - time in hours
     */
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
 	final int pid = getMyPid();
+
+	int exitAfter=ht.getOption("exitAfter", 0);
+	Date exitAfterTime = (exitAfter<=0) ? null:
+	    new Date( (new Date()).getTime() + exitAfter * 3600*1000);
+
+	ShutDownThread shutDown = new ShutDownThread(Thread.currentThread(), exitAfterTime);
+	Runtime.getRuntime().addShutdownHook(shutDown);
 
 	IndexReader reader =  ArticleAnalyzer.getReader();
 	AllStatsReader asr = new  AllStatsReader(reader);
@@ -106,6 +152,13 @@ public class TaskMaster {
 
 	Logging.info("My.arXiv TaskMaster starting. pid=" + pid);
 
+	if (exitAfterTime==null) {
+	    Logging.info("No time limit");
+	} else {
+	    Logging.info("Requested to stop after " + exitAfter + 
+			 " hours, ca. " + exitAfterTime);
+	}
+
 	// FIXME: here we ought to scan the Task table and see if
 	// there are "zombie" tasks: those which a previous TaskMaster
 	// run started but never finished. However, one needs to be
@@ -116,9 +169,8 @@ public class TaskMaster {
 	Task task=null;
 	boolean stopNow=false;
 
-	while(!stopNow) {
+	while(!stopNow && !shutDown.mustExit()) {
 	    task = grabNextTask(em,pid);
-	    Date now = new Date();
 	    if (task==null) {
 		if (noneCnt == 0 || noneCnt*sleepMsec > sleepMsgIntervalMsec) {
 		    Logging.info("no task");
@@ -127,7 +179,8 @@ public class TaskMaster {
 		noneCnt++;
 		try {		    
 		    Thread.sleep(sleepMsec);
-		} catch ( InterruptedException ex) {}
+		} catch ( InterruptedException ex) {
+		}
 		continue;
 	    } 
 	    noneCnt=0;
@@ -206,7 +259,7 @@ public class TaskMaster {
 	    }
 	}
 	reader.close();
-
+	Logging.info("Finished");
     }
 
     private static Task grabNextTask(EntityManager em, int pid) {

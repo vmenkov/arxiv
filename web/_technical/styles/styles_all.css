@@ -112,6 +112,21 @@ background:#555555;
 color:#FFFFFF;
 }
 
+/** for use in viewSuggestions.jsp */
+#big_middle_frame{
+position: absolute;
+overflow:auto;
+
+top:0px;
+bottom:0px;
+left:0;
+right:0;
+
+width:auto;
+margin:0;
+z-index: 1;
+background:none;
+}
 
 #middle_frame{
 position: absolute;
