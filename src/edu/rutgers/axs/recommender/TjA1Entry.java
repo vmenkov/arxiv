@@ -101,7 +101,7 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	    for(int i=0; i<terms.length; i++) {
 		UserProfile.TwoVal q=upro.hq.get(terms[i]);
 		if (q==null) continue;
-		// term positin in upro.terms[]
+		// term position in upro.terms[]
 		int iterm = termMapper.get(terms[i]).intValue();
 
 		double z = freqs[i];

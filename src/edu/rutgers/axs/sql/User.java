@@ -96,7 +96,7 @@ import org.apache.catalina.realm.RealmBase;
     /** Encrypted temporary password, used for extended (persistent)
 	sessions of this user (those started using the "Remember me"
 	checkbox). */
-    @Basic  @Column(length=64) @Display(order=7)
+    @Basic  @Column(length=64) @Display(editable=false, order=7)
 	String encEsPass="";
     public  String getEncEsPass() { return encEsPass; }
     public void setEncEsPass(       String x) { encEsPass = x; }

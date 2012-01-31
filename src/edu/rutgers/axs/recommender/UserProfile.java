@@ -114,11 +114,11 @@ public class UserProfile {
 	    HashMap<String, Double> h = dfc.getCoef(aid);
 	    // discount factor
 	    double gamma = getGamma(cnt);
-	    // FIXME: used stored norm instead
+	    // FIXME: can we use stored norm instead?
 	    double norm = dfc.tfNorm(h);
 	    double f = gamma / norm;
 	    // for the "sqrt(phi)" part
-	    double norm2 = dfc.sqrtTfNorm(h);
+	    double norm2 = dfc.normOfSqrtTf(h);
 	    double f2 = gamma/norm2;
 
 	    for(Map.Entry<String,Double> e: h.entrySet()) {

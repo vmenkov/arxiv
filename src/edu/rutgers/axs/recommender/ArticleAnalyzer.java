@@ -247,7 +247,7 @@ public class ArticleAnalyzer {
     /** This is the idf-weighted 2-norm of a vector composed of SQUARE
      ROOTS of term frequencies.
      @param h Represents the term frequency vector. */ 
-    double sqrtTfNorm(HashMap<String, Double> h) {
+    double normOfSqrtTf(HashMap<String, Double> h) {
 	double sum=0;
 	for(String t: h.keySet()) {
 	    double q= h.get(t).doubleValue();
@@ -355,6 +355,7 @@ public class ArticleAnalyzer {
 		}
 	    } else {
 		as = new ArticleStats();
+		as.setAid(aid);
 	    }
 	    computeAndSaveStats(em,docno,as);
 	    Logging.info("Analyzed document " + aid + ", pos="+docno +
@@ -416,18 +417,23 @@ public class ArticleAnalyzer {
 	}
 	int numdocs = reader.numDocs();
 	ArticleStats[] all = new ArticleStats[numdocs];
-	int foundCnt=0;
+	int foundCnt=0, deletedCnt=0, nullCnt=0;
 	for(int pos=0; pos<numdocs; pos++) {
-	    if (reader.isDeleted(pos)) continue;
+	    if (reader.isDeleted(pos)) {
+		deletedCnt++;
+		continue;
+	    }
 	    Document doc = reader.document(pos,fieldSelectorAid);
 	    String aid = doc.get(ArxivFields.PAPER);	    
 	    ArticleStats as = h.get(aid);
 	    if (as!=null) {
 		foundCnt++;
 		all[pos] = as;
+	    } else {
+		nullCnt++;
 	    }
 	}
-	Logging.info("Found pre-computed ArticleStats for " + foundCnt + " docs");
+	Logging.info("Found pre-computed ArticleStats for " + foundCnt + " docs; no stats found for " + nullCnt + " docs");
 	return all;
     }
 

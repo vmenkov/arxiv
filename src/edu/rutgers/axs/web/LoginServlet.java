@@ -37,10 +37,11 @@ public class LoginServlet extends HttpServlet {
 	    if (!u.checkPassword(p)) throw new WebException("Wrong password for user " + user);
   
 	    Role.Name[] ar = SessionData.authorizedRoles(sp);
+	    
 	    if (ar!=null) {
 		// authorization indeed is required 
 		if (!u.hasAnyRole(ar)) {
-		    throw new WebException("User " + user + " has no permission for page " + sp + ". If you think you should have it, contact the site administrator");
+		    throw new WebException("User " + user + " has no permission for page " + sp + ". If you think you should have it, please contact the site administrator");
 		}
 	    }
 	    // all OK

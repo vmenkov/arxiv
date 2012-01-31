@@ -164,7 +164,7 @@ public class TaskMaster {
 			upro = new UserProfile(task.getUser(), em, reader);
 			DataFile uproFile=
 			    DataFile.newOutputFile(task, Task.Op.HISTORY_TO_PROFILE, pid);
-			upro.save(outputFile.getFile());
+			upro.save(uproFile.getFile());
 			em.persist(uproFile);
 			inputFile = uproFile;
 		    }
@@ -189,6 +189,7 @@ public class TaskMaster {
 		success=true;
 		Logging.info("task=" + task+", successfully completed");
 	    } catch(Exception ex) {
+		ex.printStackTrace(System.err);
 		Logging.info("task=" + task+", failed, exception caught: " + ex);
 	    } finally {
 		Logging.info("task=" + task+", recording success="+success);
