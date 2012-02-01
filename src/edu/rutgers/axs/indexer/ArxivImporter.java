@@ -525,6 +525,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	-Dtoken=xxxx   Resume from the specified resumption page
 	-Drewrite=[true|false]  Default is true; if false, already stored pages are not modified  	
 	-Dfrom=YYYY-MM-DD | -Ddays=3
+	-Doptimize=true
 	</pre>
      */
     static public void main(String[] argv) throws IOException, SAXException {
