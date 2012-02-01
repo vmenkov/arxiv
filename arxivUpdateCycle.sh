@@ -35,6 +35,8 @@ echo "Options for ArxivImporter: $opt"
 
 time /usr/bin/time java $opt edu.rutgers.axs.indexer.ArxivImporter all >& importer-${d}.log
 
+mv missing.txt missing-${d}.txt
+
 set opt="${baseopt}"
 echo "Options for ArticleAnalyzer: $opt"
 
