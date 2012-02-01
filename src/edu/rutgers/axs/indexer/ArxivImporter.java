@@ -12,7 +12,7 @@ import org.apache.lucene.search.*;
 
 import edu.cornell.cs.osmot.cache.Cache;
 import edu.cornell.cs.osmot.options.Options;
-import edu.cornell.cs.osmot.logger.Logger;
+//import edu.cornell.cs.osmot.logger.Logger;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -28,6 +28,7 @@ import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 import edu.rutgers.axs.ParseConfig;
+import edu.rutgers.axs.sql.Logging;
 
  /** The application for pulling data from the main arxiv server using
      the OAI interface, and importing them into our server's Lucene
@@ -493,11 +494,37 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	System.exit(1);
     }
 
+    /** No more than one option, -Dfrom=YYYY-MM-DD or -Ddays=n, can be
+	supplied. If -Dfrom is supplied, uses it; otherwise, looks for
+	-Ddays and creates an equivalent "from" value. The a assumption
+	is that we're in the same timezone with the OAI2 server...
+
+	@return The value of the -Dfrom=YYYY-MM-DD, or its equivalent
+	computed from -Ddays=nnn (as today-days). Null if neither
+	option is supplied.*/
+    private static String getFrom(ParseConfig ht) {
+	final String FROM="from", DAYS="days";
+	String from=ht.getOption(FROM, null);
+	if (ht.getOption(DAYS,null)==null) return from;
+	if (from!=null) {
+	    throw new IllegalArgumentException("Can't supply -Dfrom and -Ddays simultaneously!");
+	}
+	int days=ht.getOption(DAYS, 0);
+	if (days<=0)  throw new IllegalArgumentException("-Ddays=nnn, if supplied, must be positive!");
+	Date d = new Date();
+	long msec = d.getTime() - days * 24 * 3600 * 000;
+	d.setTime(msec);
+	final SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+	from=fmt.format( d );
+	Logging.info("Converted days=" + days + " to from=" + from);
+	return from;
+    }
+
     /** Options:
 	<pre>
 	-Dtoken=xxxx   Resume from the specified resumption page
 	-Drewrite=[true|false]  Default is true; if false, already stored pages are not modified  	
-	-Dfrom=YYYY-MM-DD
+	-Dfrom=YYYY-MM-DD | -Ddays=3
 	</pre>
      */
     static public void main(String[] argv) throws IOException, SAXException {
@@ -505,7 +532,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
 	boolean rewrite =ht.getOption("rewrite", true);
-	String from=ht.getOption("from", null);
+	String from=getFrom(ht);
 	boolean optimize =ht.getOption("optimize", true);
 
 	Options.init(); // read the legacy config file
@@ -522,7 +549,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		    max	=Integer.parseInt(argv[1]);
 		} catch(Exception ex) {}
 	    }
-	    System.out.println("Processing web data, up to "+max + " pages");
+	    System.out.println("Processing web data, up to "+max + " pages; from=" + from);
 	    imp.importAll(tok, max, rewrite, from);
 	} else if (argv[0].equals("allmeta")) {
 	    if (!rewrite) throw new IllegalArgumentException("For a reload from metachache, ought to use -Drewrite=true");

@@ -331,6 +331,9 @@ public class ArticleAnalyzer {
 	@param maxCnt Max number of docs to analyze. If negative, analyze all.
     */
     void computeAllMissingNorms(EntityManager em, int maxCnt, boolean recompute) throws  org.apache.lucene.index.CorruptIndexException, IOException {
+
+	final boolean verbose=false;
+
 	List<ArticleStats> aslist = ArticleStats.getAll( em);
 	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>();
 	for(ArticleStats as: aslist) {
@@ -338,7 +341,7 @@ public class ArticleAnalyzer {
 	}
 	    
 	numdocs = reader.numDocs();
-	int doneCnt=0;
+	int doneCnt=0, skipCnt=0;
 
 	for(int docno=0; docno<numdocs; docno++) {
 	    if (reader.isDeleted(docno)) continue;
@@ -350,7 +353,8 @@ public class ArticleAnalyzer {
 		    Logging.info("Will re-do document " + aid + ", pos="+docno);
 		} else {
 		    // FIMXE: check dates and update perhaps?
-		    Logging.info("Already have  document " + aid + ", pos="+docno);
+		    if (verbose) Logging.info("Already have  document " + aid + ", pos="+docno);
+		    skipCnt++;
 		    continue;
 		}
 	    } else {
@@ -366,6 +370,7 @@ public class ArticleAnalyzer {
 		break;
 	    }
 	}
+	Logging.info("Overall, analyzed " +doneCnt + " documents, skipped " + skipCnt + " previously analyzed ones");
     }
 
     /** Computes and records in the database the stats for one document */
