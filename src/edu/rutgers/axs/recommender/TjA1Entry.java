@@ -3,9 +3,9 @@ package edu.rutgers.axs.recommender;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
+//import org.apache.lucene.util.Version;
+//import org.apache.lucene.store.Directory;
+//import org.apache.lucene.store.FSDirectory;
 
 import java.util.*;
 import java.io.*;
@@ -30,16 +30,6 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	int i;
 	double value;
 	public Coef(int _i, double v) { i =i; value=v;}
-	/** Copy constructor */
-	//public Coef(Coef c) { i =c.i; value=c.value;}
-	//public void setValue(Coef c) {
-	//    value = c.value;
-	//}
-
-	/** Compares column position */
-	//public int compareTo(Coef x) {
-	//    return icla - x.icla;
-	//}
 
 	static double uContrib(Coef[] q, double [] psi, double gamma) {
 	    double m = 0;
@@ -49,7 +39,6 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	    }
 	    return m;
 	}
-
     }
 
 
@@ -110,7 +99,7 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 		sum1 += z * boost * q.w1 *idf;
 
 		double r = idf*q.w2;
-		double w2q = z * boost * r*r;
+		double w2q = z * boost * (TjAlgorithm1.approach2? r : r*r);
 		if (q.w2 >= 0) {
 		    w2plus[iterm] += w2q;
 		} else {

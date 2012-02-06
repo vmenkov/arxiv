@@ -45,17 +45,35 @@ public class UserProfile {
     /** Maps term to value (cumulative tf) */
     public HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
 
+    /** Used with Approach 2 */
+    private void add1(String key, double inc1) {
+	TwoVal val = hq.get(key);
+	if (val==null) {
+	    hq.put( key, new TwoVal(inc1, 0));	  
+	} else {
+	    val.w1 += inc1;
+	}
+    }
 
-    void add(String key, double inc1, double inc2) {
+    /** Used with Approach 1 */
+    private void add(String key, double inc1, double inc2) {
 	TwoVal val = hq.get(key);
 	if (val==null) {
 	    hq.put( key, new TwoVal(inc1, inc2));	  
 	} else {
 	    val.w1 += inc1;
-	    val.w2 += inc1;
+	    val.w2 += inc2;
 	}
     }
     
+    /** Computes w'' := sqrt(w'). This is used with Approach 2 */
+    private void computeSqrt() {
+	for( TwoVal val:  hq.values()) {
+	    val.w2 = Math.sqrt(val.w1);
+	}
+    }
+
+
 
     /** Is this term to be excluded from the user profile?
      */
@@ -117,20 +135,31 @@ public class UserProfile {
 	    // FIXME: can we use stored norm instead?
 	    double norm = dfc.tfNorm(h);
 	    double f = gamma / norm;
-	    // for the "sqrt(phi)" part
-	    double norm2 = dfc.normOfSqrtTf(h);
-	    double f2 = gamma/norm2;
+	    double f2=0;
+	    if (!TjAlgorithm1.approach2) {
+		// for the "sqrt(phi)" part
+		double norm2 = dfc.normOfSqrtTf(h);
+		f2 = gamma/norm2;
+	    } 
 
+	    // For Approach 1, w2 is initialized right here; for Approach 2,
+	    // it will be done later
 	    for(Map.Entry<String,Double> e: h.entrySet()) {
 		double q = e.getValue().doubleValue();
-		add( e.getKey(), f * q, f2 * Math.sqrt(q));
+		if (TjAlgorithm1.approach2) {
+		    add1( e.getKey(), f * q);
+		} else {
+		    add( e.getKey(), f * q, f2 * Math.sqrt(q));
+		}
 	    }
 	    cnt++;
 	}
 	int size0 = hq.size();
 	
 	purgeUselessTerms();
-
+	if (TjAlgorithm1.approach2) {
+	    computeSqrt();
+	}
 	terms = hq.keySet().toArray(new String[0]);
 	Arrays.sort(terms, getByDescVal());
 	Logging.info( "User profile has " + terms.length + " terms");

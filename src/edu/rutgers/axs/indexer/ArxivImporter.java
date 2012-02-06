@@ -78,6 +78,8 @@ public class ArxivImporter {
 	}
 	String token=null;
 
+	if (listRecordsE == null) return token; // empty response
+
 	for(Node n = listRecordsE.getFirstChild(); n!=null; n = n.getNextSibling()) {
 	    if (!(n instanceof Element)) continue;
 	    String name = n.getNodeName();
@@ -512,7 +514,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	int days=ht.getOption(DAYS, 0);
 	if (days<=0)  throw new IllegalArgumentException("-Ddays=nnn, if supplied, must be positive!");
 	Date d = new Date();
-	long msec = d.getTime() - days * 24 * 3600 * 000;
+	long msec = d.getTime() - days * 24 * 3600 * 1000;
 	d.setTime(msec);
 	final SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
 	from=fmt.format( d );

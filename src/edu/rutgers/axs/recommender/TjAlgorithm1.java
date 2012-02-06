@@ -8,9 +8,9 @@ import javax.persistence.*;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
+//import org.apache.lucene.util.Version;
+//import org.apache.lucene.store.Directory;
+//import org.apache.lucene.store.FSDirectory;
 
 //import org.apache.commons.lang.mutable.MutableDouble;
 
@@ -23,24 +23,11 @@ import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
 
 class TjAlgorithm1 {
-    //Vector<TjA1Entry> tjEntries=new Vector<TjA1Entry>();
+    /** This flag is on when using the alternative approach to the
+     * initialization of w'' */
+    static final boolean approach2=true;
+
     TjA1Entry [] tjEntries;
-
-    /** Maps article entries (or, rather, their positions in the array
-     */
-    /*
-    private static int [] mapEi2docno(Vector<ArticleEntry> entries,ArticleStats[] allStats ) {
-	int [] ei2docno = new int[ entries.size()];
-	for(int i=0; i<ei2docno.length; i++) ei2docno[i]= -1;
-	for(int i=0; i<allStats.length; i++) {
-	    if (allStats[i]!=null) {
-		
-	    }
-	}
-
-    }
-    */
-
 
     TjAlgorithm1() {}
 
