@@ -342,6 +342,7 @@ public class ArticleAnalyzer {
 	    
 	numdocs = reader.numDocs();
 	int doneCnt=0, skipCnt=0;
+	Logging.info("Analyzer starting. The reader has "+numdocs+" documents");
 
 	for(int docno=0; docno<numdocs; docno++) {
 	    if (reader.isDeleted(docno)) continue;

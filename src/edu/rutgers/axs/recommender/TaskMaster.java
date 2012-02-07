@@ -23,25 +23,6 @@ import edu.rutgers.axs.web.ArticleEntry;
 
 public class TaskMaster {
     
-    /** Finds the process id of the UNIX process for this application.
-
-	FIXME: This obviously is non-portable outside of UNIX.
-
-	@return PID, or -1 on failure
-    */
-    static int getMyPid() {
-	try {
-	    FileReader fr = new FileReader("/proc/self/stat");
-	    LineNumberReader r = new LineNumberReader(fr);
-	    String s = r.readLine();
-	    if (s==null) return -1;
-	    String[] q= s.split("\\s+");
-	    return Integer.parseInt(q[0]);
-	} catch (IOException ex) {
-	    return -1;
-	}
-    }
-
 
     static final int maxDocs=200;
 
@@ -129,7 +110,7 @@ public class TaskMaster {
     */
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
-	final int pid = getMyPid();
+	final int pid = Main.getMyPid();
 
 	int exitAfter=ht.getOption("exitAfter", 0);
 	Date exitAfterTime = (exitAfter<=0) ? null:
@@ -190,17 +171,16 @@ public class TaskMaster {
 	    DataFile inputFile = null;
 	    try {
 		Logging.info("task["+taskCnt+"]: " + task);
-		if (task.getOp() == Task.Op.STOP) {		
+		final Task.Op op = task.getOp();
+		if (op== Task.Op.STOP) {		
 		    Logging.info("Stop requested!");
 		    stopNow=true;
-		} else if (task.getOp() == Task.Op.HISTORY_TO_PROFILE) {	
+		} else if (op == Task.Op.HISTORY_TO_PROFILE) {	
 		    //Logging.info("");
-		    UserProfile upro = 
-			new UserProfile(task.getUser(), em, reader);	   
-		    outputFile=DataFile.newOutputFile(task, pid);
-		    upro.save(outputFile.getFile());
-		} else if (task.getOp() == Task.Op.LINEAR_SUGGESTIONS_1
-			   || task.getOp() == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
+		    UserProfile upro=new UserProfile(task.getUser(),em,reader);
+		    outputFile=upro.saveToFile(task,op.outputFor());
+		} else if (op == Task.Op.LINEAR_SUGGESTIONS_1
+			   || op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 		    // FIXME: should also support individual file specs
 		    inputFile = 
 			//			(task.getInputFile()) != null ?
@@ -211,13 +191,12 @@ public class TaskMaster {
 		    UserProfile upro;
 		    if (inputFile != null) {
 			// read it
-			upro = new UserProfile(inputFile.getFile(), reader);
+			upro = new UserProfile(inputFile, reader);
 		    } else {
 			// generate it
 			upro = new UserProfile(task.getUser(), em, reader);
 			DataFile uproFile=
-			    DataFile.newOutputFile(task, Task.Op.HISTORY_TO_PROFILE, pid);
-			upro.save(uproFile.getFile());
+			    upro.saveToFile(task, DataFile.Type.USER_PROFILE);
 			em.persist(uproFile);
 			inputFile = uproFile;
 		    }
@@ -230,12 +209,12 @@ public class TaskMaster {
 			raw ? upro.luceneRawSearch(maxDocs, asr.allStats, em, days):
 			upro.luceneQuerySearch(maxDocs, days);
 
-		    if (task.getOp() == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
+		    if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 			TjAlgorithm1 algo = new TjAlgorithm1();
 			entries = algo.rank( upro, entries, asr.allStats, em, maxDocs);
 		    }
 
-		    outputFile=DataFile.newOutputFile(task, pid);
+		    outputFile=DataFile.newOutputFile(task);
 		    outputFile.setDays(days);
 		    ArticleEntry.save(entries, outputFile.getFile());
 		}

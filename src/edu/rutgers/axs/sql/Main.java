@@ -18,6 +18,7 @@
  */
 package edu.rutgers.axs.sql;
 
+import java.io.*;
 import java.util.*;
 import java.lang.reflect.*;
 import javax.persistence.*;
@@ -28,6 +29,25 @@ import javax.persistence.*;
  * database and then performs a query to retrieve it.
  */
 public class Main {
+
+    /** Finds the process id of the UNIX process for this application.
+
+	FIXME: This obviously is non-portable outside of UNIX.
+
+	@return PID, or -1 on failure
+    */
+    public static int getMyPid() {
+	try {
+	    FileReader fr = new FileReader("/proc/self/stat");
+	    LineNumberReader r = new LineNumberReader(fr);
+	    String s = r.readLine();
+	    if (s==null) return -1;
+	    String[] q= s.split("\\s+");
+	    return Integer.parseInt(q[0]);
+	} catch (IOException ex) {
+	    return -1;
+	}
+    }
 
     /** This name will be used to configure the EntityManagerFactory
 	based on the corresponding name in the

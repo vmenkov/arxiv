@@ -26,10 +26,12 @@ public class UserProfile {
 
     static Stoplist stoplist=null;   
 
+    /** The action id of the most recent user action that contributed to
+	the creation of this profile.
+    */
+    private long lastActionId=0;
+
     public ArticleAnalyzer dfc;
-    //UserProfile(ArticleAnalyzer _dfc) {
-    //	dfc = _dfc;
-    //}
 
     /** Ordered list by importance, in descending order. */
     public String[] terms = {};
@@ -122,6 +124,8 @@ public class UserProfile {
 	    throw new IllegalArgumentException( "No user with user_name="+ uname+" has been registered");
 	}
 
+	lastActionId = actor.getLastActionId();
+
 	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 	// descending score order
 	UserPageScore[]  ups =  UserPageScore.rankPagesForUser(actor);
@@ -166,8 +170,16 @@ public class UserProfile {
 	save(new File("profile.tmp"));
     }
 
-    /** Reads the profile from a file */
-    public UserProfile(File f, IndexReader reader) throws IOException {
+    /** Reads the profile from a file, and set the lastActionId from the 
+     DataFile structure. */
+    public UserProfile(DataFile df, IndexReader reader) throws IOException {
+	this(df.getFile(), reader);
+	lastActionId = df.getLastActionId();
+    }
+
+    /** Reads the profile from a file. Does not set lastActionId, so that
+     has to be done separately. */
+    private UserProfile(File f, IndexReader reader) throws IOException {
 	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
@@ -190,6 +202,17 @@ public class UserProfile {
 	r.close();
 	terms = vterms.toArray(new String[0]);
 	//Logging.info("Read " + linecnt + " lines, " + vterms
+    }
+
+    /** 	DataFile uproFile=
+			    DataFile.newOutputFile(task, Task.Op.HISTORY_TO_PROFILE);
+			upro.save(uproFile.getFile());
+    */
+    DataFile saveToFile(Task task, DataFile.Type type) throws IOException {
+	DataFile uproFile=  DataFile.newOutputFile(task, type);
+	uproFile.setLastActionId( lastActionId);
+	this.save(uproFile.getFile());
+	return uproFile;
     }
 
     /** Saves the profile to the specified file. Before doing so, verifies

@@ -59,6 +59,9 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <td> -
 <td>select m.failed, count(*) from Task m group by m.failed 
 
+<tr>
+<td>select x from Task x
+<td>select x.* from Task x
 
 <!--
 <tr><td>select x from Respondent x where x.id = 69 <td> select x.* from Respondent x where x.id = 69

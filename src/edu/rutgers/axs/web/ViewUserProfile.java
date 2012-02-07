@@ -30,7 +30,8 @@ public class ViewUserProfile extends ResultsBase {
 
     public boolean isSelf = false, force=false;
     
-
+    /** The currently recorded last action id for the user in question */
+    public long actorLastActionId=0;
 
     public ViewUserProfile(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
@@ -44,6 +45,8 @@ public class ViewUserProfile extends ResultsBase {
 	try {
 
 	    if (actorUserName==null) throw new WebException("No user name specified!");
+	    actor = User.findByName(em, actorUserName);
+	    actorLastActionId= actor.getLastActionId();
 	    em.getTransaction().begin();
 	    df = DataFile.getLatestFile(em, actorUserName, 
 					DataFile.Type.USER_PROFILE);
@@ -94,8 +97,7 @@ public class ViewUserProfile extends ResultsBase {
 	    em.getTransaction().commit();
 
 	    if (df!=null) {
-		File f = df.getFile();
-		upro = new UserProfile(f, ArticleAnalyzer.getReader());
+		upro = new UserProfile(df, ArticleAnalyzer.getReader());
 	    }
 
 	}  catch (Exception _e) {
@@ -106,6 +108,13 @@ public class ViewUserProfile extends ResultsBase {
 	}
     }
 
+    public String viewActionsLink() {
+	if (isSelf) {
+	    return "viewActionsSelf.jsp";
+	} else {
+	    return "../tools/viewActions.jsp?" +ViewActions.USER_NAME+"=" + actorUserName ;
+	}
+    }
     
 
 }

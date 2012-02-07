@@ -24,7 +24,7 @@ import edu.rutgers.axs.web.ArticleEntry;
 
 class TjAlgorithm1 {
     /** This flag is on when using the alternative approach to the
-     * initialization of w'' */
+     * initialization of w'', viz. w'' = sqrt(phi) */
     static final boolean approach2=true;
 
     TjA1Entry [] tjEntries;

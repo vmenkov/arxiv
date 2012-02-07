@@ -238,6 +238,14 @@ import org.apache.catalina.realm.RealmBase;
         return actions;
     }
 
+    public long getLastActionId() {
+	long lai = 0;
+	for(Action a: getActions()) {
+	    if (a.getId() > lai) lai = a.getId();
+	}
+	return lai;
+    }
+    
     /** Returns the list of actions, as a HashMap with the article ID
      * being a key */
     public HashMap<String, Action> getActionHashMap() {

@@ -28,12 +28,28 @@
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else {
 
-     if (!main.force && main.upro!=null) {      %>
+     if (!main.force && main.upro!=null) {      
+       long since = main.actor.getLastActionId() -main.df.getLastActionId();
+%>
 
 
 <p>User profile <%=main.df.getThisFile() %> was generated for user  
-<%=main.df.getUser() %> at: <%=Util.ago(main.df.getTime())%>. (Is this too long ago? You can <a href="#tasks">update</a> the profile to account for your activity since this profile has been generated).
+<%=main.df.getUser() %> at: <%=Util.ago(main.df.getTime())%>. 
+
+<p>This profile reflects <%= main.df.getLastActionId() %> operations recorded in the user's 
+<a href="<%=main.viewActionsLink()%>">activity log</a>. There have been <%= since %> user activity operations recorded since.
+
+<% if (since>0) { %>
+
+<p>(Is this too long ago? You can <a href="#tasks">update</a> the profile to account for your activity since this profile has been generated).
 </p>
+
+<% } else { %>
+
+<p>(This profile appears to reflect all user actions recorded so far; nonetheless, if you really want to, you can probably request an <a href="#tasks">update</a> of the profile. This probably won't result in any visible changes to it.)
+</p>
+
+<% }  %>
 
 <p>This profile contains <%=main.upro.terms.length%> terms. They are listed below in the descending order of f(t)*idf(t).
 </p>

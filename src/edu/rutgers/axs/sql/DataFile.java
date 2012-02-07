@@ -44,12 +44,22 @@ import edu.cornell.cs.osmot.options.Options;
     public  Date getTime() { return time; }
     public void setTime(       Date x) { time = x; }
 
+    /** What is the Action id of the most recent user action which was used 
+	to generate this file? This is direct impact for user profiles, and
+	indirect (via the user profile) for suggestion lists. */
+    @Basic @Display(editable=false, order=3.2)
+	@Column(nullable=false)
+	long lastActionId;
+    public  long getLastActionId() { return lastActionId; }
+    public void setLastActionId(long x) { lastActionId = x; }
+
+
     /** The task id of the Task pursuant to which the file was created,
-	If the file was not created via the TaskManager, -1 will be stored here.
+	If the file was not created via the TaskManager, -1 (or 0) will be stored here.
      */
     @Basic @Display(editable=false, order=4 )
 	@Column(nullable=false)
-	long task=-1;
+	long task;
     public  long getTask() { return task; }
     public void setTask(long x) { task = x; }
 
@@ -60,18 +70,6 @@ import edu.cornell.cs.osmot.options.Options;
 	    /** Selection based on dot products with the USER_PROFILE */
 	    LINEAR_SUGGESTIONS_1,
 	    TJ_ALGO_1_SUGGESTIONS_1;
-	/** What kind of file is created by each task? */
-	static Type outputForOp(Task.Op op) {
-	    if (op == Task.Op.HISTORY_TO_PROFILE) {
-		return Type.USER_PROFILE;
-	    } else if (op == Task.Op.LINEAR_SUGGESTIONS_1) {
-		return Type.LINEAR_SUGGESTIONS_1;
-	    } else if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
-		return Type.TJ_ALGO_1_SUGGESTIONS_1;
-	    } else {
-		throw new IllegalArgumentException("Don't know what kind of file create for task type=" +op);
-	    }
-	}
 
 	/** What task should we run to produce this kind of data? */
 	public Task.Op producerFor() {
@@ -79,6 +77,21 @@ import edu.cornell.cs.osmot.options.Options;
 	    else if (this == LINEAR_SUGGESTIONS_1) return Task.Op.LINEAR_SUGGESTIONS_1;
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return Task.Op.TJ_ALGO_1_SUGGESTIONS_1;
 	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
+	}
+
+	/**
+	   @return "profile" etc when files are needed; null on errors
+	*/
+	String givePrefix() {
+	    if (this == USER_PROFILE) {
+		return "profile";
+	    } else 	if (this == LINEAR_SUGGESTIONS_1) {
+		return "linsug1";
+	    } else 	if (this == TJ_ALGO_1_SUGGESTIONS_1) {
+		return "algo1sug1";
+	    } else {
+		return null;
+	    }	 
 	}
 
 	/** A human-readable description of the type of content this
@@ -111,11 +124,11 @@ import edu.cornell.cs.osmot.options.Options;
     public void setDays(int x) { days = x; }
 
 
-
     /** Has the physical file been deleted? */
-    @Basic boolean deleted = false;
+    @Basic  @Display(editable=false, order=6.2)    boolean deleted = false;
     public boolean getDeleted() { return deleted; }
     public void setDeleted( boolean x) {  deleted = x; }
+
 
     /** The input file based on which (if applicable) this one has
 	been generated */
@@ -191,6 +204,7 @@ import edu.cornell.cs.osmot.options.Options;
        return "" When no files needed to be created; "profile" etc
        when files are needed; null on errors
      */
+    /*
     static String givePrefix(Task.Op op) {
   	if (op == Task.Op.STOP) {
 	    return "";
@@ -204,7 +218,7 @@ import edu.cornell.cs.osmot.options.Options;
 	    return null;
 	}	 
     }
-
+    */
     private static int fileCnt = 1;
 
     private static NumberFormat fmt1 = new DecimalFormat("00000");
@@ -225,31 +239,29 @@ import edu.cornell.cs.osmot.options.Options;
 	null if no file needs to be created. The object so created
 	needs to be "persisted" later.
     */
-    static synchronized public DataFile newOutputFile(Task task, int pid) {
-	return  newOutputFile(task,task.getOp(), pid); 
+    static synchronized public DataFile newOutputFile(Task task) {
+    	return  newOutputFile(task, task.getOp().outputFor()); 
     }
 
     /**
-       @param op : may overrides the operator in the task. This is
-       used when a task produces several output files, e.g. an output
-       file for a preliminary included task.
+       @param type : the file type
      */
-    static synchronized public DataFile newOutputFile(Task task, Task.Op op, int pid) {
+    static synchronized public DataFile newOutputFile(Task task, Type type) {
 
-	String prefix = givePrefix(op);
+	String prefix = type.givePrefix();
 	String f = null;
-	Type type = null;
 	Date now = new Date();
 	if ( prefix==null)  {
-	    throw new IllegalArgumentException("Task type " + op + " not supported for file creation!");
+	    throw new IllegalArgumentException("File type " + type + " not supported for file creation!");
 	} else if ( prefix.equals(""))  { // nothing
 	    return null;
 	} else {
+	    int pid = Main.getMyPid();
 	    f = prefix + File.separator + dayFmt.format(now) + "." +
 		fmt1.format(pid) + "." + fmt2.format(fileCnt++) + ".txt";
 	}
 	DataFile df = new DataFile();
-	df.setType(Type.outputForOp(op));
+	df.setType(type);
 	df.setUser(task.getUser());
 	df.setTask(task.getId());	    
 	df.setTime( now);

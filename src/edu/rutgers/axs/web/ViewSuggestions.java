@@ -158,7 +158,7 @@ public class ViewSuggestions extends ResultsBase {
 		    
 	// exclude some...
 	// FIXME: elsewhere, this can be used as a strong negative
-	// auto-feedback (e.g., Throsten's two-pager's Algo 2)
+	// auto-feedback (e.g., Thorsten's two-pager's Algo 2)
 	for(int i=0; i<entries.size(); i++) {
 	    if (exclusions.containsKey(entries.elementAt(i).id)) {
 		entries.removeElementAt(i); 

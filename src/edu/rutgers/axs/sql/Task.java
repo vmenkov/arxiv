@@ -53,6 +53,23 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	    LINEAR_SUGGESTIONS_1,
         /** Thorsten Joachims' Algorithm 1 */
 	    TJ_ALGO_1_SUGGESTIONS_1;
+
+	/** What kind of file is created by each task? (Some tasks may
+	 * create more than one file on occasions, but this method
+	 * just returns the "main" type). */
+	public DataFile.Type outputFor() {
+	    if (this == Task.Op.HISTORY_TO_PROFILE) {
+		return DataFile.Type.USER_PROFILE;
+	    } else if (this == Task.Op.LINEAR_SUGGESTIONS_1) {
+		return DataFile.Type.LINEAR_SUGGESTIONS_1;
+	    } else if (this == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
+		return DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
+	    } else {
+		throw new IllegalArgumentException("Don't know what kind of file create for task type=" +this);
+	    }
+	}
+
+
     }
 
     @Display(editable=false, order=3) 
