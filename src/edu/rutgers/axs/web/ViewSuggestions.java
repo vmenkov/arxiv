@@ -21,10 +21,8 @@ import edu.rutgers.axs.recommender.*;
 /** Retrieves the list of artciles on which the user performed various actions,
     and ranks them based on these actions.
  */
-public class ViewSuggestions extends ResultsBase {
-    /** The user name of the user whose activity we research */
-    public String actorUserName;
-    public User actor;
+public class ViewSuggestions extends PersonalResultsBase {
+
     public Task activeTask = null, queuedTask=null, newTask=null;
 
     /** Null indicates that no file has been found */
@@ -42,22 +40,15 @@ public class ViewSuggestions extends ResultsBase {
      * generator may have its own truncatin criteria!)  */
     public static final int maxRows = 100;
     
-    /** Is the user requesting a list for his own activity (rather
-     * than for someone's else, as a researcher)? */
-    public boolean isSelf = false;
-    /** User has requested to create a new task. */
-    public boolean force=false;
-    
+    /** The currently recorded last action id for the user in question */
+    public long actorLastActionId=0;
+
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
-	force= getBoolean(FORCE, false);
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	days = (int)getLong(DAYS, days);
 	if (error) return; // authentication error?
-
-	actorUserName =  getString(USER_NAME, user);
-	isSelf = (actorUserName.equals(user));
 
 	Task.Op taskOp = mode.producerFor(); // producer task type
 
@@ -129,7 +120,9 @@ public class ViewSuggestions extends ResultsBase {
 		File f = df.getFile();
 		entries = ArticleEntry.readFile(f);
 		
-		applyUserSpecifics(entries, User.findByName(em, actorUserName));
+		actor=User.findByName(em, actorUserName);
+		actorLastActionId= actor.getLastActionId();
+		applyUserSpecifics(entries, actor);
 
 		// In docs to be displayed, populate other fields from Lucene
 		for(int i=0; i<entries.size() && i<maxRows; i++) {

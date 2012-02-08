@@ -17,10 +17,7 @@ import edu.rutgers.axs.recommender.*;
 /** Retrieves the list of artciles on which the user performed various actions,
     and ranks them based on these actions.
  */
-public class ViewUserProfile extends ResultsBase {
-    /** The user name of the user whose activity we reasearch */
-    public String actorUserName=null;
-    public User actor;
+public class ViewUserProfile extends PersonalResultsBase {
 
     public UserProfile upro=null;
 
@@ -28,18 +25,12 @@ public class ViewUserProfile extends ResultsBase {
 
     public DataFile df =null;
 
-    public boolean isSelf = false, force=false;
-    
     /** The currently recorded last action id for the user in question */
     public long actorLastActionId=0;
 
     public ViewUserProfile(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
-	force= getBoolean(FORCE, false);
-
 	if (error) return;
-	actorUserName =  getString(USER_NAME, user);
-	isSelf = (actorUserName.equals(user));
 
 	EntityManager em = sd.getEM();
 	try {
@@ -107,14 +98,5 @@ public class ViewUserProfile extends ResultsBase {
 	    //em.close(); 
 	}
     }
-
-    public String viewActionsLink() {
-	if (isSelf) {
-	    return "viewActionsSelf.jsp";
-	} else {
-	    return "../tools/viewActions.jsp?" +ViewActions.USER_NAME+"=" + actorUserName ;
-	}
-    }
-    
 
 }

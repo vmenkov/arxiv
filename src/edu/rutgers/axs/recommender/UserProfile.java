@@ -30,6 +30,8 @@ public class UserProfile {
 	the creation of this profile.
     */
     private long lastActionId=0;
+    long getLastActionId() {  return lastActionId;}
+    
 
     public ArticleAnalyzer dfc;
 

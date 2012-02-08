@@ -216,6 +216,7 @@ public class TaskMaster {
 
 		    outputFile=DataFile.newOutputFile(task);
 		    outputFile.setDays(days);
+		    outputFile.setLastActionId(upro.getLastActionId());
 		    ArticleEntry.save(entries, outputFile.getFile());
 		}
 		success=true;
@@ -255,6 +256,5 @@ public class TaskMaster {
 	    em.getTransaction().commit();
 	}
     }
-
 
 }

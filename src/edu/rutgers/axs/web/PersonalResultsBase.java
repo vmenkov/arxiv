@@ -1,0 +1,55 @@
+package edu.rutgers.axs.web;
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+import javax.persistence.*;
+
+import edu.cornell.cs.osmot.options.Options;
+
+import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.recommender.*;
+
+/** Common class for many scripts in the "personal" folder
+ */
+public class PersonalResultsBase extends ResultsBase {
+    /** The user name of the user whose activity we reasearch */
+    public String actorUserName=null;
+    public User actor;
+
+
+    /** Is the user requesting a list for his own activity (rather
+     * than for someone's else, as a researcher)? */
+    public boolean isSelf = false;
+    /** User has requested to create a new task. */
+    public boolean force=false;
+    
+    /** The currently recorded last action id for the user in question */
+    public long actorLastActionId=0;
+
+    
+
+    public PersonalResultsBase(HttpServletRequest _request, HttpServletResponse _response) {
+	super(_request,_response);
+	force= getBoolean(FORCE, false);
+
+	if (error) return;
+	actorUserName =  getString(USER_NAME, user);
+	isSelf = (actorUserName.equals(user));
+
+    }
+
+    public String viewActionsLink() {
+	if (isSelf) {
+	    return cp + "/personal/viewActionsSelf.jsp";
+	} else {
+	    return cp + "/tools/viewActions.jsp?" +ViewActions.USER_NAME+"=" + actorUserName ;
+	}
+    }
+    
+
+}
