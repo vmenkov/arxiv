@@ -31,7 +31,8 @@ public class PersonalResultsBase extends ResultsBase {
     /** The currently recorded last action id for the user in question */
     public long actorLastActionId=0;
 
-    
+    /** Only set if the user has explicitly requested an individual file to be viewed. */
+    public String requestedFile=null;
 
     public PersonalResultsBase(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
@@ -40,6 +41,7 @@ public class PersonalResultsBase extends ResultsBase {
 	if (error) return;
 	actorUserName =  getString(USER_NAME, user);
 	isSelf = (actorUserName.equals(user));
+	requestedFile =  getString(FILE, null);
 
     }
 
@@ -47,8 +49,21 @@ public class PersonalResultsBase extends ResultsBase {
 	if (isSelf) {
 	    return cp + "/personal/viewActionsSelf.jsp";
 	} else {
-	    return cp + "/tools/viewActions.jsp?" +ViewActions.USER_NAME+"=" + actorUserName ;
+	    return cp + "/tools/viewActions.jsp?" +USER_NAME+"=" + actorUserName ;
 	}
+    }
+
+    /** FIXME: must specify profile type, too, if multiple types are
+     * supported (Algo 2)... */
+    public String viewLatestProfileLink() {
+	return cp + "/personal/viewUserProfile.jsp?" +
+	    USER_NAME+"=" + actorUserName;
+    }
+  
+    public String viewProfileLink(String file) {
+	return cp + "/personal/viewUserProfile.jsp?" +
+	    USER_NAME+"=" + actorUserName +
+	    "&" + FILE+"=" + file;
     }
     
 

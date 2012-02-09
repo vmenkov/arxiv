@@ -217,6 +217,9 @@ public class TaskMaster {
 		    outputFile=DataFile.newOutputFile(task);
 		    outputFile.setDays(days);
 		    outputFile.setLastActionId(upro.getLastActionId());
+		    if (inputFile!=null) {
+			outputFile.setInputFile(inputFile.getThisFile());
+		    }
 		    ArticleEntry.save(entries, outputFile.getFile());
 		}
 		success=true;

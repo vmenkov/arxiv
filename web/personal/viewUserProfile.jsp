@@ -21,7 +21,13 @@
 </head>
 <body>
 
-<h1>Most recent currently available profile for user
+<h1>
+<% if (main.requestedFile!=null) { %>
+Profile <%=main.requestedFile%>
+<%}else{%>
+Most recent currently available profile 
+<%}%>
+for user
 <em><%= main.actorUserName %></em>
 </h1>
 
@@ -39,7 +45,13 @@
 <p>This profile reflects <%= main.df.getLastActionId() %> operations recorded in the user's 
 <a href="<%=main.viewActionsLink()%>">activity log</a>. There have been <%= since %> user activity operations recorded since.
 
-<% if (since>0) { %>
+<% if (main.requestedFile!=null) { %>
+
+<p>This may or may not be the most recent profile. To see the most
+recent profile, please <a
+href="<%=main.viewLatestProfileLink()%>">click here</a>.
+
+<% } else if (since>0) { %>
 
 <p>(Is this too long ago? You can <a href="#tasks">update</a> the profile to account for your activity since this profile has been generated).
 </p>
@@ -80,11 +92,14 @@ UserProfile.TwoVal h= main.upro.hq.get(t);
 </table>
 </p>
 
+<% } else if (main.requestedFile!=null)  { %>
+<p>No profile file found with this name: <%=main.requestedFile%>
 <% } else if (!main.force)  { %>
 <P>No user profile for user <em><%= main.actorUserName %></em> has been generated yet. 
 </p>
 <% } %>
 
+<%if (main.requestedFile==null) { %>
 <h2><a name="tasks">(Re-)computing the profile</a></h2>
 
 <%    if (main.activeTask!=null) {
@@ -121,7 +136,8 @@ the user profile for <em><%= main.actorUserName %></em>, click on the button bel
 <input type="submit" value="Create task">
 </form>
 </p>
-<%  }  %>
+<%  }  
+}%>
 
 <hr>
 <p>

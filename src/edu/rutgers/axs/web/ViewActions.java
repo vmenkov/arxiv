@@ -23,7 +23,7 @@ public class ViewActions extends ResultsBase {
     public Vector<Action> list = new Vector<Action>();
     public Vector<EnteredQuery> qlist = new Vector<EnteredQuery>();
 
-    final public static String USER_NAME = "user_name";
+    //final public static String USER_NAME = "user_name";
 
     public ViewActions(HttpServletRequest _request, HttpServletResponse _response, boolean self) {
 	super(_request,_response);

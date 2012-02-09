@@ -182,6 +182,24 @@ import edu.cornell.cs.osmot.options.Options;
 	}
     }
 
+    /** Finds the DataFile entry with a matching name */
+    static public DataFile findFileByName(EntityManager em, String  username, String file) {
+	String qs = "select m from DataFile m where m.user=:u and m.thisFile=:f";
+	Query q = em.createQuery(qs);
+
+	q.setParameter("u", username);
+	q.setParameter("f", file);
+
+	q.setMaxResults(1);
+	List<DataFile> res = (List<DataFile>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+
+
     /** Maps to a file system file. */
     public File  getFile() {
 	return new File(getPath());

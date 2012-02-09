@@ -39,8 +39,13 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    actor = User.findByName(em, actorUserName);
 	    actorLastActionId= actor.getLastActionId();
 	    em.getTransaction().begin();
-	    df = DataFile.getLatestFile(em, actorUserName, 
-					DataFile.Type.USER_PROFILE);
+
+	    if (requestedFile!=null) {
+		df = DataFile.findFileByName(em, actorUserName, requestedFile);
+	    } else {
+		df = DataFile.getLatestFile(em, actorUserName, 
+					    DataFile.Type.USER_PROFILE);
+	    }
 
 	    List<Task> tasks = 
 		Task.findOutstandingTasks(em, actorUserName, 
@@ -60,7 +65,9 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    // Do we need to request a new task?
 	    boolean needNewTask = false;
 	    
-	    if (force) {
+	    if (requestedFile!=null) {  // just a specific file-view request
+		needNewTask = false;
+	    } else if (force) {
 		if (activeTask!=null) {
 		    infomsg += "Update task not created, because a task is currently in progress already";
 		} else if (queuedTask!=null) {

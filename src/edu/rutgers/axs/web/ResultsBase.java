@@ -42,7 +42,7 @@ public class ResultsBase {
     public String user=null;
 
     final public String USER_NAME = "user_name",
-	FORCE="force";
+	FORCE="force", FILE="file";
 
     /** Returns the user object for the currently logged-in user */
     public User getUserEntry() {
