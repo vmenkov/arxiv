@@ -178,7 +178,7 @@ import edu.cornell.cs.osmot.options.Options;
     static public DataFile getLatestFile(EntityManager em, String  username, Type t, int days) {
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by  m.lastActionId, m.time desc";
+	qs += " order by  m.lastActionId desc, m.time desc";
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
@@ -203,8 +203,8 @@ import edu.cornell.cs.osmot.options.Options;
 	String qs = "select m from DataFile m, DataFile parent where m.user=:u and  m.type=:t and m.deleted=FALSE";
 	qs += " and m.inputFile=parent.thisFile and parent.type=:p";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by  m.lastActionId, m.time desc";
-	//	qs += " order by m.time desc";
+	qs += " order by  m.lastActionId desc, m.time desc";
+
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
@@ -227,8 +227,8 @@ import edu.cornell.cs.osmot.options.Options;
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
 	qs += " and m.inputFile=:i";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by  m.lastActionId, m.time desc";
-	//qs += " order by m.time desc";
+	qs += " order by  m.lastActionId desc, m.time desc";
+
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
