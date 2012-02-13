@@ -273,14 +273,14 @@ import org.apache.catalina.realm.RealmBase;
 	return h;
     }
 
-    /** Produces a HashMap which, for each article id (the key) contains
-	a sorted vector of all actions with that page. The vector is sorted by
-	timestamp, in ascending order.
+    /** Similar to getAllActionsHashMap(), but only looks at actions with id
+	greater than id0.
      */
-    public HashMap<String, Vector<Action>> getAllActionsHashMap() {
+    public HashMap<String, Vector<Action>> getAllActionsSince(long id0) {
 	HashMap<String, Vector<Action>> h = new HashMap<String, Vector<Action>>();
 
 	for( Action a: actions) {
+	    if (a.getId()<=id0) continue;
 	    String aid = a.getArticle();
 	    Vector<Action> b = h.get(aid);
 	    if (b==null) {
@@ -293,6 +293,14 @@ import org.apache.catalina.realm.RealmBase;
 	    }
 	}
 	return h;
+    }
+
+    /** Produces a HashMap which, for each article id (the key) contains
+	a sorted vector of all actions with that page. The vector is sorted by
+	timestamp, in ascending order.
+     */
+    public HashMap<String, Vector<Action>> getAllActionsHashMap() {
+	return getAllActionsSince(0);
     }
 
 

@@ -63,6 +63,15 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <td>select x from Task x
 <td>select x.* from Task x
 
+<tr>
+<td> -
+<td> select x.thisFile, x.inputFile, y.inputFile from DataFile x, DataFile y where x.type='TJ_ALGO_1_SUGGESTIONS_1' and y.thisFile=x.inputFile
+
+<tr>
+<td>select x.type, x.thisFile, x.inputFile, y.type, y.inputFile from DataFile x, DataFile y where  y.thisFile=x.inputFile
+<td>select x.type, x.thisFile, x.inputFile, y.type, y.inputFile from DataFile x, DataFile y where  y.thisFile=x.inputFile
+
+
 <!--
 <tr><td>select x from Respondent x where x.id = 69 <td> select x.* from Respondent x where x.id = 69
 <tr><td>select x from Respondent x where x.id in (69,70,71) <td> select x.* from Respondent x where x.id  in (69,70,71) 

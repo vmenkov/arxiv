@@ -104,13 +104,20 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	    other.reasons.elementAt(0).compareTo(reasons.elementAt(0)) : d;
     }
 
+    static public UserPageScore[] rankPagesForUser(User actor) {
+	return rankPagesForUserSince(actor, 0);
+    }
+
     /** Generates an ordered list of pages with which the user has interacted.
+
+	@param id0 Only actions with ids greater than this are taken
+	into account.
 
 	@return A list of pages with their scores, ordered (ranked) by
 	score, in descending order. Some scores may be negative.	
      */
-    static public UserPageScore[] rankPagesForUser(User actor) {
-	HashMap<String,Vector<Action>> ahm=actor.getAllActionsHashMap();
+    static public UserPageScore[] rankPagesForUserSince(User actor, long id0) {
+	HashMap<String,Vector<Action>> ahm=actor.getAllActionsSince(id0);
 	Vector<UserPageScore> vups = new Vector<UserPageScore>();
 	for(String aid: ahm.keySet()) {
 	    UserPageScore q	 = new UserPageScore(aid, ahm.get(aid));

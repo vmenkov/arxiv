@@ -8,9 +8,6 @@ import javax.persistence.*;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-//import org.apache.lucene.util.Version;
-//import org.apache.lucene.store.Directory;
-//import org.apache.lucene.store.FSDirectory;
 
 //import org.apache.commons.lang.mutable.MutableDouble;
 
@@ -22,6 +19,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
 
+/** Thorsten's Algo 1 */
 class TjAlgorithm1 {
     /** This flag is on when using the alternative approach to the
      * initialization of w'', viz. w'' = sqrt(phi) */
@@ -31,42 +29,35 @@ class TjAlgorithm1 {
 
     TjAlgorithm1() {}
 
-    Vector<ArticleEntry> rank(UserProfile upro, Vector<ArticleEntry> entries,ArticleStats[] allStats, EntityManager em, int maxDocs )  throws IOException{
+    ArxivScoreDoc[] 
+	rank(UserProfile upro, 
+	     ArxivScoreDoc[] sd,
+	     ArticleStats[] allStats, EntityManager em, int maxDocs )  throws IOException{
 	IndexSearcher searcher = new IndexSearcher( upro.dfc.reader);	
 
 	HashMap<String,Integer> termMapper=upro.mkTermMapper();
 
-
 	int missingStatsCnt=0, storedCnt=0;
-	tjEntries = new TjA1Entry[entries.size()];
+	tjEntries = new TjA1Entry[sd.length];
 
-	for(int i=0; i<entries.size(); i++) {
-
-	    ArticleEntry ae = entries.elementAt(i);
-	    int docno=ae.getCorrectDocno(searcher);
-
-	    if (docno > allStats.length) {
-		Logging.warning("linSim: no stats for docno=" + docno + " (out of range)");
+	for(int i=0; i<sd.length; i++) {
+	    ArticleStats as=upro.dfc.getAS(allStats, sd[i].doc, em);
+	    if (as==null) {
 		missingStatsCnt ++;
 		continue;
-	    } 
-	    ArticleStats as =allStats[docno];
-	    if (as==null) {
-		as = allStats[docno] = upro.dfc.computeAndSaveStats(em, docno);
-		Logging.info("linSim: Computed and saved missing stats for docno=" + docno + " (gap)");
-	    } 
-
-	    TjA1Entry tje = new TjA1Entry( ae, as, upro, termMapper);
+	    }
+	    TjA1Entry tje = new TjA1Entry( sd[i], as, upro, termMapper);
 	    tjEntries[storedCnt++] = tje;
 	}
 
 	Arrays.sort(tjEntries, 0, storedCnt);  
 
-	Vector<ArticleEntry> results= new Vector<ArticleEntry>();
+	if (storedCnt==0) return new ArxivScoreDoc[0]; // nothing!
 
-	if (storedCnt==0) return results; // nothing!
+	//Vector<ArticleEntry> results= new Vector<ArticleEntry>();
+	Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
        
-	double[] psi = new double[ upro.terms.length];
+	double[] phi = new double[ upro.terms.length];
 	double gamma = upro.getGamma(0);
 	int usedCnt=0;
 
@@ -82,9 +73,9 @@ class TjAlgorithm1 {
 	}
 
 	TjA1Entry tje = tjEntries[imax];
-	tje.addToPsi(psi, gamma);
-	tje.ae.setScore(utility);
-	results.add(tje.ae);
+	tje.addToPhi(phi, gamma);
+	tje.setScore(utility);
+	results.add(tje.getSd());
 
 	Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=du=" + utility);
 
@@ -98,7 +89,7 @@ class TjAlgorithm1 {
 	    for(i=usedCnt; i<storedCnt; i++) {
 		tje = tjEntries[i];
 		if (maxdu >= tje.ub()) break; 
-		double du= tje.wouldContributeNow(psi, gamma);		
+		double du= tje.wouldContributeNow(phi, gamma);		
 		if (imax<0 || du>maxdu) {
 		    imax = i;
 		    maxdu=du;
@@ -107,14 +98,14 @@ class TjAlgorithm1 {
 
 	    if (maxdu<=0) {
 		Logging.info("No further improvement to the utility can be achieved");
-		return results;
+		return results.toArray(new ArxivScoreDoc[0]);
 	    }
 
 	    int undisturbed = i;
 	    tje = tjEntries[imax];
-	    tje.addToPsi(psi, gamma);
-	    tje.ae.setScore(maxdu);
-	    results.add(tje.ae);
+	    tje.addToPhi(phi, gamma);
+	    tje.setScore(maxdu);
+	    results.add(tje.getSd());
 	    utility += maxdu;
 
 	    if (imax > usedCnt) {		// swap
@@ -129,8 +120,7 @@ class TjAlgorithm1 {
 
 	}
 
-	return results;
-
+	return results.toArray(new ArxivScoreDoc[0]);
     }
 
     /** "Finalizes" sorting of the array section a[n1:n3), within
@@ -177,8 +167,5 @@ class TjAlgorithm1 {
 	    a[i1start + j] = merged[j];
 	}
     }
-
-    
-
 
 }

@@ -5,7 +5,7 @@ import java.util.*;
 import java.text.*;
 import javax.persistence.*;
 
-import java.lang.reflect.*;
+//import java.lang.reflect.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
@@ -64,11 +64,19 @@ import edu.cornell.cs.osmot.options.Options;
     public void setTask(long x) { task = x; }
 
   
-   /** Various supported task types.  */
+   /** Various supported data file content types.  */
     public static enum Type {
+	/** Basic user profile, based directly on the user's entire 
+	    interaction history */
 	USER_PROFILE,
+	    /** A user profile that has been obtained by updating
+		another user profile, using some recent user activity,
+		by Thorsten's Algorithm 2. */
+	    TJ_ALGO_2_USER_PROFILE,
 	    /** Selection based on dot products with the USER_PROFILE */
 	    LINEAR_SUGGESTIONS_1,
+	    /** Selection based on a sublinear utility function based
+		on a user profile of some kind */
 	    TJ_ALGO_1_SUGGESTIONS_1;
 
 	/** What task should we run to produce this kind of data? */
@@ -76,6 +84,7 @@ import edu.cornell.cs.osmot.options.Options;
 	    if (this == USER_PROFILE) return Task.Op.HISTORY_TO_PROFILE;
 	    else if (this == LINEAR_SUGGESTIONS_1) return Task.Op.LINEAR_SUGGESTIONS_1;
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return Task.Op.TJ_ALGO_1_SUGGESTIONS_1;
+	    else if (this == TJ_ALGO_2_USER_PROFILE) return Task.Op.TJ_ALGO_2_USER_PROFILE;
 	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
 	}
 
@@ -85,9 +94,11 @@ import edu.cornell.cs.osmot.options.Options;
 	String givePrefix() {
 	    if (this == USER_PROFILE) {
 		return "profile";
-	    } else 	if (this == LINEAR_SUGGESTIONS_1) {
+	    } else if (this == TJ_ALGO_2_USER_PROFILE) {
+		return "algo2profile";
+	    } else if (this == LINEAR_SUGGESTIONS_1) {
 		return "linsug1";
-	    } else 	if (this == TJ_ALGO_1_SUGGESTIONS_1) {
+	    } else if (this == TJ_ALGO_1_SUGGESTIONS_1) {
 		return "algo1sug1";
 	    } else {
 		return null;
@@ -98,10 +109,11 @@ import edu.cornell.cs.osmot.options.Options;
 	 * file includes.
 	 */
 	public String description() {
-	    if (this == USER_PROFILE) return "User profile, which includes terms from the documents the user interacted with.";
+	    if (this == USER_PROFILE) return "User profile directly based on all the documents the user interacted with.";
 	    else if (this == LINEAR_SUGGESTIONS_1) return "Linear similarity: dot product of documents with the user profile. Reported scores are dot products";
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return  "Joachims' Algorithm 1: ranking documents to maximize the utility function. Reported 'scores' are documents' increments to the utility function.";
-	    else return "unknown";
+	    else if (this == TJ_ALGO_2_USER_PROFILE) return "Joachim's Alghorithm 2: user profile updated based by updating the previously current user profile using the user's recent activity";
+	    else return "Unknown";
 	}
 
    }
@@ -119,7 +131,7 @@ import edu.cornell.cs.osmot.options.Options;
 	Ignored by most other tasks.
     */
     @Basic @Display(editable=false, order=6.1)     @Column(nullable=false)
-    	private int days=0;   
+    	private int days;   
     public int getDays() { return days; }
     public void setDays(int x) { days = x; }
 
@@ -133,13 +145,13 @@ import edu.cornell.cs.osmot.options.Options;
     /** The input file based on which (if applicable) this one has
 	been generated */
     @Basic      @Column(length=64) @Display(order=8, editable=false)
-	String inputFile=null;
+	String inputFile;
     public String getInputFile() { return inputFile; }
     public void setInputFile( String x) { inputFile = x; }
 
     /** This file's path name, relative to $DATAFILE_DIRECTORY/$user_ */
     @Basic      @Column(length=64) @Display(order=9, editable=false)
-	String thisFile=null;
+	String thisFile;
     public String getThisFile() { return thisFile; }
     public void setThisFile( String x) { thisFile = x; }
 
@@ -166,7 +178,7 @@ import edu.cornell.cs.osmot.options.Options;
     static public DataFile getLatestFile(EntityManager em, String  username, Type t, int days) {
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by m.time desc";
+	qs += " order by  m.lastActionId, m.time desc";
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
@@ -181,6 +193,58 @@ import edu.cornell.cs.osmot.options.Options;
 	    return null;
 	}
     }
+
+    /** This version is used in Algo 2: looking not just for any old
+	suggestion file, but one tnat was generated based on a profile
+	of a particular type.
+     */
+    static public DataFile getLatestFile(EntityManager em, String  username, 
+					 Type t, Type parentType, int days) {
+	String qs = "select m from DataFile m, DataFile parent where m.user=:u and  m.type=:t and m.deleted=FALSE";
+	qs += " and m.inputFile=parent.thisFile and parent.type=:p";
+	if (days>=0) qs += " and m.days=:d";
+	qs += " order by  m.lastActionId, m.time desc";
+	//	qs += " order by m.time desc";
+	Query q = em.createQuery(qs);
+
+	q.setParameter("u", username);
+	q.setParameter("t", t);
+	q.setParameter("p", parentType);
+	if (days>=0) 	q.setParameter("d", days);
+
+	q.setMaxResults(1);
+	List<DataFile> res = (List<DataFile>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+
+
+    static public DataFile getLatestFileBasedOn(EntityManager em, String  username, 
+						Type t, int days, String inputFile) {
+	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
+	qs += " and m.inputFile=:i";
+	if (days>=0) qs += " and m.days=:d";
+	qs += " order by  m.lastActionId, m.time desc";
+	//qs += " order by m.time desc";
+	Query q = em.createQuery(qs);
+
+	q.setParameter("u", username);
+	q.setParameter("t", t);
+	q.setParameter("i", inputFile);
+	if (days>=0) 	q.setParameter("d", days);
+
+	q.setMaxResults(1);
+	List<DataFile> res = (List<DataFile>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+
 
     /** Finds the DataFile entry with a matching name */
     static public DataFile findFileByName(EntityManager em, String  username, String file) {

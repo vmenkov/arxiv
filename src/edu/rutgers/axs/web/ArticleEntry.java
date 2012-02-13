@@ -7,9 +7,6 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-//import edu.cornell.cs.osmot.options.Options;
-//import edu.cornell.cs.osmot.logger.Logger;
-
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 
@@ -181,8 +178,7 @@ public class ArticleEntry {
 
     /** Find a document by article ID, using a given searcher.
      @return Lucene internal doc id.*/
-    static public int find(IndexSearcher s, String aid) throws IOException
-{
+    static public int find(IndexSearcher s, String aid) throws IOException {
 	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
 	//System.out.println("query=("+tq+")");
 	TopDocs 	 top = s.search(tq, 1);

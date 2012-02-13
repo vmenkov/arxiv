@@ -456,6 +456,29 @@ public class ArticleAnalyzer {
 	return reader;
     }
 
+    /** FIXME: maybe need to resize allStats[]... */
+    ArticleStats getAS(ArticleStats allStats[], int docno, EntityManager em) 
+	throws IOException //,org.apache.lucene.index.CorruptIndexException
+    {
+	//int docno=ae.getCorrectDocno(searcher);
+	if (docno > allStats.length) {
+	    Logging.warning("linSim: no stats for docno=" + docno + " (out of range)");
+	    //missingStatsCnt ++;
+	    //continue;
+	    return null;
+	} 
+	ArticleStats as =allStats[docno];
+	if (as==null) {
+	    as = allStats[docno] = computeAndSaveStats(em, docno);
+	    Logging.info("linSim: Computed and saved missing stats for docno=" + docno + " (gap)");
+	} 
+	return as;
+    } 
+
+
+
+
+
     /** -DmaxDocs=-1 -Drecompute=false
      */
     static public void main(String[] argv) throws IOException {
@@ -470,6 +493,8 @@ public class ArticleAnalyzer {
 	z.computeAllMissingNorms(em, maxDocs, recompute);
 	em.close();
     }
+
+
 
 
 }

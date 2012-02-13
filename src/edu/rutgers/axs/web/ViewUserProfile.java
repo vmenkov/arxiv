@@ -9,13 +9,11 @@ import javax.servlet.http.*;
 
 import javax.persistence.*;
 
-import edu.cornell.cs.osmot.options.Options;
-
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.*;
 
-/** Retrieves the list of artciles on which the user performed various actions,
-    and ranks them based on these actions.
+/** Retrieves and displayed a user profile file, which contains a
+ * weighted list of terms.
  */
 public class ViewUserProfile extends PersonalResultsBase {
 
@@ -23,14 +21,34 @@ public class ViewUserProfile extends PersonalResultsBase {
 
     public Task activeTask = null, queuedTask=null, newTask=null;
 
+    /** The file, if any, whose content is being displayed. */
     public DataFile df =null;
+
+    /** In some applications (Algo 2), the "ancestor" data file 
+	(specifically, suggestion list) based on which the currently
+	displayed data file has been generated.
+     */
+    public DataFile ancestor =null;
+
+
 
     /** The currently recorded last action id for the user in question */
     public long actorLastActionId=0;
 
+    public DataFile.Type mode = DataFile.Type.USER_PROFILE;
+
     public ViewUserProfile(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	if (error) return;
+	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
+
+	if (!(mode== DataFile.Type.USER_PROFILE ||
+	      mode== DataFile.Type.TJ_ALGO_2_USER_PROFILE)) {
+	    error=true;
+	    errmsg="Mode " + mode + " not supported as a profile type";
+	    return;
+	}
+	   
 
 	EntityManager em = sd.getEM();
 	try {
@@ -43,13 +61,13 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    if (requestedFile!=null) {
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else {
-		df = DataFile.getLatestFile(em, actorUserName, 
-					    DataFile.Type.USER_PROFILE);
+		df = DataFile.getLatestFile(em, actorUserName, mode);
 	    }
 
+	    Task.Op op = mode.producerFor();
 	    List<Task> tasks = 
-		Task.findOutstandingTasks(em, actorUserName, 
-					  Task.Op.HISTORY_TO_PROFILE);
+		Task.findOutstandingTasks(em, actorUserName, op);
+
 	    if (tasks != null) {
 		for(Task t: tasks) {
 		    if (t.appearsActive()) {
@@ -76,7 +94,7 @@ public class ViewUserProfile extends PersonalResultsBase {
 		    long sec = ((new Date()).getTime() - df.getTime().getTime())/1000;
 		    final int minMinutesAllowed = 10;
 		    if (sec < minMinutesAllowed * 60) {
-			infomsg += "Update task not created, because the most recent update was completed less than " + minMinutesAllowed + " minutes ago. (Loadf control).";
+			infomsg += "Update task not created, because the most recent update was completed less than " + minMinutesAllowed + " minutes ago. (Load control).";
 		    } else {
 			needNewTask = true;
 			infomsg += "Update task created as per request";
@@ -88,21 +106,27 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    }
 
 	    if (needNewTask) {
-		newTask = new Task(actorUserName, 
-				   Task.Op.HISTORY_TO_PROFILE);
+		newTask = new Task(actorUserName, op);
 		em.persist(newTask);
 	    }	    
 	    em.getTransaction().commit();
 
 	    if (df!=null) {
 		upro = new UserProfile(df, ArticleAnalyzer.getReader());
+
+		if (df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
+		    ancestor = DataFile.findFileByName(em,actorUserName, df.getInputFile());
+		}
 	    }
 
+	}  catch (WebException _e) {
+	    error = true;
+	    errmsg = _e.getMessage();
+	    return;
 	}  catch (Exception _e) {
 	    setEx(_e);
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
-	    //em.close(); 
 	}
     }
 

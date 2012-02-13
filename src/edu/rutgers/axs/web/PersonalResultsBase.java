@@ -34,6 +34,10 @@ public class PersonalResultsBase extends ResultsBase {
     /** Only set if the user has explicitly requested an individual file to be viewed. */
     public String requestedFile=null;
 
+    public static final  String MODE="mode", DAYS="days";
+    /** For ViewSuggestionList: give suggestions based on a specific profile. */
+    public static final String BASEDON = "basedon";
+
     public PersonalResultsBase(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	force= getBoolean(FORCE, false);
@@ -64,6 +68,16 @@ public class PersonalResultsBase extends ResultsBase {
 	return cp + "/personal/viewUserProfile.jsp?" +
 	    USER_NAME+"=" + actorUserName +
 	    "&" + FILE+"=" + file;
+    }
+
+    public String viewSuggestionsLink(String file) {
+	return cp + "/personal/viewSuggestions.jsp?" +
+	    USER_NAME+"=" + actorUserName +
+	    "&" + FILE+"=" + file;
+    }
+
+    public String formatSuggestionsLink(String file) {
+	return "<a href=\"" + viewSuggestionsLink(file)+ "\">"+file+"</a>";
     }
     
 

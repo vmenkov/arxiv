@@ -56,14 +56,15 @@ public class Test {
 	    System.out.println("User=" + uname);
 	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
 
-	    Vector<ArticleEntry> entries=
+	    ArxivScoreDoc[] sd =
 		raw ? upro.luceneRawSearch(maxDocs *10, allStats, em, 0 ):
 		upro.luceneQuerySearch(maxDocs * 10, 0);
 
-	    ArticleEntry.save(entries, new File("linsug.txt"));
+	    ArticleEntry.save(upro.packageEntries(sd), new File("linsug.txt"));
 
 	    TjAlgorithm1 algo = new TjAlgorithm1();
-	    entries = algo.rank( upro, entries, allStats, em, maxDocs);
+	    sd = algo.rank( upro, sd, allStats, em, maxDocs);
+	    Vector<ArticleEntry> entries = upro.packageEntries(sd);
 
 	    ArticleEntry.save(entries, new File("algo1.txt"));
 

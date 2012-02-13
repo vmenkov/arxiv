@@ -3,16 +3,11 @@ package edu.rutgers.axs.recommender;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 
 import java.util.*;
 import java.io.*;
 
 import javax.persistence.*;
-
-import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.ArxivFields;
@@ -59,8 +54,8 @@ public class UserProfile {
 	}
     }
 
-    /** Used with Approach 1 */
-    private void add(String key, double inc1, double inc2) {
+    /** Used on initalization with Algo 1 Approach 1, and in updates in Algo 2. */
+    void add(String key, double inc1, double inc2) {
 	TwoVal val = hq.get(key);
 	if (val==null) {
 	    hq.put( key, new TwoVal(inc1, inc2));	  
@@ -99,7 +94,8 @@ public class UserProfile {
     }
 
 
-    void purgeUselessTerms() {
+    /** This is not used anymore, as useless terms are removed earlier on. */
+    private void purgeUselessTerms() {
 	Set<String> keys = hq.keySet();
 	for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
 	    String t = it.next();
@@ -118,7 +114,25 @@ public class UserProfile {
 	return 1.0 / (1 + Math.log( 1.0 + i ));
     }
     
-    /**
+    /** Empty-profile constructor */
+    UserProfile(IndexReader reader) throws IOException {
+	lastActionId = 0;
+
+	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	terms = new String[0];
+	Logging.info( "Created an empty user profile");
+    }
+
+
+    /** Initialization of the user profile vector w  in a way suitable
+	for later use in TJ's Algo 1 and Algo 2. Uses the entire available
+	record of the user activity.
+
+	Here, w1 is initialized as sum(d_i/|d_i|_IDF); w2, as sqrt(w1).
+	Unlike my "official" (conceptual) writeup, no sqrt(IDF) (and
+	IDF^{1/4}, for w2) is factored into the stored weights. Instead,
+	IDF and sqrt(IDF) are brought in when the utility is actually
+	computed in Algo 1.
      */
     UserProfile(String uname, EntityManager em, IndexReader reader) throws IOException {
 	User actor = User.findByName(em, uname);
@@ -136,40 +150,45 @@ public class UserProfile {
 	    if (up.getScore() <=0) break; // don't include "negative" pages
 	    String aid = up.getArticle();
 	    HashMap<String, Double> h = dfc.getCoef(aid);
-	    // discount factor
-	    double gamma = getGamma(cnt);
+	    double gamma = getGamma(cnt); 	    // discount factor
 	    // FIXME: can we use stored norm instead?
 	    double norm = dfc.tfNorm(h);
 	    double f = gamma / norm;
-	    double f2=0;
-	    if (!TjAlgorithm1.approach2) {
+	    if (TjAlgorithm1.approach2) {
+		// For Approach 2, w2 will be initialized  later
+		for(Map.Entry<String,Double> e: h.entrySet()) {
+		    double q = e.getValue().doubleValue();
+		    add1( e.getKey(), f * q);
+		}
+	    } else { // the original, abandoned, approach
 		// for the "sqrt(phi)" part
 		double norm2 = dfc.normOfSqrtTf(h);
-		f2 = gamma/norm2;
-	    } 
-
-	    // For Approach 1, w2 is initialized right here; for Approach 2,
-	    // it will be done later
-	    for(Map.Entry<String,Double> e: h.entrySet()) {
-		double q = e.getValue().doubleValue();
-		if (TjAlgorithm1.approach2) {
-		    add1( e.getKey(), f * q);
-		} else {
+		double f2 = gamma/norm2;
+		// For Approach 1, w2 is initialized right here
+		for(Map.Entry<String,Double> e: h.entrySet()) {
+		    double q = e.getValue().doubleValue();
 		    add( e.getKey(), f * q, f2 * Math.sqrt(q));
 		}
-	    }
+	    } 
+
 	    cnt++;
 	}
 	int size0 = hq.size();
 	
-	purgeUselessTerms();
+	//purgeUselessTerms();
 	if (TjAlgorithm1.approach2) {
 	    computeSqrt();
 	}
+	setTermsFromHQ();
+	Logging.info( "User profile has " + terms.length + " terms");
+	//save(new File("profile.tmp"));
+    }
+
+    /** Load the terms[] array as the keys of hq, sorted by w1*idf
+     */
+    void setTermsFromHQ() {
 	terms = hq.keySet().toArray(new String[0]);
 	Arrays.sort(terms, getByDescVal());
-	Logging.info( "User profile has " + terms.length + " terms");
-	save(new File("profile.tmp"));
     }
 
     /** Reads the profile from a file, and set the lastActionId from the 
@@ -314,19 +333,16 @@ public class UserProfile {
 	}	
     }
 
-    static private class OurScoreDoc implements Comparable<OurScoreDoc> {
-	int docno;
-	double score;
-	OurScoreDoc(int _docno, 	double _score) {
-	    docno=_docno;  score=_score;
-	}
-	/** Descending order! */
-	public int compareTo(OurScoreDoc  other) {
-	    double d = other.score - score; 
+/*
+    static class SDComparator implements Comparator<ScoreDoc> {
+	// Descending order! 
+	public int compare(ScoreDoc a, ScoreDoc  b) {
+	    double d = b.score - a.score; 
 	    return (d<0) ? -1 : (d>0) ? 1: 0;
 	}
     }
-     
+*/
+
     /** This is an "autonomous" version, which goes for the real cosine
       similarity, So lots of numbers are precomputed by ourselves,
       stored in the SQL database, and then pulled with ArticleStats[].
@@ -339,7 +355,9 @@ public class UserProfile {
       @param days Article date range (so many most recent days).  0
       means "all dates".
      */
-    Vector<ArticleEntry> luceneRawSearch(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
+    //    Vector<ArticleEntry>
+    ArxivScoreDoc[] 
+	luceneRawSearch(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
 
 	if (days>0) {
 	    return luceneRawSearchDateRange(maxDocs, allStats, em, days);
@@ -381,19 +399,24 @@ public class UserProfile {
 	    tcnt++;		
 	    if (maxTerms>0 && tcnt >= maxTerms) break;
 	}	    
-	OurScoreDoc[] sd = new OurScoreDoc[numdocs];
+	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
 	int  nnzc=0;
 	for(int k=0; k<scores.length; k++) {		
-	    if (scores[k]>0) sd[nnzc++] = new OurScoreDoc(k, scores[k]);
+	    if (scores[k]>0) sd[nnzc++] = new ArxivScoreDoc(k, scores[k]);
 	}
 	Logging.info("nnzc=" + nnzc);
 	if (missingStatsCnt>0) {
 	    Logging.warning("used zeros for " + missingStatsCnt + " values, because of missing stats");
 	}
-	return sortAndPackageEntries( sd, nnzc, maxDocs);
-    }
 
-    Vector<ArticleEntry> luceneRawSearchDateRange(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
+	ArxivScoreDoc[] tops=topOfTheList(sd, nnzc, maxDocs);
+	return tops;
+	//return packageEntries( tops);
+	}
+
+    //Vector<ArticleEntry>
+    ArxivScoreDoc[] 
+	luceneRawSearchDateRange(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
 	long msec = (new Date()).getTime() - 24*3600*1000 * days;
 	TermRangeQuery q = 
 	    new TermRangeQuery(ArxivFields.DATE_INDEXED,
@@ -408,7 +431,7 @@ public class UserProfile {
 	Logging.info("Search over the range of " + days + " days; found " + scoreDocs.length + " docs in range");
 	if (needNext) Logging.warning("Dropped some docs in range search (more results than " + M);
 
-	OurScoreDoc[] scores = new OurScoreDoc[scoreDocs.length];
+	ArxivScoreDoc[] scores = new ArxivScoreDoc[scoreDocs.length];
 	int  nnzc=0;
 	int missingStatsCnt =0;
 
@@ -426,27 +449,36 @@ public class UserProfile {
 		Logging.info("linSim: Computed and saved missing stats for docno=" + docno + " (gap)");
 	    } 
 	    double sim = dfc.linSim(docno, as, hq);
-	    if (sim>0) 	scores[nnzc++]= new OurScoreDoc(docno, sim);
+	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
 	}
 
 	Logging.info("nnzc=" + nnzc);
 	if (missingStatsCnt>0) {
 	    Logging.warning("used zeros for " + missingStatsCnt + " docs, because of missing stats");
 	}
-	return sortAndPackageEntries( scores, nnzc, maxDocs);
+
+	ArxivScoreDoc[] tops=topOfTheList(scores, nnzc, maxDocs);
+	return tops;
+	//return packageEntries( tops);
     }
 
-    private Vector<ArticleEntry> sortAndPackageEntries(OurScoreDoc[] scores, int nnzc, int  maxDocs)  
-	throws IOException, org.apache.lucene.index.CorruptIndexException{
+    private ArxivScoreDoc[] topOfTheList(ArxivScoreDoc[] scores, 
+				       int nnzc, int  maxDocs)  {
 	Arrays.sort( scores, 0, nnzc);
-	
 	int maxCnt = Math.min(nnzc, maxDocs);
-	Vector<ArticleEntry> entries = new  Vector<ArticleEntry>(maxCnt);
-	for(int i=0; i< maxCnt; i++) {
-	    OurScoreDoc sd = scores[i];
-	    Document doc = dfc.reader.document( sd.docno);
+	ArxivScoreDoc[] out = new 	ArxivScoreDoc[maxCnt];
+	for(int i=0; i<out.length; i++) out[i] = scores[i];
+	return out;
+    }
+
+    Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores)  
+	throws IOException    {
+	Vector<ArticleEntry> entries = new Vector<ArticleEntry>(scores.length);
+	for(int i=0; i< scores.length; i++) {
+	    ArxivScoreDoc sd = scores[i];
+	    Document doc = dfc.reader.document( sd.doc);
 	    // FIXME: could use  "skeleton" constructor instead to save time   
-	    ArticleEntry ae= new ArticleEntry(i+1, doc, sd.docno);
+	    ArticleEntry ae= new ArticleEntry(i+1, doc, sd.doc);
 	    ae.setScore( sd.score);
 	    entries.add( ae);
 	}	
@@ -534,12 +566,20 @@ public class UserProfile {
 
 	@param Date range, in days. (FIXME: not supported yet!)
      */
-    Vector<ArticleEntry> luceneQuerySearch(int maxDocs, int days) throws IOException {
+    //    Vector<ArticleEntry> 
+    ArxivScoreDoc[] 
+	luceneQuerySearch(int maxDocs, int days) throws IOException {
 	org.apache.lucene.search.Query q = firstQuery();
 	
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
 	TopDocs 	 top = searcher.search(q, maxDocs + 1);
 	ScoreDoc[] scoreDocs = top.scoreDocs;
+	ArxivScoreDoc[] out = new ArxivScoreDoc[scoreDocs.length];
+	for(int i=0; i<out.length; i++) {
+	    out[i] = new ArxivScoreDoc(scoreDocs[i]);
+	}
+	return out;
+	/*
 	boolean needNext=(scoreDocs.length > maxDocs);
 	
 	int startat=0;
@@ -553,6 +593,7 @@ public class UserProfile {
 	    entries.add( ae);
 	}	
 	return  entries;
+	*/
     }
 
     /** Creates a map that maps terms to their position in the terms[]
@@ -562,6 +603,7 @@ public class UserProfile {
 	for(int i=0; i<terms.length; i++) {
 	    h.put( terms[i], new Integer(i));
 	}
+	Logging.info("Created a term mapper for " + terms.length + " terms");
 	return h;
     }
 
@@ -578,6 +620,43 @@ public class UserProfile {
 
     }
     */
+
+    /** Modifies an existing profile by adding to it, with 0 coefficients,
+	all terms present in the current user activity log. Updates
+	lastActionId accordingly.
+
+	@return ranked list of pages viewed since the last update
+     */
+    UserPageScore[] updateVocabulary(String uname, EntityManager em) throws IOException {
+	User actor = User.findByName(em, uname);
+	if (actor == null) {
+	    throw new IllegalArgumentException( "No user with user_name="+ uname+" has been registered");
+	}
+
+	long lastActionId0 = lastActionId;
+	lastActionId = actor.getLastActionId();
+
+	// descending score order
+	UserPageScore[]
+	    ups =  UserPageScore.rankPagesForUserSince(actor, lastActionId0);
+	int cnt=0;
+	for(UserPageScore up : ups) {
+	    if (up.getScore() <=0) break; // don't include "negative" pages
+	    String aid = up.getArticle();
+	    HashMap<String, Double> h = dfc.getCoef(aid);
+	    for(Map.Entry<String,Double> e: h.entrySet()) {
+		add1( e.getKey(),0);
+	    }
+	    cnt++;
+	}
+	// updates terms[]
+	terms = hq.keySet().toArray(new String[0]);
+	Arrays.sort(terms, getByDescVal());
+	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
+	return ups;
+    }
+
+
 
     /** Stuff used to control debugging and additional verbose reporting. */
     static class Debug {

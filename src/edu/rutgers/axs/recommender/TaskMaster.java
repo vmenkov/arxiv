@@ -3,9 +3,6 @@ package edu.rutgers.axs.recommender;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 
 import java.util.*;
 import java.io.*;
@@ -15,7 +12,6 @@ import javax.persistence.*;
 import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.ParseConfig;
-//import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.ResultsBase;
 import edu.rutgers.axs.web.Search;
@@ -27,8 +23,12 @@ public class TaskMaster {
     static final int maxDocs=200;
 
 
-    /** For asynchronous reading of allStats */
-    static class AllStatsReader extends Thread {
+    /** An auxiliary thread for the asynchronous reading of the
+	allStats[] array on start-up. The idea is that if the first
+	tasks to process do not require allStats[], the main thread
+	can start working on them even as allStats[] is loading.
+     */
+    static private class AllStatsReader extends Thread {
 	ArticleStats[] allStats = null;
 	boolean error = false;
 	Exception ex;
@@ -46,8 +46,9 @@ public class TaskMaster {
 	    }
 	}
 
-	/** This is called from the parent's thread, to verify that this thread
-	    has completed. */
+	/** This is a blocking method, which is called from the
+	    parent's thread. It waits for this thread to complete, 
+	    and return the results. */
 	ArticleStats[] getResults() throws Exception {
 	    while(getState()!=Thread.State.TERMINATED) {
 		Logging.info("Waiting for ASR");
@@ -172,48 +173,43 @@ public class TaskMaster {
 	    try {
 		Logging.info("task["+taskCnt+"]: " + task);
 		final Task.Op op = task.getOp();
+		String user = task.getUser();
+
 		if (op== Task.Op.STOP) {		
 		    Logging.info("Stop requested!");
 		    stopNow=true;
 		} else if (op == Task.Op.HISTORY_TO_PROFILE) {	
 		    //Logging.info("");
-		    UserProfile upro=new UserProfile(task.getUser(),em,reader);
+		    UserProfile upro=new UserProfile(user, em,reader);
 		    outputFile=upro.saveToFile(task,op.outputFor());
 		} else if (op == Task.Op.LINEAR_SUGGESTIONS_1
 			   || op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 		    // FIXME: should also support individual file specs
-		    inputFile = 
-			//			(task.getInputFile()) != null ?
-			// new DataFile(task, task.getInputFile()
-			DataFile.getLatestFile(em, task.getUser(),
-					       DataFile.Type.USER_PROFILE);
-
-		    UserProfile upro;
-		    if (inputFile != null) {
-			// read it
-			upro = new UserProfile(inputFile, reader);
-		    } else {
-			// generate it
-			upro = new UserProfile(task.getUser(), em, reader);
-			DataFile uproFile=
-			    upro.saveToFile(task, DataFile.Type.USER_PROFILE);
-			em.persist(uproFile);
-			inputFile = uproFile;
+		    Vector<DataFile> ptr = new Vector<DataFile>(0);
+		    if (task.getInputFile()!=null) {
+			inputFile=DataFile.findFileByName(em, user,task.getInputFile()); 
+			ptr.add(inputFile);
 		    }
 
+		    UserProfile upro = 
+			getSuitableUserProfile(task, ptr, em, reader);
+		    inputFile = ptr.elementAt(0);
 		    final boolean raw=true;
 		    ArticleStats[] allStats = asr.getResults();
 		    
 		    int days = task.getDays();		    
-		    Vector<ArticleEntry> entries = 
-			raw ? upro.luceneRawSearch(maxDocs, asr.allStats, em, days):
+		    ArxivScoreDoc[] sd =
+			raw? upro.luceneRawSearch(maxDocs,asr.allStats,em,days):
 			upro.luceneQuerySearch(maxDocs, days);
 
 		    if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 			TjAlgorithm1 algo = new TjAlgorithm1();
-			entries = algo.rank( upro, entries, asr.allStats, em, maxDocs);
+			sd = algo.rank( upro, sd, asr.allStats, em, maxDocs);
 		    }
 
+		    Vector<ArticleEntry> entries = upro.packageEntries(sd);
+		    Logging.info("|sd|=" +sd.length+", |entries|=" + entries.size());
+		    
 		    outputFile=DataFile.newOutputFile(task);
 		    outputFile.setDays(days);
 		    outputFile.setLastActionId(upro.getLastActionId());
@@ -221,6 +217,55 @@ public class TaskMaster {
 			outputFile.setInputFile(inputFile.getThisFile());
 		    }
 		    ArticleEntry.save(entries, outputFile.getFile());
+		    
+		}  else if (op == Task.Op.TJ_ALGO_2_USER_PROFILE) {
+
+		    // We need to find the most recent Algo1 suggestion
+		    // list, and the user profile on which it was based.
+		    // We first see if there is a sug list already based
+		    // on an Algo 2 profile, but if not, we'll be building on
+		    // an "original" profile.
+
+		    inputFile = DataFile.
+			getLatestFile(em, user,
+				      DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1, 
+				      DataFile.Type.TJ_ALGO_2_USER_PROFILE,
+				      -1);
+		    
+		    if (inputFile==null) {
+			inputFile = DataFile.
+			    getLatestFile(em, user,
+					  DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
+		    }
+		    
+		    UserProfile upro;
+
+		    ArxivScoreDoc[] sd;
+		    if (inputFile==null) {
+			// there have been no Algo 1 suggestions... so
+			// we should default to an empty profile
+			// and empty sugg list!
+			upro = new UserProfile(reader);
+			sd = new ArxivScoreDoc[0];
+		    } else {
+			DataFile uproInputFile = 
+			    DataFile.findFileByName(em,user, inputFile.getInputFile());
+			upro = new UserProfile(uproInputFile, reader);
+			File f = inputFile.getFile();
+			Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
+			IndexSearcher searcher = new IndexSearcher(reader);	
+			sd = ArxivScoreDoc.toArxivScoreDoc(entries,searcher);
+		    }
+
+		    //      DataFile.Type.TJ_ALGO_2_USER_PROFILE);
+	
+		    TjAlgorithm2 algo=new TjAlgorithm2( upro);
+		    //ArticleStats[] allStats = asr.getResults();
+		    algo.updateProfile(user, em, sd);//, allStats);
+		    outputFile=upro.saveToFile(task,op.outputFor());
+		    if (inputFile!=null) {
+			outputFile.setInputFile(inputFile.getThisFile());
+		    }
 		}
 		success=true;
 		Logging.info("task=" + task+", successfully completed");
@@ -258,6 +303,50 @@ public class TaskMaster {
 	} finally {
 	    em.getTransaction().commit();
 	}
+    }
+
+    /** Reads in, or generates, an "input" UserProfile, as appropriate
+	for the task.
+	@param ptr If non-empty, it is used as an input parameter,
+	exactly specifying the file to read. If empty, it is used
+	as an output param, reporting as to what data file we have read
+	(or just written) the user profile from (or to),
+
+
+	    TJ_ALGO_2_USER_PROFILE,
+
+     */
+    private static UserProfile 
+	getSuitableUserProfile(Task task, Vector<DataFile> ptr, 
+			       EntityManager em, IndexReader reader)
+	throws IOException {
+
+	if (ptr.size()>0) { //explicitly specified input file
+	    return new UserProfile(ptr.elementAt(0), reader);
+	}
+	
+	DataFile inputFile = 
+	    DataFile.getLatestFile(em, task.getUser(),
+				   DataFile.Type.USER_PROFILE);
+
+	UserProfile upro;
+	if (inputFile != null) {
+	    // read it
+	    upro = new UserProfile(inputFile, reader);
+	} else {
+	    // generate it
+	    upro = new UserProfile(task.getUser(), em, reader);
+	    DataFile uproFile=
+		upro.saveToFile(task, DataFile.Type.USER_PROFILE);
+	    //		upro.saveToFile(task, DataFile.Type.TJ_ALGO_2_USER_PROFILE_1);
+	    if (uproFile==null) {
+		
+	    }
+	    em.persist(uproFile);
+	    inputFile = uproFile;
+	}
+	ptr.add(inputFile);
+	return upro;
     }
 
 }

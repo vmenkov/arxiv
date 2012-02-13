@@ -52,7 +52,9 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	    /** Linear model suggestions */
 	    LINEAR_SUGGESTIONS_1,
         /** Thorsten Joachims' Algorithm 1 */
-	    TJ_ALGO_1_SUGGESTIONS_1;
+	    TJ_ALGO_1_SUGGESTIONS_1,
+        /** Thorsten Joachims' Algorithm 2 */
+	    TJ_ALGO_2_USER_PROFILE;
 
 	/** What kind of file is created by each task? (Some tasks may
 	 * create more than one file on occasions, but this method
@@ -64,6 +66,8 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 		return DataFile.Type.LINEAR_SUGGESTIONS_1;
 	    } else if (this == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 		return DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
+	    } else if (this == Task.Op.TJ_ALGO_2_USER_PROFILE) {
+		return DataFile.Type.TJ_ALGO_2_USER_PROFILE;
 	    } else {
 		throw new IllegalArgumentException("Don't know what kind of file create for task type=" +this);
 	    }
@@ -168,7 +172,8 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	s += ", canceled="+
 	    getCanceled()+", failed="+getFailed()+", entered " +
 	    getRequestTime()+", done="+getCompleteTime()+"; pid="+
-	    getPid()+")";
+	    getPid()+". inputFile=" + getInputFile()+
+	    ", outputFile=" + getOutputFile();
 	return s;
     }
 

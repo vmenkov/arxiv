@@ -18,8 +18,8 @@ import edu.cornell.cs.osmot.options.Options;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.*;
 
-/** Retrieves the list of artciles on which the user performed various actions,
-    and ranks them based on these actions.
+/** Retrieves and displays a "suggestion list": a list of artciles which some
+    kind of automatic process has marked as potentially interesting to the user.
  */
 public class ViewSuggestions extends PersonalResultsBase {
 
@@ -29,7 +29,6 @@ public class ViewSuggestions extends PersonalResultsBase {
     public Vector<ArticleEntry> entries = null;//new Vector<ArticleEntry>();
     /** Data file whose content is to be displayed */
     public DataFile df =null;
-    public static final  String MODE="mode", DAYS="days";
 
     /** The type of the requested suggestion list, as specified by the
      * HTTP query string*/
@@ -42,12 +41,13 @@ public class ViewSuggestions extends PersonalResultsBase {
     
     /** The currently recorded last action id for the user in question */
     public long actorLastActionId=0;
-
+    public String basedon=null;
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	days = (int)getLong(DAYS, days);
+	basedon=getString(BASEDON,null);
 	if (error) return; // authentication error?
 
 	Task.Op taskOp = mode.producerFor(); // producer task type
@@ -62,7 +62,17 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 	    em.getTransaction().begin();
 	    
-	    df = DataFile.getLatestFile(em, actorUserName, mode, days);
+	    if (requestedFile!=null) {
+		df = DataFile.findFileByName(em, actorUserName, requestedFile);
+	    } else if (basedon!=null) {
+		// look for the most recent file based on the specified one...
+		df = DataFile.getLatestFileBasedOn(em, actorUserName, 
+						   mode, days, basedon);
+	    } else {
+		df = DataFile.getLatestFile(em, actorUserName, mode, days);
+	    }
+
+
 
 	    List<Task> tasks = 
 		Task.findOutstandingTasks(em, actorUserName, taskOp);
@@ -107,12 +117,14 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    if (needNewTask) {
 		newTask = new Task(actorUserName, taskOp);
 		newTask.setDays(days);
+		if (basedon!=null) newTask.setInputFile(basedon);
 		em.persist(newTask);
 	    }
 
 	    em.getTransaction().commit();
 
 	    if (df!=null) {
+
 		IndexReader reader=ArticleAnalyzer.getReader();
 		IndexSearcher s = new IndexSearcher( reader );
 

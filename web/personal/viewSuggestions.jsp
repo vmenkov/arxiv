@@ -92,7 +92,8 @@ list has been generated).  </p>
 <% }  %>
 
 
-<p>Suggestion generation method: <%=main.mode %> ( <%=main.mode.description() %>)
+<p>Suggestion generation method: <%=main.df.getType() %>
+ ( <%=main.df.getType().description() %>)
 
 <p>The list contains <%=main.entries.size() %> articles; the top <%= Math.min(main.entries.size(), main.maxRows) %> are shown below.
 </p>
@@ -121,7 +122,7 @@ for( ArticleEntry e: main.entries) {
 		<% }%>		
 
 <% } else if (!main.force) { %>
-<P>No suggestions for user <em><%= main.actorUserName %></em> has been generated yet. 
+<P>No suggestion list of the specified type for user <em><%= main.actorUserName %></em> has been generated yet. 
 </p>
 <% } %>
 	
@@ -132,7 +133,7 @@ for( ArticleEntry e: main.entries) {
 <%    if (main.activeTask!=null) {
 %> 
 <p>
-Presently, a task is running to generate the suggestion list: <%= main.activeTask%>. You may wait for a couple minutes, and then refresh this page to see if it has completed.</p>
+Presently, a task is running to generate the suggestion list: <%= main.activeTask%>. You may want to wait for a couple of minutes, and then refresh this page to see if it has completed.</p>
 <%      
       } else if (main.queuedTask!=null) {
 %>
@@ -167,6 +168,9 @@ Most recent <input type="text" name="<%=main.DAYS%>" value="<%=main.days%>"> day
 <input type="submit" value="Create task">
 </form>
 </p>
+
+<p>Note: presently, creating a task here will merely apply the existing user profile to the current dataset. If you actually want to see suggestions generated with an updated profile, you have to explicitly update the profile (of the appropriate type) first!</p>
+
 <%  }  %>
 
 <hr>
@@ -175,6 +179,9 @@ Most recent <input type="text" name="<%=main.DAYS%>" value="<%=main.days%>"> day
 <input type="hidden" name="<%=main.USER_NAME%>" value="<%=main.actorUserName%>">
 <input type="hidden" name="<%=main.MODE%>" value="<%=main.mode%>">
 <input type="hidden" name="<%=main.DAYS%>" value="<%=main.days%>">
+<% if (main.basedon!=null) { %>
+<input type="hidden" name="<%=main.BASEDON%>" value="<%=main.basedon%>">
+<% } %>
 <a name="refresh"><input type="submit" value="Refresh view"></a>
 </form>
 </p>
