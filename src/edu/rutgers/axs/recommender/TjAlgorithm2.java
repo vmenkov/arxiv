@@ -95,7 +95,13 @@ class TjAlgorithm2 {
 	int cnt=0;
 	for(UserPageScore up : ups) {
 	    String aid = up.getArticle();
-	    int docno = ArticleEntry.find( searcher,aid);
+	    int docno;
+	    try {
+		docno = ArticleEntry.find( searcher,aid);
+	    } catch (IOException ex) {
+		Logging.info("A2: ignoring document named " + aid + ", as it's not found in the index");
+		continue;
+	    }
 
 	    if (up.getScore() <=0) {
 		negativeSet.add( new Integer(docno));

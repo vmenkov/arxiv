@@ -177,7 +177,9 @@ public class ArticleEntry {
     }
 
     /** Find a document by article ID, using a given searcher.
-     @return Lucene internal doc id.*/
+     @return Lucene internal doc id.
+     @throws IOException if not found.
+    */
     static public int find(IndexSearcher s, String aid) throws IOException {
 	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
 	//System.out.println("query=("+tq+")");
