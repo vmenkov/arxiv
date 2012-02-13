@@ -203,7 +203,8 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
      * of a certain type for a certain user.
      */
     static public List<Task> findOutstandingTasks(EntityManager em, String username, Op op) {
-	Query q = em.createQuery("select m from Task m where m.completeTime is null and m.canceled=FALSE and m.failed=FALSE order by m.requestTime asc");
+	Query q = em.createQuery("select m from Task m where m.user=:u and m.completeTime is null and m.canceled=FALSE and m.failed=FALSE order by m.requestTime asc");
+	q.setParameter("u", username);
 	List<Task> res = (List<Task>)q.getResultList();
 	return res;
     }
