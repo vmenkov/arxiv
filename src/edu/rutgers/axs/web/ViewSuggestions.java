@@ -72,8 +72,6 @@ public class ViewSuggestions extends PersonalResultsBase {
 		df = DataFile.getLatestFile(em, actorUserName, mode, days);
 	    }
 
-
-
 	    List<Task> tasks = 
 		Task.findOutstandingTasks(em, actorUserName, taskOp);
 

@@ -22,8 +22,8 @@ import java.lang.annotation.*;
 
     /** This is the internal ID automatically assigned by the database
       to each entry upon creation. It is important within the database
-      (e.g., to associate PhoneCall entries with respondent entries,
-      but has no meaning outside of it.
+      (e.g., to associate ListEntry entries with User entries) but has
+      no meaning outside of it.
      */
     public long getId() {        return id;    }
 
@@ -90,6 +90,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public double getBoost3() { return boost3; }
     public void setBoost3(double x) {boost3 =x;}
 
+
     /** FIXME: should have used an array instead... */
     public double getBoost(int i) {
 	return (i<2) ? (i==0 ? boost0 : boost1) :
@@ -123,7 +124,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 
     /** Retrieves them all from the database. May be expensive. 
 	FIXME: we do get an OutOfMemoryError here sometimes. 
-	It may make sense to store data in an array of sorts instead,
+	It may make sense to store the stats data in an array of sorts instead,
 	e.g. norms[], boosts[][]...
      */
     public static List<ArticleStats> getAll( EntityManager em) {

@@ -48,6 +48,7 @@
         <class>edu.rutgers.axs.sql.ArticleStats</class>
         <class>edu.rutgers.axs.sql.Task</class>
         <class>edu.rutgers.axs.sql.DataFile</class>
+        <class>edu.rutgers.axs.sql.ListEntry</class>
 
         <properties>
             <!--

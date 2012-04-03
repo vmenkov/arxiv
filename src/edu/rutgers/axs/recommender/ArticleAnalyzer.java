@@ -32,6 +32,9 @@ public class ArticleAnalyzer {
     final String [] fields;
     /** Collection size */
     private int numdocs;
+    ArticleAnalyzer() throws IOException {
+	this(   getReader(), upFields);
+    }
     ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
 	fields = _fields;
 	reader =_reader;
@@ -103,12 +106,13 @@ public class ArticleAnalyzer {
 
     static final boolean useSqrt = false;
 
-    /** 
+    /** Computes a (weighted) term frequency vector for a specified document.
+
 	@param docno Lucene's internal integer ID for the document,
 	@param as This is an output parameter. If non-null, update
 	this object with the feature vector's statistics
 
-	@param The frequency vector, which incorporates boost factors
+	@return The frequency vector, which incorporates boost factors
 	for different fields, but no idf.
     */
     HashMap<String, Double> getCoef(int docno, ArticleStats as) 
@@ -325,7 +329,7 @@ public class ArticleAnalyzer {
 	stats for all articles that don't yet have that info stored
 	in the database. Does not try to recompute it when ...
 
-	FIMXE: Should add re-compute when the document has been updated
+	FIXME: Should add re-computing when the document has been updated
 	since ArticleStats.getDate().
 
 	@param maxCnt Max number of docs to analyze. If negative, analyze all.
@@ -383,6 +387,7 @@ public class ArticleAnalyzer {
 	computeAndSaveStats(em,docno,as);
 	return as;
     }
+
 
     /** Computes and records in the database the stats for one document.
 	
@@ -449,7 +454,6 @@ public class ArticleAnalyzer {
 	return ArticleEntry.find(s, aid);
     }
     
-   
     static public IndexReader getReader()  throws IOException {
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	IndexReader reader =  IndexReader.open( indexDirectory);            
@@ -475,9 +479,16 @@ public class ArticleAnalyzer {
 	return as;
     } 
 
-
-
-
+    /** Retrieves an existing ArticleStats record, or creates and
+	saves a new one, based on the ArXiv article id */
+    public ArticleStats getArticleStatsByAidAlways( EntityManager em, String _aid )  throws  org.apache.lucene.index.CorruptIndexException, IOException {
+	ArticleStats as = ArticleStats.findByAid( em, _aid);
+	if (as != null) return as;
+	int docno =find( _aid);
+	as = computeAndSaveStats(em,  docno);
+	return as;
+    }
+   
 
     /** -DmaxDocs=-1 -Drecompute=false
      */
@@ -486,8 +497,10 @@ public class ArticleAnalyzer {
 	int maxDocs = ht.getOption("maxDocs", -1);
 	boolean recompute = ht.getOption("recompute", false);
 	
-	IndexReader reader =  getReader();
-	ArticleAnalyzer z = new ArticleAnalyzer(reader, upFields);
+	//	IndexReader reader =  getReader();
+	//	ArticleAnalyzer z = new ArticleAnalyzer(reader, upFields);
+
+	ArticleAnalyzer z = new ArticleAnalyzer();
 
 	EntityManager em  = Main.getEM();
 	z.computeAllMissingNorms(em, maxDocs, recompute);

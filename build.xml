@@ -183,6 +183,7 @@ code. -->
       <include name="ArticleStats.class" />
       <include name="Task.class" />
       <include name="DataFile.class" />
+      <include name="ListEntry.class" />
     </fileset>
   </openjpac>
 

@@ -43,7 +43,7 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 
 <p>
 <table border=1>
-<tr><th>JPQL <th>SQL
+<tr><th>JPQL <th>SQL <th>comments
 <tr><td>select x from User x <td> select x.* from arxiv_users x
 <tr><td>select x from Action x <td> select x.* from Action x
 <tr><td> -
@@ -71,6 +71,10 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <td>select x.type, x.thisFile, x.inputFile, y.type, y.inputFile from DataFile x, DataFile y where  y.thisFile=x.inputFile
 <td>select x.type, x.thisFile, x.inputFile, y.type, y.inputFile from DataFile x, DataFile y where  y.thisFile=x.inputFile
 
+<tr>
+<td> -
+<td> select le.DF_ID, le.rank, a.aid from ListEntry le, ArticleStats a where le.ASTAT_ID = a.id order by DF_ID, rank;
+<td>Viewing suggestion list (as stored in the SQL database)
 
 <!--
 <tr><td>select x from Respondent x where x.id = 69 <td> select x.* from Respondent x where x.id = 69

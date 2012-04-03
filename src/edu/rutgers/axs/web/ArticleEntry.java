@@ -69,6 +69,8 @@ public class ArticleEntry {
 	subjline="";
      }
 
+    public String getAid() { return id; }
+
     public void setScore(double x) { score=x;}
 
     public String toString() {
@@ -124,9 +126,13 @@ public class ArticleEntry {
 	}
     }
 
-    /** Saves the profile to the specified file. Before doing so, verifies
-	that the necessary directory exists, and if it does not, tries to
+    /** Saves a list of ArticleEntry objects (typically, a suggestion
+	list) to the specified file. Before doing so, verifies that
+	the necessary directory exists, and if it does not, tries to
 	create it.
+
+	This method is a wrapper around save(Vector<ArticleEntry> entries,
+	PrintWriter w).
      */
     static public void save(Vector<ArticleEntry> entries, File f) throws IOException {
 	File g = f.getParentFile();
@@ -140,6 +146,9 @@ public class ArticleEntry {
 	w.close();
     }
 
+   /** Writes a list of ArticleEntry objects (typically, a suggestion
+	list) to a PrintWriter.
+     */
     static public void save(Vector<ArticleEntry> entries, PrintWriter w) {
 	//	w.println("#--- Entries are ordered by w(t)*idf(t)");
 	//	w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
@@ -208,6 +217,7 @@ public class ArticleEntry {
 	return docno;
     }
 
+ 
 
 }
 

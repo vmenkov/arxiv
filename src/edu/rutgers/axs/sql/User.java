@@ -327,7 +327,7 @@ import org.apache.catalina.realm.RealmBase;
 
 
     public Action addAction(String p, Action.Op op  ) {
-        Action r = new  Action( this, p, op); //, now);
+        Action r = new  Action( this, p, op); 
         actions.add(r);
         return r;
     }

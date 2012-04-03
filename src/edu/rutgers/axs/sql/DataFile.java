@@ -8,10 +8,13 @@ import javax.persistence.*;
 //import java.lang.reflect.*;
 
 import edu.cornell.cs.osmot.options.Options;
+import edu.rutgers.axs.web.ArticleEntry;
+import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 
 /** Each DataFile instance contains information about one external
-    data file, 
+    data file. Such data file may store e.g. a user profile, or a
+    suggestion list.
  */
 @Entity
     public class DataFile  implements Serializable, OurTable {
@@ -154,6 +157,30 @@ import edu.cornell.cs.osmot.options.Options;
 	String thisFile;
     public String getThisFile() { return thisFile; }
     public void setThisFile( String x) { thisFile = x; }
+
+    /** In case of a suggestion list, this refers to the list of
+	article info entries; otherwise, empty */
+    @OneToMany(cascade=CascadeType.ALL)
+    //        private Set<ListEntry> docs = new LinkedHashSet<ListEntry>();
+        private Vector<ListEntry> docs = new Vector<ListEntry>();
+
+    //    public  Set<ListEntry> getDocs() {
+    public  Vector<ListEntry> getDocs() {
+        return docs;
+    }
+
+    public void fillArticleList(Vector<ArticleEntry> entries, ArticleAnalyzer aa, EntityManager em) {
+	for(int rank=0; rank<entries.size(); rank++) {
+	    ListEntry le = null;
+	    try {
+		le = new  ListEntry(aa, em, this, entries.elementAt(rank), rank);
+	    } catch(Exception ex) {
+		Logging.error("DataFile.initList: Can't record data for article  " + entries.elementAt(rank).getAid() + " (rank="+rank+"), as it may not be in Lucene yet");
+		continue;
+	    }
+	    docs.add( le );
+	}
+    }
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	return true; 
