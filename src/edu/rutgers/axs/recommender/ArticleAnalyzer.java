@@ -208,7 +208,7 @@ public class ArticleAnalyzer {
 	@param as Contains precomputed stats for document(docno), in particular,
 	boost factors for the fields of d, already nortmalized by |d|
 
-	@param hq Represents the user vector.
+	@param hq Represents the user profile vector.
 	
      */
     double linSim(int docno, ArticleStats as, HashMap<String, UserProfile.TwoVal> hq) 
@@ -488,7 +488,69 @@ public class ArticleAnalyzer {
 	as = computeAndSaveStats(em,  docno);
 	return as;
     }
-   
+ 
+    /** Computes similarities of a given document (d1) to all other
+	docs in the database. Used for Bernoulli rewards.
+     */
+    void simToAll(HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em) throws IOException {
+
+	double norm1=tfNorm(doc1);
+
+	int numdocs = reader.numDocs() ;
+	double scores[] = new double[numdocs];	
+	int tcnt=0,	missingStatsCnt=0;
+
+ 	for(String t: doc1.keySet()) {
+	    double q= doc1.get(t).doubleValue();
+
+	    double qval = q * idf(t);
+	    for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
+		String f= ArticleAnalyzer.upFields[i];
+		Term term = new Term(f, t);
+		TermDocs td = reader.termDocs(term);
+		td.seek(term);
+		while(td.next()) {
+		    int p = td.doc();
+		    int freq = td.freq();			
+
+		    double normFactor = 0;
+		    if (allStats[p]!=null) {			
+			normFactor = allStats[p].getBoost(i);
+		    } else {
+			missingStatsCnt++;
+		    }
+
+		    double z =qval * normFactor * freq;
+		    scores[p] += z;
+		}
+		td.close();
+	    } // for fields
+	    tcnt++;		
+	} // for terms 	    
+	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
+	int  nnzc=0;
+	for(int k=0; k<scores.length; k++) {
+	    if (scores[k]>0) sd[nnzc++] = new ArxivScoreDoc(k, scores[k]/norm1);
+	}
+	Logging.info("nnzc=" + nnzc);
+	if (missingStatsCnt>0) {
+	    Logging.warning("used zeros for " + missingStatsCnt + " values, because of missing stats");
+	}
+	
+	int maxDocs = 20;
+	if (maxDocs > nnzc) maxDocs = nnzc;
+	ArxivScoreDoc[] tops=UserProfile.topOfTheList(sd, nnzc, maxDocs);
+	System.out.println("Neighbors:");
+	for(int i=0; i<tops.length; i++) {
+	    
+	    System.out.print((i==0? "{" : ", ") +
+			     "("   + allStats[tops[i].doc].getAid() +
+			     " : " + tops[i].score+")");
+	}
+	System.out.println("}");
+
+	//return tops;
+    }
 
     /** -DmaxDocs=-1 -Drecompute=false
      */
@@ -500,12 +562,37 @@ public class ArticleAnalyzer {
 	//	IndexReader reader =  getReader();
 	//	ArticleAnalyzer z = new ArticleAnalyzer(reader, upFields);
 
-	ArticleAnalyzer z = new ArticleAnalyzer();
+	if (argv.length>0 && argv[0].equals("sim")) {
+	    UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	
+	    ArticleAnalyzer z = new ArticleAnalyzer();
+	    EntityManager em  = Main.getEM();
 
-	EntityManager em  = Main.getEM();
-	z.computeAllMissingNorms(em, maxDocs, recompute);
-	em.close();
+	    ArticleStats[] allStats = ArticleAnalyzer.getArticleStatsArray(em, z.reader); 
+
+	    String aids [] = {"math/0110197",
+			      "1101.0579",
+			      "1002.0068",
+			      "nlin/0109025",
+			      "q-bio/0701040"
+	    };
+	    for(String aid: aids) {
+		System.out.println("Doc=" + aid);
+		HashMap<String, Double> doc1 = z.getCoef(aid);		
+		z.simToAll( doc1, allStats, em);
+	    }
+
+	} else 	    {
+	    // default
+
+	    ArticleAnalyzer z = new ArticleAnalyzer();
+	    
+	    EntityManager em  = Main.getEM();
+	    z.computeAllMissingNorms(em, maxDocs, recompute);
+	    em.close();
+	}
     }
+
 
 
 

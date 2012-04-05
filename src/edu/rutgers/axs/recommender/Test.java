@@ -41,8 +41,8 @@ public class Test {
 	maxDocs = ht.getOption("maxDocs", maxDocs);
 	boolean raw = ht.getOption("raw", true);
 
-	UserProfile.stoplist = new Stoplist(new File("WEB-INF/stop200.txt"));
-	System.out.println("maxTerms=" + UserProfile.maxTerms +", raw=" + raw + ", maxDocs=" + maxDocs +"; stoplist.size=" + UserProfile.stoplist.size());
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	System.out.println("maxTerms=" + UserProfile.maxTerms +", raw=" + raw + ", maxDocs=" + maxDocs +"; stoplist.size=" + UserProfile.getStoplist().size());
 
 	Test x = new Test();
 	UserProfile.setDebug(x.reader, ht);

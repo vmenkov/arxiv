@@ -10,6 +10,7 @@ import java.io.*;
 import edu.rutgers.axs.web.ArticleEntry;
 
 class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
+    /** Lucene doc id */
     int doc;
     double score;
     ArxivScoreDoc(ScoreDoc x) {

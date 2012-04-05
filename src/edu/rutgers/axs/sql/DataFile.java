@@ -80,7 +80,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    LINEAR_SUGGESTIONS_1,
 	    /** Selection based on a sublinear utility function based
 		on a user profile of some kind */
-	    TJ_ALGO_1_SUGGESTIONS_1;
+	    TJ_ALGO_1_SUGGESTIONS_1,
+	    /** Peter Frazier's algorithm - "Bernoulli Rewards" */
+	    BERNOULLI_SUGGESTIONS;
 
 	/** What task should we run to produce this kind of data? */
 	public Task.Op producerFor() {

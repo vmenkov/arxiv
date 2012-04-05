@@ -19,7 +19,19 @@ public class UserProfile {
     /** 0 means "all" */
     static int maxTerms = 1024;
 
-    static Stoplist stoplist=null;   
+    private static Stoplist stoplist=null;   
+    
+    static void setStoplist( Stoplist x) {
+	stoplist = x;
+	System.out.println("UserProfile.setStoplist: |stoplist|="+
+			   stoplist.size());
+
+    }
+
+    static Stoplist getStoplist() {
+	return stoplist;
+    }
+
 
     /** The action id of the most recent user action that contributed to
 	the creation of this profile.
@@ -412,7 +424,7 @@ public class UserProfile {
 	ArxivScoreDoc[] tops=topOfTheList(sd, nnzc, maxDocs);
 	return tops;
 	//return packageEntries( tops);
-	}
+    }
 
     //Vector<ArticleEntry>
     ArxivScoreDoc[] 
@@ -462,7 +474,7 @@ public class UserProfile {
 	//return packageEntries( tops);
     }
 
-    private ArxivScoreDoc[] topOfTheList(ArxivScoreDoc[] scores, 
+    static ArxivScoreDoc[] topOfTheList(ArxivScoreDoc[] scores, 
 				       int nnzc, int  maxDocs)  {
 	Arrays.sort( scores, 0, nnzc);
 	int maxCnt = Math.min(nnzc, maxDocs);
