@@ -494,6 +494,8 @@ public class ArticleAnalyzer {
      */
     void simToAll(HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em) throws IOException {
 
+	final double threshold[] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
+
 	double norm1=tfNorm(doc1);
 
 	int numdocs = reader.numDocs() ;
@@ -528,11 +530,24 @@ public class ArticleAnalyzer {
 	    tcnt++;		
 	} // for terms 	    
 	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
-	int  nnzc=0;
+	int  nnzc=0, abovecnt[]= new int[threshold.length];
 	for(int k=0; k<scores.length; k++) {
-	    if (scores[k]>0) sd[nnzc++] = new ArxivScoreDoc(k, scores[k]/norm1);
+	    if (scores[k]>0) {
+		double q = scores[k]/norm1;
+		for(int j=0; j<threshold.length; j++) {
+		    if (q>= threshold[j]) abovecnt[j]++;
+		}
+		if (q>=threshold[0]) {
+		    sd[nnzc++] = new ArxivScoreDoc(k, q);
+		}
+	    }
 	}
-	Logging.info("nnzc=" + nnzc);
+	String msg="nnzc=" + nnzc;
+	for(int j=0; j<threshold.length; j++) {
+	    msg += "; ";
+	    msg += "above("+threshold[j]+")="+ abovecnt[j];
+	}
+	Logging.info(msg);
 	if (missingStatsCnt>0) {
 	    Logging.warning("used zeros for " + missingStatsCnt + " values, because of missing stats");
 	}
@@ -579,6 +594,7 @@ public class ArticleAnalyzer {
 	    for(String aid: aids) {
 		System.out.println("Doc=" + aid);
 		HashMap<String, Double> doc1 = z.getCoef(aid);		
+		Logging.info("Doing " + aid);
 		z.simToAll( doc1, allStats, em);
 	    }
 
@@ -592,9 +608,6 @@ public class ArticleAnalyzer {
 	    em.close();
 	}
     }
-
-
-
 
 
 }
