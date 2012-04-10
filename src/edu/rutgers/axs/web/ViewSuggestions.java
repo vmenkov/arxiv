@@ -18,7 +18,7 @@ import edu.cornell.cs.osmot.options.Options;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.*;
 
-/** Retrieves and displays a "suggestion list": a list of artciles which some
+/** Retrieves and displays a "suggestion list": a list of articles which some
     kind of automatic process has marked as potentially interesting to the user.
  */
 public class ViewSuggestions extends PersonalResultsBase {

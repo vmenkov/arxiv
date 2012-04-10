@@ -80,6 +80,8 @@ class Show {
 	int docno = find(id);
 	Document doc = reader.document(docno);
 	System.out.println("Doc no.=" + docno);
+	System.out.println("dateIndexed=" + doc.get(ArxivFields.DATE_INDEXED));
+
 	System.out.println("Document=" + doc);
     }
     

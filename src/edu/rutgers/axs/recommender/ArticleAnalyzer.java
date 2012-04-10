@@ -355,7 +355,7 @@ public class ArticleAnalyzer {
 	    ArticleStats as =h.get(aid);
 	    if (as!=null) {
 		if (recompute) {
-		    Logging.info("Will re-do document " + aid + ", pos="+docno);
+		    Logging.info("Will re-do document " + aid + " (forced), pos="+docno);
 		} else {
 		    // FIMXE: check dates and update perhaps?
 		    if (verbose) Logging.info("Already have  document " + aid + ", pos="+docno);
@@ -598,8 +598,16 @@ public class ArticleAnalyzer {
 		z.simToAll( doc1, allStats, em);
 	    }
 
+	} else if (argv.length>0 && argv[0].equals("rated")) {
+	    // list all rated pages
+	    EntityManager em  = Main.getEM();
+	    String[] rated = Action.getAllPossiblyRatedDocs( em);
+	    em.close();
+	    for(String a: rated) {
+		System.out.println(a);
+	    }
 	} else 	    {
-	    // default
+	    // default: update stats
 
 	    ArticleAnalyzer z = new ArticleAnalyzer();
 	    

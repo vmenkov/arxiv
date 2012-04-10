@@ -21,7 +21,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     see DataFile.
  */
 @Entity
-    public class ListEntry  implements Serializable, OurTable {
+    public class ListEntry  implements OurTable {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
 	private long id;
     public void setId(long x) {        id = x;    }
@@ -50,6 +50,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setAstat(ArticleStats x) {        astat = x;    }
     public ArticleStats getAstat() {        return astat;    }
 
+    /** Does nothing. This method is added to avoid enhancer's warning. */
+    public ListEntry() {};
 
     //@ManyToOne
     //    @Basic      @Column(length=16)

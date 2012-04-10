@@ -63,7 +63,7 @@ public class ArxivImporter {
 	return new IndexWriter(indexDirectory, iwConf);
     }
 
-    /** Parses an OAI-PMH element
+    /** Parses an OAI-PMH element, and triggers appropriate operations.
 	@return the resumption token
     */
     private String parseResponse(Element e, IndexWriter writer , boolean rewrite)  throws IOException {
@@ -414,7 +414,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	return s;
     }
 
-    /** pulls in all pages (or only some)
+    /** Plls in all pages, or all pages in a date range.
 	@param tok start harvesting from the beginning (if null), or from this resumption token (otherwise)
 	@param max if max non-negative, then ...; -1 means "all"
 	@param from "YYYY-MM-DD", passed to OAI2 from=... option
@@ -535,7 +535,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
 	boolean rewrite =ht.getOption("rewrite", true);
-	String from=getFrom(ht);
+	String from=getFrom(ht); // based on "from" and "days"
 	boolean optimize =ht.getOption("optimize", true);
 
 	Options.init(); // read the legacy config file

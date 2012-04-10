@@ -121,11 +121,12 @@ import java.lang.reflect.*;
 
     public Action() {}
 
-    public Action(User u, String _article, Op _op){ //, Date t) {	
+    public Action(User u, String _article, Op _op){
 	setUser(u);
 	setArticle(_article);
 	setOp(_op);
-	Date now = (new GregorianCalendar()).getTime();
+	//	Date now = (new GregorianCalendar()).getTime();
+	Date now = new Date();
 	setTime(now);
     }
 
@@ -183,6 +184,25 @@ import java.lang.reflect.*;
      * order). This is used in sorting. */
     public int compareTo(Action other) {
 	return getTime().compareTo(other.getTime());
+    }
+
+
+    public static String[] getAllPossiblyRatedDocs( EntityManager em) {
+	Query q = em.createQuery("select distinct(a.article) from Action a");
+	Set<String> s = new HashSet<String>();
+	List list =q.getResultList();
+	for(Object o: list) {
+	    s.add((String)o);
+	}
+	q = em.createQuery("select distinct le.astat.aid from ListEntry le where le.rank< :r");
+	q.setParameter("r", 5);
+	list =q.getResultList();
+	for(Object o: list) {
+	    s.add((String)o);
+	}       
+	String[] a = s.toArray(new String[0]);
+	Arrays.sort(a); // just for human readers
+	return a;
     }
 
 }
