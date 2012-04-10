@@ -102,8 +102,8 @@ public class Indexer {
 	
 	document.add(new Field(ArxivFields.ARTICLE, article, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
-	// Date document was indexed
-	document.add(new Field("dateIndexed",
+	// Date document was indexed (converted to String by Lucene's DateTools)
+	document.add(new Field(ArxivFields.DATE_INDEXED,
 			       DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND),
 			       Field.Store.YES, Field.Index.NOT_ANALYZED));		
 	
@@ -529,7 +529,7 @@ public class Indexer {
 	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	    // Date document was indexed
-	    doc.add(new Field("dateIndexed",
+	    doc.add(new Field(ArxivFields.DATE_INDEXED,
 			      DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND),
 			      Field.Store.YES, Field.Index.NOT_ANALYZED));		
 	    // Set article length
