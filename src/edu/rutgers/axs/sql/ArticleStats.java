@@ -9,6 +9,10 @@ import org.apache.openjpa.persistence.jdbc.Index;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
+import org.apache.lucene.document.*;
+import edu.rutgers.axs.indexer.ArxivFields;
+
+
 /** Statistical information about an article's content, used for
     ranking search results etc. The idea is we compute such info for 
     all docs in the index, store it in the SQL database, and later
@@ -137,6 +141,26 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	setTime( new Date());
     }
 
+    /** Does it look like this ArticleStats entry is older than the
+	current Lucene-stored document? If it does, it may be out
+	of date, and may need to be recomputed!
+	@param doc The Lucene-stored document
+     */
+    public boolean mayBeOutOfDate(Document doc) {
+
+	String docDateString = doc.get(ArxivFields.DATE_INDEXED);
+	if (docDateString==null) return false;
+
+	Date docDate = null;
+	try {
+	    docDate=DateTools.stringToDate(docDateString);
+	} catch(java.text.ParseException ex) {
+	    return false;
+	}
+			
+	Date astDate = getTime();
+	return (astDate==null || docDate.after(astDate));
+    }
 
 
     /*ArticleStats(String _aid) {

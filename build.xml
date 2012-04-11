@@ -168,12 +168,16 @@ code. -->
   <openjpac>
     <config
        propertiesFile="${build}/META-INF/persistence.xml"/> 
-    <classpath>
-      <!-- path refid="classpath"/ -->
+    <!-- classpath refid="classpath"/ -->
+
+   <classpath>
       <!-- path refid="entity.cp"/>
       <path refid="jpa.used.cp"/ -->
       <pathelement location="${build}"/>
+      <path refid="classpath"/>
     </classpath> 
+
+
     <fileset dir="${build}/edu/rutgers/axs/sql">
       <!-- include name="**/*.class"/ -->
       <include name="User.class" />

@@ -356,8 +356,12 @@ public class ArticleAnalyzer {
 	    if (as!=null) {
 		if (recompute) {
 		    Logging.info("Will re-do document " + aid + " (forced), pos="+docno);
+		} else if (as.mayBeOutOfDate(doc)) {
+		    // checked dates, to see if we must update
+		    Logging.info("Will re-do document " + aid + " (out of date), pos="+docno);
+		    // update the date on the existing document
+		    as.setTime(new Date());
 		} else {
-		    // FIMXE: check dates and update perhaps?
 		    if (verbose) Logging.info("Already have  document " + aid + ", pos="+docno);
 		    skipCnt++;
 		    continue;
