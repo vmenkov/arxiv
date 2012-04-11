@@ -514,7 +514,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	int days=ht.getOption(DAYS, 0);
 	if (days<=0)  throw new IllegalArgumentException("-Ddays=nnn, if supplied, must be positive!");
 	Date d = new Date();
-	long msec = d.getTime() - days * 24 * 3600 * 1000;
+	long msec = d.getTime() - days * 24L * 3600L * 1000L;
 	d.setTime(msec);
 	final SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
 	from=fmt.format( d );
