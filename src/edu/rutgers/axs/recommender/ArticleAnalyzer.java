@@ -492,11 +492,19 @@ public class ArticleAnalyzer {
 	as = computeAndSaveStats(em,  docno);
 	return as;
     }
+
+    static private String catBase(String cat) {
+	if (cat==null) return null;
+	int p = cat.indexOf(".");
+	return (p<0)? cat: cat.substring(0, p);
+    }
  
     /** Computes similarities of a given document (d1) to all other
 	docs in the database. Used for Bernoulli rewards.
+
+	@param cat If not null, restrict matches to docs from the specified category
      */
-    void simToAll(HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em) throws IOException {
+    void simToAll( HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em, String cat) throws IOException {
 
 	final double threshold[] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
 
@@ -535,15 +543,26 @@ public class ArticleAnalyzer {
 	} // for terms 	    
 	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
 	int  nnzc=0, abovecnt[]= new int[threshold.length];
+
+
+	final String cat1base = catBase(cat);
+
 	for(int k=0; k<scores.length; k++) {
 	    if (scores[k]>0) {
-		double q = scores[k]/norm1;
-		for(int j=0; j<threshold.length; j++) {
-		    if (q>= threshold[j]) abovecnt[j]++;
-		}
-		if (q>=threshold[0]) {
-		    sd[nnzc++] = new ArxivScoreDoc(k, q);
-		}
+		Document doc2 = reader.document(k);
+		String cat2 =doc2.get(ArxivFields.CATEGORY);
+		boolean catMatch =  (cat1base==null || cat1base.equals(catBase(cat2)));
+
+		if (catMatch) {
+		    double q = scores[k]/norm1;
+		    for(int j=0; j<threshold.length; j++) {
+			if (q>= threshold[j]) abovecnt[j]++;
+		    }
+
+		    if (q>=threshold[0]) {
+			sd[nnzc++] = new ArxivScoreDoc(k, q);
+		    }
+		}		
 	    }
 	}
 	String msg="nnzc=" + nnzc;
@@ -597,9 +616,19 @@ public class ArticleAnalyzer {
 	    };
 	    for(String aid: aids) {
 		System.out.println("Doc=" + aid);
-		HashMap<String, Double> doc1 = z.getCoef(aid);		
-		Logging.info("Doing " + aid);
-		z.simToAll( doc1, allStats, em);
+		int docno = -1;
+		try {
+		    docno = z.find(aid);
+		} catch(Exception ex) {
+		    Logging.warning("No document found in Lucene data store for id=" + aid +"; skipping");
+		    continue;
+		}
+		HashMap<String, Double> doc1 = z.getCoef(docno, null);		
+		Document doc = z.reader.document(docno);
+		String cat =doc.get(ArxivFields.CATEGORY);
+		Logging.info("Doing " + aid +", cat=" + cat);
+
+		z.simToAll( doc1, allStats, em, cat);
 	    }
 
 	} else if (argv.length>0 && argv[0].equals("rated")) {

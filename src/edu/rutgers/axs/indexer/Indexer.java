@@ -81,7 +81,7 @@ public class Indexer {
 	Document document = new Document();
 	
 	document.add(new Field(ArxivFields.PAPER, paper, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	document.add(new Field("category", categories, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	document.add(new Field(ArxivFields.CATEGORY, categories, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 	document.add(new Field("group", groups, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 	
 	// Should be: Field(name, value, Field.Store.YES, Field.Index.ANALYZED)
@@ -694,7 +694,7 @@ public class Indexer {
 	
 	// For every document
 	Document d;
-	String article, paper;
+	String article;
 	boolean changes = true;
 	while (changes) {
 	    changes = false;
@@ -715,21 +715,21 @@ public class Indexer {
 		    System.out.println("Paper " + j + " missing.");
 		    continue;
 		}
-		if (d.get("category") != null
-		    && !d.get("category").equals("")) {
-		    System.out.println("Paper " + d.get(ArxivFields.PAPER) 
-				       + " already updated to "
-				       + d.get("category"));
+		String paper = d.get(ArxivFields.PAPER),
+		    cat =d.get(ArxivFields.CATEGORY);
+
+		if (cat != null && !cat.equals("")) {
+		    System.out.println("Paper " + paper +
+				       " already updated to "  + cat);
 		    continue;
 		}
 		
-		paper = d.get(ArxivFields.PAPER);
 		System.out.println("Updating " + paper);
 		
 		changes = true;
 		
 		// Add the category (we already have all the other fields)
-		//d.add(new Field("category", getGroups(paper), Field.Store.YES, Field.Index.NOT_ANALYZED));
+		//d.add(new Field(ArxivFields.CATEGORY), getGroups(paper), Field.Store.YES, Field.Index.NOT_ANALYZED));
 		
 		// Re-add the document itself, since ir.document only
 		// returns the stored
@@ -742,13 +742,13 @@ public class Indexer {
 		    continue;
 		}
 		
-		d.add(new Field("article", article, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
+		d.add(new Field(ArxivFields.ARTICLE, article, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 		// re-index it (includes delete)
 		ir.close();
 		indexDocument(d);
 		System.out.println("Category set to "
-				   + d.get("category"));
+				   + d.get(ArxivFields.CATEGORY));
 		ir = IndexReader.open(indexDirectory);
 	    }
 	    
