@@ -474,7 +474,10 @@ public class UserProfile {
 	//return packageEntries( tops);
     }
 
-    static ArxivScoreDoc[] topOfTheList(ArxivScoreDoc[] scores, 
+    /** Creates an array of ArxivScoreDoc objects containing the (up to)
+	maxDocs top scores from the given list.
+     */
+    public static ArxivScoreDoc[] topOfTheList(ArxivScoreDoc[] scores, 
 				       int nnzc, int  maxDocs)  {
 	Arrays.sort( scores, 0, nnzc);
 	int maxCnt = Math.min(nnzc, maxDocs);

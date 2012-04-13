@@ -1,13 +1,19 @@
 package edu.rutgers.axs.sql;
 
+import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.net.*;
 import javax.persistence.*;
-import org.apache.openjpa.persistence.jdbc.Unique;
-import org.apache.openjpa.persistence.jdbc.Index;
-import java.lang.reflect.*;
-import java.lang.annotation.*;
+//import java.lang.reflect.*;
+//import java.lang.annotation.*;
+
+//import org.apache.openjpa.persistence.jdbc.Unique;
+//import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.*;
+
+import org.apache.lucene.index.*;
+
 
 import org.apache.lucene.document.*;
 import edu.rutgers.axs.indexer.ArxivFields;
@@ -109,6 +115,22 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }
 
+    /** When were the similarities last recomputed in their entirety? 
+     (A partial update does not count). */
+    @Basic 	@Display(editable=false, order=21)
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date simsTime;
+    public  Date getSimsTime() { return simsTime; }
+    public void setSimsTime(       Date x) { simsTime = x; }
+
+
+    @Lob //(fetch=FetchType.LAZY) 
+ @Basic(fetch=FetchType.LAZY)
+	private SimRow sims;
+    public void setSims(SimRow x) { sims=x; }
+    public SimRow getSims() { return sims; }
+
+
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	return true; 
     }
@@ -162,6 +184,53 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	return (astDate==null || docDate.after(astDate));
     }
 
+    private static class FsAidOnly implements FieldSelector {
+	public FieldSelectorResult accept(String fieldName) {
+	    return fieldName.equals(ArxivFields.PAPER) ?
+		FieldSelectorResult.LOAD : 
+		FieldSelectorResult.NO_LOAD;
+	}
+    }
+
+    /** Used as a cost-saving measure when we only need to retrieve
+     * the Article ID from Lucene */
+    public final static FieldSelector fieldSelectorAid = new FsAidOnly();
+
+
+    /** Reads the entire table of pre-computed data from the SQL database.
+	@return An array including all ArticleStats entries in our
+	database. The index into the array is Lucene's current
+	internal doc id */
+    public static ArticleStats[] getArticleStatsArray( EntityManager em,
+						       IndexReader reader)
+	throws org.apache.lucene.index.CorruptIndexException, IOException
+ {
+	List<ArticleStats> aslist = ArticleStats.getAll( em);
+	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>();
+	for(ArticleStats as: aslist) {
+	    h.put(as.getAid(), as);
+	}
+	int numdocs = reader.numDocs();
+	ArticleStats[] all = new ArticleStats[numdocs];
+	int foundCnt=0, deletedCnt=0, nullCnt=0;
+	for(int pos=0; pos<numdocs; pos++) {
+	    if (reader.isDeleted(pos)) {
+		deletedCnt++;
+		continue;
+	    }
+	    Document doc = reader.document(pos,fieldSelectorAid);
+	    String aid = doc.get(ArxivFields.PAPER);	    
+	    ArticleStats as = h.get(aid);
+	    if (as!=null) {
+		foundCnt++;
+		all[pos] = as;
+	    } else {
+		nullCnt++;
+	    }
+	}
+	Logging.info("Found pre-computed ArticleStats for " + foundCnt + " docs; no stats found for " + nullCnt + " docs");
+	return all;
+    }
 
     /*ArticleStats(String _aid) {
 	aid=_aid;

@@ -9,10 +9,10 @@ import java.io.*;
 
 import edu.rutgers.axs.web.ArticleEntry;
 
-class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
+public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
     /** Lucene doc id */
-    int doc;
-    double score;
+    public int doc;
+    public double score;
     ArxivScoreDoc(ScoreDoc x) {
 	this(x.doc, x.score);
     }
@@ -25,7 +25,7 @@ class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	double d = other.score - score; 
 	return (d<0) ? -1 : (d>0) ? 1: 0;
     }
-    ArxivScoreDoc(int _docno, 	double _score) {
+    public ArxivScoreDoc(int _docno, 	double _score) {
 	doc=_docno;  score=_score;
     }
 

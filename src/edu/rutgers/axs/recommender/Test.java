@@ -49,8 +49,7 @@ public class Test {
 
 	EntityManager em = Main.getEM();
 
-	ArticleStats[] allStats = 
-	    ArticleAnalyzer.getArticleStatsArray(em, x.reader);	    
+	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, x.reader);	    
 
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);

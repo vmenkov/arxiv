@@ -27,7 +27,7 @@ import edu.rutgers.axs.web.ArticleEntry;
  */
 public class ArticleAnalyzer {
 
-    IndexReader reader;
+    public IndexReader reader;
     private IndexReader[] surs;
     final String [] fields;
     /** Collection size */
@@ -239,7 +239,7 @@ public class ArticleAnalyzer {
 
     /** Computes the idf-weighted 2-norm of a term frequency vector.
      @param h Represents the term frequency vector. */
-    double tfNorm(HashMap<String, Double> h) {
+    public double tfNorm(HashMap<String, Double> h) {
 	double sum=0;
 	for(String t: h.keySet()) {
 	    double q= h.get(t).doubleValue();
@@ -268,7 +268,7 @@ public class ArticleAnalyzer {
        } */
 
     /** Document fields used in creating the user profile */
-    static final String upFields[] =  {
+    public static final String upFields[] =  {
 	ArxivFields.TITLE, 
 	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
 	ArxivFields.ARTICLE};
@@ -384,7 +384,7 @@ public class ArticleAnalyzer {
 
     /** Computes and records in the database the stats for one document */
     ArticleStats computeAndSaveStats(EntityManager em, int docno) throws  org.apache.lucene.index.CorruptIndexException, IOException {
-	Document doc = reader.document(docno,fieldSelectorAid);
+	Document doc = reader.document(docno,ArticleStats.fieldSelectorAid);
 	String aid = doc.get(ArxivFields.PAPER);
 	ArticleStats as = new ArticleStats();
 	as.setAid(aid);	
@@ -407,51 +407,7 @@ public class ArticleAnalyzer {
     }
 
 
-    private static class FsAidOnly implements FieldSelector {
-	public FieldSelectorResult accept(String fieldName) {
-	    return fieldName.equals(ArxivFields.PAPER) ?
-		FieldSelectorResult.LOAD : 
-		FieldSelectorResult.NO_LOAD;
-	}
-    }
-
-    /** Used as a cost-saving measure when we only need to retrieve
-     * the Article ID from Lucene */
-    private static FieldSelector fieldSelectorAid = new FsAidOnly();
-
-    /** Reads the pre-computed data from the SQL database.
-	@return The index into the array is Lucene's current internal doc id */
-    public static ArticleStats[] getArticleStatsArray( EntityManager em,
-						       IndexReader reader)
-	throws org.apache.lucene.index.CorruptIndexException, IOException
- {
-	List<ArticleStats> aslist = ArticleStats.getAll( em);
-	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>();
-	for(ArticleStats as: aslist) {
-	    h.put(as.getAid(), as);
-	}
-	int numdocs = reader.numDocs();
-	ArticleStats[] all = new ArticleStats[numdocs];
-	int foundCnt=0, deletedCnt=0, nullCnt=0;
-	for(int pos=0; pos<numdocs; pos++) {
-	    if (reader.isDeleted(pos)) {
-		deletedCnt++;
-		continue;
-	    }
-	    Document doc = reader.document(pos,fieldSelectorAid);
-	    String aid = doc.get(ArxivFields.PAPER);	    
-	    ArticleStats as = h.get(aid);
-	    if (as!=null) {
-		foundCnt++;
-		all[pos] = as;
-	    } else {
-		nullCnt++;
-	    }
-	}
-	Logging.info("Found pre-computed ArticleStats for " + foundCnt + " docs; no stats found for " + nullCnt + " docs");
-	return all;
-    }
-
+   
     /** Finds a document by ID in the Lucene index */
     int find(String aid) throws IOException{
 	IndexSearcher s = new IndexSearcher( reader );
@@ -493,12 +449,6 @@ public class ArticleAnalyzer {
 	return as;
     }
 
-    static private String catBase(String cat) {
-	if (cat==null) return null;
-	int p = cat.indexOf(".");
-	return (p<0)? cat: cat.substring(0, p);
-    }
- 
     /** Computes similarities of a given document (d1) to all other
 	docs in the database. Used for Bernoulli rewards.
 
@@ -545,13 +495,13 @@ public class ArticleAnalyzer {
 	int  nnzc=0, abovecnt[]= new int[threshold.length];
 
 
-	final String cat1base = catBase(cat);
+	final String cat1base = SimRow.catBase(cat);
 
 	for(int k=0; k<scores.length; k++) {
 	    if (scores[k]>0) {
 		Document doc2 = reader.document(k);
 		String cat2 =doc2.get(ArxivFields.CATEGORY);
-		boolean catMatch =  (cat1base==null || cat1base.equals(catBase(cat2)));
+		boolean catMatch =  (cat1base==null || cat1base.equals(SimRow.catBase(cat2)));
 
 		if (catMatch) {
 		    double q = scores[k]/norm1;
@@ -606,7 +556,7 @@ public class ArticleAnalyzer {
 	    ArticleAnalyzer z = new ArticleAnalyzer();
 	    EntityManager em  = Main.getEM();
 
-	    ArticleStats[] allStats = ArticleAnalyzer.getArticleStatsArray(em, z.reader); 
+	    ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, z.reader); 
 
 	    String aids [] = {"math/0110197",
 			      "1101.0579",

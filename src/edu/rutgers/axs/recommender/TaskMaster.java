@@ -23,50 +23,6 @@ public class TaskMaster {
     static final int maxDocs=200;
 
 
-    /** An auxiliary thread for the asynchronous reading of the
-	allStats[] array on start-up. The idea is that if the first
-	tasks to process do not require allStats[], the main thread
-	can start working on them even as allStats[] is loading.
-     */
-    static private class AllStatsReader extends Thread {
-	ArticleStats[] allStats = null;
-	boolean error = false;
-	Exception ex;
-	private IndexReader reader;
-	AllStatsReader(IndexReader _reader) { reader= _reader;}
-	public void 	run() {
-	    try {
-		EntityManager em = Main.getEM();
-		allStats = ArticleAnalyzer.getArticleStatsArray(em, reader); 
-		ResultsBase.ensureClosed( em, false);
-	    } catch(Exception _ex) {
-		ex = _ex;
-		error=true;
-		Logging.error("Failed to read pre-computed AllStats. exception=" + ex);
-	    }
-	}
-
-	/** This is a blocking method, which is called from the
-	    parent's thread. It waits for this thread to complete, 
-	    and return the results. */
-	ArticleStats[] getResults() throws Exception {
-	    while(getState()!=Thread.State.TERMINATED) {
-		Logging.info("Waiting for ASR");
-		try {	 // it is the parent thread who waits!	    
-		    Thread.sleep(10 * 1000);
-		} catch ( InterruptedException ex) {}			
-	    }
-	    if (allStats==null) {
-		Logging.error("Ouch, no allStats");
-		throw (ex!=null)? ex:
-		    new IOException("Somehow could not read allStats from the SQL server");		
-	    } else {
-		return allStats;
-	    }
-	}
-
-    }
-
     private static class ShutDownThread extends Thread 	    {
 	final Thread mainThread;
 	final Date exitAfterTime;
@@ -199,12 +155,12 @@ public class TaskMaster {
 		    
 		    int days = task.getDays();		    
 		    ArxivScoreDoc[] sd =
-			raw? upro.luceneRawSearch(maxDocs,asr.allStats,em,days):
+			raw? upro.luceneRawSearch(maxDocs,allStats,em,days):
 			upro.luceneQuerySearch(maxDocs, days);
 
 		    if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 			TjAlgorithm1 algo = new TjAlgorithm1();
-			sd = algo.rank( upro, sd, asr.allStats, em, maxDocs);
+			sd = algo.rank( upro, sd, allStats, em, maxDocs);
 		    }
 
 		    Vector<ArticleEntry> entries = upro.packageEntries(sd);
