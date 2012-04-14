@@ -51,7 +51,7 @@ public class ArticleAnalyzer {
     private double[] baseBoost;
 
     
-
+    /** Stores DF for terms */
     private HashMap<String, Integer> h = new HashMap<String, Integer>();
     /** Document friequency for a term. When a term occurs in multiple 
 	fields of a doc, it is counted multiple times, because it's easier
@@ -538,6 +538,48 @@ public class ArticleAnalyzer {
 	System.out.println("}");
 
 	//return tops;
+    }
+
+    static void allSims() throws IOException {
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	
+	ArticleAnalyzer z = new ArticleAnalyzer();
+	EntityManager em  = Main.getEM();
+	
+	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, z.reader); 
+
+
+	String[] aids = Action.getAllPossiblyRatedDocs( em);
+	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>(); // map article id to ArticleStat entry
+	for(ArticleStats as: allStats) {
+	    h.put(as.getAid(), as);
+	}
+  
+
+	Logging.info("There are " + aids.length + " possibly reated docs");
+
+
+	for(String aid: aids) {
+	    int docno = -1;
+	    try {
+		docno = z.find(aid);
+	    } catch(Exception ex) {
+		Logging.warning("No document found in Lucene data store for id=" + aid +"; skipping");
+
+
+		continue;
+	    }
+	    HashMap<String, Double> doc1 = z.getCoef(docno, null);		
+	    Document doc = z.reader.document(docno);
+	    String cat =doc.get(ArxivFields.CATEGORY);
+	    Logging.info("Doing sims for doc" + aid +", cat=" + cat);
+
+
+
+	    new SimRow( doc1, allStats, em, cat, z);
+
+
+	}
     }
 
     /** -DmaxDocs=-1 -Drecompute=false

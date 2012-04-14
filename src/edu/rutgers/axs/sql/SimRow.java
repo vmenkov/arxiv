@@ -6,8 +6,6 @@ import java.text.*;
 import java.net.*;
 import javax.persistence.*;
 import org.apache.openjpa.persistence.jdbc.*;
-//import org.apache.openjpa.persistence.jdbc.Unique;
-//import org.apache.openjpa.persistence.jdbc.Index;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
@@ -54,8 +52,8 @@ public class SimRow {
 	docs in the database. Used for Bernoulli rewards.
 
 	@param cat If not null, restrict matches to docs from the specified category
-     */
-    SimRow( HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em, String cat, ArticleAnalyzer z) throws IOException {
+    */
+    public SimRow( HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em, String cat, ArticleAnalyzer z) throws IOException {
 
 	final double threshold = 0.1;
 	final double thresholds[] = {threshold};

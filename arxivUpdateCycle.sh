@@ -9,6 +9,8 @@
 #---  suggestion list generation requests.
 #-----------------------------------------------------------------------------
 
+/bin/date
+
 set d=`/bin/date +'%Y-%m-%d'`
 
 echo "Today's log names will end in $d.log"
@@ -42,7 +44,7 @@ echo "Options for ArticleAnalyzer: $opt"
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.ArticleAnalyzer >& allnorms-${d}.log 
 
-set  opt="-Xmx1024m ${baseopt} -DexitAfter=26"
+set  opt="-Xmx1024m ${baseopt} -DexitAfter=24"
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.TaskMaster >& taskmaster-${d}.log
 
