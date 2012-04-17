@@ -28,32 +28,33 @@ import edu.rutgers.axs.recommender.ArxivScoreDoc;
 
 
 /** One row of the similarity table */
-public class SimRow {
+@Embeddable
+public class SimRow implements Serializable {
 
-    static class Entry {
-	/** Refers to the ArticleStat.id of the relevant page. This is
-	    truncated from long to int, as we don't expect the id to 
-	    go over 2^31 */
-	int astid;
-	/** The actual cosine similarity */
-	float sim;
-	Entry(long _astid, double _sim) {
-	    astid = (int)_astid;
-	    sim=(float)_sim;
-	}
-	Entry(ArxivScoreDoc x,  ArticleStats[] allStats) {
-	    this( allStats[x.doc].getId(), x.score);
+     @Lob    @ElementCollection(fetch=FetchType.LAZY)
+	 public Vector<SimRowEntry> entries;
+
+    private static class CompareByAstid implements Comparator<SimRowEntry> {
+	public int 	compare(SimRowEntry o1, SimRowEntry o2) {
+	    return o1.astid - o2.astid;
 	}
     }
 
-    Vector<Entry> entries=new Vector<Entry>();
+    private static CompareByAstid compareByAstid=new  CompareByAstid();
+
+    public SimRow() {}
 
     /** Computes similarities of a given document (d1) to all other
 	docs in the database. Used for Bernoulli rewards.
 
 	@param cat If not null, restrict matches to docs from the specified category
     */
-    public SimRow( HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em, String cat, ArticleAnalyzer z) throws IOException {
+    public SimRow( int docno, ArticleStats[] allStats, EntityManager em,ArticleAnalyzer z) throws IOException {
+	entries=new Vector<SimRowEntry>();
+	HashMap<String, Double> doc1 = z.getCoef(docno, null);		
+	Document doc = z.reader.document(docno);
+	String cat =doc.get(ArxivFields.CATEGORY);
+	Logging.info("Doing sims for doc " + allStats[docno].getAid() +", cat=" + cat);
 
 	final double threshold = 0.1;
 	final double thresholds[] = {threshold};
@@ -109,7 +110,7 @@ public class SimRow {
 			if (q>= thresholds[j]) abovecnt[j]++;
 		    }
 
-		    if (q>=threshold) {
+		    if (q>=threshold && k!=docno) {
 			sd[nnzc++] = new ArxivScoreDoc(k, q);
 		    }
 		}		
@@ -125,26 +126,50 @@ public class SimRow {
 	    Logging.warning("used zeros for " + missingStatsCnt + " values, because of missing stats");
 	}
 
-	for(int i=0; i<sd.length; i++) {
-	    entries.add(new Entry(sd[i],  allStats));
+	for(int i=0; i<nnzc; i++) {
+	    SimRowEntry e = SimRowEntry.mkEntry(sd[i],  allStats);
+	    if (e!=null ) 	    entries.add(e);
 	}
-	
-	/*
-	int maxDocs = 20;
-	if (maxDocs > nnzc) maxDocs = nnzc;
-	ArxivScoreDoc[] tops=UserProfile.topOfTheList(sd, nnzc, maxDocs);
-	System.out.println("Neighbors:");
-	for(int i=0; i<tops.length; i++) {
-	    
-	    System.out.print((i==0? "{" : ", ") +
-			     "("   + allStats[tops[i].doc].getAid() +
-			     " : " + tops[i].score+")");
-	}
-	System.out.println("}");
-	*/
-
-	
+	sort();
     }
+
+    /** Sort the entries in this row by ArticleStat id.
+     @return this row (for the convenience of chaining function calls). */
+    public SimRow sort() {
+	SimRowEntry [] ea =  entries.toArray(new SimRowEntry[0]);
+	Arrays.sort(ea, compareByAstid);
+	entries.setSize(0);
+	for(SimRowEntry e: ea) 	entries.add(e);	
+	return this;
+    }
+
+      /** Merges the other SimRow's list of entries into this one. Both
+	  are assumed to be sorted. In the case of an overlap, values from
+	  the other list overwrite those from this list.
+	  @return this row (for the convenience of chaining function calls). */
+    public SimRow mergeFrom(SimRow other) {
+	if (entries==null) entries=new Vector<SimRowEntry>();
+	Vector<SimRowEntry> v = new Vector<SimRowEntry>( entries.size() + other.entries.size());
+	int i=0, j=0;
+	while(i<entries.size() && j<entries.size()) {
+	    int d=entries.elementAt(i).astid - other.entries.elementAt(j).astid;
+	    if (d>=0) {
+		v.add( other.entries.elementAt(j++));
+		if (d==0) i++;	    
+	    } else {
+		v.add( entries.elementAt(i++));
+	    }
+	}
+	while(i<entries.size()) {
+	    v.add( entries.elementAt(i++));
+	}
+	while(j<other.entries.size()) {
+	    v.add( other.entries.elementAt(j++));
+	}
+	entries = v;
+	return this;
+    }
+
 
     /** converts "cat.subcat" to "cat"
      */

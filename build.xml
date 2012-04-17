@@ -188,6 +188,8 @@ code. -->
       <include name="Task.class" />
       <include name="DataFile.class" />
       <include name="ListEntry.class" />
+      <include name="SimRow.class" />
+      <include name="SimRowEntry.class" />
     </fileset>
   </openjpac>
 

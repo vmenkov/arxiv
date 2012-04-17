@@ -191,17 +191,21 @@ import java.lang.reflect.*;
 	Query q = em.createQuery("select distinct(a.article) from Action a");
 	Set<String> s = new HashSet<String>();
 	List list =q.getResultList();
+	int cnt1=0, cnt2=0;
 	for(Object o: list) {
 	    s.add((String)o);
+	    cnt1++;
 	}
 	q = em.createQuery("select distinct le.astat.aid from ListEntry le where le.rank< :r");
 	q.setParameter("r", 5);
 	list =q.getResultList();
 	for(Object o: list) {
 	    s.add((String)o);
+	    cnt2++;
 	}       
 	String[] a = s.toArray(new String[0]);
 	Arrays.sort(a); // just for human readers
+	Logging.info("Action.getAllPossiblyRatedDocs: cnt1=" + cnt1+", cnt2="+cnt2+", total=" + a.length);
 	return a;
     }
 

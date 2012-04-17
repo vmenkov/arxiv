@@ -115,6 +115,31 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }
 
+    /** The document similarity array has been created by means of
+	scanning all existing document entries through simsThru. Ths
+	semnatics are as follows: 
+	<ul>
+
+	<li>If simsThru is set, this row of the similarity table has
+	been initialized by computing sims of this document to all
+	docs through simThru. Later on, as more docs were added to the
+	database, similarities of those docs to this doc may have been
+	computed and added to this row as well; thus, this row is 
+	also guaranteed to contain sims with all docs that have simsThru set,
+	and whose simsThru is at least as high as the ArticleStats.id for
+	this document.
+
+	<li> If simsThru is not set, it means that there was a never a
+	full inverse-index scan for this row, i.e. we have never
+	computed similarities of this row to <em>all</em> other rows.
+
+
+
+	</ul>
+    */
+    public long simsThru;
+
+
     /** When were the similarities last recomputed in their entirety? 
      (A partial update does not count). */
     @Basic 	@Display(editable=false, order=21)
@@ -124,8 +149,11 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public void setSimsTime(       Date x) { simsTime = x; }
 
 
-    @Lob //(fetch=FetchType.LAZY) 
- @Basic(fetch=FetchType.LAZY)
+    //@Lob    @Basic(fetch=FetchType.LAZY)
+     //(fetch=FetchType.LAZY) 
+    //@Embedded //(fetch=FetchType.LAZY)
+
+    @Embedded 
 	private SimRow sims;
     public void setSims(SimRow x) { sims=x; }
     public SimRow getSims() { return sims; }
@@ -146,7 +174,8 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	} else {
 	    return null;
 	}
-    }
+    }    
+
 
     /** Retrieves them all from the database. May be expensive. 
 	FIXME: we do get an OutOfMemoryError here sometimes. 
