@@ -138,6 +138,8 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	</ul>
     */
     public long simsThru;
+    public long getSimsThru() {        return simsThru;    }
+    public void setSimsThru(long x) {       simsThru=x;    }
 
 
     /** When were the similarities last recomputed in their entirety? 

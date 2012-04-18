@@ -23,6 +23,9 @@ import edu.rutgers.axs.web.ArticleEntry;
 /** Computing document similarities, for the Bernoulli Rewards unit */
 public class Similarities {
 
+    final static boolean debug=false;
+
+    /** This is used to transpose rows of the similarity matrix */
     static class Transposer {
 	private HashMap<Integer, ArticleStats> byAstid;
 	EntityManager em;
@@ -36,16 +39,20 @@ public class Similarities {
 	/** Maps ArticleStats id to SimsRow */
 	HashMap<Integer, SimRow> map = new HashMap<Integer, SimRow>();
 	void add(int astid, SimRow x) {
-	    for(SimRowEntry e: x.entries) {
-		Integer key  = new Integer(e.astid);
+	    for(SimRowEntry e: x.getEntries()) {
+		Integer key  = new Integer(e.getAstid());
 		SimRow r = map.get(key);
 		if (r==null) { map.put(key, r=new SimRow()); }
-		r.entries.add( e.transpose( astid));
+		Vector<SimRowEntry> entries = r.getEntries();
+		if (entries==null) {
+		    r.setEntries( entries =new Vector<SimRowEntry>());
+		}
+		entries.add( e.transpose( astid));
 		cnt++;
 	    }
 	    if (cnt>10000) flush();
 	}
-	/** Saves accummulated data into the database.  This includes
+	/** Saves accumulated data into the database.  This includes
 	 setSims() (sort of pointless, but we do the "set" as required by
 	 OpenJPA docs), and persist()
 	*/
@@ -61,14 +68,15 @@ public class Similarities {
 		    q.setSims(sr); 
 		}
 		em.persist(q);
+		if (debug) {
+		    Logging.info("Persisting cross-sims for astid=" + key + ", aid=" + q.getAid() + ", |entries|=" + q.getSims().getEntries().size());
+		}
 		em.getTransaction().commit();	
 	    }
 	    map.clear();
 	    cnt=0;
 	}
     }
-
-
 
     static void allSims() throws IOException {
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
@@ -82,9 +90,19 @@ public class Similarities {
 	String[] aids = Action.getAllPossiblyRatedDocs( em);
 	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>(); // map article id to ArticleStat entry
 	HashMap<Integer, ArticleStats> byAstid = new HashMap<Integer, ArticleStats>();
+	long maxAstid = 0;
 	for(ArticleStats as: allStats) {
 	    h.put(as.getAid(), as);
-	    byAstid.put(new Integer((int)as.getId()), as);//FIXME: long?
+	    if (as.getId() >  maxAstid)  maxAstid=as.getId();
+	    byAstid.put(new Integer((int)as.getId()), as);
+	}
+	if ((long)((int)maxAstid) != maxAstid) {
+	    // Oops: we can't cast to int, after all! (This is not likely
+	    // to happen on our watch, of course, and if it does, we'll
+	    // change the table schema)
+	    String msg="maxAstid=" + maxAstid+", which makes casting to int impossible!";
+	    Logging.error(msg);
+	    throw new IllegalArgumentException(msg);
 	}
 
   	Logging.info("There are " + aids.length + " possibly rated docs");
@@ -105,15 +123,20 @@ public class Similarities {
 
 	    ArticleStats as = allStats[docno];
 	    as.setSimsTime(new Date());
+	    as.setSimsThru(maxAstid);
 
 	    SimRow sr = new SimRow( docno, allStats, em,  z);
+
+	    transposer.add( (int)as.getId(), sr);
+
+
 	    as.setSims(sr);
 	    em.getTransaction().begin();
-	    Logging.info("Persisting SimRow, |entries|=" + as.getSims().entries.size());
+	    Logging.info("Persisting SimRow, |entries|=" + as.getSims().getEntries().size());
 	    em.persist(as);
 	    em.getTransaction().commit();	
 	    cnt++;
-	    if (cnt>3) break; // FIXME
+	    if (debug && cnt>3) break; // for debug runs
 	}
 	transposer.flush();
     }
@@ -138,14 +161,17 @@ public class Similarities {
 	       if (sims==null) {
 		   System.out.println("Document " + aid +" ("+as.getId()+") has no sims data");
 		   continue;
-	       } else if (sims.entries==null)  {
+	       } 
+	       Vector<SimRowEntry> entries = sims.getEntries();
+	       
+	       if (entries==null)  {
 		   System.out.println("Document " + aid +" ("+as.getId()+") has no sims.entries");
 		   continue;
 	       } 
-	       System.out.println("Document " + aid +" ("+as.getId()+") has sims with " + sims.entries.size() + " other docs");
-	       for(SimRowEntry e : sims.entries) {
-		   ArticleStats other = (ArticleStats)em.find( ArticleStats.class, new Integer(e.astid));
-		   System.out.print(" ("+other.getAid()+ ": " +e.sim+")");
+	       System.out.println("Document " + aid +" ("+as.getId()+") has sims with " + entries.size() + " other docs");
+	       for(SimRowEntry e : entries) {
+		   ArticleStats other = (ArticleStats)em.find( ArticleStats.class, new Integer(e.getAstid()));
+		   System.out.print(" ("+other.getAid()+ ": " +e.getSim()+")");
 	       }
 	       System.out.println();
 	   }

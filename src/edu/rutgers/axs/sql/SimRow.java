@@ -31,16 +31,21 @@ import edu.rutgers.axs.recommender.ArxivScoreDoc;
 @Embeddable
 public class SimRow implements Serializable {
 
-     @Lob    @ElementCollection(fetch=FetchType.LAZY)
-	 public Vector<SimRowEntry> entries;
+    //@Lob    @ElementCollection(fetch=FetchType.LAZY)
+    @ElementCollection(fetch=FetchType.LAZY)
+	  Vector<SimRowEntry> entries;
+    public Vector<SimRowEntry> getEntries() { return entries; }
+    public void setEntries(Vector<SimRowEntry> x) {	entries=x; }
 
     private static class CompareByAstid implements Comparator<SimRowEntry> {
 	public int 	compare(SimRowEntry o1, SimRowEntry o2) {
-	    return o1.astid - o2.astid;
+	    return o1.getAstid() - o2.getAstid();
 	}
     }
 
     private static CompareByAstid compareByAstid=new  CompareByAstid();
+
+
 
     public SimRow() {}
 
@@ -50,11 +55,12 @@ public class SimRow implements Serializable {
 	@param cat If not null, restrict matches to docs from the specified category
     */
     public SimRow( int docno, ArticleStats[] allStats, EntityManager em,ArticleAnalyzer z) throws IOException {
-	entries=new Vector<SimRowEntry>();
+	entries =new Vector<SimRowEntry>();
 	HashMap<String, Double> doc1 = z.getCoef(docno, null);		
 	Document doc = z.reader.document(docno);
-	String cat =doc.get(ArxivFields.CATEGORY);
-	Logging.info("Doing sims for doc " + allStats[docno].getAid() +", cat=" + cat);
+	String cats =doc.get(ArxivFields.CATEGORY);
+	CatInfo catInfo=new CatInfo(cats);
+	Logging.info("Doing sims for doc " + allStats[docno].getAid() +", cats=" + cats + ", cat bases=" + catInfo);
 
 	final double threshold = 0.1;
 	final double thresholds[] = {threshold};
@@ -95,14 +101,11 @@ public class SimRow implements Serializable {
 	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
 	int  nnzc=0, abovecnt[]= new int[thresholds.length];
 
-
-	final String cat1base = catBase(cat);
-
 	for(int k=0; k<scores.length; k++) {
 	    if (scores[k]>0) {
 		Document doc2 = z.reader.document(k);
 		String cat2 =doc2.get(ArxivFields.CATEGORY);
-		boolean catMatch = (cat1base==null || cat1base.equals(catBase(cat2)));
+		boolean catMatch = catInfo.match(cat2);
 
 		if (catMatch) {
 		    double q = scores[k]/norm1;
@@ -152,7 +155,8 @@ public class SimRow implements Serializable {
 	Vector<SimRowEntry> v = new Vector<SimRowEntry>( entries.size() + other.entries.size());
 	int i=0, j=0;
 	while(i<entries.size() && j<entries.size()) {
-	    int d=entries.elementAt(i).astid - other.entries.elementAt(j).astid;
+	    int d=entries.elementAt(i).getAstid() -
+		other.entries.elementAt(j).getAstid();
 	    if (d>=0) {
 		v.add( other.entries.elementAt(j++));
 		if (d==0) i++;	    
@@ -170,13 +174,49 @@ public class SimRow implements Serializable {
 	return this;
     }
 
+    /** Category matcher tool */
+    private static class CatInfo {
+   
+	private String[] bases;
 
-    /** converts "cat.subcat" to "cat"
-     */
-    public static String catBase(String cat) {
-	if (cat==null) return null;
-	int p = cat.indexOf(".");
-	return (p<0)? cat: cat.substring(0, p);
+	CatInfo(String cats) {
+	    bases=catBases(cats);
+	}
+
+	public String toString() {
+	    String s="(";
+	    for(int i=0; i< bases.length; i++) {
+		s += (i==0)? "" : ", ";
+		s += bases[i];
+	    }
+	    return s+")";
+	}
+
+	boolean match(String otherCats) {
+	    String otherBases[]= catBases(otherCats);
+	    for(String a: bases) for(String b: otherBases) {
+		    if (a.equals(b)) return true;
+		}
+	    return false;
+	}
+
+	private static String[] catBases(String cats) {
+	    if (cats==null) return new String[0];
+	    String[] x = cats.split("\\s+");
+	    String [] bases = new String[x.length];
+	    for(int i=0;i<x.length;i++) {
+		bases[i] = catBase(x[i]);
+	    }
+	    return bases;
+	}
+
+	/** converts "cat.subcat" to "cat"
+	 */
+	private static String catBase(String cat) {
+	    if (cat==null) return null;
+	    int p = cat.indexOf(".");
+	    return (p<0)? cat: cat.substring(0, p);
+	}
     }
  
 
