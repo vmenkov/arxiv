@@ -495,13 +495,13 @@ public class ArticleAnalyzer {
 	int  nnzc=0, abovecnt[]= new int[threshold.length];
 
 
-	final String cat1base = SimRow.catBase(cat);
+	final SimRow.CatInfo catInfo = new SimRow.CatInfo(cat);
 
 	for(int k=0; k<scores.length; k++) {
 	    if (scores[k]>0) {
 		Document doc2 = reader.document(k);
 		String cat2 =doc2.get(ArxivFields.CATEGORY);
-		boolean catMatch =  (cat1base==null || cat1base.equals(SimRow.catBase(cat2)));
+		boolean catMatch =  catInfo.match(cat2);
 
 		if (catMatch) {
 		    double q = scores[k]/norm1;

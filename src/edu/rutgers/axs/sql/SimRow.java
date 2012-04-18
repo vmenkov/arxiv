@@ -175,11 +175,11 @@ public class SimRow implements Serializable {
     }
 
     /** Category matcher tool */
-    private static class CatInfo {
+    public static class CatInfo {
    
 	private String[] bases;
 
-	CatInfo(String cats) {
+	public CatInfo(String cats) {
 	    bases=catBases(cats);
 	}
 
@@ -192,7 +192,7 @@ public class SimRow implements Serializable {
 	    return s+")";
 	}
 
-	boolean match(String otherCats) {
+	public boolean match(String otherCats) {
 	    String otherBases[]= catBases(otherCats);
 	    for(String a: bases) for(String b: otherBases) {
 		    if (a.equals(b)) return true;
