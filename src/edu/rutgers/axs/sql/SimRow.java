@@ -154,7 +154,7 @@ public class SimRow implements Serializable {
 	if (entries==null) entries=new Vector<SimRowEntry>();
 	Vector<SimRowEntry> v = new Vector<SimRowEntry>( entries.size() + other.entries.size());
 	int i=0, j=0;
-	while(i<entries.size() && j<entries.size()) {
+	while(i<entries.size() && j<other.entries.size()) {
 	    int d=entries.elementAt(i).getAstid() -
 		other.entries.elementAt(j).getAstid();
 	    if (d>=0) {
@@ -177,37 +177,45 @@ public class SimRow implements Serializable {
     /** Category matcher tool */
     public static class CatInfo {
    
-	private String[] bases;
+	Vector<String> bases;
 
 	public CatInfo(String cats) {
 	    bases=catBases(cats);
 	}
 
 	public String toString() {
-	    String s="(";
-	    for(int i=0; i< bases.length; i++) {
-		s += (i==0)? "" : ", ";
-		s += bases[i];
+	    String s="";
+	    for(String q: bases) {
+		s += (s.length()==0 ? "(" : ", ") + q;
 	    }
 	    return s+")";
 	}
 
-	public boolean match(String otherCats) {
-	    String otherBases[]= catBases(otherCats);
-	    for(String a: bases) for(String b: otherBases) {
-		    if (a.equals(b)) return true;
-		}
+	public boolean match(String otherCats) {	    
+	    for(String a: catBases(otherCats)) {
+		if (dup(bases,a)) return true;
+	    }
 	    return false;
 	}
 
-	private static String[] catBases(String cats) {
-	    if (cats==null) return new String[0];
+	/** Creates an array of (unique) category prefixes */
+	private static Vector<String> catBases(String cats) {
+	    if (cats==null) return new  Vector<String>();
 	    String[] x = cats.split("\\s+");
-	    String [] bases = new String[x.length];
-	    for(int i=0;i<x.length;i++) {
-		bases[i] = catBase(x[i]);
+	    Vector<String> vb = new  Vector<String>(x.length);
+	    for(String c: x) {
+		String b = catBase(c);
+		if (!dup(vb,b)) vb.add(b);
 	    }
-	    return bases;
+	    return vb;
+	}
+
+	/** If b contained in vb? */
+	private static boolean dup(Vector<String> vb, String b) {
+	    for(String z: vb) {
+		if (b.equals(z)) return true;
+	    }
+	    return false;	
 	}
 
 	/** converts "cat.subcat" to "cat"
