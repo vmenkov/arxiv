@@ -91,11 +91,18 @@ public class Similarities {
 	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>(); // map article id to ArticleStat entry
 	HashMap<Integer, ArticleStats> byAstid = new HashMap<Integer, ArticleStats>();
 	long maxAstid = 0;
+	int nullCnt=0;
 	for(ArticleStats as: allStats) {
+	    if (as==null) {
+		// well, the stats for this doc have not been computed yet...
+		nullCnt++;
+		continue;
+	    }
 	    h.put(as.getAid(), as);
 	    if (as.getId() >  maxAstid)  maxAstid=as.getId();
 	    byAstid.put(new Integer((int)as.getId()), as);
 	}
+	if (nullCnt>0) Logging.warning("For " + nullCnt + " docs in Lucene index, no ArticleStats entries found in the database");
 	if ((long)((int)maxAstid) != maxAstid) {
 	    // Oops: we can't cast to int, after all! (This is not likely
 	    // to happen on our watch, of course, and if it does, we'll
@@ -110,6 +117,7 @@ public class Similarities {
 	Transposer transposer=new 	Transposer(byAstid, em);
 
 	int cnt=0;
+	nullCnt=0; // new meaning now
 
 	for(String aid: aids) {
 	    int docno = -1;
@@ -122,6 +130,11 @@ public class Similarities {
 	    }
 
 	    ArticleStats as = allStats[docno];
+	    if (as==null) {
+		nullCnt++;
+		continue;
+	    }
+
 	    as.setSimsTime(new Date());
 	    as.setSimsThru(maxAstid);
 
@@ -139,6 +152,7 @@ public class Similarities {
 	    if (debug && cnt>3) break; // for debug runs
 	}
 	transposer.flush();
+	if (nullCnt>0) Logging.warning("We skipped " + nullCnt + " rated docs, because no ArticleStats entries have been found in the database");
     }
 
 
