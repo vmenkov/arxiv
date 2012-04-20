@@ -267,4 +267,13 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	aid=_aid;
 	}*/
 
+    /*
+    static public class Light {
+	long id; 
+	String aid;
+	Light(long _id, String _aid) { id = _id; aid = _aid; }
+    }
+    */
+
+
 }

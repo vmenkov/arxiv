@@ -39,7 +39,7 @@ time /usr/bin/time java $opt edu.rutgers.axs.indexer.ArxivImporter all >& import
 
 mv missing.txt missing-${d}.txt
 
-set opt="-Xmx1024m ${baseopt}"
+set opt="-Xmx2048m ${baseopt}"
 echo "Options for ArticleAnalyzer: $opt"
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.ArticleAnalyzer >& allnorms-${d}.log 

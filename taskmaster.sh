@@ -7,7 +7,7 @@
 # ....
 
 # set opt="-DOSMOT_CONFIG=."
-set opt="-Xmx1024m -DOSMOT_CONFIG=."
+set opt="-Xmx2048m -DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib
 

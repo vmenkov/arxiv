@@ -186,21 +186,64 @@ import java.lang.reflect.*;
 	return getTime().compareTo(other.getTime());
     }
 
-
     public static String[] getAllPossiblyRatedDocs( EntityManager em) {
-	Query q = em.createQuery("select distinct(a.article) from Action a");
+        return  getAllPossiblyRatedDocs(  em, false);
+    }
+
+
+    /**
+
+       Useful JPQL queries:
+
+select astat.id, astat.aid from Action a, ArticleStats astat where a.article = astat.aid and astat.simsTime is not null group by astat.id, astat.aid 
+
+select le.astat.id, le.astat.aid from ListEntry le where le.rank<5 group by le.astat.id, le.astat.aid
+
+select le.astat.id, le.astat.aid from ListEntry le where le.rank<5 and le.astat.simsTime is not null group by le.astat.id, le.astat.aid 
+
+select count(distinct astat.id) from Action a, ArticleStats astat where a.article = astat.aid and astat.simsTime is not null
+
+
+     */
+
+    public static String[] getAllPossiblyRatedDocs( EntityManager em, boolean missingSimsOnly)  {
+	//Query q = em.createQuery("select distinct(a.article) from Action a");
+
+	String qtext = "select astat.id, astat.aid from Action a, ArticleStats astat where a.article = astat.aid " +
+	    (missingSimsOnly? "and astat.simsTime is not null " : "") +
+	    "group by astat.id, astat.aid";
+	Query q = em.createQuery(qtext);
+
+
 	Set<String> s = new HashSet<String>();
 	List list =q.getResultList();
 	int cnt1=0, cnt2=0;
 	for(Object o: list) {
-	    s.add((String)o);
+	    //	    s.add((String)o);
+
+	    if (o instanceof Object[]) {
+		Object[] oa = (Object[])o;
+		s.add((String)oa[1]);
+	    }
+
 	    cnt1++;
 	}
-	q = em.createQuery("select distinct le.astat.aid from ListEntry le where le.rank< :r");
+	//	q = em.createQuery("select distinct le.astat.aid from ListEntry le where le.rank< :r");
+
+	qtext = "select le.astat.id, le.astat.aid from ListEntry le where le.rank< :r "+
+	    (missingSimsOnly?"and le.astat.simsTime is not null ": "")+
+	    "group by le.astat.id, le.astat.aid";
+	q = em.createQuery(qtext);
+
+
 	q.setParameter("r", 5);
 	list =q.getResultList();
 	for(Object o: list) {
-	    s.add((String)o);
+	    //	    s.add((String)o);
+	    if (o instanceof Object[]) {
+		Object[] oa = (Object[])o;
+		s.add((String)oa[1]);
+	    }
 	    cnt2++;
 	}       
 	String[] a = s.toArray(new String[0]);
