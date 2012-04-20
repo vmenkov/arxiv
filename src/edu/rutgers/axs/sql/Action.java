@@ -252,4 +252,31 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
 	return a;
     }
 
+
+    public static String[] getRecentDocsWithoutSims( EntityManager em)  {
+	//Query q = em.createQuery("select distinct(a.article) from Action a");
+
+	long minSimsThru = ArticleStats.minSimsThru(em);
+
+	String qtext = "select astat.id, astat.aid from ArticleStats astat where astat.aid> :m ";
+	Query q = em.createQuery(qtext);
+
+	q.setParameter("m", minSimsThru);
+
+	Vector<String> s = new Vector<String>();
+	List list =q.getResultList();
+	int cnt1=0;
+	for(Object o: list) {
+	    //	    s.add((String)o);
+
+	    if (o instanceof Object[]) {
+		Object[] oa = (Object[])o;
+		s.add((String)oa[1]);
+	    }
+
+	    cnt1++;
+	}
+	return s.toArray(new String[0]);
+
+    }
 }

@@ -79,15 +79,28 @@ public class Similarities {
     }
 
     static void allSims() throws IOException {
-	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
-	
-	ArticleAnalyzer z = new ArticleAnalyzer();
 	EntityManager em  = Main.getEM();
 	
+	String[] aids = Action.getAllPossiblyRatedDocs( em);
+	doSims(em, aids);
+    }
+
+
+    static void newSims() throws IOException {
+	EntityManager em  = Main.getEM();
+	
+	String[] aids = Action.getAllPossiblyRatedDocs( em);
+	//	doSims(em, aids);
+    }
+
+
+    static void doSims(EntityManager em, String aids[]) throws IOException {
+
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	ArticleAnalyzer z = new ArticleAnalyzer();
 	// array arranged by docno
 	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, z.reader); 
 
-	String[] aids = Action.getAllPossiblyRatedDocs( em);
 	HashMap<String, ArticleStats> h=new HashMap<String, ArticleStats>(); // map article id to ArticleStat entry
 	HashMap<Integer, ArticleStats> byAstid = new HashMap<Integer, ArticleStats>();
 	long maxAstid = 0;

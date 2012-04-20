@@ -5,8 +5,6 @@ import java.util.*;
 import java.text.*;
 import java.net.*;
 import javax.persistence.*;
-//import java.lang.reflect.*;
-//import java.lang.annotation.*;
 
 //import org.apache.openjpa.persistence.jdbc.Unique;
 //import org.apache.openjpa.persistence.jdbc.Index;
@@ -262,6 +260,23 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	Logging.info("Found pre-computed ArticleStats for " + foundCnt + " docs; no stats found for " + nullCnt + " docs");
 	return all;
     }
+
+    /** Retrieves the minimum stored value of simsThru.  The meaning of this value is as follows:
+	all docs that have simsThru set are guaranteed to have sims computed with all docs thru this value.
+
+	It was 751587 on cactuar.
+     */
+    public static long minSimsThru( EntityManager em) {
+	Query q = em.createQuery("select min(m.simsThru) from ArticleStats m where m.simsTime is not null");
+	List<Long> res = (List<Long>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next().longValue();
+	} else {
+	    Logging.warning("No min(simsThru) found!");
+	    return 0;
+	}
+    }    
+
 
     /*ArticleStats(String _aid) {
 	aid=_aid;

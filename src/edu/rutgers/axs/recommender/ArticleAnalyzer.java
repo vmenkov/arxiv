@@ -552,6 +552,8 @@ public class ArticleAnalyzer {
 
 	if (argv.length>0 && argv[0].equals("allsims")) {
 	    Similarities.allSims();
+	} else if (argv.length>0 && argv[0].equals("newsims")) {
+	    Similarities.newSims();
 	} else if (argv.length>0 && argv[0].equals("sim")) {
 	    UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 	
