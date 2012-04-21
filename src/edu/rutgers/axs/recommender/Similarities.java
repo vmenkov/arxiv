@@ -89,8 +89,12 @@ public class Similarities {
     static void newSims() throws IOException {
 	EntityManager em  = Main.getEM();
 	
-	String[] aids = Action.getAllPossiblyRatedDocs( em);
-	//	doSims(em, aids);
+	String[] aids = Action.getAllPossiblyRatedDocs( em, true);
+	Logging.info("Found " + aids.length + " possibly-rated docs without sims data");
+	doSims(em, aids);
+	aids = Action.getRecentDocsWithoutSims(em);
+	Logging.info("Found " + aids.length + " recent docs without sims data");
+	doSims(em, aids);
     }
 
 

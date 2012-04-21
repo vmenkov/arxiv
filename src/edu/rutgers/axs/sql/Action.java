@@ -210,7 +210,7 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
 	//Query q = em.createQuery("select distinct(a.article) from Action a");
 
 	String qtext = "select astat.id, astat.aid from Action a, ArticleStats astat where a.article = astat.aid " +
-	    (missingSimsOnly? "and astat.simsTime is not null " : "") +
+	    (missingSimsOnly? "and astat.simsTime is null " : "") +
 	    "group by astat.id, astat.aid";
 	Query q = em.createQuery(qtext);
 
@@ -231,7 +231,7 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
 	//	q = em.createQuery("select distinct le.astat.aid from ListEntry le where le.rank< :r");
 
 	qtext = "select le.astat.id, le.astat.aid from ListEntry le where le.rank< :r "+
-	    (missingSimsOnly?"and le.astat.simsTime is not null ": "")+
+	    (missingSimsOnly?"and le.astat.simsTime is null ": "")+
 	    "group by le.astat.id, le.astat.aid";
 	q = em.createQuery(qtext);
 
@@ -258,7 +258,8 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
 
 	long minSimsThru = ArticleStats.minSimsThru(em);
 
-	String qtext = "select astat.id, astat.aid from ArticleStats astat where astat.aid> :m ";
+	String qtext = "select astat.id, astat.aid from ArticleStats astat where astat.id> :m" +
+	    " and astat.simsTime is null";
 	Query q = em.createQuery(qtext);
 
 	q.setParameter("m", minSimsThru);
