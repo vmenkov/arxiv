@@ -104,6 +104,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		Logging.info("sendRedirect to: " + eurl);
 		response.sendRedirect(eurl);
 	    } else {
+		// get the page from the arxiv.org server, modify, and serve
 		pullPage(request, response, skeletonAE);
 	    }
 
@@ -168,7 +169,9 @@ public class FilterServlet extends  BaseArxivServlet  {
     }
     
 
-    /**
+    /** Retrieves the page from the arxiv.org server, modifies it as
+	needed, and serves to our user.
+
        @param ae In article-wise pages, when a user is logged in, this
        should be the information about the currently viewed article.
        Otherwise, this must be null.
@@ -458,6 +461,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     final static String FS =  "/FilterServlet";
 
+    /** An auxiliary class used in modifying HTML code pulled from arxiv.org 
+	(primarily, converting links arxiv.org to "involve" our FilterServlet).
+     */
     private class LineConverter {
 	
 	String user;
@@ -496,6 +502,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 
      Rewrite with a link to FilterServlet, and "hidden" sp:
      form ... (method="post")  action="/relative"
+
+
     */    
 
 	String convertLink(String link, boolean mayRewrite) {
@@ -550,6 +558,12 @@ public class FilterServlet extends  BaseArxivServlet  {
 	//if (m.matches()) {
     //	String charsetName = charsetName=m.group(1);
 
+	/**
+//<li><a href="/arxiv/FilterServlet/pdf/0806.4449v1" accesskey="f">PDF</a></li>
+
+//<li><a href="/pdf/q-bio/0611055v1" accesskey="f">PDF only</a></li>
+
+*/
 	String convertLine(String s, boolean	    willAddNote) {
 	    // <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 	    Matcher m = pHref.matcher(s);
@@ -559,7 +573,13 @@ public class FilterServlet extends  BaseArxivServlet  {
 		String tag=m.group(1);
 		String link=m.group(2);
 		String replink = convertLink(link, !tag.equals("src"));
-		m.appendReplacement(sb, tag +  "=\""+ replink + "\"");
+		String replacement =  tag +  "=\""+ replink + "\"";
+		if ((link.startsWith("/pdf/") ||link.startsWith("/ps/")) &&
+		    (tag.equals("href") ||tag.equals("action"))) {
+		    // Paul's request, 2012-04-22
+		    replacement += " target=\"_blank\"";
+		}
+		m.appendReplacement(sb, replacement);
 	    }
 	    m.appendTail(sb);
 	    s = sb.toString();

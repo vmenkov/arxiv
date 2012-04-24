@@ -3,14 +3,7 @@ package edu.rutgers.axs.html;
 import java.io.*;
 import java.util.*;
 
-/*
-import org.apache.lucene.document.*;
-import org.apache.lucene.index.*;
-import org.apache.lucene.search.*;
-*/
-
 import edu.rutgers.axs.web.*;
-//import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 
 /** Generating rating buttons (and accompanying buttons) that go under
@@ -125,7 +118,7 @@ public class RatingButton //extends HTML
 					 int flags) {
 	final String imgDir= cp + "/_technical/images/";
 	String aid = e.id;
-
+	boolean willRate=false;
 	String s="";
 	s += "<div class=\"bar_instructions\">\n";
 
@@ -147,6 +140,7 @@ public class RatingButton //extends HTML
 
 
 	if (buttons!=null && buttons.length>0) {
+	    willRate=true;
 	    s+= "<a" + 
 		att("id", "rate"+e.i) +
 		att("title", "Rate this document.") +
@@ -189,6 +183,15 @@ public class RatingButton //extends HTML
 		img( imgDir + "bin.png" , title) +
 		nbsp( "Don't show again") + "</a>&nbsp;&nbsp\n";
 	}
+
+	if (willRate) {
+
+	    // font-size:0.7em; 
+
+	    s += "<p style=\"font-size:0.9em;color:#333333\">If you cannot judge until you have seen the document, please come back to this page to provide your valuation.</p>\n";
+
+	}
+
 	s += "</div>";
 	return s;
     }
