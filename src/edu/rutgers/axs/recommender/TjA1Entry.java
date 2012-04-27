@@ -81,20 +81,23 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	return (x>0) ? 1 : (x<0) ? -1 : 0;
     }
 
-    TjA1Entry(ArxivScoreDoc _sd,  ArticleStats as, UserProfile upro, Map<String,Integer> termMapper)
+    TjA1Entry(ArxivScoreDoc _sd,  
+	      CompactArticleStatsArray casa, //ArticleStats as, 
+	      UserProfile upro, Map<String,Integer> termMapper)
 	throws IOException {
 	sd = _sd;
 	double sum1 = 0;
-	//double w2sum = 0;
 
 	int docno=sd.doc;
 
 	double[] w2plus =  new double[upro.terms.length],
 	    w2minus =  new double[upro.terms.length];	
+
 	for(int j=0; j<upro.dfc.fields.length;  j++) {	
 	    TermFreqVector tfv=upro.dfc.reader.getTermFreqVector(docno, upro.dfc.fields[j]);
 	    if (tfv==null) continue;
-	    double boost =  as.getBoost(j);
+	    //double boost =  as.getBoost(j);
+	    double boost =  casa.getBoost(docno, j);
 
 	    //System.out.println("--Terms--");
 	    int[] freqs=tfv.getTermFrequencies();

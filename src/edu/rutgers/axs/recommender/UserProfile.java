@@ -369,10 +369,15 @@ public class UserProfile {
      */
     //    Vector<ArticleEntry>
     ArxivScoreDoc[] 
-	luceneRawSearch(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
+	luceneRawSearch(int maxDocs, 
+			//ArticleStats[] allStats, 
+			CompactArticleStatsArray   allStats, 
+			EntityManager em, int days) throws IOException {
 
 	if (days>0) {
-	    return luceneRawSearchDateRange(maxDocs, allStats, em, days);
+	    return luceneRawSearchDateRange(maxDocs, 
+					    allStats, 
+					    em, days);
 	}
 
 	int numdocs = dfc.reader.numDocs() ;
@@ -391,13 +396,14 @@ public class UserProfile {
 		    int p = td.doc();
 		    int freq = td.freq();			
 
-		    double normFactor = 0;
+		    double normFactor = allStats.getBoost(p,i);
+		    /*
 		    if (allStats[p]!=null) {			
 			normFactor = allStats[p].getBoost(i);
 		    } else {
 			missingStatsCnt++;
 		    }
-
+		    */
 		    double z =qval * normFactor * 
 			(ArticleAnalyzer.useSqrt? Math.sqrt(freq) : freq);
 		    scores[p] += z;
@@ -423,12 +429,13 @@ public class UserProfile {
 
 	ArxivScoreDoc[] tops=topOfTheList(sd, nnzc, maxDocs);
 	return tops;
-	//return packageEntries( tops);
     }
 
-    //Vector<ArticleEntry>
     ArxivScoreDoc[] 
-	luceneRawSearchDateRange(int maxDocs, ArticleStats[] allStats, EntityManager em, int days) throws IOException {
+	luceneRawSearchDateRange(int maxDocs, 
+				 //ArticleStats[] allStats, 
+				 CompactArticleStatsArray   allStats, 
+				 EntityManager em, int days) throws IOException {
 	long msec = (new Date()).getTime() - 24*3600*1000 * days;
 	TermRangeQuery q = 
 	    new TermRangeQuery(ArxivFields.DATE_INDEXED,
@@ -450,17 +457,19 @@ public class UserProfile {
 	for(int i=0; i< scoreDocs.length ; i++) {
 	    int docno = scoreDocs[i].doc;
 
-	    if (docno > allStats.length) {
+	    if (docno > allStats.size()) {
 		Logging.warning("linSim: no stats for docno=" + docno + " (out of range)");
 		missingStatsCnt ++;
 		continue;
 	    } 
+	    /*
 	    ArticleStats as =allStats[docno];
 	    if (as==null) {
 		as = allStats[docno] = dfc.computeAndSaveStats(em, docno);
 		Logging.info("linSim: Computed and saved missing stats for docno=" + docno + " (gap)");
 	    } 
-	    double sim = dfc.linSim(docno, as, hq);
+	    */
+	    double sim = dfc.linSim(docno, allStats, hq);
 	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
 	}
 

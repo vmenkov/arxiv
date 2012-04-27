@@ -77,7 +77,8 @@ public class TaskMaster {
 	Runtime.getRuntime().addShutdownHook(shutDown);
 
 	IndexReader reader =  ArticleAnalyzer.getReader();
-	AllStatsReader asr = new  AllStatsReader(reader);
+	//	AllStatsReader asr = new  AllStatsReader(reader);
+	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(reader);
 	asr.start();
     
 	EntityManager em = Main.getEM();
@@ -151,16 +152,17 @@ public class TaskMaster {
 			getSuitableUserProfile(task, ptr, em, reader);
 		    inputFile = ptr.elementAt(0);
 		    final boolean raw=true;
-		    ArticleStats[] allStats = asr.getResults();
+		    //ArticleStats[] allStats = asr.getResults();
+		    CompactArticleStatsArray casa = asr.getResults();
 		    
 		    int days = task.getDays();		    
 		    ArxivScoreDoc[] sd =
-			raw? upro.luceneRawSearch(maxDocs,allStats,em,days):
+			raw? upro.luceneRawSearch(maxDocs,casa,em,days):
 			upro.luceneQuerySearch(maxDocs, days);
 
 		    if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 			TjAlgorithm1 algo = new TjAlgorithm1();
-			sd = algo.rank( upro, sd, allStats, em, maxDocs);
+			sd = algo.rank( upro, sd, casa, em, maxDocs);
 		    }
 
 		    Vector<ArticleEntry> entries = upro.packageEntries(sd);
@@ -219,8 +221,7 @@ public class TaskMaster {
 		    //      DataFile.Type.TJ_ALGO_2_USER_PROFILE);
 	
 		    TjAlgorithm2 algo=new TjAlgorithm2( upro);
-		    //ArticleStats[] allStats = asr.getResults();
-		    algo.updateProfile(user, em, sd);//, allStats);
+		    algo.updateProfile(user, em, sd);
 		    outputFile=upro.saveToFile(task,op.outputFor());
 		    if (inputFile!=null) {
 			outputFile.setInputFile(inputFile.getThisFile());

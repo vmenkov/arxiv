@@ -59,7 +59,7 @@ class IndexList {
 	if (max<0) max=n;
 	for(int i=0; i<n && i<max; i++){
 	    Document d=r.document(i);
-	    System.out.println(d.get("paper"));
+	    System.out.println(d.get(ArxivFields.PAPER));
 	}
 	if (max>=0 &&  max<n) System.out.println("    ... etc ...");
     }

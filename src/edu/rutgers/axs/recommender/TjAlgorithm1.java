@@ -32,7 +32,9 @@ class TjAlgorithm1 {
     ArxivScoreDoc[] 
 	rank(UserProfile upro, 
 	     ArxivScoreDoc[] sd,
-	     ArticleStats[] allStats, EntityManager em, int maxDocs )  throws IOException{
+	     //ArticleStats[] allStats, 
+	      CompactArticleStatsArray allStats, 
+	     EntityManager em, int maxDocs )  throws IOException{
 	IndexSearcher searcher = new IndexSearcher( upro.dfc.reader);	
 
 	HashMap<String,Integer> termMapper=upro.mkTermMapper();
@@ -41,12 +43,15 @@ class TjAlgorithm1 {
 	tjEntries = new TjA1Entry[sd.length];
 
 	for(int i=0; i<sd.length; i++) {
+	    /*
 	    ArticleStats as=upro.dfc.getAS(allStats, sd[i].doc, em);
 	    if (as==null) {
 		missingStatsCnt ++;
 		continue;
 	    }
-	    TjA1Entry tje = new TjA1Entry( sd[i], as, upro, termMapper);
+	    */
+	    if (sd[i].doc > allStats.size()) continue;
+	    TjA1Entry tje = new TjA1Entry( sd[i], allStats, upro, termMapper);
 	    tjEntries[storedCnt++] = tje;
 	}
 

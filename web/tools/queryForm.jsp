@@ -76,6 +76,11 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <td> select le.DF_ID, le.rank, a.aid from ListEntry le, ArticleStats a where le.ASTAT_ID = a.id order by DF_ID, rank;
 <td>Viewing suggestion list (as stored in the SQL database)
 
+<tr>
+<td>select a.user, count(a) from Action a group by a.user order by count(a) desc 
+<td>select u.user_name, u.email, u.id, count(*) from Action a, arxiv_users u where a.USER_ID=u.id group by a.USER_ID  order by count(*) desc
+<td>Measuring overall user activity
+
 <!--
 <tr><td>select x from Respondent x where x.id = 69 <td> select x.* from Respondent x where x.id = 69
 <tr><td>select x from Respondent x where x.id in (69,70,71) <td> select x.* from Respondent x where x.id  in (69,70,71) 

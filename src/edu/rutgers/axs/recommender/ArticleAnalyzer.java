@@ -211,7 +211,10 @@ public class ArticleAnalyzer {
 	@param hq Represents the user profile vector.
 	
      */
-    double linSim(int docno, ArticleStats as, HashMap<String, UserProfile.TwoVal> hq) 
+    double linSim(int docno, 
+		  CompactArticleStatsArray   allStats, 
+		  //ArticleStats as, 
+		  HashMap<String, UserProfile.TwoVal> hq) 
 	throws IOException {
 	
 	double sum=0;
@@ -219,7 +222,8 @@ public class ArticleAnalyzer {
 	for(int j=0; j<fields.length;  j++) {	
 	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
 	    if (tfv==null) continue;
-	    double boost =  as.getBoost(j);
+	    //double boost =  as.getBoost(j);
+	    double boost =  allStats.getBoost(docno,j);
 
 	    //System.out.println("--Terms--");
 	    int[] freqs=tfv.getTermFrequencies();
