@@ -35,7 +35,7 @@ public class Test {
     /**
        -Dwatch=docid1[:docid2:....]
      */
-    static public void main(String[] argv) throws IOException {
+    static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
 	UserProfile.maxTerms = ht.getOption("maxTerms", UserProfile.maxTerms);
 	maxDocs = ht.getOption("maxDocs", maxDocs);
@@ -49,20 +49,25 @@ public class Test {
 
 	EntityManager em = Main.getEM();
 
-	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, x.reader);	    
+	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(x.reader);
+	asr.start();    
+	CompactArticleStatsArray casa = asr.getResults();
+		
+
+	//	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, x.reader);	    
 
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);
 	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
 
 	    ArxivScoreDoc[] sd =
-		raw ? upro.luceneRawSearch(maxDocs *10, allStats, em, 0 ):
+		raw ? upro.luceneRawSearch(maxDocs *10, casa, em, 0 ):
 		upro.luceneQuerySearch(maxDocs * 10, 0);
 
 	    ArticleEntry.save(upro.packageEntries(sd), new File("linsug.txt"));
 
 	    TjAlgorithm1 algo = new TjAlgorithm1();
-	    sd = algo.rank( upro, sd, allStats, em, maxDocs);
+	    sd = algo.rank( upro, sd, casa, em, maxDocs);
 	    Vector<ArticleEntry> entries = upro.packageEntries(sd);
 
 	    ArticleEntry.save(entries, new File("algo1.txt"));
