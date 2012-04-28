@@ -422,7 +422,7 @@ public class UserProfile {
 	for(int k=0; k<scores.length; k++) {		
 	    if (scores[k]>0) sd[nnzc++] = new ArxivScoreDoc(k, scores[k]);
 	}
-	Logging.info("nnzc=" + nnzc);
+	Logging.info("nnzc=" + nnzc + ", tcnt=" + tcnt + ", |terms|=" + terms.length );
 	if (missingStatsCnt>0) {
 	    Logging.warning("used zeros for " + missingStatsCnt + " values, because of missing stats");
 	}

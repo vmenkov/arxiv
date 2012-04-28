@@ -22,8 +22,6 @@ import edu.rutgers.axs.web.ArticleEntry;
 
 public class Test {
 
-    // Where our index lives.
-    //private Directory indexDirectory;
     private IndexReader reader;
 
     public Test()  throws IOException {

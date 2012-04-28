@@ -154,7 +154,8 @@ public class TaskMaster {
 		    final boolean raw=true;
 		    //ArticleStats[] allStats = asr.getResults();
 		    CompactArticleStatsArray casa = asr.getResults();
-		    
+		    Logging.info("Read CASA, size=" + casa.size());
+
 		    int days = task.getDays();		    
 		    ArxivScoreDoc[] sd =
 			raw? upro.luceneRawSearch(maxDocs,casa,em,days):
@@ -233,7 +234,6 @@ public class TaskMaster {
 		ex.printStackTrace(System.err);
 		Logging.info("task=" + task+", failed, exception caught: " + ex);
 	    } finally {
-		Logging.info("task=" + task+", recording success="+success);
 		task.setCompleteTime(new Date());
 		task.setFailed(!success);
 		if (outputFile!=null) {
@@ -243,6 +243,7 @@ public class TaskMaster {
 		if (inputFile!=null) {
 		    task.setInputFile(inputFile.getThisFile());
 		}
+		Logging.info("task=" + task+", recording success="+success);
 		em.persist(task);
 	    }
 	}

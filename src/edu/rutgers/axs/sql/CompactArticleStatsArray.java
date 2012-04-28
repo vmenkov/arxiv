@@ -13,12 +13,13 @@ import org.apache.lucene.index.*;
 
 import edu.rutgers.axs.indexer.ArxivFields;
 import edu.rutgers.axs.web.ResultsBase;
+import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 /** A compact alternative to ArticleStats[]; the idea is to save memory. */
 public class CompactArticleStatsArray  {
  
-    final static int NB=4;
-    float [][] boost = new float[4][];
+    static final int NB=ArticleAnalyzer.upFields.length;
+    float [][] boost = new float[NB][];
     
     public int size() { 
 	return boost[0].length;
