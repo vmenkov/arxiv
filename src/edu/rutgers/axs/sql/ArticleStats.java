@@ -151,7 +151,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 
     //@Lob    @Basic(fetch=FetchType.LAZY)
      //(fetch=FetchType.LAZY) 
-    //@Embedded //(fetch=FetchType.LAZY)
+    //@Embedded (fetch=FetchType.LAZY)
 
     @Embedded 
 	private SimRow sims;

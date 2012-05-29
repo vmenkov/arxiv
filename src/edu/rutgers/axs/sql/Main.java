@@ -76,6 +76,22 @@ public class Main {
 	return em;
     }
 
+    /** Reports memory use */
+    public static void memory() {
+	memory("");
+    }
 
+    /** Reports memory use */
+    public static void memory(String title) {
+	Runtime run =  Runtime.getRuntime();
+	String s = (title.length()>0) ? " ("+title+")" :"";
+	run.gc();
+	long mmem = run.maxMemory();
+	long tmem = run.totalMemory();
+	long fmem = run.freeMemory();
+	long used = tmem - fmem;
+	System.out.println("[MEMORY]"+s+" max=" + mmem + ", total=" + tmem +
+			   ", free=" + fmem + ", used=" + used);	
+    }
 
 }

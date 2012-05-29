@@ -66,6 +66,7 @@ public class TaskMaster {
        -DexitAfter=24  - time in hours
     */
     static public void main(String[] argv) throws Exception {
+	Main.memory("start");
 	ParseConfig ht = new ParseConfig();
 	final int pid = Main.getMyPid();
 
@@ -74,13 +75,17 @@ public class TaskMaster {
 	    new Date( (new Date()).getTime() + exitAfter * 3600*1000);
 
 	ShutDownThread shutDown = new ShutDownThread(Thread.currentThread(), exitAfterTime);
-	Runtime.getRuntime().addShutdownHook(shutDown);
+	Runtime.getRuntime().addShutdownHook(shutDown);	
 
 	IndexReader reader =  ArticleAnalyzer.getReader();
 	//	AllStatsReader asr = new  AllStatsReader(reader);
+	Main.memory("main:calling CASA");
 	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(reader);
-	asr.start();
-    
+	//asr.start();
+
+	// Use run() instead of start() for single-threading
+	asr.run();	CompactArticleStatsArray casa = asr.getResults();
+
 	EntityManager em = Main.getEM();
 
 
@@ -153,7 +158,7 @@ public class TaskMaster {
 		    inputFile = ptr.elementAt(0);
 		    final boolean raw=true;
 		    //ArticleStats[] allStats = asr.getResults();
-		    CompactArticleStatsArray casa = asr.getResults();
+		    //		    CompactArticleStatsArray casa = asr.getResults();
 		    Logging.info("Read CASA, size=" + casa.size());
 
 		    int days = task.getDays();		    

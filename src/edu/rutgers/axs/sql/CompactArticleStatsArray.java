@@ -43,6 +43,9 @@ public class CompactArticleStatsArray  {
 	private IndexReader reader;
 	public CASReader(IndexReader _reader) { reader= _reader;}
 
+	/** See some advice on fetch options here: 
+	    http://openjpa.apache.org/builds/1.0.0/apache-openjpa-1.0.0/docs/manual/ref_guide_dbsetup_lrs.html
+	*/
 	public void 	run() {
 	    try {
 
@@ -55,25 +58,56 @@ public class CompactArticleStatsArray  {
 		    String aid = doc.get(ArxivFields.PAPER);
 		    aidToDocno.put(aid, new Integer(docno));
 		}
-
+		Main.memory("CASA.run: have map");
 
 		EntityManager em = Main.getEM();
 		JDBCConfiguration conf = (JDBCConfiguration)
 		    ((OpenJPAEntityManagerSPI)em).getConfiguration(); 
-		conf.setFetchBatchSize(1000); // trying to avoid OOM
-		List<ArticleStats> aslist = ArticleStats.getAll( em);
+		final int BS=1;
+		Logging.info("Default batch size="+conf.getFetchBatchSize()+"; change to " + BS);
+		conf.setFetchBatchSize(BS); // trying to avoid OOM
 
-		for(ArticleStats as: aslist) {
-		    Integer tmp =  aidToDocno.get(as.getAid());
-		    if (tmp==null) {
-			Logging.warning("unexpectedly missing aid=" +as.getAid() + " in Lucene?");
-			continue;
+		final boolean mode2 = true; // alternatives for reading data
+
+		if (mode2) {
+		    String sq = "select m.id, m.aid, m.boost0, m.boost1,  m.boost2,  m.boost3 from ArticleStats m";
+		    Query q = em.createQuery(sq);
+		    Main.memory("CASA.run: have query");
+		    List res = q.getResultList();
+		    Main.memory("CASA.run: have RL");
+		    
+		    for(Object o: res) {			    
+			if (!(o instanceof Object[])) continue;
+			Object[] oa = (Object[])o;
+			String aid=(String)oa[1];
+			Integer tmp =  aidToDocno.get(aid);
+			if (tmp==null) {
+			    Logging.warning("unexpectedly missing aid=" +aid + " in Lucene?");
+			    continue;
+			}
+			int docno = tmp.intValue();
+			for(int i=0; i<NB; i++) {
+			    casa.boost[i][docno] = (float)((Double)oa[i+2]).doubleValue();
+			}			    
 		    }
-		    int docno = tmp.intValue();
-		    for(int i=0; i<NB; i++) {
-			casa.boost[i][docno] = (float)as.getBoost(i);
+		} else {
+
+		    List<ArticleStats> aslist = ArticleStats.getAll( em);
+		    
+		    for(ArticleStats as: aslist) {
+			String aid = as.getAid();
+			Integer tmp = aidToDocno.get(aid);
+			if (tmp==null) {
+			    Logging.warning("unexpectedly missing aid=" +aid + " in Lucene?");
+			    continue;
+			}
+			int docno = tmp.intValue();
+			for(int i=0; i<NB; i++) {
+			    casa.boost[i][docno] = (float)as.getBoost(i);
+			}
 		    }
 		}
+
 		ResultsBase.ensureClosed( em, false);
 	    } catch(Exception _ex) {
 		ex = _ex;
