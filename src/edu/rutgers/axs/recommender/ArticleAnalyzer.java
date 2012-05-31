@@ -28,7 +28,6 @@ import edu.rutgers.axs.web.ArticleEntry;
 public class ArticleAnalyzer {
 
     public IndexReader reader;
-    private IndexReader[] surs;
     final String [] fields;
     /** Collection size */
     private int numdocs;
@@ -38,10 +37,7 @@ public class ArticleAnalyzer {
     ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
 	fields = _fields;
 	reader =_reader;
-	surs = reader.getSequentialSubReaders();
-	if (surs==null) {
-	    surs = new IndexReader[]{ reader};
-	}
+
 	numdocs = reader.numDocs();
 	baseBoost= initBoost(fields);
     }
@@ -66,13 +62,25 @@ public class ArticleAnalyzer {
 	    h.clear(); // trying to prevent OutOfMemoryError
 	}
 
-	int sum=0;
-	for(IndexReader sur: surs) {
-	    for(String name: fields) {
-		Term term = new Term(name, t);
-		sum += sur.docFreq(term);
-	    }		
+        int sum = 0;
+	for(String name: fields) {
+	    Term term = new Term(name, t);
+	    sum += reader.docFreq(term);
 	}
+	/*
+	System.out.println("Term " + t + ": sum =" + sum);
+	IndexReader[] surs = reader.getSequentialSubReaders();
+	if (surs!=null) {
+	    int sum1 = 0;
+	    for(IndexReader sur: surs) {
+		for(String name: fields) {
+		    Term term = new Term(name, t);
+		    sum1 += sur.docFreq(term);
+		}		
+	    }
+	    System.out.println("Term " + t + ": sum1=" + sum1 + ", over " + surs.length + " subreaders");
+	}
+	*/
 	h.put(t, new Integer(sum));
 	return sum;
     }

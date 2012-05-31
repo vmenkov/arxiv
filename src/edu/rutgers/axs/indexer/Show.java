@@ -39,8 +39,6 @@ import edu.rutgers.axs.web.Search;
  */
 class Show {
 
-    // Where our index lives.
-    //private Directory indexDirectory;
     private IndexReader reader;
     
     public Show()  throws IOException {
@@ -81,19 +79,25 @@ class Show {
 	Document doc = reader.document(docno);
 	System.out.println("Doc no.=" + docno);
 	System.out.println("dateIndexed=" + doc.get(ArxivFields.DATE_INDEXED));
-
 	System.out.println("Document=" + doc);
     }
-    
+
+    /** Note: using 
+	long utc = reader.getUniqueTermCount();
+	won't do, as we get an java.lang.UnsupportedOperationException: 
+	"this reader does not implement getUniqueTermCount()".
+	This is why we use subreaders.
+    */
     void showCoef(String id) throws IOException {
 
+	//long utc = reader.getUniqueTermCount();
+	//System.out.println("Index has "+utc +" unique terms");
 
 	IndexReader[] surs = reader.getSequentialSubReaders();
 	for(IndexReader sur: surs) {	    
 	    long utc = sur.getUniqueTermCount();
-	    System.out.println("subindex has "+utc +" unique terms");
+	    System.out.println("Subindex has "+utc +" unique terms");
 	}
-	IndexReader sur = surs[0];
 
 	int docno = find(id);
 	Document doc = reader.document(docno);
@@ -101,16 +105,6 @@ class Show {
  	for(String name: Search.searchFields) {
 	    Fieldable f = doc.getFieldable(name);
 	    System.out.println("["+name+"]="+f);
-	    /*
-	    byte[] bin = doc.getBinaryValue( name); // always null
-	    if (bin==null) {
-		System.out.println("Bytes: null");
-	    } else {
-		System.out.print("Bytes: (");
-		for(byte b: bin)	    System.out.print(" " + (int)b);
-		System.out.println(")");
-	    }
-	    */
 	    TermFreqVector tfv=reader.getTermFreqVector(docno, name);
 	    if (tfv==null) {
 		System.out.println("--No terms--");
@@ -121,8 +115,7 @@ class Show {
 	    String[] terms=tfv.getTerms();
 	    for(int i=0; i<terms.length; i++) {
 		Term term = new Term(name, terms[i]);
-
-		System.out.println(" " + terms[i] + " : " + freqs[i] + "; df=" +sur.docFreq(term) );
+		System.out.println(" " + terms[i] + " : " + freqs[i] + "; df=" +reader.docFreq(term) );
 	    }
 	}
 
