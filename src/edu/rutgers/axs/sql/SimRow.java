@@ -86,7 +86,7 @@ public class SimRow implements Serializable {
 
 		    double normFactor = 0;
 		    if (allStats[p]!=null) {			
-			normFactor = allStats[p].getBoost(i);
+			normFactor = allStats[p].getNormalizedBoost(i);
 		    } else {
 			missingStatsCnt++;
 		    }

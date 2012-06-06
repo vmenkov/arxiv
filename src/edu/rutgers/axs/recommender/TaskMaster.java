@@ -81,13 +81,14 @@ public class TaskMaster {
 	//	AllStatsReader asr = new  AllStatsReader(reader);
 	Main.memory("main:calling CASA");
 	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(reader);
-	//asr.start();
+	//CompactArticleStatsArray casa = null;
+	asr.start(); CompactArticleStatsArray casa = asr.getResults();
 
 	// Use run() instead of start() for single-threading
-	asr.run();	CompactArticleStatsArray casa = asr.getResults();
+	//asr.run();	
 
 	EntityManager em = Main.getEM();
-
+	Scheduler scheduler = new Scheduler( em );
 
 	int taskCnt=0;
 	int noneCnt=0; // how many "no task" loops w/o a message
@@ -116,6 +117,15 @@ public class TaskMaster {
 	while(!stopNow && !shutDown.mustExit()) {
 	    task = grabNextTask(em,pid);
 	    if (task==null) {
+
+		if (scheduler.needsToRunNow()) {
+		    Logging.info("no task: calling scheduler");
+		    int newTaskCnt = scheduler.schedule();
+		    continue;
+		}
+
+		//Logging.info("no task");
+
 		if (noneCnt == 0 || noneCnt*sleepMsec > sleepMsgIntervalMsec) {
 		    Logging.info("no task");
 		    noneCnt=0;
@@ -256,6 +266,8 @@ public class TaskMaster {
 	Logging.info("Finished");
     }
 
+    /** Gets the next available task to be fulfilled from the Task
+     * table, and marks it as "started" */
     private static Task grabNextTask(EntityManager em, int pid) {
 	em.getTransaction().begin();
 	try {

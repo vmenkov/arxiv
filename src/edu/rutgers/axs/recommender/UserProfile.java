@@ -375,9 +375,7 @@ public class UserProfile {
 			EntityManager em, int days) throws IOException {
 
 	if (days>0) {
-	    return luceneRawSearchDateRange(maxDocs, 
-					    allStats, 
-					    em, days);
+	    return luceneRawSearchDateRange(maxDocs, allStats, em, days);
 	}
 
 	int numdocs = dfc.reader.numDocs() ;
@@ -396,10 +394,10 @@ public class UserProfile {
 		    int p = td.doc();
 		    int freq = td.freq();			
 
-		    double normFactor = allStats.getBoost(p,i);
+		    double normFactor = allStats.getNormalizedBoost(p,i);
 		    /*
 		    if (allStats[p]!=null) {			
-			normFactor = allStats[p].getBoost(i);
+			normFactor = allStats[p].getNormalizedBoost(i);
 		    } else {
 			missingStatsCnt++;
 		    }

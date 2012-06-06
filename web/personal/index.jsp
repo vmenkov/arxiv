@@ -44,6 +44,21 @@
 </ul>
 </p>
 
+<!--
+<h2>Paul's experiment plan, June 2012</h2>
+<p>
+<ul>
+<li><a href="">Treatment A</a>: User profile UP0 (directly based on all user's activity), linearly applied to the entire corpus
+
+</ul>
+</p>
+-->
+
+<hr>
+<p><strong>
+Tools below will be mostly moved to the "research" page
+</strong></p>
+
 <h2>Recommendation lists</h2>
 
 <p>

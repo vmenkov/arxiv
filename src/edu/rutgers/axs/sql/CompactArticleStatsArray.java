@@ -9,25 +9,36 @@ import org.apache.openjpa.persistence.*;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
-//import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.ArxivFields;
 import edu.rutgers.axs.web.ResultsBase;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
-/** A compact alternative to ArticleStats[]; the idea is to save memory. */
+/** A compact alternative to ArticleStats[]; the idea is to save RAM
+ * space during runtime. */
 public class CompactArticleStatsArray  {
  
     static final int NB=ArticleAnalyzer.upFields.length;
+    /** Raw boost */
     float [][] boost = new float[NB][];
+    /** Document norm */
+    float norm[];
     
     public int size() { 
 	return boost[0].length;
     }
 
-    public float getBoost(int docno, int i) {
+    /** Raw boost factor for the field */
+    public float getRawBoost(int docno, int i) {
 	return boost[i][docno];
     }
+
+    /** "Normalized boost", i.e. the boost factor for the field divided by the 
+	document norm */
+    public float getNormalizedBoost(int docno, int i) {
+	return boost[i][docno]/norm[docno];
+    }
+
 
     /** An auxiliary thread for the asynchronous reading of the
 	allStats[] array on start-up. The idea is that if the first
@@ -47,10 +58,20 @@ public class CompactArticleStatsArray  {
 	    http://openjpa.apache.org/builds/1.0.0/apache-openjpa-1.0.0/docs/manual/ref_guide_dbsetup_lrs.html
 	*/
 	public void 	run() {
+	    EntityManager em=null;
+	    
+	    //final int maxDoc=1000000; // just for testing
+	    //if (maxDoc<0) {
+	    //	Main.memory("SKIP ALL OF CASA");
+	    //	return;
+	    //}
+
+
 	    try {
 
 		int n=	reader.numDocs() ;
 		for(int i=0; i<NB; i++) casa.boost[i] = new float[n];
+		casa.norm = new float[n];
 
 		HashMap<String,Integer> aidToDocno = new HashMap<String,Integer>();
 		for(int docno=0; docno<n; docno++){
@@ -60,23 +81,32 @@ public class CompactArticleStatsArray  {
 		}
 		Main.memory("CASA.run: have map");
 
-		EntityManager em = Main.getEM();
+		em = Main.getEM();
+		/*
 		JDBCConfiguration conf = (JDBCConfiguration)
 		    ((OpenJPAEntityManagerSPI)em).getConfiguration(); 
 		final int BS=1;
 		Logging.info("Default batch size="+conf.getFetchBatchSize()+"; change to " + BS);
 		conf.setFetchBatchSize(BS); // trying to avoid OOM
+		*/
 
 		final boolean mode2 = true; // alternatives for reading data
 
 		if (mode2) {
-		    String sq = "select m.id, m.aid, m.boost0, m.boost1,  m.boost2,  m.boost3 from ArticleStats m";
+		    String sq = "select m.id, m.aid, m.norm, m.boost0, m.boost1,  m.boost2,  m.boost3 from ArticleStats m";
 		    Query q = em.createQuery(sq);
 		    Main.memory("CASA.run: have query");
 		    List res = q.getResultList();
-		    Main.memory("CASA.run: have RL");
+		    Main.memory("CASA.run: have RL, size=" + res.size());
 		    
+		    int cnt=0;
 		    for(Object o: res) {			    
+
+			//if (cnt>=maxDoc) {
+			//    Main.memory("SKIP the rest of CASA after cnt=" + cnt);
+			//    return;
+			//}
+
 			if (!(o instanceof Object[])) continue;
 			Object[] oa = (Object[])o;
 			String aid=(String)oa[1];
@@ -86,10 +116,18 @@ public class CompactArticleStatsArray  {
 			    continue;
 			}
 			int docno = tmp.intValue();
+			casa.norm[docno] =(float)((Double)oa[2]).doubleValue();
 			for(int i=0; i<NB; i++) {
-			    casa.boost[i][docno] = (float)((Double)oa[i+2]).doubleValue();
-			}			    
+			    casa.boost[i][docno] = (float)((Double)oa[i+3]).doubleValue();
+			}
+
+			cnt++;
+
+			if (cnt % 100000 == 0) {
+			    Main.memory("CASA.run: in " + cnt);
+			}
 		    }
+		    Main.memory("CASA.run: all "+cnt+" in");
 		} else {
 
 		    List<ArticleStats> aslist = ArticleStats.getAll( em);
@@ -102,17 +140,19 @@ public class CompactArticleStatsArray  {
 			    continue;
 			}
 			int docno = tmp.intValue();
+			casa.norm[docno] = (float)as.getNorm();
 			for(int i=0; i<NB; i++) {
-			    casa.boost[i][docno] = (float)as.getBoost(i);
+			    casa.boost[i][docno] = (float)as.getRawBoost(i);
 			}
 		    }
 		}
 
-		ResultsBase.ensureClosed( em, false);
 	    } catch(Exception _ex) {
 		ex = _ex;
 		error=true;
 		Logging.error("Failed to read pre-computed AllStats. exception=" + ex);
+	    } finally {
+		ResultsBase.ensureClosed( em, false);
 	    }
 	}
 
@@ -121,7 +161,7 @@ public class CompactArticleStatsArray  {
 	    and return the results. */
 	public CompactArticleStatsArray getResults() throws Exception {
 	    while(getState()!=Thread.State.TERMINATED) {
-		Logging.info("Waiting for CASR");
+		Logging.info("Waiting for CASR; state=" + getState());
 		try {	 // it is the parent thread who waits!	    
 		    Thread.sleep(10 * 1000);
 		} catch ( InterruptedException ex) {}			

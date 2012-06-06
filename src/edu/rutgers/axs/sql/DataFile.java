@@ -250,7 +250,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	}
     }
 
-
+    /** Finds the latest file of a given type (probably, sugg list)
+	that's based on a particular input file (probably, a user profile file)
+     */
     static public DataFile getLatestFileBasedOn(EntityManager em, String  username, 
 						Type t, int days, String inputFile) {
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
@@ -263,6 +265,37 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	q.setParameter("u", username);
 	q.setParameter("t", t);
 	q.setParameter("i", inputFile);
+	if (days>=0) 	q.setParameter("d", days);
+
+	q.setMaxResults(1);
+	List<DataFile> res = (List<DataFile>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+
+    /** Finds the latest file of a given type (probably, sugg list)
+	that's based on an input file of a particular type (probably,
+	a user profile type)
+   
+	@param t Looking for a file of this type
+	@param sourceType Looking for a file whose source is of that type
+     */
+    static public DataFile getLatestFileBasedOn(EntityManager em, String  username, 
+						Type t, int days, Type sourceType) {
+	String qs = "select m from DataFile m, DataFile src " +
+	    "where src.thisFile = m.inputFile and src.type=:st " +	    
+	    "and m.user=:u and m.type=:t and m.deleted=FALSE";
+	if (days>=0) qs += " and m.days=:d";
+	qs += " order by  m.lastActionId desc, m.time desc";
+
+	Query q = em.createQuery(qs);
+
+	q.setParameter("u", username);
+	q.setParameter("t", t);
+	q.setParameter("st", sourceType);
 	if (days>=0) 	q.setParameter("d", days);
 
 	q.setMaxResults(1);

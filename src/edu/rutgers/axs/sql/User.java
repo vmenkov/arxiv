@@ -238,6 +238,12 @@ import org.apache.catalina.realm.RealmBase;
         return actions;
     }
 
+    /** Scans the list of the user's action, finding the most recent
+	(according to the action ID). Note that this may perhaps be done more
+	efficiently with a SQL query instead.
+	
+	@return The highest recorded action id, or 0 (if none is recorded)
+     */
     public long getLastActionId() {
 	long lai = 0;
 	for(Action a: getActions()) {

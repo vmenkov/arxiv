@@ -112,6 +112,12 @@ public class ArticleAnalyzer {
 	return getCoef(docno,null);
     }
 
+    /** This flag controls whether TF or sqrt(TF) is used to compute
+      dot products and norms of documents. The norms so computed are
+      incorporated in the fields' boost factors stored in the
+      database, so one should not change this flag without rerunning
+      ArticleAnalyzer on the entire corpus...
+     */
     static final boolean useSqrt = false;
 
     /** Computes a (weighted) term frequency vector for a specified document.
@@ -162,7 +168,7 @@ public class ArticleAnalyzer {
 	    as.setLength(length);
 	    as.setTermCnt(h.size());
 	    as.setNorm(0);
-	    for(int j=0; j<nf; j++)  as.setBoost(j,0);
+	    for(int j=0; j<nf; j++)  as.setRawBoost(j,0);
 	    as.setTime( new Date());
 	}
 
@@ -199,7 +205,9 @@ public class ArticleAnalyzer {
 	if (mustUpdate) { 
 	    double norm=tfNorm(h);
 	    as.setNorm(norm);
-	    for(int j=0; j<nf; j++)  as.setBoost(j,boost[j]/norm);
+	    for(int j=0; j<nf; j++)  {
+		as.setRawBoost(j,boost[j]);
+	    }
 	}
 
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
@@ -214,7 +222,7 @@ public class ArticleAnalyzer {
 	@param docno=document position (internal id) in the Lucene index.
 
 	@param as Contains precomputed stats for document(docno), in particular,
-	boost factors for the fields of d, already nortmalized by |d|
+	boost factors for the fields of d, and the norm of |d|
 
 	@param hq Represents the user profile vector.
 	
@@ -230,8 +238,8 @@ public class ArticleAnalyzer {
 	for(int j=0; j<fields.length;  j++) {	
 	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
 	    if (tfv==null) continue;
-	    //double boost =  as.getBoost(j);
-	    double boost =  allStats.getBoost(docno,j);
+	    //double boost =  as.getNormalizedBoost(j);
+	    double boost =  allStats.getNormalizedBoost(docno,j);
 
 	    //System.out.println("--Terms--");
 	    int[] freqs=tfv.getTermFrequencies();
@@ -491,7 +499,7 @@ public class ArticleAnalyzer {
 
 		    double normFactor = 0;
 		    if (allStats[p]!=null) {			
-			normFactor = allStats[p].getBoost(i);
+			normFactor = allStats[p].getNormalizedBoost(i);
 		    } else {
 			missingStatsCnt++;
 		    }

@@ -41,6 +41,9 @@ public class ViewSuggestions extends PersonalResultsBase {
     
     /** The currently recorded last action id for the user in question */
     public long actorLastActionId=0;
+    /** If this is supplied, this specifies the particular user
+	profile on which the requested suggestion list must be based.
+     */
     public String basedon=null;
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
@@ -65,7 +68,8 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    if (requestedFile!=null) {
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else if (basedon!=null) {
-		// look for the most recent file based on the specified one...
+		// look for the most recent sugestion list based on
+		// the specified user profile file...
 		df = DataFile.getLatestFileBasedOn(em, actorUserName, 
 						   mode, days, basedon);
 	    } else {

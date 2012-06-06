@@ -47,7 +47,10 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public void setAid(String x) { aid=x;}
     /** Pre-computed idf-weighted two-norm for the article's feature
 	vectors. It is used e.g. when computing a cosine similarity
-	based on dot products, */
+	based on dot products. Note that since the norm is IDF-weighted,
+	it becomes somewhat incorrect when more documents are added into 
+	the index and 
+    */
     @Basic
 	@Display(editable=false, order=3)
 	double norm;
@@ -83,34 +86,46 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     */
     @Basic	@Display(editable=false, order=10)
 	double boost0;
-    public double getBoost0() { return boost0; }
-    public void setBoost0(double x) {boost0 =x;}
+    private double getBoost0() { return boost0; }
+    private void setBoost0(double x) {boost0 =x;}
      @Basic	@Display(editable=false, order=11)
 	 double boost1;
-    public double getBoost1() { return boost1; }
-    public void setBoost1(double x) {boost1 =x;}
+    private double getBoost1() { return boost1; }
+    private void setBoost1(double x) {boost1 =x;}
     @Basic	@Display(editable=false, order=12)
 	double boost2;
-    public double getBoost2() { return boost2; }
-    public void setBoost2(double x) {boost2 =x;}
+    private double getBoost2() { return boost2; }
+    private void setBoost2(double x) {boost2 =x;}
     @Basic	@Display(editable=false, order=13)
 	double boost3;
-    public double getBoost3() { return boost3; }
-    public void setBoost3(double x) {boost3 =x;}
+    private double getBoost3() { return boost3; }
+    private void setBoost3(double x) {boost3 =x;}
 
 
     /** FIXME: should have used an array instead... */
-    public double getBoost(int i) {
-	return (i<2) ? (i==0 ? boost0 : boost1) :
-	    (i==2 ? boost2 : boost3);
+    private double getBoost(int i) {
+	return (i<2) ? (i==0 ? getBoost0() : getBoost1()) :
+	    (i==2 ? getBoost2() : getBoost3());
     }
 
-    public void setBoost(int i, double x) {
+    private void setBoost(int i, double x) {
 	if (i<2) {
 	    if (i==0) setBoost0(x); else setBoost1(x);
 	} else {
 	    if (i==2) setBoost2(x); else setBoost3(x);
 	}
+    }
+
+    public void setRawBoost(int i, double x) {
+	setBoost(i,x);
+    }
+
+    public double getRawBoost(int i) {
+	return getBoost(i);
+    }
+
+    public double getNormalizedBoost(int i) {
+	return getBoost(i)/getNorm();
     }
 
     /** The document similarity array has been created by means of
