@@ -77,14 +77,14 @@ to the
 <p>This profile reflects <%= main.df.getLastActionId() %> operations recorded in the user's 
 <a href="<%=main.viewActionsLink()%>">activity log</a>. There have been <%= since %> user activity operations recorded since.
 
-<% if (since>0) { %>
+<% if (main.expert && since>0) { %>
 
 <p>(Was this too long ago? 
 You can <a href="#tasks">update</a> the suggestion list to
 account for your activity and new article submissions since this
 list has been generated).  </p>
 
-<% } else { %>
+<% } else if (main.expert) { %>
 
 <p>(This list appears to reflect all user actions recorded so far; nonetheless, if you really want to, you can probably request an <a href="#tasks">update</a> of the suggestion list. This may also reflect new articles added to the database since the last suggestion list update.)
 </p>
@@ -126,7 +126,7 @@ for( ArticleEntry e: main.entries) {
 </p>
 <% } %>
 	
-
+<% if (main.expert) { %>
 
 <h2><a name="tasks">(Re-)computing the suggestion list</a></h2>
 
@@ -187,7 +187,7 @@ Most recent <input type="text" name="<%=main.DAYS%>" value="<%=main.days%>"> day
 </p>
 
 
-<%  }  %>
+<%  } }  %>
 
 
 

@@ -36,23 +36,22 @@
 <li><a href="viewFolder.jsp">Your personal folder</a>
 <li><a href="viewActionsSelf.jsp">Your browsing activity history</a>
 <li><a href="viewRankedPages.jsp">Pages ranked based on your actions</a>
-<li><a href="viewUserProfile.jsp">User profile</a> - weighted list of terms from the articles you've interacted with. (This is directly derived from the entire history).
+<li><a href="viewUserProfile.jsp?expert=true">User profile</a> - weighted list of terms from the articles you've interacted with. (This is directly derived from the entire history).
 (This page also has a link to the sugg list based on this profile)
-<li><a href="viewUserProfile.jsp?mode=TJ_ALGO_2_USER_PROFILE">User profile</a> - the current "iteration" of Algorithm 2 (based on the user profile on which the last Algo 1 suggestion list was generated, with updates based on the user's activity since then.)
+<li><a href="viewUserProfile.jsp?expert=true&mode=TJ_ALGO_2_USER_PROFILE">User profile</a> - the current "iteration" of Algorithm 2 (based on the user profile on which the last Algo 1 suggestion list was generated, with updates based on the user's activity since then.)
 (This page also has a link to the sugg list based on this profile)
 
 </ul>
 </p>
 
-<!--
 <h2>Paul's experiment plan, June 2012</h2>
 <p>
 <ul>
-<li><a href="">Treatment A</a>: User profile UP0 (directly based on all user's activity), linearly applied to the entire corpus
+<li><a href="viewSuggestions.jsp?mode=LOG_SUGGESTIONS_1">Treatment A</a>: User profile UP0 (directly based on all user's activity), applied to the entire corpus (log(TF)*IDF)
 
 </ul>
 </p>
--->
+
 
 <hr>
 <p><strong>
@@ -67,10 +66,10 @@ Various algorithms for finding pages possibly interesting to you.
 
 <p>
 <ul>
-<li><a href="viewSuggestions.jsp?mode=LINEAR_SUGGESTIONS_1">Suggestions - linear model</a> - applying the user profile vector to the entire data set. (Cosine similarity).
-<li><a href="viewSuggestions.jsp?mode=LINEAR_SUGGESTIONS_1&days=7">Suggestions - linear model - last 7 days</a> - applying the user profile vector to the most recent articles (the last 7 days). (Cosine similarity).
-<li><a href="viewSuggestions.jsp?mode=TJ_ALGO_1_SUGGESTIONS_1">Suggestions - Thorsten's Algorthm 1</a> - applying Algortithm 1 to rank the entire data set.
-<li><a href="viewSuggestions.jsp?mode=TJ_ALGO_1_SUGGESTIONS_1&days=7">Suggestions - Thorsten's Algorthm 1 - last 7 days</a> - applying Algortithm 1 to rank the most recent articles (the last 7 days). 
+<li><a href="viewSuggestions.jsp?expert=true&mode=LINEAR_SUGGESTIONS_1">Suggestions - linear model</a> - applying the user profile vector to the entire data set. (Cosine similarity).
+<li><a href="viewSuggestions.jsp?expert=true&mode=LINEAR_SUGGESTIONS_1&days=7">Suggestions - linear model - last 7 days</a> - applying the user profile vector to the most recent articles (the last 7 days). (Cosine similarity).
+<li><a href="viewSuggestions.jsp?expert=true&mode=TJ_ALGO_1_SUGGESTIONS_1">Suggestions - Thorsten's Algorthm 1</a> - applying Algortithm 1 to rank the entire data set.
+<li><a href="viewSuggestions.jsp?expert=true&mode=TJ_ALGO_1_SUGGESTIONS_1&days=7">Suggestions - Thorsten's Algorthm 1 - last 7 days</a> - applying Algortithm 1 to rank the most recent articles (the last 7 days). 
 
 </ul>
 </p>

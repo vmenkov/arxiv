@@ -59,7 +59,7 @@ public class Test {
 	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
 
 	    ArxivScoreDoc[] sd =
-		raw ? upro.luceneRawSearch(maxDocs *10, casa, em, 0 ):
+		raw ? upro.luceneRawSearch(maxDocs *10, casa, em, 0 , false):
 		upro.luceneQuerySearch(maxDocs * 10, 0);
 
 	    ArticleEntry.save(upro.packageEntries(sd), new File("linsug.txt"));

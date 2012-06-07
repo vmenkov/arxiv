@@ -118,42 +118,38 @@ public class Scheduler {
 
 	    } else { // suggestion list generation stage
 		int days=0; // (all docs)
-		// (A) linear suggestions based on a "plain" user profile
-		DataFile.Type profileType = DataFile.Type.USER_PROFILE;
-		DataFile.Type mode = DataFile.Type.LINEAR_SUGGESTIONS_1;
-	
-		DataFile latestProfile = 
-		    DataFile.getLatestFile(em, uname, profileType);
-		if ( latestProfile==null) {
-		    Logging.warning("Scheduler: user " + uname + "; cannot do SUG1 update because there is no " + profileType + " profile available");
-		    continue;
-		}
-		long plai = latestProfile.getLastActionId();
-		DataFile sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
-		boolean need = sugg==null || (sugg.getLastActionId() < plai);
-		Logging.info("Scheduler: user " + uname + "; needed SUG1 update? " + need);
-		if (need) {
-		    addTask(em, uname, mode, days);
-		    createdCnt++;
-		}
+		//  Different types of suggestions
+		DataFile.Type modes[] = {
+		    DataFile.Type.LINEAR_SUGGESTIONS_1,
+		    DataFile.Type.LOG_SUGGESTIONS_1,
+		    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1};
 
-		// (B) Algo 1 suggestions based on an Algo 2 profile 
-		profileType = DataFile.Type.TJ_ALGO_2_USER_PROFILE;
-		mode = DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
-		latestProfile = 
-		    DataFile.getLatestFile(em, uname, profileType);
-		if ( latestProfile==null) {
-		    Logging.warning("Scheduler: user " + uname + "; cannot do SUG2 update because there is no " + profileType + " profile available");
-		    continue;
+		for(DataFile.Type mode: modes) {
+
+		    DataFile.Type profileType = 
+			(mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
+			DataFile.Type.TJ_ALGO_2_USER_PROFILE :
+			DataFile.Type.USER_PROFILE;
+
+		    DataFile latestProfile = 
+			DataFile.getLatestFile(em, uname, profileType);
+		    if ( latestProfile==null) {
+			Logging.warning("Scheduler: user " + uname + "; cannot do "+mode +" update because there is no " + profileType + " profile available");
+			continue;
+		    }
+		    long plai = latestProfile.getLastActionId();
+		    DataFile sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
+		    boolean need = sugg==null || (sugg.getLastActionId() < plai);
+		    Logging.info("Scheduler: user " + uname + "; needed "+mode+" update? " + need);
+		    if (need) {
+			String requiredInput =
+			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
+			    latestProfile.getThisFile() : null;
+
+			addTask(em, uname, mode, days, requiredInput );
+			createdCnt++;
+		    }
 		}
-		plai = latestProfile.getLastActionId();
-		sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
-		need = sugg==null || (sugg.getLastActionId() < plai);
-		Logging.info("Scheduler: user " + uname + "; needed SUG2 update? " + need);
-		if (need) {
-		    addTask(em, uname, mode, days, latestProfile.getThisFile());
-		    createdCnt++;
-		}	
 	    }
 	   
 	}

@@ -255,6 +255,116 @@ public class ArticleAnalyzer {
 	return sum;
     }
 
+    /** This version of linSim() is used for reporting */
+    double linSimReport(int docno, 
+		       ArticleStats as, 
+		       HashMap<String, UserProfile.TwoVal> hq) 
+	throws IOException {
+	
+	double sum=0;
+	
+	for(int j=0; j<fields.length;  j++) {	
+	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
+	    if (tfv==null) continue;
+	    double boost =  as.getNormalizedBoost(j);
+	    int[] freqs=tfv.getTermFrequencies();
+	    String[] terms=tfv.getTerms();	    
+
+	    double[] products = new double[terms.length];
+
+	    for(int i=0; i<terms.length; i++) {
+		UserProfile.TwoVal q=hq.get(terms[i]);
+		if (q==null) continue;
+
+		double z = useSqrt? Math.sqrt(freqs[i]) : freqs[i];
+		double s = products[i] = z * boost * q.w1 *idf(terms[i]);
+		sum += s;
+	    }
+
+	    int[] ind = UserProfile.ScoresComparator.sortIndexesDesc(products);
+	    System.out.print("LinSim: Top contributions for "+fields[j]+": (");
+	    for(int i=0; i<ind.length && i<10 ; i++) {
+		System.out.print(" " + terms[ind[i]] +":"+ products[ind[i]]);
+	    }
+	    System.out.println(")");
+
+	}
+	return sum;
+    }
+
+    double logSim(int docno, 
+		  CompactArticleStatsArray   allStats, 
+		  //ArticleStats as, 
+		  HashMap<String, UserProfile.TwoVal> hq) 
+	throws IOException {
+	
+	double sum=0;
+	
+	for(int j=0; j<fields.length;  j++) {	
+	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
+	    if (tfv==null) continue;
+
+	    //double boost =  allStats.getRawBoost(docno,j);
+	    double boost = 1.0;
+
+	    //System.out.println("--Terms--");
+	    int[] freqs=tfv.getTermFrequencies();
+	    String[] terms=tfv.getTerms();	    
+	    for(int i=0; i<terms.length; i++) {
+		UserProfile.TwoVal q=hq.get(terms[i]);
+		if (q==null) continue;
+
+//		double z = useSqrt? Math.sqrt(freqs[i]) : freqs[i];
+//		double s = products[i] = z * boost * q.w1 *idf(terms[i]);
+
+		double z = Math.log(1.0 + freqs[i]);
+		sum += z * boost * q.w1 *idf(terms[i]);
+	    }
+	}
+	return sum;
+    }
+
+  double logSimReport(int docno, 
+		  ArticleStats as, 
+		  HashMap<String, UserProfile.TwoVal> hq) 
+	throws IOException {
+	
+	double sum=0;
+	
+	for(int j=0; j<fields.length;  j++) {	
+	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
+	    if (tfv==null) continue;
+
+	    //double boost =  allStats.getRawBoost(docno,j);
+	    double boost = 1.0;
+
+	    //System.out.println("--Terms--");
+	    int[] freqs=tfv.getTermFrequencies();
+	    String[] terms=tfv.getTerms();	    
+	    double[] products = new double[terms.length];
+	    for(int i=0; i<terms.length; i++) {
+		UserProfile.TwoVal q=hq.get(terms[i]);
+		if (q==null) continue;
+
+//		double z = useSqrt? Math.sqrt(freqs[i]) : freqs[i];
+//		double s = products[i] = z * boost * q.w1 *idf(terms[i]);
+
+		double z = Math.log(1.0 + freqs[i]);
+		double s = products[i] =z * boost * q.w1 *idf(terms[i]);
+		sum += s;
+	    }
+
+	    int[] ind = UserProfile.ScoresComparator.sortIndexesDesc(products);
+	    System.out.print("LogSim: Top contributions for "+fields[j]+": (");
+	    for(int i=0; i<ind.length && i<10 ; i++) {
+		System.out.print(" " + terms[ind[i]] +":"+ products[ind[i]]);
+	    }
+	    System.out.println(")");
+
+
+	}
+	return sum;
+    }
 
 
     /** Computes the idf-weighted 2-norm of a term frequency vector.

@@ -78,6 +78,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    TJ_ALGO_2_USER_PROFILE,
 	    /** Selection based on dot products with the USER_PROFILE */
 	    LINEAR_SUGGESTIONS_1,
+	    /** Selection based on dot products with the USER_PROFILE */
+	    LOG_SUGGESTIONS_1,
 	    /** Selection based on a sublinear utility function based
 		on a user profile of some kind */
 	    TJ_ALGO_1_SUGGESTIONS_1,
@@ -88,6 +90,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	public Task.Op producerFor() {
 	    if (this == USER_PROFILE) return Task.Op.HISTORY_TO_PROFILE;
 	    else if (this == LINEAR_SUGGESTIONS_1) return Task.Op.LINEAR_SUGGESTIONS_1;
+	    else if (this == LOG_SUGGESTIONS_1) return Task.Op.LOG_SUGGESTIONS_1;
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return Task.Op.TJ_ALGO_1_SUGGESTIONS_1;
 	    else if (this == TJ_ALGO_2_USER_PROFILE) return Task.Op.TJ_ALGO_2_USER_PROFILE;
 	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
@@ -103,6 +106,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 		return "algo2profile";
 	    } else if (this == LINEAR_SUGGESTIONS_1) {
 		return "linsug1";
+	    } else if (this == LOG_SUGGESTIONS_1) {
+		return "logsug1";
 	    } else if (this == TJ_ALGO_1_SUGGESTIONS_1) {
 		return "algo1sug1";
 	    } else {
@@ -115,7 +120,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	 */
 	public String description() {
 	    if (this == USER_PROFILE) return "User profile directly based on all the documents the user interacted with.";
-	    else if (this == LINEAR_SUGGESTIONS_1) return "Linear similarity: dot product of documents with the user profile. Reported scores are dot products";
+	    else if (this == LINEAR_SUGGESTIONS_1) return "Linear similarity: dot product of documents (normalized) with the user profile. Reported scores are dot products";	    
+	    else if (this == LOG_SUGGESTIONS_1) return "Log similarity: dot product of documents' log(TF) with the user profile. Reported scores are dot products";
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return  "Joachims' Algorithm 1: ranking documents to maximize the utility function. Reported 'scores' are documents' increments to the utility function.";
 	    else if (this == TJ_ALGO_2_USER_PROFILE) return "Joachim's Alghorithm 2: user profile updated based by updating the previously current user profile using the user's recent activity";
 	    else return "Unknown";

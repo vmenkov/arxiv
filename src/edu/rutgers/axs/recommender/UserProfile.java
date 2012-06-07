@@ -334,7 +334,7 @@ public class UserProfile {
 	corresponding elements in that score array. The ordering is
 	in the descending order of the scores.
     */
-    private static class ScoresComparator implements Comparator<Integer> {
+    static class ScoresComparator implements Comparator<Integer> {
 	double scores[];
 	ScoresComparator(double _scores[]) { scores=_scores; }	    
 	/** descending order */
@@ -343,6 +343,24 @@ public class UserProfile {
 		scores[ o1.intValue()];
 	    return (d<0)? -1 : (d>0) ? 1 : 0;
 	}	
+
+	/** Sort the values {0,1,2,...,n-1} based on the descending values
+	    of the elements of the array scores[0:n-1]
+	*/
+	static int[] sortIndexesDesc(double scores[])  {
+	    Integer qpos[]  = new Integer[scores.length];
+	    for(int k=0; k<scores.length; k++) {		
+		qpos[k] = new Integer(k);
+	    }
+	    Arrays.sort( qpos, 0, scores.length, new  ScoresComparator(scores));
+	    int p[] = new int[scores.length];
+	    for(int k=0; k<scores.length; k++) {		
+		p[k] = qpos[k].intValue();
+	    }
+	    return p;
+	}
+
+
     }
 
 /*
@@ -372,10 +390,10 @@ public class UserProfile {
 	luceneRawSearch(int maxDocs, 
 			//ArticleStats[] allStats, 
 			CompactArticleStatsArray   allStats, 
-			EntityManager em, int days) throws IOException {
+			EntityManager em, int days, boolean useLog) throws IOException {
 
 	if (days>0) {
-	    return luceneRawSearchDateRange(maxDocs, allStats, em, days);
+	    return luceneRawSearchDateRange(maxDocs, allStats, em, days, useLog);
 	}
 
 	int numdocs = dfc.reader.numDocs() ;
@@ -394,7 +412,7 @@ public class UserProfile {
 		    int p = td.doc();
 		    int freq = td.freq();			
 
-		    double normFactor = allStats.getNormalizedBoost(p,i);
+		    double normFactor = useLog? 1 : allStats.getNormalizedBoost(p,i);
 		    /*
 		    if (allStats[p]!=null) {			
 			normFactor = allStats[p].getNormalizedBoost(i);
@@ -402,8 +420,10 @@ public class UserProfile {
 			missingStatsCnt++;
 		    }
 		    */
-		    double z =qval * normFactor * 
-			(ArticleAnalyzer.useSqrt? Math.sqrt(freq) : freq);
+		    double fr = useLog? Math.log(1.0 + freq) :
+			(ArticleAnalyzer.useSqrt? Math.sqrt(freq) : freq);		    
+		    double z =qval * normFactor * fr;
+
 		    scores[p] += z;
 		    if (debug!=null) {
 			String aid=debug.getAid(p);
@@ -433,7 +453,8 @@ public class UserProfile {
 	luceneRawSearchDateRange(int maxDocs, 
 				 //ArticleStats[] allStats, 
 				 CompactArticleStatsArray   allStats, 
-				 EntityManager em, int days) throws IOException {
+				 EntityManager em, int days,
+				 boolean useLog) throws IOException {
 	long msec = (new Date()).getTime() - 24*3600*1000 * days;
 	TermRangeQuery q = 
 	    new TermRangeQuery(ArxivFields.DATE_INDEXED,
@@ -467,7 +488,11 @@ public class UserProfile {
 		Logging.info("linSim: Computed and saved missing stats for docno=" + docno + " (gap)");
 	    } 
 	    */
-	    double sim = dfc.linSim(docno, allStats, hq);
+
+	    double sim = useLog? 
+		dfc.logSim(docno, allStats, hq) :
+		dfc.linSim(docno, allStats, hq);
+
 	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
 	}
 
@@ -713,6 +738,34 @@ public class UserProfile {
 	}
     }
 
+    
+    public static void main(String argv[]) 
+	throws  org.apache.lucene.index.CorruptIndexException, IOException {
 
+	String username = argv[0];
+	String file = argv[1];
+
+	System.out.println("User="+username+", profile="+file);
+
+	EntityManager em = Main.getEM();
+
+	for(int j=2; j<argv.length; j++) {
+	    String aid = argv[j];
+
+	    DataFile df = DataFile.findFileByName( em,  username,  file);
+	    IndexReader reader =  ArticleAnalyzer.getReader();
+	    
+	    UserProfile up = new UserProfile( df, reader);
+
+	    System.out.println("Doc="+aid);
+	    int docno = up.dfc.find(aid);
+
+	    ArticleStats as =  up.dfc.getArticleStatsByAidAlways( em, aid);
+	    double linsim = up.dfc.linSimReport(docno, as, up.hq);
+	    System.out.println("linsim="+linsim);
+	    double logsim = up.dfc.logSimReport(docno, as, up.hq);
+	    System.out.println("logsim="+logsim);
+	}
+    }
 
 }

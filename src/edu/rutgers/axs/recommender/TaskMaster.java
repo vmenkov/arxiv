@@ -155,8 +155,9 @@ public class TaskMaster {
 		    UserProfile upro=new UserProfile(user, em,reader);
 		    outputFile=upro.saveToFile(task,op.outputFor());
 		} else if (op == Task.Op.LINEAR_SUGGESTIONS_1
+			   || op == Task.Op.LOG_SUGGESTIONS_1
 			   || op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
-		    // FIXME: should also support individual file specs
+
 		    Vector<DataFile> ptr = new Vector<DataFile>(0);
 		    if (task.getInputFile()!=null) {
 			inputFile=DataFile.findFileByName(em, user,task.getInputFile()); 
@@ -169,11 +170,12 @@ public class TaskMaster {
 		    final boolean raw=true;
 		    //ArticleStats[] allStats = asr.getResults();
 		    //		    CompactArticleStatsArray casa = asr.getResults();
-		    Logging.info("Read CASA, size=" + casa.size());
+		    //Logging.info("Read CASA, size=" + casa.size());
 
+		    boolean useLog = (op == Task.Op.LOG_SUGGESTIONS_1);
 		    int days = task.getDays();		    
 		    ArxivScoreDoc[] sd =
-			raw? upro.luceneRawSearch(maxDocs,casa,em,days):
+			raw? upro.luceneRawSearch(maxDocs,casa,em,days, useLog):
 			upro.luceneQuerySearch(maxDocs, days);
 
 		    if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
@@ -285,13 +287,12 @@ public class TaskMaster {
 
     /** Reads in, or generates, an "input" UserProfile, as appropriate
 	for the task.
+
 	@param ptr If non-empty, it is used as an input parameter,
 	exactly specifying the file to read. If empty, it is used
-	as an output param, reporting as to what data file we have read
-	(or just written) the user profile from (or to),
-
-
-	    TJ_ALGO_2_USER_PROFILE,
+	as an output param, reporting to what data file we have read
+	the user profile from, or to what file we have just written
+	the user profile, as the case may be.
 
      */
     private static UserProfile 

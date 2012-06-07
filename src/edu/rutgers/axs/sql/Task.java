@@ -51,6 +51,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	HISTORY_TO_PROFILE,
 	    /** Linear model suggestions */
 	    LINEAR_SUGGESTIONS_1,
+	    LOG_SUGGESTIONS_1,
         /** Thorsten Joachims' Algorithm 1 */
 	    TJ_ALGO_1_SUGGESTIONS_1,
         /** Thorsten Joachims' Algorithm 2 */
@@ -64,6 +65,8 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 		return DataFile.Type.USER_PROFILE;
 	    } else if (this == Task.Op.LINEAR_SUGGESTIONS_1) {
 		return DataFile.Type.LINEAR_SUGGESTIONS_1;
+	    } else if (this == Task.Op.LOG_SUGGESTIONS_1) {
+		return DataFile.Type.LOG_SUGGESTIONS_1;
 	    } else if (this == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 		return DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
 	    } else if (this == Task.Op.TJ_ALGO_2_USER_PROFILE) {

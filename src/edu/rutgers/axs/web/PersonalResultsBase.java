@@ -25,6 +25,9 @@ public class PersonalResultsBase extends ResultsBase {
     /** Is the user requesting a list for his own activity (rather
      * than for someone's else, as a researcher)? */
     public boolean isSelf = false;
+
+    /** "Expert mode" allows one to view more options in certain screens */
+    public boolean expert = false;
     /** User has requested to create a new task. */
     public boolean force=false;
     
@@ -34,13 +37,14 @@ public class PersonalResultsBase extends ResultsBase {
     /** Only set if the user has explicitly requested an individual file to be viewed. */
     public String requestedFile=null;
 
-    public static final  String MODE="mode", DAYS="days";
+    public static final  String MODE="mode", DAYS="days", EXPERT="expert";
     /** For ViewSuggestionList: give suggestions based on a specific profile. */
     public static final String BASEDON = "basedon";
 
     public PersonalResultsBase(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	force= getBoolean(FORCE, false);
+	expert= getBoolean(EXPERT, false);
 
 	if (error) return;
 	actorUserName =  getString(USER_NAME, user);
