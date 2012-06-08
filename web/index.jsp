@@ -170,6 +170,25 @@ window.onload = StartScripts;
     
     <h1>arXiv</h1>
     <div id="left_frame">
+
+  <h2>Personalization tools</h2>
+
+
+   <% if (main.user==null) { %>
+  
+    <a class="button" href="participation.html""><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Join</a>
+
+      <% } else { %>
+    
+      <a class="button" href="#sug" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Recommended for you</a>
+
+      <a class="button" href="personal/viewFolder.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your personal folder</a>
+
+      <a class="button" href="personal/index.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your account and personalization tools </a>
+
+
+ <% } %>
+ 
     <h2>Articles by category</h2>
       <a class="button" href="#physics" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Physics</a>
       <a class="button" href="#math" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Mathematics</a>
@@ -180,6 +199,7 @@ window.onload = StartScripts;
       <a class="button" href="#stat" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Statistics</a>
       <br />
 
+<!--
       <h2>Personalization tools</h2>
 
       <% if (main.user==null) { %>
@@ -188,6 +208,8 @@ window.onload = StartScripts;
 </div>		
       <br /> 
       <% } else { %>
+
+
       <div style="text-align:center"><a href="personal/index.jsp">Your account and personalization tools</a><br /> </div>		
       <br /> 
       
@@ -196,17 +218,29 @@ window.onload = StartScripts;
       
       <% }  %>
 
+<!--
       <div style="text-align: center"><a href="interview.html">Interview Page<br /> (do we need this?)</a></div>
       <br />
       
       <div style="text-align: center"><a href="participation_login.html">Login-based Participation Page<br /> (do we need this?)</a></div>
       <br />
+
+-->
       
-      <div style="text-align: center">Other Links Here - ver <%=Version.version%></div>
+      <div style="text-align: center">Version <%=Version.version%></div>
     </div>
     <!-- Left Frame -->
 
     <div id="right_frame" style="padding-top: 0px;">
+
+  <% if (main.user!=null) { %>
+    
+<h2><a name="sug">Recommendations</a></h2>
+
+<p>A personalized list of suggested articles will go here
+</p>
+
+<% } %>
 
 <h2><a name="physics">Physics</a></h2>
 <ul>
