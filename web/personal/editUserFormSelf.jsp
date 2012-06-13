@@ -47,6 +47,16 @@
 </p>
 
 <input type="submit" value="Update account information">
+
+<h3>Updating interest areas</h3>
+<%= u.mkCatBoxes() %>
+</p>
+<p>
+<input type="submit" value="Update account information">
+</form>
+</p>
+
+
 </form>
 
 <%   }      %>

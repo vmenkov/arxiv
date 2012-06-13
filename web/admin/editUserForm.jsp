@@ -5,7 +5,6 @@
 
 <% 
    GetUser main=new GetUser(request,response);
-   String id = main.u.getUser_name();
 
    if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 
@@ -14,9 +13,9 @@ To try again, go back to the <a href="manageUsers.jsp">User Management</a>
 main page.
 </p>
 
-<%   } else {      %>
-
-<!-- ${param.id} -->
+<%   } else {      
+   String id = main.u.getUser_name();
+%>
 
 <html>
 <head>
@@ -38,7 +37,8 @@ main page.
 <form method=post action="editUser.jsp">
 <%= Tools.inputHidden(EditUser.USER_NAME, id) %> <br>
 
-<h3>Updating user information</h3>
+
+<h3>Updating user account information</h3>
 
 <p>
 <icd:UserEntryForm user_name="<%=id%>"/>
@@ -63,6 +63,14 @@ main page.
 <%= EditUser.pwTable() %>
 </p>
 
+<p>
+<input type="submit" value="Update user record">
+</p>
+
+<h3>Updating interest areas</h3>
+<%= main.u.mkCatBoxes() %>
+</p>
+<p>
 <input type="submit" value="Update user record">
 </form>
 </p>

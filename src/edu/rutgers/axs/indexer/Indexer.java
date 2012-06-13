@@ -88,7 +88,7 @@ public class Indexer {
 	document.add(new Field("from", from, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	if (date != null) {
-	    document.add(new Field("date",
+	    document.add(new Field(ArxivFields.DATE,
 				   DateTools.timeToString(date.getTime(),DateTools.Resolution.MINUTE),
 				   Field.Store.YES, Field.Index.NOT_ANALYZED));
 	}

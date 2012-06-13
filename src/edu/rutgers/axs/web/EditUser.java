@@ -203,6 +203,23 @@ public class EditUser extends ResultsBase {
 
 	try {
 	    Tools.editEntity(EntryFormTag.PREFIX, r, request);
+
+
+	    // Set roles
+	    Set<String> c = r.getCats();
+	    if (c==null) c = new HashSet<String> ();
+	    for(String name: Categories.listAllStorableCats()) {
+		String sent=request.getParameter(EditUser.CAT_PREFIX+name);
+		if (sent == null) {
+		    Logging.info("Removing cat " + name);
+		    c.remove(name);
+		} else {
+		    Logging.info("Adding cat " + name);
+		    c.add(name);
+		}
+	    }
+	    r.setCats(c);
+		
 	} catch(IllegalAccessException ex) {
 	    setEx(ex);
 	} catch( java.lang.reflect.InvocationTargetException ex) {
@@ -218,7 +235,8 @@ public class EditUser extends ResultsBase {
 	NEW_PASSWORD_RETYPED = "confirm_password",
 	EMAIL = EntryFormTag.PREFIX + "email",
 	CONFIRM_EMAIL = "confirm_email",
-	ROLE_PREFIX = "role."
+	ROLE_PREFIX = "role.",
+	CAT_PREFIX = "cat."
 	;
 
     public static String pwTable() {

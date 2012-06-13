@@ -2,14 +2,10 @@ package edu.rutgers.axs.sql;
 
 import java.io.*;
 import java.util.*;
-//import java.text.*;
-//import java.net.*;
 import javax.persistence.*;
 import org.apache.openjpa.persistence.jdbc.*;
-//import java.lang.reflect.*;
 import java.lang.annotation.*;
 
-//import edu.rutgers.axs.indexer.ArxivFields;
 
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
 import edu.rutgers.axs.recommender.ArxivScoreDoc;

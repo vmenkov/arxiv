@@ -88,7 +88,7 @@ public class Tools {
 	if (text != null) {
 	    s += (style!=null)? Style.SPAN(style) +  text + "</SPAN>" : text;
 	}
-	s += "<br>\n";
+	s += "\n";
 	return s;
 
     }

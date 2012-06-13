@@ -10,7 +10,8 @@ public class ArxivFields {
 	TITLE="title",
 	AUTHORS="authors",
 	COMMENTS="comments",
-	CATEGORY="category";
+	CATEGORY="category",
+	DATE = "date";
     final static public String DATE_INDEXED="dateIndexed";
 }
 

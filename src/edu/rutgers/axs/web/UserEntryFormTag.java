@@ -68,6 +68,8 @@ public class UserEntryFormTag extends TagSupport {
 	    out.println("</table>");
 
         } catch (Exception ex) {
+	    System.out.println(ex);
+	    ex.printStackTrace(System.out);
             throw new JspException("IO problems");
         } finally {
 	    out.flush();

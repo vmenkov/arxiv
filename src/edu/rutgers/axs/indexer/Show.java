@@ -46,6 +46,7 @@ class Show {
 	reader =  IndexReader.open( indexDirectory);     
     }
 
+    /** Finds Lucene document (its internal integer id) by Arxiv id */
     private int find(String id) throws IOException{
 
 	//IndexSearcher s = new IndexSearcher( indexDirectory);
@@ -103,25 +104,26 @@ class Show {
 	Document doc = reader.document(docno);
 	System.out.println("Document info for id=" + id +", doc no.=" + docno);
  	for(String name: Search.searchFields) {
-	    Fieldable f = doc.getFieldable(name);
-	    System.out.println("["+name+"]="+f);
-	    TermFreqVector tfv=reader.getTermFreqVector(docno, name);
-	    if (tfv==null) {
-		System.out.println("--No terms--");
-		continue;
-	    }
-	    System.out.println("--Terms--");
-	    int[] freqs=tfv.getTermFrequencies();
-	    String[] terms=tfv.getTerms();
-	    for(int i=0; i<terms.length; i++) {
-		Term term = new Term(name, terms[i]);
-		System.out.println(" " + terms[i] + " : " + freqs[i] + "; df=" +reader.docFreq(term) );
-	    }
+	    showField(docno, doc, name);
 	}
-
-
+	showField(docno, doc,ArxivFields.CATEGORY);
     }
 
-
-
+    void showField(int docno,	Document doc, String name)throws IOException  {
+	Fieldable f = doc.getFieldable(name);
+	System.out.println("["+name+"]="+f);
+	TermFreqVector tfv=reader.getTermFreqVector(docno, name);
+	if (tfv==null) {
+	    System.out.println("--No terms--");
+	    return;
+	}
+	System.out.println("--Terms--");
+	int[] freqs=tfv.getTermFrequencies();
+	String[] terms=tfv.getTerms();
+	for(int i=0; i<terms.length; i++) {
+	    Term term = new Term(name, terms[i]);
+	    System.out.println(" " + terms[i] + " : " + freqs[i] + "; df=" +reader.docFreq(term) );
+	}
+    }
+    
 }

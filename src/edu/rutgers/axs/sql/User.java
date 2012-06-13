@@ -10,6 +10,10 @@ import javax.servlet.http.Cookie;
 
 import org.apache.catalina.realm.RealmBase;
 
+import edu.rutgers.axs.web.EditUser;
+import edu.rutgers.axs.web.Tools;
+
+
 @Entity 
     @Table(name="arxiv_users", 
 	   uniqueConstraints=@UniqueConstraint(name="arxiv_user_name_cnstrt", columnNames="user_name") )
@@ -199,7 +203,8 @@ import org.apache.catalina.realm.RealmBase;
 	    "<th>User name</th>\n" +
 	    "<th>Detail (password is encrypted)</th>\n" +
 	    "<th>Roles</th>\n" +
-	    "<th>Enabled</td>\n";
+	    "<th>Enabled</th>\n" +
+	    "<th>Interests</th>\n";
     }
 
    /** HTML: name, details, roles, enabled ; personal name, email*/
@@ -208,7 +213,8 @@ import org.apache.catalina.realm.RealmBase;
 	    "<td>" + getUser_name() + "</td>\n" +
 	    "<td>" + reflectToString()  + "</td>\n" +
 	    "<td>" + listRoles()  + "</td>\n" +
-	    "<td>" + (isEnabled()? "Yes" : "No")  + "</td>\n" ;
+	    "<td>" + (isEnabled()? "Yes" : "No")  + "</td>\n" +
+	    "<td>" + listCats()  + "</td>\n" ;
     }
 
     /** Can be used instead of (User)em.find(User.class, un);
@@ -351,6 +357,76 @@ import org.apache.catalina.realm.RealmBase;
 	EnteredQuery r = new  EnteredQuery( this, p, maxlen, found); 
 	queries.add(r);	
 	return r;
+    }
+  
+    /** For some reason, EAGER seems to be necessary here! LAZY results in the
+	data not being read, ever!
+    */
+    @Display(editable=false, order=20)
+    @ElementCollection(fetch=FetchType.EAGER)
+	  private Set<String> cats = new LinkedHashSet<String>();
+    public Set<String> getCats() { 
+	Logging.info("getCats: cats=" + cats);
+	return cats; 
+    }
+    public void setCats(Set<String> x) {	cats=x; }
+
+    public boolean hasCat(String cat) {
+	return getCats()!=null && getCats().contains(cat);
+
+    }
+
+    public String listCats() {
+	if (getCats()==null) return "[none]";
+	String s="";
+	for(String r: getCats()) {
+	    s += " " + r;
+	}
+	return s; 	
+    }
+
+    /*
+    synchronized public void addCat(String cat) {
+	if (getCats().contains(cat)) return;
+	HashSet<String> c = getCats();
+	c.add(cat);
+	setCats(c);
+    }
+
+    synchronized public void removeRole(String cat) {
+	if (!getCats().contains(cat)) return;
+	HashSet<String> c = getCats();
+	c.remove(cat);
+	setCats(c);
+
+    }
+    */
+
+   /** Creates set of radio buttons reflecting the ArXiv categories the user
+    is interested in. */
+    public String mkCatBoxes() {
+	final String space = "&nbsp;&nbsp;";
+	StringBuffer b = new StringBuffer();
+	for(Categories.Cat major: Categories.majors) {
+	    b.append("<h4>" + major.name + " : " + major.desc + "</h4>\n");
+	    if (major.hasSubs()) {
+		for(Categories.Cat minor: major.subcats) {
+		    String name=major.name +"."+ minor.name;
+		    b.append(space);
+		    b.append(  "<strong>" +Tools.checkbox(EditUser.CAT_PREFIX + name, 
+					     "on", name, hasCat(name))
+			      + "</strong> " + minor.desc+ "<br>\n");
+		    
+		}
+	    } else {
+		String name = major.name;
+		b.append( "<strong>" +
+			  Tools.checkbox(EditUser.CAT_PREFIX + name, 
+					 "on", name, hasCat(name))
+			   + "</strong> " + major.desc+ "<br>\n");
+	    }
+	}
+	return b.toString();
     }
 
 }

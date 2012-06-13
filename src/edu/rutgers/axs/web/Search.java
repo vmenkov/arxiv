@@ -24,11 +24,11 @@ import edu.cornell.cs.osmot.logger.Logger;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.indexer.ArxivFields;
+import edu.rutgers.axs.recommender.ArticleAnalyzer;
 import edu.rutgers.axs.html.RatingButton;
+import edu.rutgers.axs.ParseConfig;
 
-/** The base class for the classes that are behind the Frontier Finder
- * Lite JSP pages.
+/** Our interface for Lucene searches
  */
 public class Search extends ResultsBase {
     
@@ -77,7 +77,7 @@ public class Search extends ResultsBase {
 		(u==null) ? new HashMap<String, Action>() :
 		u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
 
-	    sr  = new SearchResults(query, exclusions, startat);
+	    sr  = new TextSearchResults(query, exclusions, startat);
 	    if (u!=null) {
 		// Mark pages currently in the user's folder, or rated by the user
 		ArticleEntry.markFolder(sr.entries, u.getFolder());
@@ -132,10 +132,14 @@ public class Search extends ResultsBase {
 	public boolean needPrev, needNext;
 
 	public int reportedLength;
+    }
 
-	/** @param startat How many top search results to skip (0, 25, ...)
+    /** Full-text search */
+    public static class TextSearchResults extends SearchResults {
+	/**@param query Text that the user typed into the Search box
+	   @param startat How many top search results to skip (0, 25, ...)
 	 */
-	SearchResults(String query, HashMap<String, Action> exclusions, int startat) throws Exception {
+	TextSearchResults(String query, HashMap<String, Action> exclusions, int startat) throws Exception {
 	    prevstart = Math.max(startat - M, 0);
 	    nextstart = startat + M;
 	    needPrev = (prevstart < startat);
@@ -227,6 +231,88 @@ public class Search extends ResultsBase {
 
     }
 
+
+   /** Subject search */
+    public static class SubjectSearchResults extends SearchResults {
+	/**@param cat
+	   @param startat How many top search results to skip (0, 25, ...)
+	 */
+	SubjectSearchResults(String[] cats, Date rangeStartDate, 
+			     HashMap<String, Action> exclusions, 
+			     int startat) throws Exception {
+	    prevstart = Math.max(startat - M, 0);
+	    nextstart = startat + M;
+	    needPrev = (prevstart < startat);
+
+	    org.apache.lucene.search.Query q;
+	    if (cats.length<1) {
+		Logging.warning("No categories specified!");
+		return;
+	    } else if (cats.length==1) {
+		q = new TermQuery(new Term(ArxivFields.CATEGORY, cats[0]));
+	    } else {
+		BooleanQuery bq = new BooleanQuery();
+		for(String t: cats) {
+		    TermQuery tq = new TermQuery(new Term(ArxivFields.CATEGORY, t));
+		    bq.add( tq,  BooleanClause.Occur.SHOULD);
+	  	    
+		}
+		q = bq;
+	    }
+
+
+	    if ( rangeStartDate!=null) {
+		BooleanQuery bq = new BooleanQuery();
+		bq.add( q,  BooleanClause.Occur.MUST);
+		String lower = 	DateTools.timeToString(rangeStartDate.getTime(), DateTools.Resolution.MINUTE);
+		System.out.println("date range: from " + lower);
+		TermRangeQuery trq = 
+		    new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);
+		bq.add( trq,  BooleanClause.Occur.MUST);
+		q = bq;
+	    }
+
+
+	    Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
+	    IndexSearcher searcher = new IndexSearcher( indexDirectory);
+	    
+	    numdocs = searcher.getIndexReader().numDocs() ;
+	    System.out.println("index has "+numdocs +" documents");
+	    
+	    int maxlen = startat + M;
+	    TopDocs 	 top = searcher.search(q, maxlen + 1);
+	    scoreDocs = top.scoreDocs;
+	    needNext=(scoreDocs.length > maxlen);
+	    if (needNext) {
+		reportedLength =maxlen;
+		atleast = "over";
+	    } else {
+		reportedLength = scoreDocs.length;
+		atleast = "";
+	    }
+
+	    //Document doc = s.doc(scoreDocs[0].doc);
+	    System.out.println("" + scoreDocs.length + " results");
+
+
+	    int pos = startat+1;
+	    for(int i=startat; i< scoreDocs.length && i<maxlen; i++) {
+		int docno=scoreDocs[i].doc;
+		Document doc = searcher.doc(docno);
+
+		// check if it's been "removed" by the user.
+		String aid = doc.get(ArxivFields.PAPER);
+		if (exclusions!=null && exclusions.containsKey(aid)) {
+		    int epos = excludedEntries.size()+1;
+		    excludedEntries.add( new ArticleEntry(epos, doc, docno));
+		} else {
+		    entries.add( new ArticleEntry(pos, doc, docno));
+		    pos++;
+		}			
+	    }
+	}
+    }
+
     static void usage() {
 	usage(null);
     }
@@ -245,17 +331,50 @@ public class Search extends ResultsBase {
     }
 
 
+
+
     /** For testing */
     static public void main(String[] argv) throws Exception {
 	if (argv.length==0) usage();
+
+	ParseConfig ht = new ParseConfig();
+	//int maxDocs = ht.getOption("maxDocs", -1);
+	boolean cat = ht.getOption("cat", false);
+
+	int days=ht.getOption("days", 0);
+	Date rangeStartDate = (days <=0) ? null:
+	    new Date( (new Date()).getTime() - days *24L* 3600L*1000L);
+
+
+
 	String s="";
 	for(String x: argv) {
 	    if (s.length()>0) s += " ";
 	    s += x;
 	}
+
+	System.out.println( (cat? "Subject search":"Text search") + " for: " + s );
+
 	HashMap<String, Action> exc = new HashMap<String, Action>();
-	SearchResults sr = new SearchResults(s, exc, 0);
-       
+	SearchResults sr =
+	    cat? 
+	    new SubjectSearchResults(argv, rangeStartDate, exc, 0) :
+	    new TextSearchResults(s, exc, 0);
+
+	IndexReader reader = ArticleAnalyzer.getReader();
+
+	int cnt=0;
+  	for(ScoreDoc q: sr.scoreDocs) {
+	    cnt++;
+	    int docno = q.doc;
+	    Document d = reader.document(docno);
+	    System.out.println("["+cnt+"] " + d.get(ArxivFields.PAPER) +
+			       "; " + d.get(ArxivFields.CATEGORY) +
+			       "; " + d.get(ArxivFields.TITLE) +
+			       " ("+ d.get(ArxivFields.DATE)+")");
+
+	}
+     
     }
 
 }
