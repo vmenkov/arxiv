@@ -64,7 +64,7 @@ public class ArxivImporter {
     /** Parses an OAI-PMH element, and triggers appropriate operations.
 	@return the resumption token
     */
-    private String parseResponse(Element e, IndexWriter writer , boolean rewrite)  throws IOException {
+    private String parseResponse(Element e, IndexWriter writer, IndexReader reader, boolean rewrite)  throws IOException {
 	//org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
 	XMLUtil.assertElement(e,"OAI-PMH");
 	Element listRecordsE = null;
@@ -82,7 +82,7 @@ public class ArxivImporter {
 	    if (!(n instanceof Element)) continue;
 	    String name = n.getNodeName();
 	    if (name.equals(Tags.RECORD)) {
-		importRecord((Element)n, writer, rewrite); 
+		importRecord((Element)n, writer, reader, rewrite); 
 	    } else if (name.equals("resumptionToken")) {
 		// <resumptionToken cursor="0" completeListSize="702029">245357|1001</resumptionToken>
 		Node nx = n.getFirstChild();
@@ -262,7 +262,7 @@ public class ArxivImporter {
 	when there are good reasons to believe it has actually changed
 	since the last caching.)
     */
-    public void importRecord(Element record, IndexWriter writer, boolean rewrite) throws IOException {
+    private void importRecord(Element record, IndexWriter writer, IndexReader reader, boolean rewrite) throws IOException {
 	org.apache.lucene.document.Document doc = parseRecordElement( record);
 	if (doc==null) {
 	    // deleted status
@@ -303,8 +303,6 @@ public class ArxivImporter {
 		    // them only when the format of categories to be stored
 		    // should be changed
 
-		    // FIXME: is there an easier way?
-		    IndexReader reader = IndexReader.open(writer, false);
 
 		    if (catsMatch(doc, top.scoreDocs[0].doc, reader)) {
 			System.out.println("skip already stored doc with matching cats, id=" + paper);
@@ -457,6 +455,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	int pagecnt=0;
 
 	IndexWriter writer =  makeWriter(); 
+	// FIXME: is there an easier way?
+	IndexReader reader = IndexReader.open(writer, false);
+
 
 	try {
 
@@ -464,15 +465,17 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		String us = makeURL( tok, from);
 		System.out.println("At "+new Date()+", requesting: " + us);
 		Element e = getPage(us);	    
-		tok = parseResponse(e, writer, rewrite);
+		tok = parseResponse(e, writer, reader, rewrite);
 		pagecnt++;
 		System.out.println("done "+pagecnt+" pages, token =  " + tok);
 		if (tok==null || tok.trim().equals("")) break;
 
 		if (pagecnt % 1 == 0) {
 		    System.out.println("At "+new Date()+", re-opening index... ");
+		    reader.close();
 		    writer.close();
 		    writer =  makeWriter(); 
+		    reader = IndexReader.open(writer, false);
 		}
 
 	    }
@@ -482,6 +485,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		writer.optimize();
 	    }
 	} finally {
+	    reader.close();
 	    writer.close();
 	}
     }
@@ -492,7 +496,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
      */
     private boolean readingMetacache=false;
     
-    private void processDir( File root,IndexWriter writer, boolean rewrite)
+    private void processDir( File root,IndexWriter writer, IndexReader reader, boolean rewrite)
 	throws IOException   {
 	System.out.println("Processing directory " + root);
 	if (!root.isDirectory()) throw new IllegalArgumentException("'" + root + "' is not a directory");
@@ -503,7 +507,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		try {
 		    Element e = XMLUtil.readFileToElement(f);
 		    if (e.getNodeName().equals(Tags.RECORD)) {
-			importRecord(e, writer , rewrite);	
+			importRecord(e, writer, reader, rewrite);	
 		    } else {
 			System.out.println("Not a 'record' element in file "+f);
 			//tok = imp.parseResponse(e, writer , rewrite);
@@ -518,7 +522,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	}
 	for(File f: children) {
 	    if (f.isDirectory()) {
-		processDir( f, writer, rewrite);
+		processDir( f, writer, reader, rewrite);
 	    }
 	}
     }
@@ -606,23 +610,26 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    if (!rewrite) throw new IllegalArgumentException("For a reload from metachache, ought to use -Drewrite=true");
 	    imp.readingMetacache=true;
 	    IndexWriter writer =  imp.makeWriter(); 
-	    imp.processDir( new File(imp.metaCacheRoot), writer, rewrite );
+	    IndexReader reader = IndexReader.open(writer, false);
+	    imp.processDir( new File(imp.metaCacheRoot), writer, reader, rewrite );
 	    if (optimize) {
 		System.out.println("Optimizing index... ");
 		writer.optimize();
 	    }
+	    reader.close();
 	    writer.close();
 	} else if (argv[0].equals("files")) {
 	    // processing files
 	    IndexWriter writer =  imp.makeWriter(); 
+	    IndexReader reader = IndexReader.open(writer, false);
 	    for(int i=1; i<argv.length; i++) {
 		String s= argv[i];
 	 	System.out.println("Processing " + s);
 		Element e = XMLUtil.readFileToElement(s);
 		if (e.getNodeName().equals(Tags.RECORD)) {
-		    imp.importRecord(e, writer , rewrite);
+		    imp.importRecord(e, writer, reader, rewrite);
 		} else {
-		    tok = imp.parseResponse(e, writer , rewrite);
+		    tok = imp.parseResponse(e, writer, reader, rewrite);
 		    System.out.println("resumptionToken =  " + tok);
 		}
 	    }
@@ -630,6 +637,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		System.out.println("Optimizing index... ");
 		writer.optimize();
 	    }
+	    reader.close();
 	    writer.close();
 	} else {
 	    System.out.println("Unrecognized command: " + argv[0]);
