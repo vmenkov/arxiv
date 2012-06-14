@@ -308,6 +308,7 @@ public class ArxivImporter {
 
 		    if (catsMatch(doc, top.scoreDocs[0].doc, reader)) {
 			System.out.println("skip already stored doc with matching cats, id=" + paper);
+			return;
 		    }
 		    reader.close();
 		}
@@ -358,7 +359,7 @@ public class ArxivImporter {
 
 	if (newCats.length != oldCats.length) return false;
 	for(int i=0; i< oldCats.length; i++) {
-	    if (newCats[i] != oldCats[i]) return false;
+	    if (!newCats[i].equals(oldCats[i])) return false;
 	}
 	return true;
     }

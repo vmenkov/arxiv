@@ -12,7 +12,7 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 
 
 #set opt="-cp ${cp} ${opt} -Drewrite=false"
-set opt="-cp ${cp} ${opt} -Drewrite=true -Ddays=10"
+set opt="-cp ${cp} ${opt} -Drewrite=true -Doptimize=true -Ddays=3"
 # -Dfrom=2012-01-16
 
 echo "opt=$opt"
