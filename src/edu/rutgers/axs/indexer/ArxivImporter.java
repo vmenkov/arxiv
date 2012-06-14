@@ -308,7 +308,7 @@ public class ArxivImporter {
 			System.out.println("skip already stored doc with matching cats, id=" + paper);
 			return;
 		    }
-		    reader.close();
+
 		}
 	    }
 	}
