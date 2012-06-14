@@ -124,6 +124,13 @@ class XMLtoLucene {
 	    new Field(q.luceneName, text, Field.Store.YES, 
 		      (doIndex? Field.Index.ANALYZED: Field.Index.NOT_ANALYZED),
 		      (doIndex? Field.TermVector.YES: Field.TermVector.NO));
+	
+	/** Special parsing required for categories, to preserve hyphens */
+	if (q.luceneName.equals(ArxivFields.CATEGORY)) {
+	    field.setTokenStream(new SubjectTokenizer(text));
+
+	}
+
 	doc.add(field);
 	
     }
@@ -153,7 +160,7 @@ class XMLtoLucene {
 	map.add("journal-ref");
 	map.add(ArxivFields.ABSTRACT);
 
-	map.add("categories", "category");
+	map.add("categories",ArxivFields.CATEGORY);
 
 	map.ignore("updated");
 	map.ignore("datestamp");

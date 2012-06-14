@@ -12,13 +12,11 @@ import org.apache.lucene.search.*;
 
 import edu.cornell.cs.osmot.cache.Cache;
 import edu.cornell.cs.osmot.options.Options;
-//import edu.cornell.cs.osmot.logger.Logger;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import java.util.*;
 import java.text.SimpleDateFormat;
-//import java.util.regex.*;
 import java.io.*;
 import java.net.*;
 
@@ -498,7 +496,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
     /** No more than one option, -Dfrom=YYYY-MM-DD or -Ddays=n, can be
 	supplied. If -Dfrom is supplied, uses it; otherwise, looks for
-	-Ddays and creates an equivalent "from" value. The a assumption
+	-Ddays and create an equivalent "from" value. The a assumption
 	is that we're in the same timezone with the OAI2 server...
 
 	@return The value of the -Dfrom=YYYY-MM-DD, or its equivalent

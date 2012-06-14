@@ -273,6 +273,8 @@ public class Search extends ResultsBase {
 	    }
 
 
+	    System.out.println("Lucene query: " +q);
+
 	    Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	    IndexSearcher searcher = new IndexSearcher( indexDirectory);
 	    

@@ -15,13 +15,9 @@ import edu.cornell.cs.osmot.cache.Cache;
 import edu.cornell.cs.osmot.options.Options;
 import edu.cornell.cs.osmot.logger.Logger;
 
-import java.util.Collection;
-import java.util.Iterator;
-
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.*;
+import java.text.*;
 import java.io.*;
 
 /**
@@ -81,7 +77,14 @@ public class Indexer {
 	Document document = new Document();
 	
 	document.add(new Field(ArxivFields.PAPER, paper, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	document.add(new Field(ArxivFields.CATEGORY, categories, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
+	//	Field f = new Field(ArxivFields.CATEGORY, categories, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES);
+	//	f.setTokenStream(new SubjectTokenizer(categories));
+
+	String xcat = "dummy-field " + categories;	
+	Field f = new Field(ArxivFields.CATEGORY, new SubjectTokenizer(xcat));
+	System.out.println("Trying to save cats=" +xcat);
+
+	document.add(f);
 	document.add(new Field("group", groups, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 	
 	// Should be: Field(name, value, Field.Store.YES, Field.Index.ANALYZED)
@@ -467,7 +470,7 @@ public class Indexer {
        @param      doc_file The name of the disk file from which the document body is to be read. If null, there is no document body.
      */
     static void processDocument(Document doc, String doc_file, boolean allowUpdate,
-				 IndexWriter writer, String cacheDirectory ) 	throws IOException {
+				IndexWriter writer, String cacheDirectory) throws IOException {
 	String aid =  doc.get(ArxivFields.PAPER);
 	// Remove it if its already there
 	if (allowUpdate) {
@@ -628,7 +631,9 @@ public class Indexer {
 	    show.show(args[1]);	
 	} else if (args[0].equals("showcoef")) {
 	    Show show = new Show();
-	    show.showCoef(args[1]);
+	    for(int j=1; j<args.length; j++) {
+		show.showCoef(args[j]);
+	    }
 	} else if (args[0].equals("list")) {
 	    int max=-1;
 	    if (args.length >1) {
