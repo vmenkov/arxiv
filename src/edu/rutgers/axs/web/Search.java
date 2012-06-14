@@ -58,13 +58,6 @@ public class Search extends ResultsBase {
             edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 
 	    startat = (int)Tools.getLong(request, "startat",0);
-	    //boolean useLog = Tools.getBoolean(request, "log",false);
-	    /*
-	    try {
-		startat = Integer.parseInt(request.getParameter("startat"));
-		if (startat<0) startat=0;
-	    } catch(Exception _e) {}
-	    */
 	    User u = null;
 
 	    if (user!=null) {
@@ -132,6 +125,8 @@ public class Search extends ResultsBase {
 	public boolean needPrev, needNext;
 
 	public int reportedLength;
+
+	public org.apache.lucene.search.Query reportedLuceneQuery=null;
     }
 
     /** Full-text search */
@@ -149,8 +144,8 @@ public class Search extends ResultsBase {
 		query.startsWith("\"") && query.endsWith("\"");
 	    if (isPhrase) query = query.substring(1, query.length()-1);
 
-
-	    String terms[]= query.toLowerCase().split("[^a-zA-Z0-9_]+");
+	    // ":", "-", "." and "*" are allowed in terms, for later processing
+	    String terms[]= query.split("[^a-zA-Z0-9_:\\.\\*\\-]+");
 	    BooleanQuery q = new BooleanQuery();
 
 	    if (isPhrase) {
@@ -160,7 +155,7 @@ public class Search extends ResultsBase {
 		    int tcnt=0;
 		    for(String t: terms) {
 			if (t.trim().length()==0) continue;
-			ph.add( new Term(f, t));
+			ph.add( new Term(f, t.toLowerCase()));
 			tcnt++;
 		    }
 		    q.add( ph, BooleanClause.Occur.SHOULD);
@@ -170,12 +165,28 @@ public class Search extends ResultsBase {
 		int tcnt=0;
 		for(String t: terms) {
 		    if (t.trim().length()==0) continue;
-		    BooleanQuery b = new BooleanQuery(); 	
-		    for(String f: searchFields) {
-			TermQuery tq = new TermQuery(new Term(f, t));
-			b.add( tq, BooleanClause.Occur.SHOULD);		
+		    org.apache.lucene.search.Query zq=null;
+		    final String SUBJECT = "subject:", DAYS="days:";
+		    if (t.startsWith(SUBJECT)) {
+			String cat = t.substring(SUBJECT.length());
+			zq= mkTermOrPrefixQuery(ArxivFields.CATEGORY, cat);
+		    } else if (t.startsWith(DAYS)) {
+			String s = t.substring(DAYS.length());
+			try {
+			    int  days = Integer.parseInt(s);
+			    Date since = new Date( (new Date()).getTime() - days *24L* 3600L*1000L);
+			    zq = mkSinceDateQuery(since);
+			} catch (Exception ex) {}
+		    } else {
+			BooleanQuery b = new BooleanQuery(); 
+			for(String f: searchFields) {
+			    b.add(  mkTermOrPrefixQuery(f, t.toLowerCase()),
+				    BooleanClause.Occur.SHOULD);		
+			}
+			zq = b;
 		    }
-		    q.add( b,  BooleanClause.Occur.MUST);
+		
+		    q.add( zq,  BooleanClause.Occur.MUST);
 		    tcnt++;
 		}
 		if (tcnt==0) throw new WebException("Empty query");
@@ -188,6 +199,7 @@ public class Search extends ResultsBase {
 	    System.out.println("index has "+numdocs +" documents");
 	    
 	    int maxlen = startat + M;
+	    reportedLuceneQuery=q;
 	    TopDocs 	 top = searcher.search(q, maxlen + 1);
 	    scoreDocs = top.scoreDocs;
 	    needNext=(scoreDocs.length > maxlen);
@@ -200,6 +212,7 @@ public class Search extends ResultsBase {
 	    }
 
 	    //Document doc = s.doc(scoreDocs[0].doc);
+	    System.out.println("Lucene query=" + q);
 	    System.out.println("" + scoreDocs.length + " results");
 
 
@@ -249,29 +262,19 @@ public class Search extends ResultsBase {
 		Logging.warning("No categories specified!");
 		return;
 	    } else if (cats.length==1) {
-		q = new TermQuery(new Term(ArxivFields.CATEGORY, cats[0]));
+		q =   mkTermOrPrefixQuery(ArxivFields.CATEGORY, cats[0]);
 	    } else {
 		BooleanQuery bq = new BooleanQuery();
 		for(String t: cats) {
-		    TermQuery tq = new TermQuery(new Term(ArxivFields.CATEGORY, t));
-		    bq.add( tq,  BooleanClause.Occur.SHOULD);
-	  	    
+		    bq.add(  mkTermOrPrefixQuery(ArxivFields.CATEGORY, t),
+			     BooleanClause.Occur.SHOULD);
 		}
 		q = bq;
 	    }
 
-
 	    if ( rangeStartDate!=null) {
-		BooleanQuery bq = new BooleanQuery();
-		bq.add( q,  BooleanClause.Occur.MUST);
-		String lower = 	DateTools.timeToString(rangeStartDate.getTime(), DateTools.Resolution.MINUTE);
-		System.out.println("date range: from " + lower);
-		TermRangeQuery trq = 
-		    new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);
-		bq.add( trq,  BooleanClause.Occur.MUST);
-		q = bq;
+		q = andQuery( q, mkSinceDateQuery(rangeStartDate));
 	    }
-
 
 	    System.out.println("Lucene query: " +q);
 
@@ -282,6 +285,7 @@ public class Search extends ResultsBase {
 	    System.out.println("index has "+numdocs +" documents");
 	    
 	    int maxlen = startat + M;
+	    reportedLuceneQuery=q;
 	    TopDocs 	 top = searcher.search(q, maxlen + 1);
 	    scoreDocs = top.scoreDocs;
 	    needNext=(scoreDocs.length > maxlen);
@@ -332,8 +336,39 @@ public class Search extends ResultsBase {
 	System.exit(1);
     }
 
+    static org.apache.lucene.search.Query mkTermOrPrefixQuery(String field, String t) {
+	int pos = t.indexOf('*');
+	if (pos<0) return new TermQuery(new Term(field, t)); 
+	else {
+	    return new PrefixQuery(new Term(field, t.substring(0,pos))); 
+	}
+	
+    }
+
+    static TermRangeQuery mkSinceDateQuery(Date since) {
+	String lower = 	DateTools.timeToString(since.getTime(), DateTools.Resolution.MINUTE);
+	//System.out.println("date range: from " + lower);
+	return new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);
+    }
 
 
+    static BooleanQuery andQuery( org.apache.lucene.search.Query q1, 
+				  org.apache.lucene.search.Query q2) {
+	if (q1 instanceof BooleanQuery) {
+	    BooleanQuery b = (BooleanQuery)q1;
+	    b.add( q2,  BooleanClause.Occur.MUST);
+	    return b;
+	} else if  (q2 instanceof BooleanQuery) {
+	    BooleanQuery b = (BooleanQuery)q2;
+	    b.add( q1,  BooleanClause.Occur.MUST);
+	    return b;
+	} else {
+	    BooleanQuery b = new BooleanQuery();
+	    b.add( q1,  BooleanClause.Occur.MUST);
+	    b.add( q2,  BooleanClause.Occur.MUST);
+	    return b;
+	}
+    }
 
     /** For testing */
     static public void main(String[] argv) throws Exception {
@@ -344,10 +379,8 @@ public class Search extends ResultsBase {
 	boolean cat = ht.getOption("cat", false);
 
 	int days=ht.getOption("days", 0);
-	Date rangeStartDate = (days <=0) ? null:
+	Date since = (days <=0) ? null:
 	    new Date( (new Date()).getTime() - days *24L* 3600L*1000L);
-
-
 
 	String s="";
 	for(String x: argv) {
@@ -360,7 +393,7 @@ public class Search extends ResultsBase {
 	HashMap<String, Action> exc = new HashMap<String, Action>();
 	SearchResults sr =
 	    cat? 
-	    new SubjectSearchResults(argv, rangeStartDate, exc, 0) :
+	    new SubjectSearchResults(argv, since, exc, 0) :
 	    new TextSearchResults(s, exc, 0);
 
 	IndexReader reader = ArticleAnalyzer.getReader();

@@ -44,19 +44,20 @@
 </ul>
 </p>
 
-<h2>Paul's experiment plan, June 2012</h2>
+<h2>Paul's new experiment plan, June 2012</h2>
+
+<hr>
+<p><strong>
+Tools below will be mostly moved to the "research" page
+</strong></p>
+
+<h2>Paul's old experiment plan, May 2012</h2>
 <p>
 <ul>
 <li><a href="viewSuggestions.jsp?mode=LOG_SUGGESTIONS_1">Treatment A</a>: User profile UP0 (directly based on all user's activity), applied to the entire corpus (log(TF)*IDF)
 
 </ul>
 </p>
-
-
-<hr>
-<p><strong>
-Tools below will be mostly moved to the "research" page
-</strong></p>
 
 <h2>Recommendation lists</h2>
 

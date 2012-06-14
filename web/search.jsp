@@ -68,7 +68,7 @@ window.onload = StartScripts;
 	<div style="width:100%; text-align:center; position:relative; top:25px;">
 		<form name="simple_search" style="position:relative; text-align:center;" action="">
 		
-			<input type="text" name="simple_search" size="25" id="simple_search" />
+			<input type="text" name="simple_search" size="25" id="simple_search" value="<%=main.query%>" />
 			<input type="submit" value="Search" id="search_button_" class="button" style="font-weight:bold; padding:0px; width:75px; height:23px; text-align:center; position:relative; display:inline;" />
 		
 		</form>
@@ -110,6 +110,7 @@ window.onload = StartScripts;
 		<h1>Search Results</h1>
 		
 		<p>Query: <%= main.query %>
+		<br>Lucene query: <%= sr.reportedLuceneQuery%>
 		</p>
 		<p>Searched the collection of <%= sr.numdocs %> documents; found <%= sr.atleast %> 
 		<%= sr.reportedLength %> matching documents.

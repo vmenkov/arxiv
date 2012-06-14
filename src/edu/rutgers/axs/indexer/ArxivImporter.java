@@ -282,21 +282,38 @@ public class ArxivImporter {
 	Cache metacache = new Cache(metaCacheRoot);	
 	metacache.setExtension(".xml");
 
-	if (!rewrite) {
+	if (!rewrite || fixCatsOnly) {
 	    // see if the doc already exists (both the Lucene entry, and the cached body and metadata)
+
 	    TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, paper));
 	    TopDocs 	 top = searcher.search(tq, 1);
 	    if (top.scoreDocs.length >0) {
-		// already exists
-		if (metacache.fileExists(paper) && 
-		    (new Cache( bodyCacheRoot)).fileExists(paper) ) {
-		    System.out.println("skip already stored doc, id=" + paper);
-		    return;
-		} else {
-		    System.out.println("Lucene entry exists, but no cached data, for doc id=" + paper);
+		boolean isCached = metacache.fileExists(paper) && 
+		    (new Cache( bodyCacheRoot)).fileExists(paper);
+
+		if (!rewrite) {
+		    if (isCached) {
+			System.out.println("skip already stored doc, id=" + paper);
+			return;
+		    } else {
+			System.out.println("Lucene entry exists, but no cached data, for doc id=" + paper);
+		    }
+		} else if (fixCatsOnly) {
+		    // special mode: for articles already present, we rewrite
+		    // them only when the format of categories to be stored
+		    // should be changed
+
+		    // FIXME: is there an easier way?
+		    IndexReader reader = IndexReader.open(writer, false);
+
+		    if (catsMatch(doc, top.scoreDocs[0].doc, reader)) {
+			System.out.println("skip already stored doc with matching cats, id=" + paper);
+		    }
+		    reader.close();
 		}
 	    }
 	}
+	    
 
 	String whole_doc = readBody( paper,  bodySrcRoot);
    
@@ -328,6 +345,24 @@ public class ArxivImporter {
 	    metacache.cacheDocument(paper, XMLUtil.XMLtoString(record));
 	}
     }
+
+    private static boolean catsMatch(org.apache.lucene.document.Document newDoc, int oldDocno, IndexReader reader) throws IOException{
+	String s = newDoc.get(ArxivFields.CATEGORY);
+	if (s==null) return false;
+	String[] newCats = s.split("\\s+");
+	Arrays.sort(newCats);
+
+	TermFreqVector tfv=reader.getTermFreqVector(oldDocno, ArxivFields.CATEGORY);
+	String[] oldCats=tfv.getTerms();	    
+	Arrays.sort(oldCats);
+
+	if (newCats.length != oldCats.length) return false;
+	for(int i=0; i< oldCats.length; i++) {
+	    if (newCats[i] != oldCats[i]) return false;
+	}
+	return true;
+    }
+
 
     private static boolean mustRetry(HttpURLConnection conn )throws IOException {
 	int code = conn.getResponseCode();
@@ -424,17 +459,27 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
 	try {
 
-	while( max<0 || pagecnt < max) 	 {
-	    String us = makeURL( tok, from);
-	    System.out.println("Requesting: " + us);
-	    Element e = getPage(us);	    
-	    tok = parseResponse(e, writer, rewrite);
-	    pagecnt++;
-	    System.out.println("done "+pagecnt+" pages, token =  " + tok);
-	    if (tok==null || tok.trim().equals("")) break;
-	}
+	    while( max<0 || pagecnt < max) 	 {
+		String us = makeURL( tok, from);
+		System.out.println("At "+new Date()+", requesting: " + us);
+		Element e = getPage(us);	    
+		tok = parseResponse(e, writer, rewrite);
+		pagecnt++;
+		System.out.println("done "+pagecnt+" pages, token =  " + tok);
+		if (tok==null || tok.trim().equals("")) break;
 
-	writer.optimize();
+		if (pagecnt % 1 == 0) {
+		    System.out.println("At "+new Date()+", re-opening index... ");
+		    writer.close();
+		    writer =  makeWriter(); 
+		}
+
+	    }
+
+	    if (optimize) {
+		System.out.println("At "+new Date()+", optimizing index... ");
+		writer.optimize();
+	    }
 	} finally {
 	    writer.close();
 	}
@@ -520,6 +565,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	return from;
     }
 
+    static boolean  optimize=true;
+    static boolean fixCatsOnly = false;
+
     /** Options:
 	<pre>
 	-Dtoken=xxxx   Resume from the specified resumption page
@@ -534,7 +582,8 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	String tok=ht.getOption("token", null);
 	boolean rewrite =ht.getOption("rewrite", true);
 	String from=getFrom(ht); // based on "from" and "days"
-	boolean optimize =ht.getOption("optimize", true);
+	optimize =ht.getOption("optimize", optimize);
+	fixCatsOnly = ht.getOption("fixCatsOnly", false);
 
 	Options.init(); // read the legacy config file
 
