@@ -133,7 +133,8 @@ window.onload = StartScripts;
 		
 			<input type="text" name="simple_search" size="25" id="simple_search" />
 			<input type="submit" value="Search" id="search_button_" class="button" style="font-weight:bold; padding:0px; width:75px; height:23px; text-align:center; position:relative; display:inline;" />
-		
+			<a href="search_help.jsp">Search help</a>
+
 		</form>
 	</div>
 
@@ -227,7 +228,10 @@ window.onload = StartScripts;
 
 -->
       
-      <div style="text-align: center">Version <%=Version.version%></div>
+      <div style="text-align: center">My.ArXiv Version <%=Version.version%></div>
+
+       <div style="text-align: center"><strong>This project is supported by the National Science Foundation (#NSF IIS-1142251)</strong></div>
+
     </div>
     <!-- Left Frame -->
 

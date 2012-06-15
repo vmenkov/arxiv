@@ -70,7 +70,9 @@ window.onload = StartScripts;
 		
 			<input type="text" name="simple_search" size="25" id="simple_search" value="<%=main.query%>" />
 			<input type="submit" value="Search" id="search_button_" class="button" style="font-weight:bold; padding:0px; width:75px; height:23px; text-align:center; position:relative; display:inline;" />
+			<a href="search_help.jsp">Search help</a>
 		
+
 		</form>
 	</div>
 

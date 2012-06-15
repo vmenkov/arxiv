@@ -165,27 +165,8 @@ public class Search extends ResultsBase {
 		int tcnt=0;
 		for(String t: terms) {
 		    if (t.trim().length()==0) continue;
-		    org.apache.lucene.search.Query zq=null;
-		    final String SUBJECT = "subject:", DAYS="days:";
-		    if (t.startsWith(SUBJECT)) {
-			String cat = t.substring(SUBJECT.length());
-			zq= mkTermOrPrefixQuery(ArxivFields.CATEGORY, cat);
-		    } else if (t.startsWith(DAYS)) {
-			String s = t.substring(DAYS.length());
-			try {
-			    int  days = Integer.parseInt(s);
-			    Date since = new Date( (new Date()).getTime() - days *24L* 3600L*1000L);
-			    zq = mkSinceDateQuery(since);
-			} catch (Exception ex) {}
-		    } else {
-			BooleanQuery b = new BooleanQuery(); 
-			for(String f: searchFields) {
-			    b.add(  mkTermOrPrefixQuery(f, t.toLowerCase()),
-				    BooleanClause.Occur.SHOULD);		
-			}
-			zq = b;
-		    }
-		
+		    org.apache.lucene.search.Query zq= mkWordClause(t);
+		    if (zq == null) continue;
 		    q.add( zq,  BooleanClause.Occur.MUST);
 		    tcnt++;
 		}
@@ -241,8 +222,44 @@ public class Search extends ResultsBase {
 	    }
 	}
 
+	static private org.apache.lucene.search.Query mkWordClause(String t) {
 
+	    String f0 = ArxivFields.CATEGORY;
+	    String prefix = f0 + ":";
+	    if (t.startsWith(prefix)) {
+		String w = t.substring(prefix.length());
+		return mkTermOrPrefixQuery(f0, w);
+	    }
+
+	    for(String f: searchFields) {
+		prefix = f + ":";
+		if (t.startsWith(prefix)) {
+		    String w = t.substring(prefix.length());
+		    return mkTermOrPrefixQuery(f, w.toLowerCase());
+		}
+	    }
+
+	    f0 = "days";
+	    prefix = f0 + ":";
+	    if (t.startsWith(prefix)) {
+		String s = t.substring(prefix.length());
+		try {
+		    int  days = Integer.parseInt(s);
+		    Date since = new Date( (new Date()).getTime() - days *24L* 3600L*1000L);
+		    return mkSinceDateQuery(since);
+		} catch (Exception ex) { return null; }
+	    } else {
+		BooleanQuery b = new BooleanQuery(); 
+		for(String f: searchFields) {
+		    b.add(  mkTermOrPrefixQuery(f, t.toLowerCase()),
+			    BooleanClause.Occur.SHOULD);		
+		}
+		return b;
+	    }
+	}
     }
+
+
 
 
    /** Subject search */
