@@ -363,16 +363,6 @@ public class UserProfile {
 
     }
 
-/*
-    static class SDComparator implements Comparator<ScoreDoc> {
-	// Descending order! 
-	public int compare(ScoreDoc a, ScoreDoc  b) {
-	    double d = b.score - a.score; 
-	    return (d<0) ? -1 : (d>0) ? 1: 0;
-	}
-    }
-*/
-
     /** This is an "autonomous" version, which goes for the real cosine
       similarity, So lots of numbers are precomputed by ourselves,
       stored in the SQL database, and then pulled with ArticleStats[].

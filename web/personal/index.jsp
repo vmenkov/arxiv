@@ -44,7 +44,12 @@
 </ul>
 </p>
 
+
 <h2>Paul's new experiment plan, June 2012</h2>
+
+<ul>
+<li>Treatment A: <a href="../user_cat_search.jsp?user_cat_search=true">User cat search</a>
+</ul>
 
 <hr>
 <p><strong>

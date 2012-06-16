@@ -148,7 +148,7 @@ class XMLtoLucene {
 		    }});
 	map.ignore("identifier");
 	map.add("id", ArxivFields.PAPER, Flags.NOT_ANALIZED);
-	map.add("created", "date", Flags.NOT_ANALIZED).
+	map.add("created",  ArxivFields.DATE, Flags.NOT_ANALIZED).
 	    setHandler(new FieldHandler() {
 		    String convertText(String text) {
 			return text.replaceAll("-", "") + "0000";

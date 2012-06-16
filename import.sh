@@ -18,6 +18,6 @@ set opt="-cp ${cp} ${opt} -Drewrite=true -Doptimize=true -Ddays=3"
 echo "opt=$opt"
 
 #echo java $opt edu.cornell.cs.osmot.indexer.Indexer $1 $2 $3
-/usr/bin/time java $opt edu.rutgers.axs.indexer.ArxivImporter all $1 $2 $3
+/usr/bin/time java $opt  edu.rutgers.axs.indexer.ArxivImporter all $1 $2 $3
 
 

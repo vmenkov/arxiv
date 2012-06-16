@@ -17,13 +17,12 @@ import edu.rutgers.axs.recommender.*;
 /** Common class for many scripts in the "personal" folder
  */
 public class PersonalResultsBase extends ResultsBase {
-    /** The user name of the user whose activity we reasearch */
+    /** The user name of the user whose activity we research */
     public String actorUserName=null;
     public User actor;
 
-
     /** Is the user requesting a list for his own activity (rather
-     * than for someone's else, as a researcher)? */
+	than for someone's else, as a researcher)? */
     public boolean isSelf = false;
 
     /** "Expert mode" allows one to view more options in certain screens */

@@ -10,9 +10,9 @@ set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/co
 
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 
-set opt="-cp ${cp} ${opt} -Dcat=true -Ddays=5600"
+set opt="-cp ${cp} ${opt} -Dcat=true -Ddays=30 -Dcustom=true"
 
 echo "opt=$opt"
 
-/usr/bin/time java $opt edu.rutgers.axs.web.Search $1 $2 $3
+/usr/bin/time java $opt edu.rutgers.axs.web.Search "$1" "$2" "$3"
 

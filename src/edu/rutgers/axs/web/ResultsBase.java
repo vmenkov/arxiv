@@ -108,6 +108,9 @@ public class ResultsBase {
     long getLong(String name, long defVal) {
 	return Tools.getLong(request, name, defVal);
     }
+    int getInt(String name, int defVal) {
+	return (int)Tools.getLong(request, name, defVal);
+    }
 
     String getString(String name, String defVal) {
 	return Tools.getString(request, name, defVal);
@@ -205,6 +208,31 @@ public class ResultsBase {
 					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER);
     } 
 
+    static String a(String url, String body) {
+	return  "<a href=\"" + url+ "\">"+body+"</a>";
+	
+    }
+
+    /** Generates an HTML "div" element with everything pertaining to a single
+	search result.
+     */
+    public String resultsDivHTML(ArticleEntry e, boolean isSelf) {
+	String s = 
+	    "<div class=\"result\" id=\"result" + e.i + "\">\n" +
+	    "<div class=\"document\">\n" +
+	    e.i + ". [score="+e.score+ "] "+ e.idline + "\n" +
+	    "[" + a( urlAbstract(e.id), "Abstract") + "]\n" +
+	    "[" + a( urlPDF(e.id), "PDF/PS/etc") + "]\n" +
+	    "<br>\n" +
+	    e.titline + "<br>\n" +
+	    e.authline+ "<br>\n" +
+	    (!e.commline.equals("") ? e.commline + "<br>" : "") +
+	    e.subjline+ "<br>\n" +
+	    "</div>\n" +
+	    (isSelf? judgmentBarHTML(e): "") +
+	    "</div>";
+	return s;
+    }
 
 
 }

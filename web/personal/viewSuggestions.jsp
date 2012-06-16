@@ -55,14 +55,10 @@
 
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else {     %>
-
-
 <%
      if (!main.force && main.entries!=null) {
        long since = main.actor.getLastActionId() -main.df.getLastActionId();
  %>
-	
-	
 		<h1>Suggestions</h1>
 
 <p>Suggestion list <%=main.df.getThisFile() %> was generated for user
@@ -101,24 +97,8 @@ list has been generated).  </p>
 		<% 
 		int rowCnt=0;
 for( ArticleEntry e: main.entries) { 
-		  if (++rowCnt >= main.maxRows) break;
-%>
-		<div class="result" id="result<%=e.i%>">
-			<div class="document">
-			<%= e.i %>. [score=<%=e.score%>] <%= e.idline %> 
-[<a href="<%=main.urlAbstract(e.id)%>">Abstract</a>]
-[<a href="<%=main.urlPDF(e.id)%>">PDF/PS/etc</a>]
- <br />
-			<%= e.titline %><br />
-			<%= e.authline %><br />
-			<% if (!e.commline.equals("")) { %>
-			<%= e.commline %><br />  
-			<%}%>
-			<%= e.subjline %><br />
-			</div>
-
-			<%= main.isSelf? main.judgmentBarHTML(e): "" %>
-		</div>
+		  if (++rowCnt >= main.maxRows) break;%>
+<%= main.resultsDivHTML(e) %>	
 		<% }%>		
 
 <% } else if (!main.force) { %>

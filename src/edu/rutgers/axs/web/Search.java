@@ -15,6 +15,7 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
@@ -39,20 +40,38 @@ public class Search extends ResultsBase {
     public int startat = 0;
     //public boolean useLog = false;
 
+    /** Used for cat search, to restrict date range */
+    public int days=7;
+
+    static final String DAYS="days",
+	SIMPLE_SEARCH="simple_search", USER_CAT_SEARCH="user_cat_search";
+
     public Search(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	if (error) return;
 	EntityManager em = null;
 	try {
-	    query = request.getParameter("simple_search");
-	    if (query==null || query.trim().equals("")) {
+	    query = request.getParameter(SIMPLE_SEARCH);
+	    boolean user_cat_search = getBoolean( USER_CAT_SEARCH, false);
+
+	    if (user_cat_search) {
+		if (query != null) {
+		    error=true;
+		    errmsg="You cannot use " + SIMPLE_SEARCH + " and " + USER_CAT_SEARCH + " at the same time!";
+		    return;		    
+		} else if (user==null) {
+		    error = true;
+		    errmsg = "Not logged in";
+		    return;
+		}
+	    } else if (query==null || query.trim().equals("")) {
 		error=true;
 		errmsg="No query entered";
 		return;
+	    } else {		// simple_search, by query 
+		queryEncoded = URLEncoder.encode(query);
 	    }
 
-	    queryEncoded = URLEncoder.encode(query);
-	    
 	    // just checking
 	    SessionData sd = SessionData.getSessionData(request);  
             edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
@@ -70,7 +89,17 @@ public class Search extends ResultsBase {
 		(u==null) ? new HashMap<String, Action>() :
 		u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
 
-	    sr  = new TextSearchResults(query, exclusions, startat);
+	    if (user_cat_search) {
+		String[] cats = u.getCats().toArray(new String[0]);
+		Date now = new Date();
+		days = getInt( DAYS, days);
+		Date since = new Date(now.getTime() - days *24L* 3600L*1000L);
+		sr = new SubjectSearchResults(cats, since,
+					      exclusions, startat, true);
+	    } else {
+		sr  = new TextSearchResults(query, exclusions, startat);
+	    }
+
 	    if (u!=null) {
 		// Mark pages currently in the user's folder, or rated by the user
 		ArticleEntry.markFolder(sr.entries, u.getFolder());
@@ -78,7 +107,7 @@ public class Search extends ResultsBase {
 					 u.getActionHashMap(Action.ratingOps));
 	    }
 
-	    if (user!=null) {
+	    if (!user_cat_search && user!=null) {
 		if (u!=null) {
 		    em.getTransaction().begin();
 		    u = User.findByName(em, user); // re-read, just in case   
@@ -176,7 +205,7 @@ public class Search extends ResultsBase {
 	    Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	    IndexSearcher searcher = new IndexSearcher( indexDirectory);
 	    
-	    numdocs = searcher.getIndexReader().numDocs() ;
+	    numdocs = searcher.getIndexReader().numDocs();
 	    System.out.println("index has "+numdocs +" documents");
 	    
 	    int maxlen = startat + M;
@@ -206,9 +235,9 @@ public class Search extends ResultsBase {
 		String aid = doc.get(ArxivFields.PAPER);
 		if (exclusions!=null && exclusions.containsKey(aid)) {
 		    int epos = excludedEntries.size()+1;
-		    excludedEntries.add( new ArticleEntry(epos, doc, docno));
+		    excludedEntries.add( new ArticleEntry(epos, doc, docno, scoreDocs[i].score));
 		} else {
-		    entries.add( new ArticleEntry(pos, doc, docno));
+		    entries.add( new ArticleEntry(pos, doc, docno, scoreDocs[i].score));
 		    pos++;
 		}			
      /*
@@ -239,7 +268,7 @@ public class Search extends ResultsBase {
 		}
 	    }
 
-	    f0 = "days";
+	    f0 = DAYS;
 	    prefix = f0 + ":";
 	    if (t.startsWith(prefix)) {
 		String s = t.substring(prefix.length());
@@ -260,8 +289,6 @@ public class Search extends ResultsBase {
     }
 
 
-
-
    /** Subject search */
     public static class SubjectSearchResults extends SearchResults {
 	/**@param cat
@@ -269,7 +296,8 @@ public class Search extends ResultsBase {
 	 */
 	SubjectSearchResults(String[] cats, Date rangeStartDate, 
 			     HashMap<String, Action> exclusions, 
-			     int startat) throws Exception {
+			     int startat
+			     , boolean customSort) throws Exception {
 	    prevstart = Math.max(startat - M, 0);
 	    nextstart = startat + M;
 	    needPrev = (prevstart < startat);
@@ -283,6 +311,8 @@ public class Search extends ResultsBase {
 	    } else {
 		BooleanQuery bq = new BooleanQuery();
 		for(String t: cats) {
+		    t = t.trim();
+		    if (t.equals("")) continue;
 		    bq.add(  mkTermOrPrefixQuery(ArxivFields.CATEGORY, t),
 			     BooleanClause.Occur.SHOULD);
 		}
@@ -303,8 +333,10 @@ public class Search extends ResultsBase {
 	    
 	    int maxlen = startat + M;
 	    reportedLuceneQuery=q;
-	    TopDocs 	 top = searcher.search(q, maxlen + 1);
+	    int searchLimit = customSort ? 10000 : maxlen + 1;
+	    TopDocs 	 top = searcher.search(q, searchLimit);
 	    scoreDocs = top.scoreDocs;
+	    if (customSort) doCustomSort(searcher, scoreDocs, cats, rangeStartDate);
 	    needNext=(scoreDocs.length > maxlen);
 	    if (needNext) {
 		reportedLength =maxlen;
@@ -327,9 +359,9 @@ public class Search extends ResultsBase {
 		String aid = doc.get(ArxivFields.PAPER);
 		if (exclusions!=null && exclusions.containsKey(aid)) {
 		    int epos = excludedEntries.size()+1;
-		    excludedEntries.add( new ArticleEntry(epos, doc, docno));
+		    excludedEntries.add( new ArticleEntry(epos, doc, docno, scoreDocs[i].score));
 		} else {
-		    entries.add( new ArticleEntry(pos, doc, docno));
+		    entries.add( new ArticleEntry(pos, doc, docno, scoreDocs[i].score));
 		    pos++;
 		}			
 	    }
@@ -369,13 +401,22 @@ public class Search extends ResultsBase {
     }
 
 
+    static boolean isAnAndQuery(org.apache.lucene.search.Query q) {
+	if (!(q instanceof BooleanQuery)) return false;
+	for(BooleanClause c: ((BooleanQuery)q).clauses()) {
+	    if (c.getOccur()!= BooleanClause.Occur.MUST) return false;
+	}
+	return true;
+    }
+
+
     static BooleanQuery andQuery( org.apache.lucene.search.Query q1, 
 				  org.apache.lucene.search.Query q2) {
-	if (q1 instanceof BooleanQuery) {
+	if (isAnAndQuery(q1)) {
 	    BooleanQuery b = (BooleanQuery)q1;
 	    b.add( q2,  BooleanClause.Occur.MUST);
 	    return b;
-	} else if  (q2 instanceof BooleanQuery) {
+	} else if  (isAnAndQuery(q2)) {
 	    BooleanQuery b = (BooleanQuery)q2;
 	    b.add( q1,  BooleanClause.Occur.MUST);
 	    return b;
@@ -387,6 +428,77 @@ public class Search extends ResultsBase {
 	}
     }
 
+    /** foo matches foo* */
+    private static boolean wcMatch(String x, String wc) {
+	return wc.endsWith("*") && x.startsWith(wc.substring(0,wc.length()-1));
+    }
+
+    /** Counts matches in two sorted (ascending) arrays */
+    private static int matchCnt(String [] a1, String[] a2) {
+	int cnt=0;
+	int i1=0, i2=0;
+	while(i1<a1.length && i2<a2.length) {
+	    int d = a1[i1].compareTo(a2[i2]);
+	    if (d==0 || wcMatch(a1[i1],a2[i2])) {
+		i1++;
+		i2++;
+		cnt++;
+	    } else  if (d<0) i1++;
+	    else {//if (d>0) 
+		i2++;
+	    }
+	}
+	return cnt;
+    }
+
+
+    static class SDComparator implements Comparator<ScoreDoc> {
+	// Descending order! 
+	public int compare(ScoreDoc a, ScoreDoc  b) {
+	    double d = b.score - a.score; 
+	    return (d<0) ? -1 : (d>0) ? 1: 0;
+	}
+    }
+
+
+    /** Re-sort as needed for June 2012 experiments. Number of matching 
+	cats is the primary key, date is the secondary */
+    static void doCustomSort(IndexSearcher searcher, ScoreDoc[] scoreDocs, String[] _cats, Date since) throws IOException, CorruptIndexException{
+	String[] cats = Arrays.copyOf(_cats, _cats.length);
+	Arrays.sort(cats);
+
+	//	Vector<String> wildCardPrefixes = new Vector<String>();
+	//	for(String cat: 
+      
+
+	IndexReader reader = searcher.getIndexReader();
+
+	Date now = new Date();
+	long maxMsec = now.getTime() - since.getTime();
+	if (maxMsec <= 0) maxMsec = 365 * 24 * 3600L * 1000L; // just in case
+
+
+	for(int i=0; i<scoreDocs.length; i++) {
+	    ScoreDoc sd = scoreDocs[i];
+	    
+	    TermFreqVector tfv=reader.getTermFreqVector(sd.doc, ArxivFields.CATEGORY);
+	    // in ascending order already, as per API docs
+	    String[] docCats=tfv.getTerms();	    
+	    int matches = matchCnt( docCats,cats);
+	    sd.score = (float)matches;
+
+	    String dateString  = reader.document(sd.doc).get(ArxivFields.DATE);
+	    if (dateString != null) {
+		try {
+		    Date docDate= DateTools.stringToDate(dateString);
+		    double penalty = 0.5 * (now.getTime() - docDate.getTime())/(double)maxMsec;
+		    sd.score -= (float) penalty;
+		} catch(java.text.ParseException ex) {}
+	    }
+	}
+	Arrays.sort(scoreDocs, new SDComparator());
+    }
+
     /** For testing */
     static public void main(String[] argv) throws Exception {
 	if (argv.length==0) usage();
@@ -394,10 +506,11 @@ public class Search extends ResultsBase {
 	ParseConfig ht = new ParseConfig();
 	//int maxDocs = ht.getOption("maxDocs", -1);
 	boolean cat = ht.getOption("cat", false);
+	boolean custom = ht.getOption("custom", false);
 
 	int days=ht.getOption("days", 0);
 	Date since = (days <=0) ? null:
-	    new Date( (new Date()).getTime() - days *24L* 3600L*1000L);
+	    new Date( (new Date()).getTime() - (long)days *24L* 3600L*1000L);
 
 	String s="";
 	for(String x: argv) {
@@ -405,12 +518,13 @@ public class Search extends ResultsBase {
 	    s += x;
 	}
 
-	System.out.println( (cat? "Subject search":"Text search") + " for: " + s );
+	System.out.println( (cat? "Subject search":"Text search") +
+			    " for: " + s + "; since " + since);
 
 	HashMap<String, Action> exc = new HashMap<String, Action>();
 	SearchResults sr =
 	    cat? 
-	    new SubjectSearchResults(argv, since, exc, 0) :
+	    new SubjectSearchResults(argv, since, exc, 0, custom) :
 	    new TextSearchResults(s, exc, 0);
 
 	IndexReader reader = ArticleAnalyzer.getReader();
@@ -420,7 +534,7 @@ public class Search extends ResultsBase {
 	    cnt++;
 	    int docno = q.doc;
 	    Document d = reader.document(docno);
-	    System.out.println("["+cnt+"] " + d.get(ArxivFields.PAPER) +
+	    System.out.println("["+cnt+"][s="+q.score+"] " + d.get(ArxivFields.PAPER) +
 			       "; " + d.get(ArxivFields.CATEGORY) +
 			       "; " + d.get(ArxivFields.TITLE) +
 			       " ("+ d.get(ArxivFields.DATE)+")");

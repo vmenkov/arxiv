@@ -187,4 +187,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	return s;
     }
 
+    public String resultsDivHTML(ArticleEntry e) {
+	return resultsDivHTML(e, isSelf);
+    }
 }

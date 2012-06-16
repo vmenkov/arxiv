@@ -41,12 +41,17 @@ public class ArticleEntry {
 	Lucene data store.
 	@param docno Lucene's internal doc id
      */
-    public ArticleEntry(int _i, Document doc, int _docno) {
+    public ArticleEntry(int _i, Document doc, int _docno, double _score) {
 	i = _i;
 	docno = _docno;
+	score=_score;
 	id=doc.get(ArxivFields.PAPER);
 	idline="arXiv:" + id;
 	populateOtherFields( doc);
+    }
+
+    public ArticleEntry(int _i, Document doc, int _docno) {
+	this(_i, doc, _docno, 0);
     }
 
     void populateOtherFields( Document doc) {
