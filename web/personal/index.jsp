@@ -45,10 +45,15 @@
 </p>
 
 
-<h2>Paul's new experiment plan, June 2012</h2>
+<h2><a name="plan-2012-06">Paul's new experiment plan, June 2012</a></h2>
+
+These are the building blocks of the experiment as it is currently planned: 
 
 <ul>
 <li>Treatment A: <a href="../user_cat_search.jsp?user_cat_search=true">User cat search</a>
+<li>Treatment B: to see what Treatment B will be like, go to 
+<a href="viewUserProfile.jsp?expert=true&mode=TJ_ALGO_2_USER_PROFILE">Algo 2 user profile</a>, check the radio button at "sublinear utility", and click on the "view suggestions" button
+
 </ul>
 
 <hr>
@@ -81,7 +86,7 @@ Various algorithms for finding pages possibly interesting to you.
 </p>
 
 
-<h2>Other</h2>
+<h2><a name="other">Other</a></h2>
 
 <p>
 <ul>
