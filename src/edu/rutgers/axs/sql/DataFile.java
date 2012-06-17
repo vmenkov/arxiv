@@ -5,8 +5,6 @@ import java.util.*;
 import java.text.*;
 import javax.persistence.*;
 
-//import java.lang.reflect.*;
-
 import edu.cornell.cs.osmot.options.Options;
 import edu.rutgers.axs.web.ArticleEntry;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
@@ -69,6 +67,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
   
    /** Various supported data file content types.  */
     public static enum Type {
+	/** This is just used instead of null */
+	//NONE,
 	/** Basic user profile, based directly on the user's entire 
 	    interaction history */
 	USER_PROFILE,
@@ -258,6 +258,13 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
     /** Finds the latest file of a given type (probably, sugg list)
 	that's based on a particular input file (probably, a user profile file)
+
+	@param days The value in the DataFile.days of the file to be
+	retrieved. 
+
+	@param inputFile Input file name (as recorded in
+	DataFile.inputFile) based on which the file we're retrieving
+	must be based.
      */
     static public DataFile getLatestFileBasedOn(EntityManager em, String  username, 
 						Type t, int days, String inputFile) {

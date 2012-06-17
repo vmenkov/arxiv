@@ -51,11 +51,14 @@ These are the building blocks of the experiment as it is currently planned:
 
 <ul>
 <li>Treatment A: <a href="../user_cat_search.jsp?user_cat_search=true">User cat search</a>
-<li>Treatment B: to see what Treatment B will be like, go to 
+<li>Treatment B: the most recent suggestion list that has been calculated by Thorsten's Algorthm 1 applied to an Algo 2 profile
+<ul>
+<li><a href="viewSuggestions.jsp?mode=TJ_ALGO_1_SUGGESTIONS_1&basedon_type=TJ_ALGO_2_USER_PROFILE">Direct view</a>
+<li>You also should see the same list in the following roundabout way: go to 
 <a href="viewUserProfile.jsp?expert=true&mode=TJ_ALGO_2_USER_PROFILE">Algo 2 user profile</a>, check the radio button at "sublinear utility", and click on the "view suggestions" button
-
 </ul>
-
+In either case, if you have not had any previous activity, there may be no list of the right type yet. This will be fixed later by some reasonable substitution... 
+</ul>
 <hr>
 <p><strong>
 Tools below will be mostly moved to the "research" page

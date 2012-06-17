@@ -37,8 +37,9 @@ public class PersonalResultsBase extends ResultsBase {
     public String requestedFile=null;
 
     public static final  String MODE="mode", DAYS="days", EXPERT="expert";
-    /** For ViewSuggestionList: give suggestions based on a specific profile. */
-    public static final String BASEDON = "basedon";
+    /** For ViewSuggestionList: give suggestions based on a specific
+	profile, or on a specific data type */
+    public static final String BASEDON = "basedon", BASEDON_TYPE = "basedon_type";
 
     public PersonalResultsBase(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);

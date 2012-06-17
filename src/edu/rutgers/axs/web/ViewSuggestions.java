@@ -45,12 +45,18 @@ public class ViewSuggestions extends PersonalResultsBase {
 	profile on which the requested suggestion list must be based.
      */
     public String basedon=null;
+    /** If this is supplied, this specifies the type of the source file
+	on which the requested suggestion list must be based.
+     */
+    DataFile.Type basedonType = null;
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	days = (int)getLong(DAYS, days);
 	basedon=getString(BASEDON,null);
+	basedonType =  (DataFile.Type)getEnum(DataFile.Type.class, BASEDON_TYPE,null); // DataFile.Type.NONE);
+
 	if (error) return; // authentication error?
 
 	Task.Op taskOp = mode.producerFor(); // producer task type
@@ -62,6 +68,11 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
 
 	    if (actorUserName==null) throw new WebException("No user name specified!");
+	    if (force && !expert) {
+		throw new WebException("The 'force' mode can only be used together with the 'expert' mode");
+	    }	
+
+
 
 	    em.getTransaction().begin();
 	    
@@ -72,6 +83,9 @@ public class ViewSuggestions extends PersonalResultsBase {
 		// the specified user profile file...
 		df = DataFile.getLatestFileBasedOn(em, actorUserName, 
 						   mode, days, basedon);
+	    } else if (basedonType!=null) {
+		df = DataFile.getLatestFileBasedOn(em, actorUserName, 
+						   mode, days, basedonType);
 	    } else {
 		df = DataFile.getLatestFile(em, actorUserName, mode, days);
 	    }
@@ -112,7 +126,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 		    }
 		}
 	    } else {
-		needNewTask= (df==null && activeTask==null && queuedTask==null);
+		needNewTask= expert && (df==null && activeTask==null && queuedTask==null);
 		infomsg += "Update task created since there are no current data to show, and no earlier update task in queue";
 	    }
 
