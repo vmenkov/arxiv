@@ -88,10 +88,11 @@ public class Scheduler {
 	    em.refresh(u);
 	    String uname= u.getUser_name();
 	    long lai = u.getLastActionId();
-	    if (lai <= 0) {
+
+	    //if (lai <= 0) {
 		//Logging.info("Scheduler: user " + uname + "; skip, due to no activity ever");
-		continue;
-	    }
+	    //	continue;
+	    //}
 
 	    if (!stage2) { // profile generation stage
 		int days=0; // does not matter for UP
@@ -122,7 +123,7 @@ public class Scheduler {
 		}
 
 	    } else { // suggestion list generation stage
-		//  Different types of suggestions
+		//  Different types of suggestion lists to generate
 		DataFile.Type modes[] = {
 		    DataFile.Type.LINEAR_SUGGESTIONS_1,
 		    DataFile.Type.LOG_SUGGESTIONS_1,
@@ -149,7 +150,7 @@ public class Scheduler {
 		    long plai = latestProfile.getLastActionId();
 		    DataFile sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
 		    boolean need = sugg==null || (sugg.getLastActionId() < plai);
-		    Logging.info("Scheduler: user " + uname + "; needed "+mode+" update? " + need);
+		    Logging.info("Scheduler: user " + uname + "; needed "+mode+" ("+days +"d) update? " + need);
 		    if (need) {
 			String requiredInput =
 			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
