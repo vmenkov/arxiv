@@ -50,7 +50,7 @@ public class ViewSuggestions extends PersonalResultsBase {
     DataFile.Type basedonType = null;
 
     static final String TEAM_DRAFT = "team_draft";
-    boolean teamDraft = false;
+    public boolean teamDraft = false;
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);

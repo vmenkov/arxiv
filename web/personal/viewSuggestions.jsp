@@ -59,7 +59,18 @@
      if (!main.force && main.entries!=null) {
        long since = main.actor.getLastActionId() -main.df.getLastActionId();
  %>
+
+<% if (main.teamDraft) {%>
+		<h1>Suggestions - merged list</h1>
+
+<em>The list presented here has been obtained by team-draft merger of the user category search results (Treatment A), and the Algo 1 suggestion list (Treatment B) as outlined below.</em>
+
+<h2>Underlying Treatment B suggestion list description</h2>
+
+<% } else { %>
 		<h1>Suggestions</h1>
+
+<% }%>
 
 <p>Suggestion list <%=main.df.getThisFile() %> was generated for user
 <%=main.df.getUser() %> at: <%=Util.ago(main.df.getTime())%>.
