@@ -18,6 +18,7 @@
 
 <form method="POST" action="LoginServlet">
       <input type="hidden" name="sp" value="<%=request.getParameter("sp")%>">
+      <input type="hidden" name="qs" value="<%=request.getParameter("qs")%>">
 <table>
 	<tr>
 		<td colspan="2">

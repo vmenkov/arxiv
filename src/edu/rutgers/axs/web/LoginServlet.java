@@ -20,6 +20,7 @@ public class LoginServlet extends HttpServlet {
 	String user= request.getParameter("j_username");
 	String p= request.getParameter("j_password");
 	String sp =  request.getParameter("sp");
+	String qs =  request.getParameter("qs");
 	String remember = request.getParameter("remember");
 	
 	//boolean error = false;
@@ -58,8 +59,15 @@ public class LoginServlet extends HttpServlet {
 		Logging.info("Login: no 'remember' box");		
 	    }
 
-	    String redirect = (sp==null || sp.equals("null"))? "/index.jsp" : sp;
-	    Logging.info("Login: sp="+sp+", redirect (relative to cp) to=" + redirect);	    
+	    String redirect =  "/index.jsp";
+	    if (sp!=null && !sp.equals("null")) {
+		redirect = sp;
+		if (qs != null) {
+		    redirect += "?" + qs;
+		}
+	    }
+	    Logging.info("Login: sp="+sp+", qs="+qs);
+	    Logging.info("Redirect (relative to cp) to=" + redirect);	    
 
 	    //	    RequestDispatcher dis = request.getRequestDispatcher(redirect);
 	    //	    Logging.info("Login: forward to=" + redirect);	    

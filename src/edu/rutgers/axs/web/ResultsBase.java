@@ -80,6 +80,10 @@ public class ResultsBase {
 		
 		    String redirect = cp + "/login2.jsp?sp=" +
 			URLEncoder.encode( request.getServletPath(), "UTF-8");
+
+		    String qs = request.getQueryString();
+		    if (qs != null) redirect += "&qs="+	URLEncoder.encode(qs, "UTF-8");
+
 		    //String eurl = response.encodeRedirectURL(redirect);
 		    response.sendRedirect(redirect);
 
