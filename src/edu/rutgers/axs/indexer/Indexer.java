@@ -628,7 +628,19 @@ public class Indexer {
 
 	} else if (args[0].equals("show")) {
 	    Show show = new Show();
-	    show.show(args[1]);	
+	    for(int j=1; j<args.length; j++) {
+		String v = args[j];
+		// is it numeric?
+		int docno=-1;
+		try {
+		    docno = Integer.parseInt(v);
+		} catch(Exception ex) {}
+		if (docno >= 0 && v.equals("" + docno)) {
+		    show.show(docno);  // numeric id requested
+		} else {
+		    show.show(v);	
+		}
+	    }
 	} else if (args[0].equals("showcoef")) {
 	    Show show = new Show();
 	    for(int j=1; j<args.length; j++) {

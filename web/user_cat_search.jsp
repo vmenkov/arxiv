@@ -7,7 +7,7 @@
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% 
 	Search main=new Search(request,response);
-	Search.SearchResults sr = main.sr;
+	SearchResults sr = main.sr;
 %>
 <!-- © 2011 by AEP -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"

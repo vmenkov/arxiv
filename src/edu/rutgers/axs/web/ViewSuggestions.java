@@ -3,7 +3,6 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -50,12 +49,17 @@ public class ViewSuggestions extends PersonalResultsBase {
      */
     DataFile.Type basedonType = null;
 
+    static final String TEAM_DRAFT = "team_draft";
+    boolean teamDraft = false;
+
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	days = (int)getLong(DAYS, days);
 	basedon=getString(BASEDON,null);
 	basedonType =  (DataFile.Type)getEnum(DataFile.Type.class, BASEDON_TYPE,null); // DataFile.Type.NONE);
+	
+	teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
 
 	if (error) return; // authentication error?
 
@@ -71,8 +75,6 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    if (force && !expert) {
 		throw new WebException("The 'force' mode can only be used together with the 'expert' mode");
 	    }	
-
-
 
 	    em.getTransaction().begin();
 	    
@@ -142,23 +144,45 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    if (df!=null) {
 
 		IndexReader reader=ArticleAnalyzer.getReader();
-		IndexSearcher s = new IndexSearcher( reader );
-
-		// read the artcile IDs and scores from the file
-		File f = df.getFile();
-		entries = ArticleEntry.readFile(f);
-		
+		IndexSearcher searcher = new IndexSearcher( reader );
 		actor=User.findByName(em, actorUserName);
-		actorLastActionId= actor.getLastActionId();
-		applyUserSpecifics(entries, actor);
 
+		if (teamDraft) {
+		    SearchResults asr = new SearchResults(df, searcher);
+		    
+		    int maxlen = 10000;
+		    SearchResults bsr = 
+			SubjectSearchResults.orderedSearch( searcher, actor, days, maxlen);
+		    if (bsr.scoreDocs.length>=maxlen) {
+			String msg = "Catsearch: At least, or more than, " + maxlen + " results found; displayed list may be incomplete";
+			Logging.warning(msg);
+			infomsg += msg + "<br>";
+		    }
+
+		    SearchResults merged = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs);
+		    int startat = 0;
+		    int M = 100;
+		    merged.setWindow( searcher, startat, M, null);
+
+		    entries = merged.entries;
+		} else {
+
+		    // read the artcile IDs and scores from the file
+		    File f = df.getFile();
+		    entries = ArticleEntry.readFile(f);
+		    
+		    actorLastActionId= actor.getLastActionId();
+		}
+		applyUserSpecifics(entries, actor);
+				
 		// In docs to be displayed, populate other fields from Lucene
 		for(int i=0; i<entries.size() && i<maxRows; i++) {
 		    ArticleEntry e = entries.elementAt(i);
-		    int docno = e.getCorrectDocno(s);		    
+		    int docno = e.getCorrectDocno(searcher);
 		    Document doc = reader.document(docno);
 		    e.populateOtherFields(doc);
 		}
+		searcher.close();
 		reader.close();
 	    }
 
@@ -201,6 +225,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	return s;
     }
 
+    /** Wrapper for the same method in ResultsBase */
     public String resultsDivHTML(ArticleEntry e) {
 	return resultsDivHTML(e, isSelf);
     }

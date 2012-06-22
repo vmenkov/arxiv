@@ -58,7 +58,11 @@ public class RatingButton //extends HTML
     static private String  spanStyle(boolean on) {
 	return on? "" : att("style", "display: none;");
     }
-
+    
+    /**
+       @param on If false,  'style="display: none;"' is used to render the span
+       (initially) invisible.
+     */
     static private String span(String id, boolean on, String text) {
 	String s=  	
 	    "<span " + att("id", id) +    spanStyle(on) + ">" +
@@ -102,16 +106,25 @@ public class RatingButton //extends HTML
 	    "&" +BaseArxivServlet.ACTION+ "=" + op;
     }
 
-
-    public static final int NEED_FOLDER=1, NEED_HIDE=2;
-
+    /** This are bit flags from which the "flags" parameter of
+	judgmentBarHTML() may be composed. */
+    /** If the bit is set, create the "add to my folder" button */
+    public static final int NEED_FOLDER=1, 
+    /** If the bit is set, create the "never show again" button */
+	NEED_HIDE=2, 
+    /** If the bit is set, initially hide the ratings buttons inside a
+	single "Rate" button, which the user will need to expand with
+	a separate click */
+	FOLD_JB=4;
 
     /** Generates the HTML inserted into various pages where articles
-	are listed. Includes the enclosing DIV ,,, /DIV.
+	are listed. Includes the enclosing DIV element (DIV ...  /DIV).
 
 	Note that the "A" elements contain no "HREF" attribute, not even
 	one with the "#" value. This is in order to prevent the page from
 	scrolling needlessly when the user clicks on a link.
+
+	@param flags Controls the appearance of the button set. E.g.  NEED_FOLDER | NEED_HIDE
      */
     static public String judgmentBarHTML(String cp, ArticleEntry e,
 					 RatingButton [] buttons,
@@ -141,15 +154,17 @@ public class RatingButton //extends HTML
 
 	if (buttons!=null && buttons.length>0) {
 	    willRate=true;
-	    s+= "<a" + 
-		att("id", "rate"+e.i) +
-		att("title", "Rate this document.") +
-		att("onclick",
-		    "$(this).hide(100); $('#ratings"+e.i+"').show(500);") +
-		">";
-	    s += img(imgDir + "page_question.png", "Rate this document.");
-	    s += "&nbsp;Rate</a>\n";		
+	    if ((flags & FOLD_JB)!=0) {
 
+		s+= "<a" + 
+		    att("id", "rate"+e.i) +
+		    att("title", "Rate this document.") +
+		    att("onclick",
+			"$(this).hide(100); $('#ratings"+e.i+"').show(500);") +
+		    ">";
+		s += img(imgDir + "page_question.png", "Rate this document.");
+		s += "&nbsp;Rate</a>\n";		
+	    }
 
 	    String spanBody="";
 	    for(int j=0; j<buttons.length; j++) {
@@ -169,7 +184,8 @@ public class RatingButton //extends HTML
 		q += "&nbsp;&nbsp;";
 		spanBody += q;
 	    }
-	    s += span("ratings" + e.i, false, spanBody) + "\n";
+	    boolean showJB = (flags & FOLD_JB)==0;
+	    s += span("ratings" + e.i, showJB, spanBody) + "\n";
 	}
 
        	if ((flags & NEED_HIDE)!=0) {

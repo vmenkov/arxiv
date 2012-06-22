@@ -69,7 +69,7 @@ public class CompactArticleStatsArray  {
 
 	    try {
 
-		int n=	reader.numDocs() ;
+		int n=	reader.maxDoc() ;
 		for(int i=0; i<NB; i++) casa.boost[i] = new float[n];
 		casa.norm = new float[n];
 

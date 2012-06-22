@@ -386,8 +386,9 @@ public class UserProfile {
 	    return luceneRawSearchDateRange(maxDocs, allStats, em, days, useLog);
 	}
 
-	int numdocs = dfc.reader.numDocs() ;
-	double scores[] = new double[numdocs];	
+	int numdocs0 = dfc.reader.numDocs(), maxdoc=dfc.reader.maxDoc() ;
+	Logging.info("UP: numdocs=" + numdocs0 + ", maxdoc=" + maxdoc);
+	double scores[] = new double[maxdoc];	
 		
 	int tcnt=0,	missingStatsCnt=0;
 	for(String t: terms) {
@@ -402,7 +403,7 @@ public class UserProfile {
 		    int p = td.doc();
 		    int freq = td.freq();			
 
-		    double normFactor = useLog? 1 : allStats.getNormalizedBoost(p,i);
+		    double normFactor = useLog? 1: allStats.getNormalizedBoost(p,i);
 		    /*
 		    if (allStats[p]!=null) {			
 			normFactor = allStats[p].getNormalizedBoost(i);
@@ -411,7 +412,7 @@ public class UserProfile {
 		    }
 		    */
 		    double fr = useLog? Math.log(1.0 + freq) :
-			(ArticleAnalyzer.useSqrt? Math.sqrt(freq) : freq);		    
+			(ArticleAnalyzer.useSqrt? Math.sqrt(freq) : freq);    
 		    double z =qval * normFactor * fr;
 
 		    scores[p] += z;
@@ -425,7 +426,7 @@ public class UserProfile {
 	    tcnt++;		
 	    if (maxTerms>0 && tcnt >= maxTerms) break;
 	}	    
-	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
+	ArxivScoreDoc[] sd = new ArxivScoreDoc[maxdoc];
 	int  nnzc=0;
 	for(int k=0; k<scores.length; k++) {		
 	    if (scores[k]>0) sd[nnzc++] = new ArxivScoreDoc(k, scores[k]);
@@ -439,6 +440,9 @@ public class UserProfile {
 	return tops;
     }
 
+    /** This method first gets an article list by date range, and then
+	orders them.
+     */
     ArxivScoreDoc[] 
 	luceneRawSearchDateRange(int maxDocs, 
 				 //ArticleStats[] allStats, 
@@ -528,8 +532,8 @@ public class UserProfile {
     Vector<ArticleEntry> luceneRawSearchOrig(int maxDocs) throws IOException {
 	String [] terms = hq.keySet().toArray(new String[0]);
 	
-	int numdocs = dfc.reader.numDocs() ;
-	double scores[] = new double[numdocs];	
+	int maxdoc = dfc.reader.maxDoc() ;
+	double scores[] = new double[maxdoc];	
 	
 	// Sort by value, in descending order
 	Arrays.sort(terms, getByDescVal());
@@ -571,7 +575,7 @@ public class UserProfile {
 	    if (maxTerms>0 && tcnt >= maxTerms) break;
 	}	    
 	// qpos[] will contain internal document numbers
-	Integer qpos[]  = new Integer[numdocs];
+	Integer qpos[]  = new Integer[maxdoc];
 	int  nnzc=0;
 	for(int k=0; k<scores.length; k++) {		
 	    if (scores[k]>0) {

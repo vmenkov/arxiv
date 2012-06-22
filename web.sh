@@ -14,5 +14,5 @@ set opt="-cp ${cp} ${opt}"
 
 echo "opt=$opt"
 
-/usr/bin/time java $opt edu.rutgers.axs.web.Search $1 $2 $3
+/usr/bin/time java $opt edu.rutgers.axs.web.SearchResults $1 $2 $3
 

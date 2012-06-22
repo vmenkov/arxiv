@@ -7,7 +7,7 @@
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% 
 	Search main=new Search(request,response);
-	Search.SearchResults sr = main.sr;
+	SearchResults sr = main.sr;
 %>
 <!-- © 2011 by AEP -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -119,23 +119,7 @@ window.onload = StartScripts;
 		</p>
 
 		<% for( ArticleEntry e: sr.entries) { %>
-
-		<div class="result" id="result<%=e.i%>">
-			<div class="document">
-			<%= e.i %>. <%= e.idline %> 
-[<a href="<%=main.urlAbstract(e.id)%>">Abstract</a>]
-[<a href="<%=main.urlPDF(e.id)%>">PDF/PS/etc</a>]
- <br />
-			<%= e.titline %><br />
-			<%= e.authline %><br />
-			<% if (!e.commline.equals("")) { %>
-			<%= e.commline %><br />  
-			<%}%>
-			<%= e.subjline %><br />
-			</div>
-
-			<%= main.user!=null ? main.judgmentBarHTML(e): "" %>
-		</div>
+<%= main.resultsDivHTML(e,main.user!=null ) %>	
 		<% }%>		
 
 		<div> <!-- Links to prev/next pages, if necessary -->

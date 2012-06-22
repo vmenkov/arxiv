@@ -13,13 +13,6 @@ import java.io.*;
 import org.apache.lucene.document.*;
 import org.apache.lucene.analysis.Analyzer;
 
-//import org.apache.lucene.analysis.standard.StandardAnalyzer;
-/*
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
-*/
-
 import org.apache.lucene.util.Version;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -32,6 +25,7 @@ import edu.cornell.cs.osmot.options.Options;
 import edu.cornell.cs.osmot.logger.Logger;
 
 import edu.rutgers.axs.web.Search;
+import edu.rutgers.axs.web.SearchResults;
 
 
 /** Used to look up article information in our Lucene data store (a
@@ -43,7 +37,10 @@ class Show {
     
     public Show()  throws IOException {
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-	reader =  IndexReader.open( indexDirectory);     
+	reader =  IndexReader.open( indexDirectory);  
+   	int numdocs = reader.numDocs();
+   	int maxdoc = reader.maxDoc();
+	System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
     }
 
     /** Finds Lucene document (its internal integer id) by Arxiv id */
@@ -77,6 +74,10 @@ class Show {
      */
     void show(String id) throws IOException {
 	int docno = find(id);
+	show(docno);
+    }
+
+    void show(int docno) throws IOException {
 	Document doc = reader.document(docno);
 	System.out.println("Doc no.=" + docno);
 	System.out.println("dateIndexed=" + doc.get(ArxivFields.DATE_INDEXED));
@@ -103,7 +104,7 @@ class Show {
 	int docno = find(id);
 	Document doc = reader.document(docno);
 	System.out.println("Document info for id=" + id +", doc no.=" + docno);
- 	for(String name: Search.searchFields) {
+ 	for(String name: SearchResults.searchFields) {
 	    showField(docno, doc, name);
 	}
 	showField(docno, doc,ArxivFields.CATEGORY);

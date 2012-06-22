@@ -67,8 +67,8 @@ public class SimRow implements Serializable {
 
 	double norm1=z.tfNorm(doc1);
 
-	int numdocs = z.reader.numDocs() ;
-	double scores[] = new double[numdocs];	
+	int maxdoc = z.reader.maxDoc() ;
+	double scores[] = new double[maxdoc];	
 	int tcnt=0,	missingStatsCnt=0;
 
  	for(String t: doc1.keySet()) {
@@ -98,7 +98,7 @@ public class SimRow implements Serializable {
 	    } // for fields
 	    tcnt++;		
 	} // for terms 	    
-	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
+	ArxivScoreDoc[] sd = new ArxivScoreDoc[maxdoc];
 	int  nnzc=0, abovecnt[]= new int[thresholds.length];
 
 	for(int k=0; k<scores.length; k++) {

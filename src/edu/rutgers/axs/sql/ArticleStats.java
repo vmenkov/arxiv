@@ -254,10 +254,10 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	for(ArticleStats as: aslist) {
 	    h.put(as.getAid(), as);
 	}
-	int numdocs = reader.numDocs();
-	ArticleStats[] all = new ArticleStats[numdocs];
+	int maxdoc = reader.maxDoc();
+	ArticleStats[] all = new ArticleStats[maxdoc];
 	int foundCnt=0, deletedCnt=0, nullCnt=0;
-	for(int pos=0; pos<numdocs; pos++) {
+	for(int pos=0; pos<maxdoc; pos++) {
 	    if (reader.isDeleted(pos)) {
 		deletedCnt++;
 		continue;

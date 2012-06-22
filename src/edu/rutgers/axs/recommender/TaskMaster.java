@@ -13,15 +13,11 @@ import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.web.ResultsBase;
-import edu.rutgers.axs.web.Search;
-import edu.rutgers.axs.web.ArticleEntry;
+import edu.rutgers.axs.web.*;
 
 public class TaskMaster {
-    
-
+  
     static final int maxDocs=200;
-
 
     private static class ShutDownThread extends Thread 	    {
 	final Thread mainThread;
@@ -174,13 +170,28 @@ public class TaskMaster {
 
 		    boolean useLog = (op == Task.Op.LOG_SUGGESTIONS_1);
 		    int days = task.getDays();		    
-		    ArxivScoreDoc[] sd =
-			raw? upro.luceneRawSearch(maxDocs,casa,em,days, useLog):
-			upro.luceneQuerySearch(maxDocs, days);
+		    ArxivScoreDoc[] sd;
+
 
 		    if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
+			// restricting the scope by category and date,
+			// as per Thorsten 2012-06-18
+			User u = User.findByName( em, user);
+			String[] cats = u.getCats().toArray(new String[0]);
+			Date since = SearchResults.daysAgo( days );
+			IndexSearcher searcher = new IndexSearcher(reader);	
+			SearchResults sr = new SubjectSearchResults(searcher, cats, since, 10000);
+			// set scores for use in tie-breaking
+			sr.setCatSearchScores(reader, sr.scoreDocs,cats,since);
+
+			sd = ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
+			searcher.close();
+			// rank by TJ Algo 1
 			TjAlgorithm1 algo = new TjAlgorithm1();
 			sd = algo.rank( upro, sd, casa, em, maxDocs);
+		    } else {
+			sd = raw? upro.luceneRawSearch(maxDocs,casa,em,days, useLog):
+			upro.luceneQuerySearch(maxDocs, days);
 		    }
 
 		    Vector<ArticleEntry> entries = upro.packageEntries(sd);
@@ -203,7 +214,7 @@ public class TaskMaster {
 		    // list, and the user profile on which it was based.
 		    // We first see if there is a sug list already based
 		    // on an Algo 2 profile, but if not, we'll be building on
-		    // an "original" profile.
+		    // an empty (zero) profile. (as per TJ, 2012-06-19)
 
 		    inputFile = DataFile.
 			getLatestFile(em, user,
@@ -211,17 +222,14 @@ public class TaskMaster {
 				      DataFile.Type.TJ_ALGO_2_USER_PROFILE,
 				      -1);
 		    
-		    if (inputFile==null) {
-			inputFile = DataFile.
-			    getLatestFile(em, user,
-					  DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
-		    }
+		    //		    if (inputFile==null) {
+		    //	inputFile = DataFile.getLatestFile(em, user,  DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
+		    //		    }
 		    
 		    UserProfile upro;
 
 		    ArxivScoreDoc[] sd;
 		    if (inputFile==null) {
-			// there have been no Algo 1 suggestions... so
 			// we should default to an empty profile
 			// and empty sugg list!
 			upro = new UserProfile(reader);
@@ -234,6 +242,7 @@ public class TaskMaster {
 			Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
 			IndexSearcher searcher = new IndexSearcher(reader);	
 			sd = ArxivScoreDoc.toArxivScoreDoc(entries,searcher);
+			searcher.close();
 		    }
 
 		    //      DataFile.Type.TJ_ALGO_2_USER_PROFILE);

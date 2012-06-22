@@ -203,14 +203,15 @@ public class ResultsBase {
     }
 
     public String judgmentBarHTML(ArticleEntry entry) {
+	// ... but not RatingButton.FOLD_JB
 	return RatingButton.judgmentBarHTML( cp, entry, 
 					     RatingButton.allRatingButtons,
-					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER);
+					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER  );
     } 
 
+    /** An "A" HTML element */
     static String a(String url, String body) {
-	return  "<a href=\"" + url+ "\">"+body+"</a>";
-	
+	return  "<a href=\"" + url+ "\">"+body+"</a>";	
     }
 
     /** Generates an HTML "div" element with everything pertaining to a single
@@ -220,7 +221,7 @@ public class ResultsBase {
 	String s = 
 	    "<div class=\"result\" id=\"result" + e.i + "\">\n" +
 	    "<div class=\"document\">\n" +
-	    e.i + ". [score="+e.score+ "] "+ e.idline + "\n" +
+	    e.i + ". [score="+e.score+ "] "+ e.idline + "; "+e.formatDate()+"\n" +
 	    "[" + a( urlAbstract(e.id), "Abstract") + "]\n" +
 	    "[" + a( urlPDF(e.id), "PDF/PS/etc") + "]\n" +
 	    "<br>\n" +

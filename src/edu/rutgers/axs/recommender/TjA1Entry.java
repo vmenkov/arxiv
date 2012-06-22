@@ -34,6 +34,10 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	static double uContrib(Coef[] q, double [] phi, double gamma) {
 	    double m = 0;
 	    for(Coef c: q) {
+
+		if (phi[c.i]<0) throw new AssertionError("phi["+c.i+"]<0");
+		if (c.value+gamma<0) throw new AssertionError("c.value+gamma<0");
+
 		m += Math.sqrt( phi[ c.i ] + c.value * gamma) -
 		    Math.sqrt( phi[ c.i ] );
 	    }
@@ -44,7 +48,13 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 
     private ArxivScoreDoc sd;
     ArxivScoreDoc getSd() { return sd;}
-    
+    /** Tie-breaking, using the saved score */
+    double compareTieTo(TjA1Entry o) {
+	return sd.score - o.sd.score;
+    }
+
+    //    String datestring="";
+
     void setScore(double x) { sd.score=(float)x;}
 
     /** Components of phi, pre-multiplied by w2^2, and (in the actual
@@ -81,11 +91,12 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	return (x>0) ? 1 : (x<0) ? -1 : 0;
     }
 
-    TjA1Entry(ArxivScoreDoc _sd,  
+    TjA1Entry(ArxivScoreDoc _sd,  //String _datestring,
 	      CompactArticleStatsArray casa, //ArticleStats as, 
 	      UserProfile upro, Map<String,Integer> termMapper)
 	throws IOException {
 	sd = _sd;
+	//	datestring = _datestring;
 	double sum1 = 0;
 
 	int docno=sd.doc;
@@ -118,6 +129,7 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 		double w2q = 		    TjAlgorithm1.approach2? 
 		    z * idf * q.w2 * q.w2 :
 		    z * idf * idf * q.w2 * q.w2;
+		if (w2q<0) throw new AssertionError("w2q<0: this is impossible!");
 		if (q.w2 >= 0) {
 		    w2plus[iterm] += w2q;
 		} else {

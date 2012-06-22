@@ -30,7 +30,7 @@ public class ArticleAnalyzer {
     public IndexReader reader;
     final String [] fields;
     /** Collection size */
-    private int numdocs;
+    private int numdocs, maxdoc;
     ArticleAnalyzer() throws IOException {
 	this(   getReader(), upFields);
     }
@@ -39,6 +39,7 @@ public class ArticleAnalyzer {
 	reader =_reader;
 
 	numdocs = reader.numDocs();
+	maxdoc = reader.maxDoc();
 	baseBoost= initBoost(fields);
     }
 
@@ -478,7 +479,7 @@ public class ArticleAnalyzer {
 	int doneCnt=0, skipCnt=0;
 	Logging.info("Analyzer starting. The reader has "+numdocs+" documents");
 
-	for(int docno=0; docno<numdocs; docno++) {
+	for(int docno=0; docno<maxdoc; docno++) {
 	    if (reader.isDeleted(docno)) continue;
 	    Document doc = reader.document(docno);
 	    String aid = doc.get(ArxivFields.PAPER);
@@ -590,8 +591,8 @@ public class ArticleAnalyzer {
 
 	double norm1=tfNorm(doc1);
 
-	int numdocs = reader.numDocs() ;
-	double scores[] = new double[numdocs];	
+	int numdocs = reader.numDocs(), maxdoc=reader.maxDoc();
+	double scores[] = new double[maxdoc];	
 	int tcnt=0,	missingStatsCnt=0;
 
  	for(String t: doc1.keySet()) {
@@ -621,7 +622,7 @@ public class ArticleAnalyzer {
 	    } // for fields
 	    tcnt++;		
 	} // for terms 	    
-	ArxivScoreDoc[] sd = new ArxivScoreDoc[numdocs];
+	ArxivScoreDoc[] sd = new ArxivScoreDoc[maxdoc];
 	int  nnzc=0, abovecnt[]= new int[threshold.length];
 
 

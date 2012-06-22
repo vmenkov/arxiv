@@ -1,7 +1,5 @@
 package edu.rutgers.axs.recommender;
 
-//import org.apache.lucene.document.*;
-//import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
 import java.util.*;
@@ -9,6 +7,7 @@ import java.io.*;
 
 import edu.rutgers.axs.web.ArticleEntry;
 
+/** Our replacement of sort's for Lucene's ScoreDoc class */
 public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
     /** Lucene doc id */
     public int doc;
@@ -27,6 +26,14 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
     }
     public ArxivScoreDoc(int _docno, 	double _score) {
 	doc=_docno;  score=_score;
+    }
+
+    static ArxivScoreDoc[] toArxivScoreDoc(ScoreDoc[] a) {
+	ArxivScoreDoc[] b = new  ArxivScoreDoc[a.length];
+	for(int i=0; i<a.length; i++) {
+	    b[i] = new ArxivScoreDoc(a[i]);
+	}
+	return b;
     }
 
     static ArxivScoreDoc[] toArxivScoreDoc(Vector<ArticleEntry> entries,

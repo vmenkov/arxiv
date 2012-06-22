@@ -9,32 +9,36 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-//import org.apache.commons.lang.mutable.MutableDouble;
-
-import edu.cornell.cs.osmot.options.Options;
-
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
 
-/** Thorsten's Algo 1 */
+/** Thorsten's Algorithm 1 */
 class TjAlgorithm1 {
     /** This flag is on when using the alternative approach to the
-     * initialization of w'', viz. w'' = sqrt(phi) */
+      initialization of w'', viz. w'' = sqrt(phi) */
     static final boolean approach2=true;
 
     TjA1Entry [] tjEntries;
 
     TjAlgorithm1() {}
 
+    /** Orders (ranks) a given set of documents in accordance with Thorsten's
+	cumulative utility function for a given user.
+
+	@param upro The user profile with respect to whose "w" the utility
+	function will be computed
+	@param sd List of documents to rank. The scores will be used by this 
+	algorithm as 	secondary keys for tie-breaking; they should be pre-set
+	as appropriate before calling this method.
+     */
     ArxivScoreDoc[] 
-	rank(UserProfile upro, 
-	     ArxivScoreDoc[] sd,
+	rank( UserProfile upro,    ArxivScoreDoc[] sd,
 	     //ArticleStats[] allStats, 
 	      CompactArticleStatsArray allStats, 
-	     EntityManager em, int maxDocs )  throws IOException{
+	      EntityManager em, int maxDocs )  throws IOException{
 	IndexSearcher searcher = new IndexSearcher( upro.dfc.reader);	
 
 	HashMap<String,Integer> termMapper=upro.mkTermMapper();
@@ -51,6 +55,8 @@ class TjAlgorithm1 {
 	    }
 	    */
 	    if (sd[i].doc > allStats.size()) continue;
+	    Document doc = searcher.doc(sd[i].doc);
+	    //String datestring = doc.get(ArxivFields.DATE);
 	    TjA1Entry tje = new TjA1Entry( sd[i], allStats, upro, termMapper);
 	    tjEntries[storedCnt++] = tje;
 	}
@@ -71,7 +77,9 @@ class TjAlgorithm1 {
 	for(int i=0; i<storedCnt; i++) {
 	    TjA1Entry tje = tjEntries[i];
 	    double u = tje.ub() - tje.mcMinus;
-	    if (imax<0 || u>utility) {
+	    // includes date-based tie-breaking clause
+	    if (imax<0 || u>utility ||
+		(u==utility && tje.compareTieTo(tjEntries[imax])>0)) {
 		imax = i;
 		utility=u;
 	    }
@@ -95,7 +103,9 @@ class TjAlgorithm1 {
 		tje = tjEntries[i];
 		if (maxdu >= tje.ub()) break; 
 		double du= tje.wouldContributeNow(phi, gamma);		
-		if (imax<0 || du>maxdu) {
+		// includes date-based tie-breaking clause
+		if (imax<0 || du>maxdu ||
+		    (du==maxdu && tje.compareTieTo(tjEntries[imax])>0)) {
 		    imax = i;
 		    maxdu=du;
 		}

@@ -2,6 +2,7 @@ package edu.rutgers.axs.web;
 
 import java.io.*;
 import java.util.*;
+import java.text.*;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -29,6 +30,23 @@ public class ArticleEntry {
     /** This may be set if the article has come from some kind of a ranked-list
 	search */
     public double score=0;
+    /** This is the Lucene-stored article submission date, as a string */
+    public String date=null;
+
+    static private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    public String formatDate() {
+	if (date==null) return "no date";
+	
+	Date docDate= null;
+	try {
+	    return dateFormat.format( DateTools.stringToDate(date));
+	} catch(java.text.ParseException ex) {
+	    return "date not known"; // ought not happen
+	}
+	
+    }
+
 
     /** This field may be used in some applications to store the
       Lucene internal (ephemeral) document number. We put -1 to mean
@@ -60,6 +78,7 @@ public class ArticleEntry {
 	String c= doc.get(ArxivFields.COMMENTS);
 	commline=(c==null? "": "Comments:" + c);
 	subjline="Subjects:" + doc.get((ArxivFields.CATEGORY));
+	date = doc.get(ArxivFields.DATE);
     }
     
 
@@ -164,7 +183,9 @@ public class ArticleEntry {
     }
 
     /** Reads a file saved earlier and creates a vector of "skeleton"
-      entries (just article id)
+	entries.
+	@return A Vector of "skeleton" entries (each one containing
+	just the ArXiv article ID and the score read from the file).
      */
     static public Vector<ArticleEntry> readFile(File f) throws IOException {
 	Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
