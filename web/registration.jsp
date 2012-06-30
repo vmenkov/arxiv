@@ -1,6 +1,19 @@
-<?php echo '<', '?xml version="1.0" encoding="UTF-8"?', '>'; ?>
-
 <!-- © 2011 by AEP -->
+<%@ page import="edu.rutgers.axs.web.*" %>
+<%@ page import="edu.rutgers.axs.sql.*" %>
+<%@ page import="edu.rutgers.axs.Version" %>
+<%@ page import="java.io.*" %>
+<%@ page import="java.util.*" %>
+<%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
+<% 
+        ResultsBase main=new ResultsBase(request,response);
+	boolean survey = main.getBoolean(EditUser.SURVEY, false);
+	String spacer="	<tr>"+
+			"<td style=\"width:50%; text-align:right; vertical-align:middle; height:5px; border:none;\">&nbsp;</td>" +
+			"<td style=\"width:50%; text-align:left; vertical-align:middle; height:5px; border:none;\">&nbsp;</td>" +
+		"</tr>";
+
+%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -153,24 +166,9 @@ window.onload = StartScripts;
 	<img src="_technical/images/bar-rutgers.jpg" style="border:none; width:1000px; height:75px; position:absolute; top:0px; left:0px;" alt="" />
 	<div style="position:absolute; top:10px; left:10px; font-size:4em; font-weight:bold; text-shadow: 2px 2px 2px #000; right: 813px;"><span style="color:#CCCCCC; font-weight:normal;">my:</span>arXiv</div>
 	
-	<!-- div style="width:100%; text-align:center; position:relative; top:25px;">
-		<form name="simple_search" style="position:relative; text-align:center;" action="search.jsp">
-		
-			<input type="text" name="simple_search" size="25" id="simple_search" />
-			<input type="submit" value="Search" id="search_button_" class="button" style="font-weight:bold; padding:0px; width:75px; height:23px; text-align:center; position:relative; display:inline;" />
-		
-		</form>
-	</div -->
-
-	<!-- <img src="../images/face.jpg" style="border:none; position:absolute; left:0px; top:5px;" alt="" /> -->
 	<div id="layer_page_title" style="z-index: 10">
 		<!-- #BeginEditable "Page_Title" -->
 
-	<!-- div>
-		<div id="status" style="position:absolute; right:65px; top:2px;">You are not participating in arXiv research</div> 
-		<div class="button_div" style="position:absolute; right:-8px; top:0px; width:65px; height:15px;"><a href="#">More Info</a></div>
-		</div -->
-		<!-- #EndEditable -->
 	</div>
 	
 	<div id="validator" style="width:3px; height:3px; position:absolute; top:0px; right:0px; color:blue;">
@@ -194,29 +192,28 @@ window.onload = StartScripts;
 
 <div style="text-align:center;">
 
-Thank you for choosing to participate in the arXiv research at the confidential login-based level.<br />
+Thank you for choosing to participate in the arXiv research at the confidential login-based level. Please create your account.<br />
 
+<!--
 <small>(At some point we may add here a feature to import one's account info from arxiv.org...)</small><br /><br />
-
-Please create your account:<br /><br />
+-->
 
 
 <form class="cmxform" id="signupform" method="post" 
       action="newUserSelf.jsp" 
       style="text-align:center;">
+
+<%= Tools.inputHidden(EditUser.SURVEY, survey) %>
+
 	<table style="width: 100%;" cellspacing="0" cellpadding="0">
+<tr><td colspan="2"><h3>Choose your user name and password</h3></td></tr>
 		<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="username">Desired Username</label>
 <br><small>(Up to 15 characters long)</small>
 </td>
 			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="username" name="user_name" style="width:150px" /></td>
 		</tr>
-
-		<tr>
-			<td style="width:50%; text-align:right; vertical-align:middle; height:5px; border:none;">&nbsp;</td>
-			<td style="width:50%; text-align:left; vertical-align:middle; height:5px; border:none;">&nbsp;</td>
-		</tr>
-
+<%=spacer%>
 
 		<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="password">Desired Password</label></td>
@@ -228,10 +225,10 @@ Please create your account:<br /><br />
 			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="confirm_password" name="confirm_password" style="width:150px" type="password" /></td>
 		</tr>
 
-		<tr>
-			<td style="width:50%; text-align:right; vertical-align:middle; height:5px; border:none;">&nbsp;</td>
-			<td style="width:50%; text-align:left; vertical-align:middle; height:5px; border:none;">&nbsp;</td>
-		</tr>
+<%=spacer%>
+
+<% if (!survey) { %>
+<tr><td colspan="2"><h3>Personal information (optional)</h3></td></tr>
 
 
 		<tr>
@@ -244,10 +241,7 @@ Please create your account:<br /><br />
 			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="confirm_email" name="confirm_email" style="width:150px" /></td>
 		</tr>
 
-		<tr>
-			<td style="width:50%; text-align:right; vertical-align:middle; height:5px; border:none;">&nbsp;</td>
-			<td style="width:50%; text-align:left; vertical-align:middle; height:5px; border:none;">&nbsp;</td>
-		</tr>
+<%=spacer%>
 
 		<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="firstName">First and middle name (optional)</label></td>
@@ -259,34 +253,100 @@ Please create your account:<br /><br />
 			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="lastName" name="r.lastName" style="width:150px" /></td>
 		</tr>
 
-		<!-- tr>
-			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="cookie">Remember the log-in in this browser</label></td>
-			<td style="width:50%; text-align:left; vertical-align:middle;"><input style="vertical-align:middle;" type="checkbox" class="checkbox" id="cookie" name="cookie" />
-				<a id="more_info" href="#" style="vertical-align:middle; font-size:0.7em;">More Info</a>
-			</td>
-		</tr -->
 
-		
-	</table>
+<% } else  { %>
+
+<tr><td colspan="2"><h3>Optional follow-up telephone interview</h3>
+
+<p>
+We are conducting a few follow-up interviews with searchers to get more detailed information about how to improve the arXiv system.
+
+<p>
+If you are willing also to be interviewed, you can give us your name, telephone number or email, for a follow-up telephone interview some time in the future.   The optional follow-up telephone interview is confidential, not anonymous. The telephone interview contains questions that you may find of a personal nature such as demographic information.  One potential risk of participating in the follow-up study is that confidential information about you may be accidentally disclosed outside of the research team.  We will use our best efforts to keep the information you provide secure, and we think the risk of accidental disclosure is very small.  A link between your personal information, such as name, phone number and demographic information, and the data we collect will be kept to allow for follow-up to complete the interview and to mail the payment for completing the interview. 
+
+<p>
+However, after we have processed your telephone interview we will sever the link between your personal information and the data you gave us. We would like to audio tape the telephone interview with you so that we can review it, and make notes. As soon as we process your telephone interview, we will destroy the audio record itself, keeping only the anonymous notes, audio taping your interview renders the data collection confidential not anonymous. 
+
+<p>
+We will pay you US$50, for a completed interview. If you decide to stop partway through an interview you will be paid for the fraction of the interview that has been completed.
+
+<p>
+We hope you can give us about 20 minutes of your time to help our study. We may do the telephone interview in one long call, or in two shorter ones in the same week if you prefer. There are no foreseeable risks to participating in this research. 
+
+<p>
+Your participation in our study is completely voluntary, and refusing to participate will involve no penalty. You may stop the interview at any time without penalty. 
+
+<p>
+We look forward to talking with you about your unique experience with searches in the arXiv. 
+
+<p>
+By giving you my contact information I agree to participate in the telephone interview portion of the study. 
+
+</td></tr>
+		<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="firstName">First and middle name</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="firstName" name="r.firstName" style="width:150px" /></td>
+		</tr>
+
+		<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="firstName">Last name </label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="lastName" name="r.lastName" style="width:150px" /></td>
+		</tr>
+
+<%=spacer%>
+
+		<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="email">E-mail Address (Can also be used for resending the login information if you forget it.)</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="email" name="r.email" style="width:150px" /></td>
+		</tr>
+
+		<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="confirm_email">Retype E-mail Address</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="confirm_email" name="confirm_email" style="width:150px" /></td>
+		</tr>
+
+<%=spacer%>
+
+		<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="phoneNumber">Telephone Number</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="phoneNumber" name="r.phoneNumber" style="width:150px" /></td>
+		</tr>
+
+
+		<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="timeToReach">Best Times to Reach You: day(s) of week, time(s) of day</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="timeToReach" name="r.timeToReach" style="width:150px" /></td>
+		</tr>
+
+
+<tr><td colspan=2 align=left>
+By clicking on the box below you approve the use of audio recording for the telephone interview
+</td></tr>
+	<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="approvedAudio">Click here to approve audio recording</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><%= Tools.checkbox(EntryFormTag.PREFIX + "approvedAudio", "on", null, false) %></td>
+	</tr>
+
+<%}  %>
 	
-<!-- div id="cookie_explanation"style="display:none; width:500px; border:1px gray solid; margin:25px auto 0px auto; padding:10px; border-radius:10px;">
-	We can place a little piece of information called "cookie" in your computer, so that your browser "remembers" your login.
-	This way, you won't need to insert your login name and password each time you log in. To terminate this feature, simply log out.
-	This feature is safe if you are using the arXiv on a computer that belongs to you.
-	However, if you are sharing a computer with other people (in an office, school or internet café) you should not turn this feature on.
-</div -->
+	</table>
 
-	<script type="text/javascript"> 
-		$(document).ready(function(){
-		  $("#more_info").click(function(){
-		    $("#cookie_explanation").slideDown(500);
-   		    $("#more_info").hide(500);
-			});
-		});
-	</script>
+	
 
-	<!-- input class="submit_button" style="width:75px; height:25px; margin-top:25px" type="submit" value="Register" id="submit" / --> 	
+<h3>Your interest areas</h3>
 
+<p>You need to specify at least one interest area ("subject category")
+in order for My.ArXiv to be able to generate recommendations for
+you. You can specify as many interest areas as you want. You will be
+able to change the list of interest areas at any time.  </P>
+
+<p>If you want to see what kind of articles are categorized under each
+subject category, please see the main page of <a
+href="http://arxiv.org/">ArXiv.org</a>.  </P>
+
+<p>
+<%= Categories.mkCatBoxes(null) %>
+</p>
 	<input type="submit" value="Register" id="submit" /> 	
 	
 </form>

@@ -35,8 +35,15 @@
 
 <h3>Updating your account information</h3>
 
-<p><icd:UserEntryForm user_name="<%=id%>"/>
+<p>All information in this section is optional. 
 
+<p>If you supply a correct email address, it can be used to reset a
+lost password if necessary.
+
+<p>Other contact information only needs to be supplied if you have
+agreed to participate in the follow-up interview.
+
+<p><icd:UserEntryForm user_name="<%=id%>"/>
 
 <h3>Changing password and status</h3>
 
@@ -49,11 +56,14 @@
 <input type="submit" value="Update account information">
 
 <h3>Updating interest areas</h3>
+
+<p>You need to specify at least one interest area in order for
+My.ArXiv to be able to generate recommendations for you.
+
 <%= u.mkCatBoxes() %>
 </p>
 <p>
 <input type="submit" value="Update account information">
-</form>
 </p>
 
 

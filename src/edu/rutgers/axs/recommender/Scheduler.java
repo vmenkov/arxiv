@@ -31,7 +31,15 @@ public class Scheduler {
     /** Every so often, see if we should check user activity
 	and schedule more events.
     */
-    final static int schedulingCheckIntervalSec = 10 * 60;
+    private int schedulingIntervalSec = 10 * 60;
+
+    int getSchedulingIntervalSec()  {
+	return schedulingIntervalSec;	
+    }
+   
+    void setSchedulingIntervalSec(int x) {
+	schedulingIntervalSec = x;	
+    }
 
     /** How often do run TJ's Algorithm 2 to update the UP2 user profile?
      */
@@ -49,7 +57,7 @@ public class Scheduler {
 	if (lastSchedulingRunAt == null) return true;
 	Date now = new Date();
 	return (now.getTime() >= lastSchedulingRunAt.getTime() + 
-		 schedulingCheckIntervalSec * 1000);
+		 schedulingIntervalSec * 1000);
     }
     
     /** Scheduling is run in two alternating stages: profile
@@ -89,10 +97,17 @@ public class Scheduler {
 	    String uname= u.getUser_name();
 	    long lai = u.getLastActionId();
 
+
 	    //if (lai <= 0) {
 		//Logging.info("Scheduler: user " + uname + "; skip, due to no activity ever");
 	    //	continue;
 	    //}
+	    if (u.catCnt()==0) {
+		// Main suggestion lists are based on categories now...
+		Logging.info("Scheduler: user " + uname + "; skip (catCnt=0)");
+		continue;
+	    }
+
 
 	    if (!stage2) { // profile generation stage
 		int days=0; // does not matter for UP
@@ -125,8 +140,8 @@ public class Scheduler {
 	    } else { // suggestion list generation stage
 		//  Different types of suggestion lists to generate
 		DataFile.Type modes[] = {
-		    DataFile.Type.LINEAR_SUGGESTIONS_1,
-		    DataFile.Type.LOG_SUGGESTIONS_1,
+		    //		    DataFile.Type.LINEAR_SUGGESTIONS_1,
+		    //		    DataFile.Type.LOG_SUGGESTIONS_1,
 		    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1};
 
 		for(DataFile.Type mode: modes) {

@@ -35,7 +35,7 @@ public class ViewSuggestions extends PersonalResultsBase {
     /** Date range on which is the list should be based. (0=all time). */
     public int days=0;
     /** Max length to display. (Note that the suggestion list
-     * generator may have its own truncatin criteria!)  */
+     * generator may have its own truncation criteria!)  */
     public static final int maxRows = 100;
     
     /** The currently recorded last action id for the user in question */
@@ -52,14 +52,31 @@ public class ViewSuggestions extends PersonalResultsBase {
     static final String TEAM_DRAFT = "team_draft";
     public boolean teamDraft = false;
 
+    private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
+
+
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
+	this(_request, _response, false);
+    }
+
+    /**
+       @param mainPage If true, we're generating a list for the main page.
+     */
+    public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	days = (int)getLong(DAYS, days);
 	basedon=getString(BASEDON,null);
 	basedonType =  (DataFile.Type)getEnum(DataFile.Type.class, BASEDON_TYPE,null); // DataFile.Type.NONE);
 	
+	
 	teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
+
+	if (mainPage) {
+	    // disregard most of params
+	} else {
+	    //	    teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
+	}
 
 	if (error) return; // authentication error?
 
@@ -159,7 +176,10 @@ public class ViewSuggestions extends PersonalResultsBase {
 			infomsg += msg + "<br>";
 		    }
 
-		    SearchResults merged = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs);
+		    
+		    
+		    long seed =  (actorUserName.hashCode() << 16) | dfmt.format(new Date()).hashCode();
+		    SearchResults merged = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
 		    int startat = 0;
 		    int M = 100;
 		    merged.setWindow( searcher, startat, M, null);

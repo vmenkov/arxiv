@@ -5,9 +5,6 @@ import edu.rutgers.axs.web.*;
 
 import java.io.*;
 import java.util.*;
-//import java.lang.reflect.*;
-//import java.lang.annotation.*;
-//import java.text.DecimalFormat;
 import javax.servlet.http.*;
 
 import javax.servlet.jsp.*;
@@ -25,7 +22,7 @@ public class EntryFormTag extends TagSupport {
     static final String ID="id";
 
     /** Prefix for HTTP request params */
-    static final String PREFIX = "r.";
+    public static final String PREFIX = "r.";
 
     private String className;
     public void setClassName(String name) {

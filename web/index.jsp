@@ -228,7 +228,7 @@ window.onload = StartScripts;
 
 -->
       
-      <div style="text-align: center">My.ArXiv Version <%=Version.version%></div>
+      <div style="text-align: center">My.ArXiv Version <%=Version.getInfo()%></div>
 
        <div style="text-align: center"><strong>This project is supported by the National Science Foundation (#NSF IIS-1142251)</strong></div>
 

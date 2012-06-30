@@ -44,6 +44,7 @@ public class ResultsBase {
     final public String USER_NAME = "user_name",
 	FORCE="force", FILE="file";
 
+
     /** Returns the user object for the currently logged-in user */
     public User getUserEntry() {
 	return sd.getUserEntry(user);
@@ -109,22 +110,22 @@ public class ResultsBase {
 	request. If no such param is found in the request, returns the
 	specified default value.
     */
-    long getLong(String name, long defVal) {
+    public long getLong(String name, long defVal) {
 	return Tools.getLong(request, name, defVal);
     }
-    int getInt(String name, int defVal) {
+    public int getInt(String name, int defVal) {
 	return (int)Tools.getLong(request, name, defVal);
     }
 
-    String getString(String name, String defVal) {
+    public String getString(String name, String defVal) {
 	return Tools.getString(request, name, defVal);
     }
 
-    boolean getBoolean(String name, boolean defVal) {
+    public boolean getBoolean(String name, boolean defVal) {
 	return Tools.getBoolean(request, name, defVal);
     }
 
-    Enum getEnum(Class retType, String name, Enum defVal) {
+    public Enum getEnum(Class retType, String name, Enum defVal) {
 	return Tools.getEnum(request, retType, name,  defVal);
     }
 

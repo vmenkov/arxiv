@@ -24,7 +24,11 @@ public class Tools {
 	return name + "_hm";
     }
 
-    static String inputHidden(String name, long val) {
+    /** Creates an "input type=hidden" HTML tag */
+    public static String inputHidden(String name, boolean val) {
+	return "<input type=\"hidden\" name=\""+name+"\" value=\""+val+"\">\n";
+    }
+    public static String inputHidden(String name, long val) {
 	return "<input type=\"hidden\" name=\""+name+"\" value=\""+val+"\">\n";
     }
     public static String inputHidden(String name, String val) {

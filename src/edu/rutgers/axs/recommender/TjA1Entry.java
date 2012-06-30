@@ -106,7 +106,10 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 
 	for(int j=0; j<upro.dfc.fields.length;  j++) {	
 	    TermFreqVector tfv=upro.dfc.reader.getTermFreqVector(docno, upro.dfc.fields[j]);
-	    if (tfv==null) continue;
+	    if (tfv==null) {
+		Logging.warning("No tfv for docno=" + docno + ", field=" + upro.dfc.fields[j]);
+		continue;
+	    }
 	    //double boost =  as.getNormalizedBoost(j);
 	    double boost =  casa.getNormalizedBoost(docno, j);
 

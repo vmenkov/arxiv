@@ -10,8 +10,15 @@ package  edu.rutgers.axs;
  */
 public class Version {
     /** The version number of the applications */
-    public final static String version = "0.1.010";
+    public final static String version = "0.2.001";
+    public final static String date = "2012-06-27";
 
+    public static String getVersion() { return version; }
+
+    /** Version number and date */
+    public static String getInfo() { return version + "("+date+")"; }
+    
+    
     /** Compares two version number (described as strings). 
 	@return a negative number if the first argument is smaller, a positive if the second is smaller; 0 if they are the same.
      */

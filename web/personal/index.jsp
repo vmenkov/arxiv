@@ -50,7 +50,7 @@
 These are the building blocks of the experiment as it is currently planned: 
 
 <ul>
-<li>Treatment A: <a href="../user_cat_search.jsp?user_cat_search=true">User cat earch</a>. <em>This list will be never directly shown to the users during the  experiment.</em>
+<li>Treatment A: <a href="../user_cat_search.jsp?user_cat_search=true">User cat search</a>. <em>This list will be never directly shown to the users during the  experiment.</em>
 <li>Treatment B: the most recent suggestion list that has been calculated by Thorsten's Algorthm 1 applied to an Algo 2 profile.  <em>A list like this, generated the night before, will be shown to user's on the experiment's "learning days".</em>
 <ul>
 <li><a href="viewSuggestions.jsp?mode=TJ_ALGO_1_SUGGESTIONS_1&basedon_type=TJ_ALGO_2_USER_PROFILE&days=7">Direct view</a>

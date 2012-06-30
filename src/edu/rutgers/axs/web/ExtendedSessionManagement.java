@@ -13,9 +13,9 @@ import org.apache.catalina.realm.RealmBase;
 import edu.rutgers.axs.sql.*;
 
 /** This is used to manage extended sessions, which survive over the
-    server restart. This is used when the user checks the "remember
-    me" button on login. The information is stored persistently in a
-    User structure in the database,
+    web server restart. This feature is used when the user checks the
+    "remember me" button on login. The information is stored
+    persistently in a User structure in the database,
  */
 public class ExtendedSessionManagement {
 

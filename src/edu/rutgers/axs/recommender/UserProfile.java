@@ -638,7 +638,7 @@ public class UserProfile {
     }
 
     /** Creates a map that maps terms to their position in the terms[]
-     * array. */
+	array of this UserProfile. */
     HashMap<String,Integer> mkTermMapper() {
 	HashMap<String,Integer> h = new HashMap<String,Integer>();
 	for(int i=0; i<terms.length; i++) {

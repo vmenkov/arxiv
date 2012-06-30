@@ -87,16 +87,22 @@ public class  SearchResults {
 
 	http://www.cs.cornell.edu/People/tj/publications/radlinski_etal_08b.pdf 
 
+	@param seed Random number generator seed. The caller can make it a function of the user name and calendar date,
+	to ensure that during same-day page reload the user will see the same list. (Thorsten's suggestion, 2012-06)
+
 	@return A wrapper around the "merged" ScoreDoc array
     */
-    public static SearchResults teamDraft(ScoreDoc[] a,  ScoreDoc[] b) {
+    public static SearchResults teamDraft(ScoreDoc[] a,  ScoreDoc[] b, long seed) {
 	HashSet<Integer> saved = new 	HashSet<Integer> ();
 	Vector<ScoreDoc> v = new Vector<ScoreDoc>();
 	int acnt = 0, bcnt=0;
 	int nexta=0, nextb=0;
 
+	
+	Random ran = new Random(seed);
+
 	while(nexta < a.length && nextb < b.length) {
-	    boolean useA = (acnt < bcnt ||  acnt==bcnt && Math.random() > 0.5);
+	    boolean useA = (acnt < bcnt ||  acnt==bcnt && ran.nextBoolean());
 	    ScoreDoc x = useA? a[nexta++] : b[nextb++];
 	    saved.add(new Integer(x.doc));
 	    v.add(x);

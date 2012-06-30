@@ -126,127 +126,97 @@ window.onload = StartScripts;
 <h1>arXiv Research</h1>
 
 <div style="margin:0 auto; max-width:1000px;">
+
+<h3>Research Description and Purpose of the Study</h3>
 <p>
-	We invite you to participate in a research study about how
-	people conduct searches in the arXiv database.  This research
-	will help us understand how people conduct searches and what
-	may be most helpful in providing accurate information to users
-	like you when they search this database.
+We invite you to participate in a research study about how people conduct searches in the arXiv database. This research will help us understand how people conduct searches and what may be most helpful in providing accurate information to users when they search this database. This research is being conducted by Paul Kantor, Principal Investigator, who is a Professor in the LIS Department of the School of Communication and Information at Rutgers University; 
+<p>
 
 <p>
-This experimental interface is supported in part by the National Science Foundation, and hosted at Rutgers University during development and testing. For information about the project visit: <a href="http://arxiv_xs.rutgers.edu/">http://arxiv_xs.rutgers.edu/</a>
-</div>
+This experimental interface is supported in part by the National Science Foundation, and hosted at Rutgers University during development and testing. For information about the project visit:
+ <a href="http://arxiv_xs.rutgers.edu/">http://arxiv_xs.rutgers.edu/</a>
+</p>
 
-<br />
+<p><strong>
+Please note that you must be at least 18 years of age to participate.
+Please do not continue if you are not 18 or older.
+</strong></p>	
 
-<div style="margin:0px auto; max-width:1000px; text-align:center;">
-	Please note that you must be at least 18 years of age to participate.
-	Are you 18 or older?
-	
-	<br /><br />
+<h3>Risks and benfits</h3>
+<p>
+This research may benefit you directly, if the experimental search is more effective, and it will help to better design search systems for users of databases, and the arXiv in particular. There are no foreseeable risks to participating in this research.
+</p>
 
-	<input id="age_18_yes" type="radio" name="age" class="input_radio" />
-	<label for="age_18_yes">Yes</label>
-		
-	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-		
-	<input id="age_18_no" type="radio" name="age" class="input_radio" />
-	<label for="age_18_no">No</label>
+<h3>Protection of Privacy and Confidentiality of Data</h3>
+<p>
+We will do our best to protect your privacy as a research participant.  Because this information is being sent (transmitted) over the Internet, there is the possibility that an outside party (such as a computer hacker) may be able to gain access to your information.  If your search is being completed on a computer in a publicly accessible area, such as in a restaurant, at a school, a library, or at work, please understand that this can increase the possibility that others may be able to access your responses. Therefore, it is strongly advised that your search be completed on a private computer to protect your privacy. Please remember to always completely close your browser (or log-off) after completing your search.
+</p>
+ 
+<h3>Participation</h3>
 
-	<br /><br />
+<p>
+You can participate in this research in two different ways (please
+click the option you prefer in the appropriate box at the bottom of
+the page after reading this entire form):
 
-	<script type="text/javascript"> 
-		$(document).ready(function(){
-		  $("#age_18_no").click(function(){
-		    $("#age_continue").slideUp(500);
-		    $("#age_stop").slideDown(500);
-		 });
-		});
+<ul>
+<li>
+A. You can participate completely anonymously by registering with a
+username and password  d (and you may provide contact email needed for
+password reset) and let us track your searches
 
-		$(document).ready(function(){
-		 $("#age_18_yes").click(function(){
-	    	$("#age_stop").slideUp(500);
-	    	$("#age_continue").slideDown(500);
-	     });
-		});
-	</script>
+<li>
+ B. You can create a username and password, and share with us your
+contact information for a possible follow-up interview, and let us
+track all your searches (contact email will also support password
+reset).
+</ul>
 
-	<div id="age_stop" style="display:none; border:2px red outset; margin:0 auto; padding:10px; width:300px; background:#FFBBBB; color:#000000; font-weight:bold; border-radius:10px;">
-			<img src="_technical/images/stop.gif" style="height:50px; width:50px;" alt="stop" /><br /><br />
-			Sorry, you cannot participate in this research.
-	</div>		
+<p>
+The search you are conducting can be completely anonymous if you
+choose option A. The search will be confidential if you choose option
+B.  The software used to collect the data will not record the IP
+address of your computer or any other identifying information (except
+your username and password, and email if you chose to provide it).  We
+will not ask questions related to your identity if you choose option
+A.  Your responses will only be associated with your username and
+password; we will only have the personal information you choose to
+give us if you choose option B. At the end of your search we may ask
+you for some feedback, giving us this feedback is optional.
+
+<!--
+<p>
+We will track your search information for as long as you conduct your
+current search. Typical searches take from 1 to 30 minutes.
+-->
+
+<p>
+If you choose option B above, we will track your search data every
+time you search in the arXiv with your same username and password,
+until the end of the study in July 2013.
+
+<p>
+The research team and the Institutional Review Board (a committee that
+reviews research studies in order to protect research participants) at
+Rutgers University are the only parties that will be allowed to see
+the data, except as may be required by law. If a report of this study
+is published, or the results are presented at a professional
+conference, only group results will be stated. All study data will be
+kept for 6 years.
+
+<h3>Voluntary Participation</h3>
+
+<p>
+Your participation is entirely voluntary and you may choose not to
+participate in this study or withdraw your consent at any time by
+ending your search and logging out.  You will not be penalized in any
+way should you choose not to participate or withdraw.
 
 
-	<div id="age_continue" style="display:none; border:none; margin:0 auto; max-width:1000px;" >
- 		
-		<p>The FAQ below will help you choose your level of participation.</p>
+<h3>Contact Information</h3>
 
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>What is the benefit of this research?</p>
-		<p class="answer">This research might not benefit you directly, but it will help us better design search systems for users of databases, and the arXiv in particular.
-			This means, users like you should benefit from it.
-		</p>
-
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>Are there any risk of this research?</p>
-		<p class="answer">There are no foreseeable risks to participating in this research.</p>
-
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>How are the user's privacy and confidentiality of data insured?</p>
-		<p class="answer">If you decide to participate, we will do our best to protect your privacy as a research participant.
-				Since the information is being sent (transmitted) over the Internet,
-				there is a possibility that an outside party (such as a computer hacker) may be able to gain access to your information.
-				If you use the arXiv on a computer in a publicly accessible area, such as in a restaurant, a school, a library, or at work,
-				please understand that this can increase the possibility that others may be able to access your responses.
-				Therefore, we strongly recommend you to conduct your search on a private computer to protect your privacy.
-				Please remember to always completely close your browser (or log-off) after completing your search.
-		</p>
-
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>
-			How can I participate? Participation Levels Explained
-		</p>
-		<p class="answer">
-			You can participate in this research on three different levels:
-		</p>
-
-		<table style="width:75%; border-collapse:collapse; margin:10px auto 10px auto;">
-			<tr>
-				<td style="width:250px; background:#cccccc; padding:10px; border-top-left-radius:10px;">Anonymous Participation</td>
-				<td style="width:250px; background:#cccccc; padding:10px; border-top-right-radius:10px;">Your search is completely anonymous.</td>
-			</tr>
-			<tr>
-				<td style="width:250px; background:#dddddd; padding:10px;">Session-based Confidential Participation</td>
-				<td style="width:250px; background:#dddddd; padding:10px;">Your search is confidential.
-					The software used to collect the data will not record the IP address of your computer or any other identifying information.</td>
-			</tr>
-			<tr>
-				<td style="width:250px; background:#eeeeee; padding:10px; border-bottom-left-radius:10px;">Login-based Confidential Participation</td>
-				<td style="width:250px; background:#eeeeee; padding:10px; border-bottom-right-radius:10px;">Your search is confidential.
-					The software used to collect the data will not record any identifying information except your log-in name.
-					You may create multiple topic names if you have several distinct research interests.
-			</td>
-			</tr>
-		</table>
-
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>How else can I participate?</p>
-		<p class="answer">At the end of your search we will ask you for some feedback. Giving us this feedback is optional.</p>
-
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>How will the data be collected?</p>
-		<p class="answer">We will track your search information for as long as you conduct your current search.
-				Typical searches take from 1 to 30 minutes.
-				If you choose login-based participation, we will track your search data every time you search in the arXiv with your login name for the next 12 months.
-				The research team and the Institutional Review Board (a committee that reviews research studies in order to protect research participants)
-				at Rutgers University are the only parties that will be allowed to access the data, except as may be required by law.
-				If a report of this study is published, or the results are presented at a professional conference, only group results will be stated.
-				All study data will be kept for 6 years.
-		</p>
-
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>Is my participation voluntary?</p>
-		<p class="answer">
-			Your participation is entirely voluntary
-			and you may choose not to participate in this study or withdraw your consent at any time by changing your participation status.
-			You will not be penalized in any way should you choose not to participate or withdraw.
-		</p>
-
-		<p class="question"><span class="diamond">&diams;&nbsp;</span>Whom should I contact if I have further questions?</p>
-		<p class="answer">We are available to answer your questions about this research. You may contact the Principal Investigator:</p>
+<p>We are available to answer your questions about this research. You
+may contact the Principal Investigator:</p>
 
 			<div style="width:180px; margin:10px auto; text-align:justify; background:#eeeeee; padding:10px; border-radius:10px;">
 			<span style="font-weight:bold">Paul Kantor</span><br />
@@ -257,9 +227,9 @@ This experimental interface is supported in part by the National Science Foundat
 				<br />New Brunswick, NJ 08901
 			</div>
 
-<p style="margin:5px 0 5px 10px">For information about the project you can visitthe project site: <a href="http://arxiv_xs.rutgers.edu/">http://arxiv_xs.rutgers.edu/</a></p>
+<p>For information about the project you can visitthe project site: <a href="http://arxiv_xs.rutgers.edu/">http://arxiv_xs.rutgers.edu/</a></p>
 
-		<p style="margin:5px 0 5px 10px">If you have any questions about your rights as a research subject, you may contact the IRB Administrator at Rutgers University:</p>
+<p>If you have any questions about your rights as a research subject, you may contact the IRB Administrator at Rutgers University:</p>
 
 			<div style="max-width:550px; margin:10px auto; text-align:justify; background:#eeeeee; padding:10px; border-radius:10px;">
 				<span style="font-weight:bold">Rutgers University Institutional Review Board for the Protection of Human Subjects</span><br />
@@ -269,76 +239,20 @@ This experimental interface is supported in part by the National Science Foundat
 				humansubjects@orsp.rutgers.edu
 			</div>
 
-		<p style="margin:5px 0 5px 10px">
-			This Internet Research Information Sheet was approved
-			by the Rutgers University Institutional Review Board for the Protection of Human Subjects on [date];
-			approval of this sheet expires on [expiration date].
-		</p>
+<p>
+This Internet Research Information Sheet was approved by the Rutgers
+University Institutional Review Board for the Protection of Human
+Subjects on 6/14/2011; there is not any expiration on this approval.
 
-		<p style="margin:5px 0 5px 10px; text-align:center;">Would you like to participate in the arXiv Research as described?<br />By participating in this study you agree to be a study subject.</p>
-
-		<input id="participation_yes" type="radio" name="participation_agreement" class="input_radio" tabindex="3" />
-		<label for="participation_yes">Yes</label>
-		
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-			
-		<input id="participation_no" type="radio" name="participation_agreement" class="input_radio" tabindex="4" />
-		<label for="participation_no">No</label>
-
-
-		<script type="text/javascript"> 
-			$(document).ready(function(){
-			  $("#participation_no").click(function(){
-			    $("#participation_continue").slideUp(500);
-			    $("#participation_stop").slideDown(500);
-				setTimeout(function() { document.getElementById('anchor').focus(); }, 700);
-			 });
-			});
-
-			$(document).ready(function(){
-			 $("#participation_yes").click(function(){
-		    	$("#participation_stop").slideUp(500);
-		    	$("#participation_continue").slideDown(500);
-				setTimeout(function() { document.getElementById('anchor').focus(); }, 700);
-		     });
-			});
-		</script>
-
-		<div id="placeholder" style="height:225px; display:block; padding-top:10px;">
-
-
-		<div id="participation_stop" style="display:none; border:none; margin:0px auto 0px auto; padding-top:25px; max-width:1000px;">
-			Thank you for your interest in our research.<br />
-			We regret your decision to decline your participation.<br />
-			In case you reconsider your decision, you can click
-			<a href="participation.html" target="_self">here</a>
-			or on your participation status in the upper right corner of our webpage.
-			
-			<br /><br /><br />
-				
-			<div class="button_div" style="width:65px; height:15px; margin:0px auto;"><a href="#">Continue</a></div>
-			
-		</div>		
- 
- 		<div id="participation_continue" style="display:none; border:none; margin:0 auto; max-width:1000px;">
- 			Thank you for choosing to participate in the arXiv Research. Please choose your level of participation below.<br />
- 			By clicking on the options you understand that completely anonymized versions of the data generated by your participation
- 			will be archived and may be made available to other researchers from Rutgers University or other institutions.<br /><br />
-
-
-				<script type="text/javascript"> 
+<p>
+By participating in this study you agree to be a study subject. Please
+click <strong>"YES"</strong> to one of the following options to allow tracking of your
+search:
+</p>
+	<script type="text/javascript"> 
 					$(document).ready(function(){
 					  $("#participation_level_anonymous").click(function(){
 					    $("#participation_anonymous").fadeIn(500);
-					    $("#participation_sessionbased").fadeOut(0);
-				   	    $("#participation_loginbased").fadeOut(0);
-					 });
-					});
-
-					$(document).ready(function(){
-					  $("#participation_level_sessionbased").click(function(){
-					    $("#participation_anonymous").fadeOut(0);
-					    $("#participation_sessionbased").fadeIn(500);
 				   	    $("#participation_loginbased").fadeOut(0);
 					 });
 					});
@@ -346,52 +260,42 @@ This experimental interface is supported in part by the National Science Foundat
 					$(document).ready(function(){
 					  $("#participation_level_loginbased").click(function(){
 					    $("#participation_anonymous").fadeOut(0);
-					    $("#participation_sessionbased").fadeOut(0);
 				   	    $("#participation_loginbased").fadeIn(500);
 					 });
 					});
-				</script>
+	</script>
 
-
-				<div style="width:800px; height:85px; margin:0px auto; position:relative;">
-
+	<div style="width:800px; height:85px; margin:0px auto; position:relative;">
 					<div style="width:380px; height:60px; margin:none; padding:10px; float:left; text-align:justify; vertical-align:middle;">
 		
-						<div id="participation_level_anonymous">
-							<input id="anonymous" type="radio" class="input_radio" value="anonymous" name="participation_level" tabindex="5" />
-							<label for="anonymous" id="label_anonymous">Anonymous participation</label>
+
+			<div id="participation_level_none" style="display:none">  <!-- hidden button -->
+							<input id="none" type="radio" class="input_radio" value="none" name="participation_level" tabindex="5" />
+							<label for="none" id="label_none">A. Yes, I want to participate anonymously</label>
 						</div>
 		
-						<div id="participation_level_sessionbased">
-							<input id="sessionbased" type="radio" class="input_radio" value="session-based" name="participation_level" tabindex="6" />
-							<label for="sessionbased" id="label_sessionbased">Session-based confidential participation</label>
-						</div>	
+
+						<div id="participation_level_anonymous">
+							<input id="anonymous" type="radio" class="input_radio" value="anonymous" name="participation_level" tabindex="5" />
+							<label for="anonymous" id="label_anonymous">A. Yes, I want to participate anonymously</label>
+						</div>
 		
+			
 						<div id="participation_level_loginbased">
 							<input id="loginbased" class="input_radio" type="radio" value="login-based" name="participation_level" tabindex="7" />
-							<label for="loginbased" id="label_loginbased">Login-based confidential participation</label>
+							<label for="loginbased" id="label_loginbased">B. Yes, you can track all of my searches</label>
 						</div>	
 					</div>
 
-					<script type="text/javascript"> 
+				<script type="text/javascript"> 
 						$(document).ready(function(){
 							$("#participation_level_anonymous").hover(function() { $("#expl_anonymous").fadeIn(100)}, function() { $("#expl_anonymous").fadeOut(100); });
-							$("#participation_level_sessionbased").hover(function() { $("#expl_sessionbased").fadeIn(100)}, function() { $("#expl_sessionbased").fadeOut(100); });
-							$("#participation_level_loginbased").hover(function() { $("#expl_loginbased").fadeIn(100)}, function() { $("#expl_loginbased").fadeOut(100); });
+						        $("#participation_level_loginbased").hover(function() { $("#expl_loginbased").fadeIn(100)}, function() { $("#expl_loginbased").fadeOut(100); });
 						});
 
 						$(document).ready(function(){
 						  $("#participation_level_anonymous").click(function(){
 						    $("#participation_anonymous").fadeIn(500);
-						    $("#participation_sessionbased").fadeOut(500);
-					   	    $("#participation_loginbased").fadeOut(500);
-						 });
-						});
-
-						$(document).ready(function(){
-						  $("#participation_level_sessionbased").click(function(){
-						    $("#participation_anonymous").fadeOut(500);
-						    $("#participation_sessionbased").fadeIn(500);
 					   	    $("#participation_loginbased").fadeOut(500);
 						 });
 						});
@@ -399,67 +303,32 @@ This experimental interface is supported in part by the National Science Foundat
 						$(document).ready(function(){
 						  $("#participation_level_loginbased").click(function(){
 						    $("#participation_anonymous").fadeOut(500);
-						    $("#participation_sessionbased").fadeOut(500);
 					   	    $("#participation_loginbased").fadeIn(500);
 						 });
 						});
-					</script>
+				</script>
 
-				<div style="width:400px; position:absolute; top:5px; right:0px; height:60px; padding:10px 0px 0px 0px; margin:none; float:right; vertical-align:middle; display:none; border:1px gray ridge; border-radius:10px;" id="expl_anonymous"><br />Your search will be completely anonymous.</div>
-				<div style="width:400px; position:absolute; top:5px; right:0px; height:60px; padding:10px 0px 0px 0px; margin:none; float:right; vertical-align:middle; display:none; border:1px gray ridge; border-radius:10px;" id="expl_sessionbased">Your search will be confidential.<br />The software used to collect the data will not record<br />the IP address of your computer or any other identifying information.</div>
-				<div style="width:400px; position:absolute; top:5px; right:0px; height:60px; padding:10px 0px 0px 0px; margin:none; float:right; vertical-align:middle; display:none; border:1px gray ridge; border-radius:10px;" id="expl_loginbased">Your search will be confidential.<br />The software used to collect the data will not record<br />any identifying information except your login name.</div>
-			</div>
-
-
-			<div style="height:15px; margin:10px auto 25px auto; text-align:center;">
-
-				<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_anonymous"><a href="#">Continue with Anonymous Participation</a></div>
-				<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_sessionbased"><a href="#" >Continue with Session-based Confidential Participation</a></div>
-				<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_loginbased"><a href="participation_login.html" target="_self">Continue with Login-based Confidential Participation</a></div>
-
-			</div>
-
-			<p style="text-align:center;">If you do not agree with the consent form and do not wish to participate in this study, click
-				<a href="#" id="participation_nono">here</a>.
-			</p>
-
-		</div>
-
-  	</div>
- 		 
-		<script type="text/javascript"> 
-			$(document).ready(function(){
-			  $("#participation_nono").click(function(){
-			    $("#participation_continue").slideUp(500);
-			    $("#participation_stop").slideDown(500);
-			 });
-			});
-		</script>
-
-	</div>
-
-	<div id="wrapping_anchor" style="height:10px;">
-		<input name="anchor" id="anchor" type="text" />
+				<div style="width:400px; position:absolute; top:5px; right:0px; height:60px; padding:10px 0px 0px 0px; margin:none; float:right; vertical-align:middle; display:none; border:1px gray ridge; border-radius:10px;" id="expl_anonymous">You can participate completely anonymously by registering with a username and password (and you may provide contact email needed for password reset) and let us track your searches</div>
+			
+				<div style="width:400px; position:absolute; top:5px; right:0px; height:60px; padding:10px 0px 0px 0px; margin:none; float:right; vertical-align:middle; display:none; border:1px gray ridge; border-radius:10px;" id="expl_loginbased">You can create a username and password, and share with us your contact information for a possible follow-up interview, and let us track all your searches (contact email will also support password reset)</div>
 	</div>
 
 
-	
-	
-	</div> 
-		<!-- #EndEditable -->	
-	</div> <!-- Wrapping -->
-	
-	</div> <!-- Middle frame ends-->
+	<div style="height:15px; margin:10px auto 25px auto; text-align:center;">
 
-<div id="lower_frame">
-	
-</div> <!-- Lower frame ends -->		
+				<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_anonymous"><a href="registration.jsp?survey=false" target="_self">Continue with Anonymous Participation</a></div>			
+				<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_loginbased"><a href="registration.jsp?survey=true" target="_self">Continue with Login-based Confidential Participation</a></div>
 
-<!-- #BeginEditable "Scripts" -->
-<!-- #EndEditable -->
+			</div>
+
+
+<p>
+If you do not agree with the consent form and do not wish to participate in this study, please close this webpage on your web browser to exit from participating.
+</P>
+
+<p>
+Thank you, Paul B. Kantor (Principal Investigator)
+</p>
 
 </body>
-
-<!-- #EndTemplate -->
-
 </html>

@@ -45,7 +45,7 @@ Now you can
 <ul>
 <li><a href="<%=main.cp%>">Main page</a>
 <li><a href="<%=main.cp%>/personal/index.jsp">Your account</a>
-<li><a href="<%=main.cp%>/personal/editUserFormSelf.jsp">Modify your account information again</a>
+<li><a href="<%=main.cp%>/personal/editUserFormSelf.jsp">Modify your account information</a>
 </ul>
 
 

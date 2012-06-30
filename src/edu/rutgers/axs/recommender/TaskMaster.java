@@ -60,6 +60,12 @@ public class TaskMaster {
 
     /**
        -DexitAfter=24  - time in hours
+
+       FIXME: this program has just one reader (never re-opened)
+       during its operation, and a once-read
+       CompactArticleStatsArray. This means that it should NOT ever
+       run concurrently with the ArxivImporter, to avoid using stale
+       data.
     */
     static public void main(String[] argv) throws Exception {
 	Main.memory("start");
@@ -85,6 +91,8 @@ public class TaskMaster {
 
 	EntityManager em = Main.getEM();
 	Scheduler scheduler = new Scheduler( em );
+	int schedulingIntervalSec=ht.getOption("schedulingIntervalSec", 0);
+	if (schedulingIntervalSec > 0) scheduler.setSchedulingIntervalSec(schedulingIntervalSec);
 
 	int taskCnt=0;
 	int noneCnt=0; // how many "no task" loops w/o a message

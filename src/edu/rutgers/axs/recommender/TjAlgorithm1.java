@@ -90,7 +90,8 @@ class TjAlgorithm1 {
 	tje.setScore(utility);
 	results.add(tje.getSd());
 
-	Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=du=" + utility);
+	Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=du=" + utility 
+		     + " (tje.ub()="+tje.ub()+", tje.mcMinus="+ tje.mcMinus+")");
 
 	usedCnt++;
 

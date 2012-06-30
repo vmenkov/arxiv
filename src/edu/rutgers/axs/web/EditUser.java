@@ -33,7 +33,8 @@ public class EditUser extends ResultsBase {
 	EDIT_ANY, EDIT_SELF, CREATE_SELF;
     }
 
-
+    /** Boolean parameter in user-creation process */
+    public final static String SURVEY="survey";
 
     /** @param selfForm Set this to true when invoking this
 	constructor from the form for editing one's own entry (the
@@ -44,6 +45,9 @@ public class EditUser extends ResultsBase {
      */
     public EditUser(HttpServletRequest _request, HttpServletResponse _response, Mode mode) {
 	super(_request,_response);
+
+	// Did we come from a CREATE_SELF form that talked about an agreement to pariticipate in a follow-up interview?
+	boolean survey = getBoolean(EditUser.SURVEY, false);
 	
 	uname = (mode==Mode.EDIT_SELF) ? user: 
 	    Tools.getString(request,USER_NAME, "").trim();
@@ -168,13 +172,30 @@ public class EditUser extends ResultsBase {
 		} 	  
 	    }
 
-	    // only SOME forms enter this, namely, participation_login.html
+	    // only SOME forms enter this, namely, registration.jsp ( former participation_login.html)
 	    String confirmEmail = Tools.getString(request,CONFIRM_EMAIL, null);
 	    if (confirmEmail!=null &&  
 		!confirmEmail.equals( Tools.getString(request,EMAIL, null))) {
 		error = true;
 		errmsg = "The email address should be entered correctly in both boxes";
 		return;	
+	    }
+
+	    
+	    if ( mode==Mode.CREATE_SELF && survey) {
+		// if (!getApprovedAudio()) {	... }
+		if ((r.getEmail()==null || r.getEmail().equals("")) &&
+		    (r.getPhoneNumber()==null || r.getPhoneNumber().equals(""))) {
+		    error = true;
+		    errmsg = "You have agreed to participate in a follow-up interview, but have not provided any contact information. Please go back and enter your email address and/or telephone number";
+		    return;		    
+		}
+	    }
+
+	    if (r.catCnt()==0) {
+		error = true;
+		errmsg = "You must specify some categories of interest, in order for the system to be able to generate recommendations. Please go back and check boxes next to at least one category!";
+		return;		    
 	    }
 
 	    // saving data into the database
@@ -205,7 +226,7 @@ public class EditUser extends ResultsBase {
 	    Tools.editEntity(EntryFormTag.PREFIX, r, request);
 
 
-	    // Set roles
+	    // Set subject categories
 	    Set<String> c = r.getCats();
 	    if (c==null) c = new HashSet<String> ();
 	    for(String name: Categories.listAllStorableCats()) {

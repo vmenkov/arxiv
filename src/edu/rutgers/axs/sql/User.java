@@ -105,10 +105,30 @@ import edu.rutgers.axs.web.Tools;
     public  String getEncEsPass() { return encEsPass; }
     public void setEncEsPass(       String x) { encEsPass = x; }
 
+
+    @Basic @Display(order=9.1,rp=true,text="e.g. 732-932-0000") 
+    //@Usedin(phone=true)
+        @Column(length=32)      String phoneNumber;
+    public void setPhoneNumber(String val) {  phoneNumber        = val;    }
+    public String getPhoneNumber() {        return phoneNumber ;    }
+
+
+    @Basic @Display(order=9.2,rp=true,text="e.g. 'weekday evenings'") 
+         @Column(length=64)      String timesToReach;
+    public void setTimesToReach(String val) {      timesToReach    = val;    }
+    public String getTimesToReach() {        return timesToReach ;    }
+  
+    @Basic @Display(order=9.3, alt="Approved audio recording")   
+        @Column(nullable=false) boolean approvedAudio;
+    public  boolean getApprovedAudio() { return approvedAudio; }
+    public void setApprovedAudio( boolean x) { approvedAudio = x; }
+
+
+
     /** End time for the current extended (persistent) sessions. If
 	null, or in the past, then there is such session in effect for
 	this user now. */
-    @Display(editable=false, order=6) 
+    @Display(editable=false, order=9) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
        Date esEnd;
     public  Date getEsEnd() { return esEnd; }
@@ -366,14 +386,19 @@ import edu.rutgers.axs.web.Tools;
     @ElementCollection(fetch=FetchType.EAGER)
 	  private Set<String> cats = new LinkedHashSet<String>();
     public Set<String> getCats() { 
-	Logging.info("getCats: cats=" + cats);
+	//Logging.info("getCats: cats=" + cats);
 	return cats; 
     }
+
     public void setCats(Set<String> x) {	cats=x; }
 
     public boolean hasCat(String cat) {
 	return getCats()!=null && getCats().contains(cat);
 
+    }
+
+    public int catCnt() {
+	return getCats()==null? 0 : getCats().size();
     }
 
     public String listCats() {
@@ -402,31 +427,11 @@ import edu.rutgers.axs.web.Tools;
     }
     */
 
-   /** Creates set of radio buttons reflecting the ArXiv categories the user
+   /** Creates set of radio buttons reflecting the ArXiv categories this user
     is interested in. */
     public String mkCatBoxes() {
-	final String space = "&nbsp;&nbsp;";
-	StringBuffer b = new StringBuffer();
-	for(Categories.Cat major: Categories.majors) {
-	    b.append("<h4>" + major.name + " : " + major.desc + "</h4>\n");
-	    if (major.hasSubs()) {
-		for(Categories.Cat minor: major.subcats) {
-		    String name=major.name +"."+ minor.name;
-		    b.append(space);
-		    b.append(  "<strong>" +Tools.checkbox(EditUser.CAT_PREFIX + name, 
-					     "on", name, hasCat(name))
-			      + "</strong> " + minor.desc+ "<br>\n");
-		    
-		}
-	    } else {
-		String name = major.name;
-		b.append( "<strong>" +
-			  Tools.checkbox(EditUser.CAT_PREFIX + name, 
-					 "on", name, hasCat(name))
-			   + "</strong> " + major.desc+ "<br>\n");
-	    }
-	}
-	return b.toString();
+	return Categories.mkCatBoxes(this);
     }
 
+  
 }

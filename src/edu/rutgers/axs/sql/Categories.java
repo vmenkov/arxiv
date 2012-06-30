@@ -2,6 +2,10 @@ package edu.rutgers.axs.sql;
 
 import java.util.*;
 
+import edu.rutgers.axs.web.EditUser;
+import edu.rutgers.axs.web.Tools;
+
+
 public class Categories {
 
     static class CategoryException extends Exception {
@@ -255,4 +259,43 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	}
 	return v;
     }
+
+    /** Creates set of radio buttons reflecting the ArXiv categories
+    the specified user is interested in. 
+
+
+    @param u A user entry. If null, then no boxes will be checked . */
+    static public String mkCatBoxes(User u) {
+	//final String space = "&nbsp;&nbsp;";
+	StringBuffer b = new StringBuffer();
+	b.append("<table border=\"1\">\n");
+	for(Categories.Cat major: Categories.majors) {
+	    b.append("<tr><th valign='top' align='left'>" + 
+		     //major.name + " : " + 
+		     major.desc + "</th>\n");
+	    b.append("<td align='left'>\n");
+	    if (major.hasSubs()) {
+		for(Categories.Cat minor: major.subcats) {
+		    String name=major.name +"."+ minor.name;
+		    boolean has = u!=null && u.hasCat(name);
+		    b.append( "<strong>" +Tools.checkbox(EditUser.CAT_PREFIX + name, 
+							 "on", name, has)
+			      + "</strong> " + minor.desc+ "<br>\n");
+		    
+		}
+	    } else {
+		String name = major.name;
+		boolean has = u!=null && u.hasCat(name);
+		b.append( "<strong>" +
+			  Tools.checkbox(EditUser.CAT_PREFIX + name, 
+					 "on", name, has)
+			   + "</strong> " + major.desc+ "<br>\n");
+	    }
+	    b.append("</td>\n");
+	}
+	b.append("</table>\n");
+	return b.toString();
+    }
+
+
 }

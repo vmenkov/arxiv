@@ -15,7 +15,11 @@ import edu.rutgers.axs.web.ResultsBase;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 /** A compact alternative to ArticleStats[]; the idea is to save RAM
- * space during runtime. */
+    space during runtime. 
+
+    FIXME: if the Lucene index changes after this array has been initialized, it really ought not to 
+    be used anymore.
+*/
 public class CompactArticleStatsArray  {
  
     static final int NB=ArticleAnalyzer.upFields.length;
@@ -34,7 +38,9 @@ public class CompactArticleStatsArray  {
     }
 
     /** "Normalized boost", i.e. the boost factor for the field divided by the 
-	document norm */
+	document norm.
+	@param docno Lucene's internal document id.
+    */
     public float getNormalizedBoost(int docno, int i) {
 	return boost[i][docno]/norm[docno];
     }
