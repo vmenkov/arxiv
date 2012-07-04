@@ -73,6 +73,7 @@ public class ResultsBase {
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 	    user = sd.getRemoteUser(request);
 
+	    //	    Logging.info("calling sd.isAuthorized("+user+")");
 	    if(!sd.isAuthorized(request,user)) {
 		Logging.info("user " + user + " is not authorized to access servlet at " + request.getServletPath());
 		

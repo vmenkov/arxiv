@@ -313,6 +313,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 	q.setMaxResults(1);
 	List<DataFile> res = (List<DataFile>)q.getResultList();
+
+	Logging.info("DataFile.getLatestFileBasedOn(user="+username+", t=" + t+", days=" + days+", sourceType=" + sourceType +") gives " + res.size() + " results");
+
 	if (res.size() != 0) {
 	    return  res.iterator().next();
 	} else {

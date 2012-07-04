@@ -19,6 +19,7 @@ import edu.rutgers.axs.recommender.*;
 public class PersonalResultsBase extends ResultsBase {
     /** The user name of the user whose activity we research */
     public String actorUserName=null;
+    /** The object for the user whose activity we research */
     public User actor;
 
     /** Is the user requesting a list for his own activity (rather
@@ -48,7 +49,7 @@ public class PersonalResultsBase extends ResultsBase {
 
 	if (error) return;
 	actorUserName =  getString(USER_NAME, user);
-	isSelf = (actorUserName.equals(user));
+	isSelf =  (actorUserName==null) || (actorUserName.equals(user));
 	requestedFile =  getString(FILE, null);
 
     }

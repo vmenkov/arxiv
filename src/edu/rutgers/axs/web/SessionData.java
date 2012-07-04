@@ -26,8 +26,8 @@ public class SessionData {
     /** Generates proper link URLs */
     //final public Link link;
     
-    private SessionData( HttpSession _session,HttpServletRequest request ) throws WebException,
-					      IOException {
+    private SessionData( HttpSession _session,HttpServletRequest request )
+	throws WebException, IOException {
 	session = _session;
 
 	//-- not used any more: use persistence.xml instead
@@ -35,12 +35,11 @@ public class SessionData {
 	readProperties();
 
         // Create a new EntityManagerFactory using the System properties.
-        // The "icd" name will be used to configure based on the
+        // The "arxiv" name will be used to configure based on the
         // corresponding name in the META-INF/persistence.xml file
 	factory = Persistence.
 	    createEntityManagerFactory(Main.persistenceUnitName,p);
 
-	//link = new Link( request.getContextPath());
     }
 
 
@@ -53,26 +52,18 @@ public class SessionData {
   	return em;
     }  
 
-    /** Looks up the DemoSessionData already associated with the
-     * current session, or creates a new one. This is done atomically,
-     * synchronized on the session object.
+    /** Looks up the SessionData object already associated with the
+	current session, or creates a new one. This is done atomically,
+        synchronized on the session object.
      */
     static synchronized SessionData getSessionData(HttpServletRequest request) 
-				    throws WebException,IOException
-{
+	throws WebException, IOException {
 
 	HttpSession session = request.getSession();
 	String name = "sd";
 	SessionData sd  = null;
 	synchronized(session) {
-	    /*
-	    for(Enumeration en = session.getAttributeNames(); en.hasMoreElements(); ) {
-		String key=(String)en.nextElement();
-		Object val=session.getAttribute(key);
-		//Logging.info("session["+key+"]="+val);
-	    }
-	    */
-
+  
 	    sd  = ( SessionData) session.getAttribute(name);
 	    if (sd == null) {
 		sd = new SessionData(session,request);
@@ -84,38 +75,7 @@ public class SessionData {
 	return sd;
      }
 
-    /*
-    public static SessionData getSessionData(PageContext context) throws WebException,IOException{
-	return getSessionData(context.getSession());
-    }
-    */
-
-    /*
-    static  SessionData getSessionData(HttpSession session )  
-    throws WebException,IOException
-    {
-	String name = "sd";
-	SessionData sd  = null;
-	synchronized(session) {
-	    for(Enumeration en = session.getAttributeNames(); en.hasMoreElements(); ) {
-		String key=(String)en.nextElement();
-		Object val=session.getAttribute(key);
-		//Logging.info("session["+key+"]="+val);
-	    }
-
-
-	    sd  = ( SessionData) session.getAttribute(name);
-	    if (sd == null) {
-		sd = new SessionData(session);
-		session.setAttribute(name, sd);
-	    }
-	    //sd.update(request);
-
-	}
-	return sd;
-    }
-    */
-
+ 
     ServletContext getServletContext() {
 	return session.getServletContext(); 
     }
@@ -140,8 +100,8 @@ public class SessionData {
 	is.close();
 
 	edu.rutgers.axs.sql.Logging.info("SessionData.readProperties() - loaded");
-	for(Object k:p.keySet()) {
-	    edu.rutgers.axs.sql.Logging.info("Prop["+k+"]='"+p.get(k)+"'");}
+	//	for(Object k:p.keySet()) {
+	    //edu.rutgers.axs.sql.Logging.info("Prop["+k+"]='"+p.get(k)+"'");}
 
 	return p;
     }
@@ -155,9 +115,22 @@ public class SessionData {
 
     private String storedUserName = null;
 
+    /** Gets the user name associated with this session. Originally,
+	this method relied on Tomcat keeping track of this stuff, but
+	as Tomcat is not always deployed quite right, we don't do it
+	anymore. Instead, an instance variable (storedUserName) in
+	this SessionData object is used to keep track of the user name
+	within the current Tomcat session. Between Tomcat sessions (e.g.,
+	after server restart), the  ExtendedSessionManagement module is used
+	to find the user name based on a cookie sent by the browser.
+
+	Starts the new experimental day, if necessary. 
+     */
     String getRemoteUser(HttpServletRequest request) {    
 	String u;
 	if (relyOnTomcat) {
+	    // FIXME: if we do this (we don't now), how will we control the
+	    // LEARN/EVAL day type setting?
 	    u = request.getRemoteUser();
 	} else {
 	    // first, check this server session
@@ -165,21 +138,39 @@ public class SessionData {
 	    if (u==null) {
 		// maybe there is an extended session?
 		Cookie cookie =  ExtendedSessionManagement.findCookie(request);
-		if(cookie!=null) {
+		if (cookie!=null) {
 		    EntityManager em = getEM();
-		    User user=  ExtendedSessionManagement.getValidEsUser( em, cookie);
-		    if (user!=null)  u = user.getUser_name();
-		    em.close();
+		    try {
+			User user=  ExtendedSessionManagement.getValidEsUser( em, cookie);
+			if (user!=null) {
+			    u = user.getUser_name();
+			    boolean newDay = user.changeDayIfNeeded();
+			    Logging.info("getRemoteUser("+u+"); change day=" + newDay +"; now day=" + user.getDay());
+			    if (newDay)  {
+				em.getTransaction().begin(); 
+				em.persist(user);
+				em.getTransaction().commit(); 
+			    }
+			    Logging.info("getRemoteUser("+u+"); committed");
+			}
+		    } finally {
+			em.close();
+		    }
 		}
 	    }
 	}
 	return  (u!=null)? u : 		defaultUser;
     }
 
-    /** Returns the user object for the currently logged-in user */
-    public User getUserEntry(String user) {
+    /** Returns the user object for the currently logged-in
+     user.*/
+    User getUserEntry(String user) {
+	return getUserEntry(user,false);
+    }
+    User getUserEntry(String user, boolean refresh) {
 	EntityManager em = getEM();
 	User u = User.findByName(em, user);
+	if (refresh) em.refresh(u);
 	em.close();
 	return u;
     }
@@ -208,18 +199,23 @@ public class SessionData {
 	else return null;
     }
 
-    /** Is this user authorized to access this url? */
+    /** Is the current user authorized to access this url? */
     boolean isAuthorized(HttpServletRequest request) {
 	return isAuthorized(request, getRemoteUser(request));
     }
 
+    /** Is the specified user authorized to access this url?
+    */
     boolean isAuthorized(HttpServletRequest request, String user) {
 	String sp = request.getServletPath();
+	Logging.info("isAuthorized("+user+", " + sp + ")?");
 	Role.Name[] ar = authorizedRoles(sp);
 	if (ar==null) return true; // no restrictions
 	if (user==null) return false; // no user 
-	User u = getUserEntry(user);
-	return u!=null && u.hasAnyRole(ar);
+	User u = getUserEntry(user, true); // refresh it, just in case
+	boolean b = u!=null && u.hasAnyRole(ar);
+	Logging.info("isAuthorized("+user+", " + sp + ")=" + b);
+	return b;
     }
 
 }

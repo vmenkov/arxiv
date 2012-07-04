@@ -33,13 +33,11 @@ public class ViewSuggestions extends PersonalResultsBase {
      * HTTP query string*/
     public DataFile.Type mode= DataFile.Type.LINEAR_SUGGESTIONS_1;
     /** Date range on which is the list should be based. (0=all time). */
-    public int days=0;
+    public int days= 0;
     /** Max length to display. (Note that the suggestion list
      * generator may have its own truncation criteria!)  */
     public static final int maxRows = 100;
     
-    /** The currently recorded last action id for the user in question */
-    public long actorLastActionId=0;
     /** If this is supplied, this specifies the particular user
 	profile on which the requested suggestion list must be based.
      */
@@ -59,36 +57,60 @@ public class ViewSuggestions extends PersonalResultsBase {
 	this(_request, _response, false);
     }
 
+    private static enum Mode {
+	SUG2, CAT_SEARCH, TEAM_DRAFT;
+    };
+
+
     /**
        @param mainPage If true, we're generating a list for the main page.
      */
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
-	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
-	days = (int)getLong(DAYS, days);
-	basedon=getString(BASEDON,null);
-	basedonType =  (DataFile.Type)getEnum(DataFile.Type.class, BASEDON_TYPE,null); // DataFile.Type.NONE);
-	
-	
-	teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
+
+	if (actorUserName==null) {
+	    error = true;
+	    errmsg = "No user name specified!";
+	    return;
+	}
+
+
+	EntityManager em = sd.getEM();
+	try {
+
+	actor=User.findByName(em, actorUserName);
 
 	if (mainPage) {
+	    if (user==null) return; // no list needed
 	    // disregard most of params
+	    teamDraft = (actor.getDay()==User.Day.EVAL);
+	    basedon=null;
+	    mode = DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
+	    basedonType =DataFile.Type.TJ_ALGO_2_USER_PROFILE;
+	    days = (int)getLong(DAYS,Search.DEFAULT_DAYS);
 	} else {
-	    //	    teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
+	    mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
+	    basedon=getString(BASEDON,null);
+	    basedonType =  (DataFile.Type)getEnum(DataFile.Type.class, BASEDON_TYPE,null); // DataFile.Type.NONE);
+	    days = (int)getLong(DAYS, days);
+	    // use params as given
 	}
+
+	// Looking at some request params. This is used as the standard
+	// setup in the standalone page, or as the override in the
+	// main page environment
+	teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
+
 
 	if (error) return; // authentication error?
 
 	Task.Op taskOp = mode.producerFor(); // producer task type
 
-	EntityManager em = sd.getEM();
-	try {
 	    final int maxDays=30;
 
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
 
-	    if (actorUserName==null) throw new WebException("No user name specified!");
+
 	    if (force && !expert) {
 		throw new WebException("The 'force' mode can only be used together with the 'expert' mode");
 	    }	
@@ -158,25 +180,18 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 	    em.getTransaction().commit();
 
+	    actorLastActionId= actor.getLastActionId();
+
+
 	    if (df!=null) {
 
 		IndexReader reader=ArticleAnalyzer.getReader();
 		IndexSearcher searcher = new IndexSearcher( reader );
-		actor=User.findByName(em, actorUserName);
 
 		if (teamDraft) {
 		    SearchResults asr = new SearchResults(df, searcher);
 		    
-		    int maxlen = 10000;
-		    SearchResults bsr = 
-			SubjectSearchResults.orderedSearch( searcher, actor, days, maxlen);
-		    if (bsr.scoreDocs.length>=maxlen) {
-			String msg = "Catsearch: At least, or more than, " + maxlen + " results found; displayed list may be incomplete";
-			Logging.warning(msg);
-			infomsg += msg + "<br>";
-		    }
-
-		    
+		    SearchResults bsr = catSearch(searcher);
 		    
 		    long seed =  (actorUserName.hashCode() << 16) | dfmt.format(new Date()).hashCode();
 		    SearchResults merged = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
@@ -191,7 +206,6 @@ public class ViewSuggestions extends PersonalResultsBase {
 		    File f = df.getFile();
 		    entries = ArticleEntry.readFile(f);
 		    
-		    actorLastActionId= actor.getLastActionId();
 		}
 		applyUserSpecifics(entries, actor);
 				
@@ -213,6 +227,20 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    //em.close(); 
 	}
     }
+
+    private SearchResults catSearch(IndexSearcher searcher) throws Exception {
+	int maxlen = 10000;
+	SearchResults bsr = 
+	    SubjectSearchResults.orderedSearch( searcher, actor, days, maxlen);
+	if (bsr.scoreDocs.length>=maxlen) {
+	    String msg = "Catsearch: At least, or more than, " + maxlen + " results found; displayed list may be incomplete";
+	    Logging.warning(msg);
+	    infomsg += msg + "<br>";
+	}
+	return bsr;
+    }
+		    
+
 
     /** Applies this user's exclusions, folder inclusions, and ratings */
     void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {

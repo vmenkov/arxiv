@@ -95,4 +95,15 @@ public class Util {
 	return d==null? "never" :  Reflect.compactFormat(d) + " " + Util.ago(d);
     }
 
+    /** Like join() in Perl */
+    static public String join(String pad, Object[] a) {
+	if (a==null) return "null";
+	StringBuffer b = new StringBuffer();
+	for(Object q: a) {
+	    if (b.length()>0) b.append(pad);
+	    b.append(q);
+	}
+	return b.toString();
+    }
+
 }

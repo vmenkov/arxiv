@@ -197,6 +197,16 @@ public class TaskMaster {
 			// rank by TJ Algo 1
 			TjAlgorithm1 algo = new TjAlgorithm1();
 			sd = algo.rank( upro, sd, casa, em, maxDocs);
+
+			// FIXME: is there a better place for the day-setting?
+			boolean isTrivial = (upro.terms.length==0);
+			if (isTrivial) {
+			    u.forceNewDay(User.Day.LEARN);
+			} else {
+			    u.forceNewDay();
+			}
+			em.persist(u);
+
 		    } else {
 			sd = raw? upro.luceneRawSearch(maxDocs,casa,em,days, useLog):
 			upro.luceneQuerySearch(maxDocs, days);
@@ -345,4 +355,34 @@ public class TaskMaster {
 	return upro;
     }
 
+    /*
+    private static  ArxivScoreDoc[] algo1Wrapper(EntityManager em, String user, int days,
+				IndexReader reader, UserProfile upro) {
+	// restricting the scope by category and date,
+	// as per Thorsten 2012-06-18
+	User u = User.findByName( em, user);
+	String[] cats = u.getCats().toArray(new String[0]);
+	Date since = SearchResults.daysAgo( days );
+	IndexSearcher searcher = new IndexSearcher(reader);	
+	SearchResults sr = new SubjectSearchResults(searcher, cats, since, 10000);
+	// set scores for use in tie-breaking
+	sr.setCatSearchScores(reader, sr.scoreDocs,cats,since);
+	
+	ArxivScoreDoc[] sd = ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
+	searcher.close();
+	// rank by TJ Algo 1
+	TjAlgorithm1 algo = new TjAlgorithm1();
+	sd = algo.rank( upro, sd, casa, em, maxDocs);
+	
+	// FIXME: is there a better place for the day-setting?
+	boolean isTrivial = (upro.terms.length==0);
+	if (isTrivial) {
+	    u.forceNewDay(User.Day.LEARN);
+	} else {
+	    u.forceNewDay();
+	}
+	em.persist(u);
+	return sd;
+    }
+    */
 }

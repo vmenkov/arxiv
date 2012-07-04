@@ -167,6 +167,7 @@ import edu.rutgers.axs.web.Tools;
     }
 
     public boolean hasRole(Role.Name name) {
+	if (getRoles()==null) Logging.warning(" hasRole() : getRoles==null!");
 	for(Role r: getRoles()) {
 	    if (r.getERole() == name) return true;
 	}
@@ -188,17 +189,73 @@ import edu.rutgers.axs.web.Tools;
 	return hasRole(Role.Name.researcher);
     }
 
+
+    /** What kind of "experimental day" we have for this user now? 
+	"Learning" or "Evaluation" as per June 2012 scheme.
+	By default, null is stored */
+    public static enum Day {
+	LEARN, EVAL;
+    }
+
+    @Column(nullable=true,length=6) @Enumerated(EnumType.STRING) 
+	@Display(editable=false, order=10.1) 
+    private User.Day day;
+    
+    public User.Day getDay() { return day; }
+    void setDay(User.Day x) { day = x; }
+	
+    @Display(editable=false, order=10.2) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+       Date dayStart;
+    Date getDayStart() { return dayStart; }
+    void setDayStart(       Date x) { dayStart = x; }
+
+    /** Sets the day type in the entry, if the previous day is
+	over. Once should call persist() thereafter.
+
+	@return True if the new day has been started. In this case,
+	one should call persist(). False if the current day continues.
+    */
+    public boolean changeDayIfNeeded(){
+	Date now = new Date();
+	if (getDay()==null || getDayStart()==null ||
+	    getDayStart().getTime() <= now.getTime() - 24 * 3600L * 1000L) {
+	    forceNewDay();
+	    return true;
+	}
+	else return false;
+    }
+
+    /** This should be called once a profile has been updated */
+    public Day forceNewDay() {
+	return  forceNewDay( Math.random() < 0.5 ? Day.LEARN : Day.EVAL);
+    }
+    /** Sets the new day type to the specified value, and the day start time
+	to "now". This can be called e.g. for a new user.
+    */
+    public Day forceNewDay(Day val) {
+	Date now = new Date();
+	Logging.info("Setting day type for user "+ getUser_name()+" to "+ val);
+	setDay( val);
+	setDayStart(now);	
+	return val;
+    }
+
+    /** Human-readable printable message about this user's current
+     * experimental day
+     */
+    public String dayMsg() {
+	return ""+ getDay() + " since " + getDayStart();
+    }
+
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	    return true; 
     }
 
     @PostLoad
 	void postLoad() {
-	int n = 0;
-	for(Role r: getRoles()) {
-	    n++;
-	}
-	//Logging.info("Loaded a user entry with "+n +" roles: " + reflectToString());
+	int n = 0;	for(Role r: getRoles()) {	    n++;	}
+	Logging.info("Loaded a user entry with "+n +" roles: " + reflectToString());
     }
 
     public String reflectToString() {
@@ -272,6 +329,7 @@ import edu.rutgers.axs.web.Tools;
      */
     public long getLastActionId() {
 	long lai = 0;
+	if (getActions()==null) return 0;
 	for(Action a: getActions()) {
 	    if (a.getId() > lai) lai = a.getId();
 	}
@@ -309,10 +367,29 @@ import edu.rutgers.axs.web.Tools;
 	greater than id0.
      */
     public HashMap<String, Vector<Action>> getAllActionsSince(long id0) {
+	return getAllActionsSince(id0, null);
+    }
+
+    public HashMap<String, Vector<Action>> getAllActionsSince1(long id0, User.Day allowedType) {
+	return getAllActionsSince(id0, new User.Day[] {allowedType});
+    }
+
+    /** Similar to getAllActionsHashMap(), but only looks at actions with id
+	greater than id0.
+
+	@param dayType If not null, only actions on days of these
+	types are taken into consideration
+     */
+    public HashMap<String, Vector<Action>> getAllActionsSince(long id0, User.Day[] allowedDayTypes) {
+
 	HashMap<String, Vector<Action>> h = new HashMap<String, Vector<Action>>();
 
-	for( Action a: actions) {
+	int inRangeCnt=0, acceptedCnt=0;
+	if (getActions()==null) return h;
+	for( Action a: getActions()) {
 	    if (a.getId()<=id0) continue;
+	    inRangeCnt++;
+	    if (!isAllowedType(a.getDay(), allowedDayTypes)) continue;
 	    String aid = a.getArticle();
 	    Vector<Action> b = h.get(aid);
 	    if (b==null) {
@@ -323,8 +400,18 @@ import edu.rutgers.axs.web.Tools;
 		while( pos > 0 && b.elementAt(pos-1).after(a)) pos--;
 		b.insertElementAt(a, pos);
 	    }
+	    acceptedCnt++;
 	}
+	Logging.info("getAllActionsSince("+id0+",{"+
+		     Util.join(",", allowedDayTypes) +    "}): out of " + 
+		     inRangeCnt + " actions, accepted " + acceptedCnt);
 	return h;
+    }
+
+    boolean isAllowedType(User.Day d, User.Day[] types) {
+	if (types==null) return true;
+	for(User.Day q: types) { if (d==q) return true; }
+	return false;
     }
 
     /** Produces a HashMap which, for each article id (the key) contains

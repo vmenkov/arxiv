@@ -36,7 +36,8 @@ public class LoginServlet extends HttpServlet {
 	    if (u==null)  throw new WebException("No such user: " + user);
 
 	    if (!u.checkPassword(p)) throw new WebException("Wrong password for user " + user);
-  
+
+
 	    Role.Name[] ar = SessionData.authorizedRoles(sp);
 	    
 	    if (ar!=null) {
@@ -48,15 +49,18 @@ public class LoginServlet extends HttpServlet {
 	    // all OK
 	    sd.storeUserName(user);
 
+	    boolean newDay = u.changeDayIfNeeded();
+	    Logging.info("LoginServlet("+user+"); change day=" + newDay +"; now day=" + u.getDay());
+
 	    Cookie cookie = null;
-	    if (remember!=null) {
+	    if (remember!=null || newDay) {
 		em.getTransaction().begin();
-		cookie =  ExtendedSessionManagement.makeCookie(u);
+		if (remember!=null) cookie =  ExtendedSessionManagement.makeCookie(u);
 		em.persist(u);
 		em.getTransaction().commit(); 
 		Logging.info("Login: remembered user");		
 	    } else {
-		Logging.info("Login: no 'remember' box");		
+		Logging.info("Login: won't remember user (box not checked)");
 	    }
 
 	    String redirect =  "/index.jsp";

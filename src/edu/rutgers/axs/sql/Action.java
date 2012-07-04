@@ -44,7 +44,7 @@ import java.lang.reflect.*;
 	return user;
     }
 
-    public void setUser(User c) {
+    private void setUser(User c) {
 	user=c;
     }
     
@@ -109,6 +109,16 @@ import java.lang.reflect.*;
     public Op getOp() { return op; }
     public void setOp(Op _op) { op = _op; }
 
+    /** The type of "experimental day" during which the action occurred */
+    @Column(nullable=true,length=6) @Enumerated(EnumType.STRING) 
+	@Display(editable=false, order=5) 
+    private User.Day day;
+    
+    public User.Day getDay() { return day; }
+    void setDay(User.Day x) { day = x; }
+
+
+
     /** Any text from an entry box, or the text value of an enum 
 	response. Only some responses may have this. */
     //    @Basic   @Column(nullable=true) String text;
@@ -123,9 +133,9 @@ import java.lang.reflect.*;
 
     public Action(User u, String _article, Op _op){
 	setUser(u);
+	setDay(u.getDay());
 	setArticle(_article);
 	setOp(_op);
-	//	Date now = (new GregorianCalendar()).getTime();
 	Date now = new Date();
 	setTime(now);
     }

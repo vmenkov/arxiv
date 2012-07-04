@@ -121,21 +121,18 @@ public class Reflect {
     }
 
     private Reflect(Class c) {
-	Logging.info("Reflect(" + c +")");
+	//Logging.info("Reflect(" + c +")");
 	Vector<Entry> v = new Vector<Entry>();
 	for(Field f: c.getDeclaredFields()) {
 	    Entry e = new Entry();
 	    e.f = f;
 	    e.name = f.getName();
-	    //Logging.info("Reflect(" + c +"): try " + e.name);
 
 	    String gn = makeGetMethodName(e.name), sn=makeSetMethodName(e.name);
 	    e.g = e.s = null;
 	    try {
 		e.g =c.getMethod(gn);
-		//Logging.info("Reflect(" + c +"): got " + e.g);
 		e.s =c.getMethod(sn, e.f.getType() );	      
-		//Logging.info("Reflect(" + c +"): got " + e.s);
 	    } catch (Exception ex) { 
 		//Logging.warning("Reflect(" + c +"): failure for " + e.name);
 		continue;
@@ -146,13 +143,12 @@ public class Reflect {
 	    e.rp = (anno!=null) && anno.rp(); // default no
 	    e.payment = (anno!=null) && anno.payment(); // default no
 	    e.order = (anno==null) ? 0 : anno.order();
-	    //Logging.info("Reflect(" + c +"): got entry for " + e.name);
 	    v.addElement(e);
 	    entryTable.put(e.name, e);
 	}
 	entries = v.toArray(new Entry[v.size()]);
 	Arrays.sort(entries);
-	Logging.info("Reflect(" + c +") successful, e.length="+entries.length);	
+	//Logging.info("Reflect(" + c +") successful, e.length="+entries.length);	
     } 
 
     /** Prints all appropriate fields of the specified object in the default
