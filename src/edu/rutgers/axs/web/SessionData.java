@@ -165,12 +165,8 @@ public class SessionData {
     /** Returns the user object for the currently logged-in
      user.*/
     User getUserEntry(String user) {
-	return getUserEntry(user,false);
-    }
-    User getUserEntry(String user, boolean refresh) {
 	EntityManager em = getEM();
 	User u = User.findByName(em, user);
-	if (refresh) em.refresh(u);
 	em.close();
 	return u;
     }
@@ -212,7 +208,7 @@ public class SessionData {
 	Role.Name[] ar = authorizedRoles(sp);
 	if (ar==null) return true; // no restrictions
 	if (user==null) return false; // no user 
-	User u = getUserEntry(user, true); // refresh it, just in case
+	User u = getUserEntry(user);
 	boolean b = u!=null && u.hasAnyRole(ar);
 	Logging.info("isAuthorized("+user+", " + sp + ")=" + b);
 	return b;
