@@ -24,6 +24,13 @@ public class ViewSuggestions extends PersonalResultsBase {
 
     public Task activeTask = null, queuedTask=null, newTask=null;
 
+    /** This flag is set by this module if it found no suitable data
+	file, but generated a suggestion list directly when processing
+	the HTTP request. This is done in our June 2012 experiment
+	when the user has no profile yet.
+     */
+    public boolean onTheFly = true;
+
     /** Null indicates that no file has been found */
     public Vector<ArticleEntry> entries = null;//new Vector<ArticleEntry>();
     /** Data file whose content is to be displayed */
@@ -63,7 +70,8 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 
     /**
-       @param mainPage If true, we're generating a list for the main page.
+       @param mainPage If true, we're preparing a list to appear on
+       the main page.
      */
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
@@ -88,6 +96,10 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    mode = DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
 	    basedonType =DataFile.Type.TJ_ALGO_2_USER_PROFILE;
 	    days = (int)getLong(DAYS,Search.DEFAULT_DAYS);
+
+	    if (expert) throw new WebException("The 'expert' mode cannot be used on the main page");
+
+
 	} else {
 	    mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	    basedon=getString(BASEDON,null);
@@ -109,6 +121,8 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    final int maxDays=30;
 
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
+
+
 
 
 	    if (force && !expert) {
@@ -182,13 +196,24 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 	    actorLastActionId= actor.getLastActionId();
 
+	    onTheFly = (df==null) && mainPage;
 
-	    if (df!=null) {
+	    if (df!=null || onTheFly) {
 
 		IndexReader reader=ArticleAnalyzer.getReader();
 		IndexSearcher searcher = new IndexSearcher( reader );
 
-		if (teamDraft) {
+		if (onTheFly) {
+		    // simply generate and use cat search results for now
+		    SearchResults bsr = catSearch(searcher);
+
+		    int startat = 0;
+		    int M = 100;
+		    bsr.setWindow( searcher, startat, M, null);
+		    entries = bsr.entries;
+		    
+		} else if (teamDraft) {
+		    // merge the list from the file with the cat search res
 		    SearchResults asr = new SearchResults(df, searcher);
 		    
 		    SearchResults bsr = catSearch(searcher);

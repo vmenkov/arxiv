@@ -243,7 +243,7 @@ window.onload = StartScripts;
     
 <h2><a name="sug">New articles recommended for you</a></h2>
 
-<% if (main.df == null) {
+<% if (main.df == null && !main.onTheFly) {
    %> 
 <p>
 Presently, no recommendations are available for you.
@@ -258,7 +258,8 @@ generating a suggestion list for you (task no. <%= main.activeTask.getId()%>). Y
 %>
 <p>
 Presently,  a task is queued to generate a suggestion list for you (task no. <%= main.queuedTask.getId()%>. You may wait for a few minutes, and then refresh this page to see if it has started and completed.</p>
- <% } else  if (main.actor.catCnt()==0) {
+<% 
+} else if (main.actor.catCnt()==0) {
 %>
 <p>
 It appears that you have not specified any subject categories of interest. Please <a href="personal/editUserFormSelf.jsp">modify your user profile</a>, adding some categories!
@@ -272,7 +273,13 @@ Perhaps you need to wait for a while for a recommendation list to be generated, 
  
 <%
 } else {
+ if (main.onTheFly) {
 %>
+<p>Initial suggestion list generated in runtime.</p>
+<%
+ } else {
+%>
+
 
 <p>Suggestion list <%=main.df.getThisFile() %> was generated for user
 <%=main.df.getUser() %> at: <%=Util.ago(main.df.getTime())%>. 
@@ -284,6 +291,8 @@ to the
 <%= (main.days>0)? "articles from the last " + main.days + " days" :
     "entire article archive (all times)" %>
 <p>Merge=<%=main.teamDraft%></p>
+
+<% } %>
 
 <p>The list contains <%=main.entries.size() %> articles; the top <%= Math.min(main.entries.size(), main.maxRows) %> are shown below.
 </p>
