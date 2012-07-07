@@ -258,29 +258,50 @@ Thank you for choosing to participate in the arXiv research at the confidential 
 
 <tr><td colspan="2"><h3>Optional follow-up telephone interview</h3>
 
-<p>
-We are conducting a few follow-up interviews with searchers to get more detailed information about how to improve the arXiv system.
+<p> We are conducting a few follow-up interviews with searchers to get
+more detailed information about how to improve the arXiv system.
 
-<p>
-If you are willing also to be interviewed, you can give us your name, telephone number or email, for a follow-up telephone interview some time in the future.   The optional follow-up telephone interview is confidential, not anonymous. The telephone interview contains questions that you may find of a personal nature such as demographic information.  One potential risk of participating in the follow-up study is that confidential information about you may be accidentally disclosed outside of the research team.  We will use our best efforts to keep the information you provide secure, and we think the risk of accidental disclosure is very small.  A link between your personal information, such as name, phone number and demographic information, and the data we collect will be kept to allow for follow-up to complete the interview and to mail the payment for completing the interview. 
+<p> If you are willing also to be interviewed, you can give us your
+name, telephone number or email, for a follow-up telephone interview
+some time in the future.  The optional follow-up telephone interview
+is confidential, not anonymous. The telephone interview contains
+questions that you may find of a personal nature such as demographic
+information.  One potential risk of participating in the follow-up
+study is that confidential information about you may be accidentally
+disclosed outside of the research team.  We will use our best efforts
+to keep the information you provide secure, and we think the risk of
+accidental disclosure is very small.  A link between your personal
+information, such as name, phone number and demographic information,
+and the data we collect will be kept to allow for follow-up to
+complete the interview and to mail the payment for completing the
+interview.
 
-<p>
-However, after we have processed your telephone interview we will sever the link between your personal information and the data you gave us. We would like to audio tape the telephone interview with you so that we can review it, and make notes. As soon as we process your telephone interview, we will destroy the audio record itself, keeping only the anonymous notes, audio taping your interview renders the data collection confidential not anonymous. 
+<p> However, after we have processed your telephone interview we will
+sever the link between your personal information and the data you gave
+us. We would like to audio tape the telephone interview with you so
+that we can review it, and make notes. As soon as we process your
+telephone interview, we will destroy the audio record itself, keeping
+only the anonymous notes, audio taping your interview renders the data
+collection confidential not anonymous.
 
-<p>
-We will pay you US$50, for a completed interview. If you decide to stop partway through an interview you will be paid for the fraction of the interview that has been completed.
+<p> We will pay you US<strong>$50</strong>, for a completed
+interview. If you decide to stop partway through an interview you will
+be paid for the fraction of the interview that has been completed.
 
-<p>
-We hope you can give us about 20 minutes of your time to help our study. We may do the telephone interview in one long call, or in two shorter ones in the same week if you prefer. There are no foreseeable risks to participating in this research. 
+<p> We hope you can give us about 20 minutes of your time to help our
+study. We may do the telephone interview in one long call, or in two
+shorter ones in the same week if you prefer. There are no foreseeable
+risks to participating in this research.
 
-<p>
-Your participation in our study is completely voluntary, and refusing to participate will involve no penalty. You may stop the interview at any time without penalty. 
+<p> Your participation in our study is completely voluntary, and
+refusing to participate will involve no penalty. You may stop the
+interview at any time without penalty.
 
-<p>
-We look forward to talking with you about your unique experience with searches in the arXiv. 
+<p> We look forward to talking with you about your unique experience
+with searches in the arXiv.
 
-<p>
-By giving you my contact information I agree to participate in the telephone interview portion of the study. 
+<p> By giving you my contact information I agree to participate in the
+telephone interview portion of the study.
 
 </td></tr>
 		<tr>
@@ -319,9 +340,10 @@ By giving you my contact information I agree to participate in the telephone int
 		</tr>
 
 
-<tr><td colspan=2 align=left>
-By clicking on the box below you approve the use of audio recording for the telephone interview
+<tr><td colspan=2 align=left> By clicking on the box below you approve
+the use of audio recording for the telephone interview
 </td></tr>
+
 	<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="approvedAudio">Click here to approve audio recording</label></td>
 			<td style="width:50%; text-align:left; vertical-align:middle;"><%= Tools.checkbox(EntryFormTag.PREFIX + "approvedAudio", "on", null, false) %></td>
