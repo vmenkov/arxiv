@@ -252,10 +252,12 @@ import edu.rutgers.axs.web.Tools;
 	    return true; 
     }
 
+    /** For some reason, the getRoles call here seems to be essential to ensure
+     that roles are available later! */
     @PostLoad
 	void postLoad() {
 	int n = 0;	for(Role r: getRoles()) {	    n++;	}
-	Logging.info("Loaded a user entry with "+n +" roles: " + reflectToString());
+	//	Logging.info("Loaded a user entry with "+n +" roles: " + reflectToString());
     }
 
     public String reflectToString() {

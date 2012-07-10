@@ -32,17 +32,9 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
 <script type="text/javascript" src="_technical/scripts/jquery.js"></script>
 <script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>
+<script type="text/javascript" src="scripts/blur.js"></script>
+<script type="text/javascript" src="scripts/buttons_control.js"></script>
 
-<script type="text/javascript">
-<!--
-function BlurLinks(){
-lnks=document.getElementsByTagName('a');
-for(i=0;i<lnks.length;i++){
-lnks[i].onfocus=new Function("if(this.blur)this.blur()");
-}
-}
-//-->
-</script>
 
 <!-- #BeginEditable "Styles" -->
 <style type="text/css">
