@@ -41,14 +41,33 @@ public class Scheduler {
 	schedulingIntervalSec = x;	
     }
 
+    /** This flag is only set via the set method */
+    private boolean articlesUpdated=false;
+
+    boolean getArticlesUpdated() { 
+	return  articlesUpdated;
+    }
+
+    /** Set this to true to tell the schedulers that (the local copy
+	of) ArXiv has been updated, and we must update suggestion 
+	lists too.
+    */
+    void setArticlesUpdated(boolean x) {
+	articlesUpdated =x; 
+    }
+
     /** How often do run TJ's Algorithm 2 to update the UP2 user profile?
      */
     final static int updateUP2intervalSec = 24 * 3600;
 
+    /** When the scheduler was created. This is used to figure that a
+	particular suggestion list predates this run. */
+    private final Date startTime = new Date();
+
     private EntityManager em;
 
     Scheduler(	EntityManager _em ) {
-	em = _em;
+	em = _em;	
     }
 
 
@@ -165,6 +184,12 @@ public class Scheduler {
 		    long plai = latestProfile.getLastActionId();
 		    DataFile sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
 		    boolean need = sugg==null || (sugg.getLastActionId() < plai);
+
+		    // If the articles have been updated, profiles sugg lists
+		    // must be updated too.
+		    need = need || articlesUpdated && sugg.getTime().before(startTime);
+
+
 		    Logging.info("Scheduler: user " + uname + "; needed "+mode+" ("+days +"d) update? " + need);
 		    if (need) {
 			String requiredInput =

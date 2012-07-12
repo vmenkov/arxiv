@@ -38,7 +38,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	user=c;
     }
 
-    /** When generated. */
+    /** When was this file generated? */
     @Display(editable=false, order=3) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
 	Date time;

@@ -54,9 +54,9 @@ public class RatingButton //extends HTML
 	return " " + name + "=\""+val+"\"";
     }
 
-    /**  'style="display: none;"' or an empty string */
+    /**  'style="display:none;"' or an empty string */
     static private String  spanStyle(boolean on) {
-	return on? "" : att("style", "display: none;");
+	return on? "" : att("style", "display:none;");
     }
     
     /**
@@ -144,13 +144,15 @@ public class RatingButton //extends HTML
 	    s += twoSpans(sn, e.isInFolder,
 			  img(imgPath) + 
 			  strong("(In your <a href=\""+cp+"/personal/viewFolder.jsp\">folder</a>)"),
-			  "<a class=\"add\" " +
+			  "<a" +
+			  att("class", "add") +
 			  att("title", title) +
 			  att( "onclick", js) + ">" +
 			  img(imgPath) + nbsp("Copy to my folder") +
 			  "</a>" +"&nbsp;&nbsp;") + "\n";
 	}
 
+	boolean someChecked = false;
 
 	if (buttons!=null && buttons.length>0) {
 	    willRate=true;
@@ -170,6 +172,7 @@ public class RatingButton //extends HTML
 	    for(int j=0; j<buttons.length; j++) {
 		RatingButton b = buttons[j];
 		boolean checked= (e.latestRating==b.op);
+		someChecked = (someChecked || checked);
 		String src= imgDir + b.imgSrc;
 		String text="&nbsp;" + nbsp(b.text);
 		
@@ -193,18 +196,20 @@ public class RatingButton //extends HTML
 	    String js="$.get('"+judge(cp,aid,Action.Op.DONT_SHOW_AGAIN)+"', " + 
 	    "function(data) { $('#result"+e.i+"').hide();} )";
 	    String title="Permanently remove this document from the search results";
-	    s += "<a class=\"remove\" " + att("id", "remove"+e.i) +
+	    s += "<a " + att("class", "remove") + att("id", "remove"+e.i) +
 		att("title", title) +
 		att("onclick", js) + ">" +
 		img( imgDir + "bin.png" , title) +
 		nbsp( "Don't show again") + "</a>&nbsp;&nbsp\n";
 	}
 
-	if (willRate) {
+	if (willRate && !someChecked) {
 
 	    // font-size:0.7em; 
 
-	    s += "<p style=\"font-size:0.9em;color:#333333\">If you cannot judge until you have seen the document, please come back to this page to provide your valuation.</p>\n";
+	    s += "<p" +		att("id", "advice" + e.i) +
+		att("style", "font-size:0.9em;color:#333333") +
+		">If you cannot judge until you have seen the document, please come back to this page to provide your valuation.</p>\n";
 
 	}
 
@@ -217,7 +222,7 @@ public class RatingButton //extends HTML
 	return "<script" +
 	    att("type", "text/javascript") +
 	    att("src", scriptLocation)  +
-	    "\"></script>\n";
+	    "></script>\n";
     }
 
 }

@@ -15,7 +15,7 @@
 </head>
 <body>
 <pre>
-ver=<%=Version.version%>
+ver=<%=Version.getVersion()%>
 getContextPath=<%=request.getContextPath()%>
 getServletPath=<%=request.getServletPath()%>
 error=<%=main.error%>

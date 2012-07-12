@@ -9,7 +9,7 @@ import java.io.*;
 
 import javax.persistence.*;
 
-import edu.cornell.cs.osmot.options.Options;
+//import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
@@ -93,6 +93,8 @@ public class TaskMaster {
 	Scheduler scheduler = new Scheduler( em );
 	int schedulingIntervalSec=ht.getOption("schedulingIntervalSec", 0);
 	if (schedulingIntervalSec > 0) scheduler.setSchedulingIntervalSec(schedulingIntervalSec);
+	scheduler.setArticlesUpdated( ht.getOption("articlesUpdated", false));
+
 
 	int taskCnt=0;
 	int noneCnt=0; // how many "no task" loops w/o a message

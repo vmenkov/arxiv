@@ -15,4 +15,5 @@ function ratingEntered(i,j, n) {
           flipCheckedOff('#ratings' + i + '_' + k);
        }
     }
+    $('#advice' + i).hide();
 }
