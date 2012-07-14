@@ -340,8 +340,8 @@ telephone interview portion of the study.
 		</tr>
 
 
-<tr><td colspan=2 align=left> By clicking on the box below you approve
-the use of audio recording for the telephone interview
+<tr><td colspan=2 align=left><strong> By clicking on the box below you approve
+the use of audio recording for the telephone interview</strong>
 </td></tr>
 
 	<tr>
@@ -350,23 +350,20 @@ the use of audio recording for the telephone interview
 	</tr>
 
 <%}  %>
+	</table>
 
+<h3>Your interest areas</h3>
 
+	<table>
 	<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Recommend recent articles no older than so many days. The value can be from 1 to 30; default 7
 </label></td>
 			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="days" name="r.days" value="<%=Search.DEFAULT_DAYS%>" style="width:150px" /></td>
 		</tr>
 
-<tr><td>days</td>
-<td><input type="text" name="r.days" value="0" size=32>
 
 	
 	</table>
-
-	
-
-<h3>Your interest areas</h3>
 
 <p>You need to specify at least one interest area ("subject category")
 in order for My.ArXiv to be able to generate recommendations for

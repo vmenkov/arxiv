@@ -19,7 +19,7 @@
 <%   } else {      %>
 
 
-<h1>Your account entry</h1>
+<h1>Updating your account information and preferences</h1>
 
 <p>User_name = <em><%=id%></em></p>
 

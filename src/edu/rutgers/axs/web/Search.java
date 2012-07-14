@@ -95,6 +95,8 @@ public class Search extends ResultsBase {
 	    
 	    if (user_cat_search) {
 		String[] cats = u.getCats().toArray(new String[0]);
+		if (u!=null) days=u.getDays(); // user-specific horizon!
+		if (days<=0) days = DEFAULT_DAYS;
 		days = getInt( DAYS, days);
 		Date since = SearchResults.daysAgo( days );
 		int maxlen = 10000;
