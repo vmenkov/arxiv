@@ -68,7 +68,6 @@ My.ArXiv to be able to generate recommendations for you.
 
 
 </form>
-
 <%   }      %>
 
 <icd:RU/>

@@ -72,12 +72,12 @@ import edu.rutgers.axs.web.Tools;
 	return getUser_pass() !=null && getUser_pass().length()>0;
     }
 
-    @Basic  @Column(length=64) @Display(order=3)
+    @Basic  @Column(length=64) @Display(order=3, alt="First (and middle) name")
 	String firstName;
     public  String getFirstName() { return firstName; }
     public void setFirstName(       String x) { firstName = x; }
  
-   @Basic  @Column(length=64) @Display(order=4)
+    @Basic  @Column(length=64) @Display(order=4, alt="Last name")
 	String lastName;
     public  String getLastName() { return lastName; }
     public void setLastName(       String x) { lastName = x; }
@@ -106,19 +106,19 @@ import edu.rutgers.axs.web.Tools;
     public void setEncEsPass(       String x) { encEsPass = x; }
 
 
-    @Basic @Display(order=9.1,rp=true,text="e.g. 732-932-0000") 
+    @Basic @Display(order=9.1,rp=true,alt="Phone number (e.g. 732-932-0000)") 
     //@Usedin(phone=true)
         @Column(length=32)      String phoneNumber;
     public void setPhoneNumber(String val) {  phoneNumber        = val;    }
     public String getPhoneNumber() {        return phoneNumber ;    }
 
 
-    @Basic @Display(order=9.2,rp=true,text="e.g. 'weekday evenings'") 
+    @Basic @Display(order=9.2,rp=true,alt="Best times to reach you (e.g. 'weekday evenings')") 
          @Column(length=64)      String timesToReach;
     public void setTimesToReach(String val) {      timesToReach    = val;    }
     public String getTimesToReach() {        return timesToReach ;    }
   
-    @Basic @Display(order=9.3, alt="Approved audio recording")   
+    @Basic @Display(order=9.3, alt="Do you approve the use of audio recording for the telephone interview?")
         @Column(nullable=false) boolean approvedAudio;
     public  boolean getApprovedAudio() { return approvedAudio; }
     public void setApprovedAudio( boolean x) { approvedAudio = x; }
@@ -128,7 +128,7 @@ import edu.rutgers.axs.web.Tools;
     /** End time for the current extended (persistent) sessions. If
 	null, or in the past, then there is such session in effect for
 	this user now. */
-    @Display(editable=false, order=9) 
+    @Display(editable=false, order=10) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
        Date esEnd;
     public  Date getEsEnd() { return esEnd; }
@@ -198,13 +198,13 @@ import edu.rutgers.axs.web.Tools;
     }
 
     @Column(nullable=true,length=6) @Enumerated(EnumType.STRING) 
-	@Display(editable=false, order=10.1) 
+	@Display(editable=true, order=11.1) 
     private User.Day day;
     
     public User.Day getDay() { return day; }
     void setDay(User.Day x) { day = x; }
 	
-    @Display(editable=false, order=10.2) 
+    @Display(editable=false, order=11.2) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
        Date dayStart;
     Date getDayStart() { return dayStart; }
@@ -247,6 +247,15 @@ import edu.rutgers.axs.web.Tools;
     public String dayMsg() {
 	return ""+ getDay() + " since " + getDayStart();
     }
+
+    /** The "time horizon" for selecting "recent articles" (for
+	suggestion lists, etc). Default is 7 days.
+     */
+    @Basic   @Display(order=12,editable=true, alt="Recommend recent articles no older than so many days. The value can be from 1 to 30; default 7")
+	private int days;
+    public  int getDays() { return days; }
+    public void setDays( int x) { days = x; }
+ 
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	    return true; 

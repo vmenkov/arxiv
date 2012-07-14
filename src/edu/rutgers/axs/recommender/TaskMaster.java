@@ -234,7 +234,9 @@ public class TaskMaster {
 		    // list, and the user profile on which it was based.
 		    // We first see if there is a sug list already based
 		    // on an Algo 2 profile, but if not, we'll be building on
-		    // an empty (zero) profile. (as per TJ, 2012-06-19)
+		    // an empty (zero) profile. (as per TJ, 2012-06-19).
+		    // The day range does not matter, as the user is allowed 
+		    // to change it		   
 
 		    inputFile = DataFile.
 			getLatestFile(em, user,
@@ -265,8 +267,6 @@ public class TaskMaster {
 			searcher.close();
 		    }
 
-		    //      DataFile.Type.TJ_ALGO_2_USER_PROFILE);
-	
 		    TjAlgorithm2 algo=new TjAlgorithm2( upro);
 		    algo.updateProfile(user, em, sd);
 		    outputFile=upro.saveToFile(task,op.outputFor());

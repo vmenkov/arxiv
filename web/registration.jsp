@@ -350,6 +350,17 @@ the use of audio recording for the telephone interview
 	</tr>
 
 <%}  %>
+
+
+	<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Recommend recent articles no older than so many days. The value can be from 1 to 30; default 7
+</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="days" name="r.days" value="<%=Search.DEFAULT_DAYS%>" style="width:150px" /></td>
+		</tr>
+
+<tr><td>days</td>
+<td><input type="text" name="r.days" value="0" size=32>
+
 	
 	</table>
 

@@ -54,6 +54,7 @@ public class Scheduler {
     */
     void setArticlesUpdated(boolean x) {
 	articlesUpdated =x; 
+	Logging.info("set articlesUpdated=" + articlesUpdated);
     }
 
     /** How often do run TJ's Algorithm 2 to update the UP2 user profile?
@@ -105,7 +106,7 @@ public class Scheduler {
 
 	List<Long> lu  =  (List<Long>) q.getResultList();
 	//Logging.info("Scheduler: Found " + lu.size() + " users whose UP or SL may need updating");
-	Logging.info("Scheduler (stage="+(stage2?"SL":"UP")+"): Found " + lu.size() + " users");
+	Logging.info("Scheduler (stage="+(stage2?"SL":"UP")+"), au="+articlesUpdated+": Found " + lu.size() + " users");
 
 	//for(long uid: lu) {	    Logging.info("uid=" + uid);	}
 
@@ -166,8 +167,10 @@ public class Scheduler {
 		for(DataFile.Type mode: modes) {
 
 		    // (0 means "all docs")
-		    int days= (mode==DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1)?
-			Search.DEFAULT_DAYS : 0;
+		    // (mode==DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1)?
+
+		    int days= u.getDays(); // user-specific search horizon
+		    if (days==0) days = Search.DEFAULT_DAYS;
 
 
 		    DataFile.Type profileType = 

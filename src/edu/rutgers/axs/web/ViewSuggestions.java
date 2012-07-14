@@ -29,7 +29,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	the HTTP request. This is done in our June 2012 experiment
 	when the user has no profile yet.
      */
-    public boolean onTheFly = true;
+    public boolean onTheFly = false;
 
     /** Null indicates that no file has been found */
     public Vector<ArticleEntry> entries = null;//new Vector<ArticleEntry>();
@@ -75,6 +75,7 @@ public class ViewSuggestions extends PersonalResultsBase {
      */
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
+	if (error) return; // authentication error?
 
 	if (actorUserName==null) {
 	    error = true;
@@ -82,48 +83,34 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    return;
 	}
 
-
 	EntityManager em = sd.getEM();
 	try {
 
-	actor=User.findByName(em, actorUserName);
+	    actor=User.findByName(em, actorUserName);
+	    
+	    if (mainPage) {
+		initMainPage(em, actor);
+		return;
+	    } 
 
-	if (mainPage) {
-	    if (user==null) return; // no list needed
-	    // disregard most of params
-	    teamDraft = (actor.getDay()==User.Day.EVAL);
-	    basedon=null;
-	    mode = DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
-	    basedonType =DataFile.Type.TJ_ALGO_2_USER_PROFILE;
-	    days = (int)getLong(DAYS,Search.DEFAULT_DAYS);
-
-	    if (expert) throw new WebException("The 'expert' mode cannot be used on the main page");
-
-
-	} else {
 	    mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	    basedon=getString(BASEDON,null);
 	    basedonType =  (DataFile.Type)getEnum(DataFile.Type.class, BASEDON_TYPE,null); // DataFile.Type.NONE);
+
+	    days =actor.getDays();
+	    if (days<=0) days = Search.DEFAULT_DAYS;
 	    days = (int)getLong(DAYS, days);
-	    // use params as given
-	}
 
-	// Looking at some request params. This is used as the standard
-	// setup in the standalone page, or as the override in the
-	// main page environment
-	teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
-
-
-	if (error) return; // authentication error?
-
-	Task.Op taskOp = mode.producerFor(); // producer task type
-
+	    // Looking at some request params. This is used as the standard
+	    // setup in the standalone page, or as the override in the
+	    // main page environment
+	    teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
+	
+	    Task.Op taskOp = mode.producerFor(); // producer task type
+	    
 	    final int maxDays=30;
-
+	    
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
-
-
-
 
 	    if (force && !expert) {
 		throw new WebException("The 'force' mode can only be used together with the 'expert' mode");
@@ -150,7 +137,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 	    if (tasks != null) {
 		for(Task t: tasks) {
-		    if (t.getDays()!=days) continue; // range mismatch
+		    if (days>=0 && t.getDays()!=days) continue; // range mismatch
 		    if (t.appearsActive()) {
 			activeTask=t; 
 			break;
@@ -196,53 +183,8 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 	    actorLastActionId= actor.getLastActionId();
 
-	    onTheFly = (df==null) && mainPage;
-
-	    if (df!=null || onTheFly) {
-
-		IndexReader reader=ArticleAnalyzer.getReader();
-		IndexSearcher searcher = new IndexSearcher( reader );
-
-		if (onTheFly) {
-		    // simply generate and use cat search results for now
-		    SearchResults bsr = catSearch(searcher);
-
-		    int startat = 0;
-		    int M = 100;
-		    bsr.setWindow( searcher, startat, M, null);
-		    entries = bsr.entries;
-		    
-		} else if (teamDraft) {
-		    // merge the list from the file with the cat search res
-		    SearchResults asr = new SearchResults(df, searcher);
-		    
-		    SearchResults bsr = catSearch(searcher);
-		    
-		    long seed =  (actorUserName.hashCode() << 16) | dfmt.format(new Date()).hashCode();
-		    SearchResults merged = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
-		    int startat = 0;
-		    int M = 100;
-		    merged.setWindow( searcher, startat, M, null);
-
-		    entries = merged.entries;
-		} else {
-
-		    // read the artcile IDs and scores from the file
-		    File f = df.getFile();
-		    entries = ArticleEntry.readFile(f);
-		    
-		}
-		applyUserSpecifics(entries, actor);
-				
-		// In docs to be displayed, populate other fields from Lucene
-		for(int i=0; i<entries.size() && i<maxRows; i++) {
-		    ArticleEntry e = entries.elementAt(i);
-		    int docno = e.getCorrectDocno(searcher);
-		    Document doc = reader.document(docno);
-		    e.populateOtherFields(doc);
-		}
-		searcher.close();
-		reader.close();
+	    if (df!=null) {
+		initList(df, false);
 	    }
 
 	}  catch (Exception _e) {
@@ -252,6 +194,87 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    //em.close(); 
 	}
     }
+
+    /** Generates the list for the main page */
+    private void initMainPage(EntityManager em, User actor) throws Exception {
+	if (error || user==null) return; // no list needed
+	// disregard most of params
+	teamDraft = (actor.getDay()==User.Day.EVAL);
+	basedon=null;
+	mode = DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
+	basedonType =DataFile.Type.TJ_ALGO_2_USER_PROFILE;
+	//	    days = (int)getLong(DAYS,Search.DEFAULT_DAYS);
+	// "-1" means "any horizon"; this way we take care of the case
+	// when the user changes the horizon
+	// days = (int)getLong(DAYS,-1);
+		
+	if (expert || force) throw new WebException("The 'expert' or 'force' mode cannot be used on the main page");
+
+	// Look for the most recent sugestion list based on
+	// the specified user profile file... 
+	// Any day range ("-1") is accepted, because the user may have changed 
+	// the range recently
+	df = DataFile.getLatestFileBasedOn(em, actorUserName, 
+					   mode, -1, basedonType);
+
+	onTheFly = (df==null);
+       
+	if (df == null) {
+	    days =actor.getDays();
+	    if (days<=0) days = Search.DEFAULT_DAYS;
+	} else {
+	    days = df.getDays();
+	}
+	    	    
+	initList(df, onTheFly);
+    }
+
+    private void initList(DataFile df, boolean onTheFly) throws Exception {
+	IndexReader reader=ArticleAnalyzer.getReader();
+	IndexSearcher searcher = new IndexSearcher( reader );
+	
+	if (onTheFly) {
+	    // simply generate and use cat search results for now
+	    SearchResults bsr = catSearch(searcher);
+	    
+	    int startat = 0;
+	    int M = 100;
+	    bsr.setWindow( searcher, startat, M, null);
+	    entries = bsr.entries;
+	    
+	} else if (teamDraft) {
+	    // merge the list from the file with the cat search res
+	    SearchResults asr = new SearchResults(df, searcher);
+	    
+	    SearchResults bsr = catSearch(searcher);
+		    
+	    long seed =  (actorUserName.hashCode() << 16) | dfmt.format(new Date()).hashCode();
+	    SearchResults merged = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
+	    int startat = 0;
+	    int M = 100;
+	    merged.setWindow( searcher, startat, M, null);
+	    
+	    entries = merged.entries;
+	} else {
+	    
+	    // read the artcile IDs and scores from the file
+	    File f = df.getFile();
+	    entries = ArticleEntry.readFile(f);
+	    
+	}
+	applyUserSpecifics(entries, actor);
+	
+	// In docs to be displayed, populate other fields from Lucene
+	for(int i=0; i<entries.size() && i<maxRows; i++) {
+	    ArticleEntry e = entries.elementAt(i);
+	    int docno = e.getCorrectDocno(searcher);
+	    Document doc = reader.document(docno);
+	    e.populateOtherFields(doc);
+	}
+	searcher.close();
+	reader.close();
+    }
+    
 
     private SearchResults catSearch(IndexSearcher searcher) throws Exception {
 	int maxlen = 10000;
@@ -265,10 +288,8 @@ public class ViewSuggestions extends PersonalResultsBase {
 	return bsr;
     }
 		    
-
-
     /** Applies this user's exclusions, folder inclusions, and ratings */
-    void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
+    private void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
 	if (u==null) return;
     
 	HashMap<String, Action> exclusions = 

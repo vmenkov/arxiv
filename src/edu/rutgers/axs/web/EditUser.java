@@ -12,6 +12,7 @@ import javax.servlet.http.*;
 import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.web.Search;
 
 /** Edits an existing user entry. Only admin-level users can modify
     other user's entries. 
@@ -224,7 +225,7 @@ public class EditUser extends ResultsBase {
 
 	try {
 	    Tools.editEntity(EntryFormTag.PREFIX, r, request);
-
+	    if (r.getDays()<=0 || r.getDays()>30) r.setDays(Search.DEFAULT_DAYS);
 
 	    // Set subject categories
 	    Set<String> c = r.getCats();
