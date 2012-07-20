@@ -81,6 +81,13 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <td>select u.user_name, u.email, u.id, count(*) from Action a, arxiv_users u where a.USER_ID=u.id group by a.USER_ID  order by count(*) desc
 <td>Measuring overall user activity
 
+<tr>
+<td>
+<td>
+select x.op, count(*), avg(TIME_TO_SEC(timediff(x.completeTime, x.startTime))) from Task x where not isnull(x.completeTime) group by x.op
+<td>Showing the number of tasks of various type 
+
+
 <!--
 <tr><td>select x from Respondent x where x.id = 69 <td> select x.* from Respondent x where x.id = 69
 <tr><td>select x from Respondent x where x.id in (69,70,71) <td> select x.* from Respondent x where x.id  in (69,70,71) 

@@ -106,19 +106,26 @@ import edu.rutgers.axs.web.Tools;
     public void setEncEsPass(       String x) { encEsPass = x; }
 
 
-    @Basic @Display(order=9.1,rp=true,alt="Phone number (e.g. 732-932-0000)") 
+    @Basic @Display(order=9.1, alt="Agreed to participate in follow-up telephone survey")
+        @Column(nullable=false) boolean survey;
+    public  boolean getSurvey() { return survey; }
+    public void setSurvey( boolean x) { survey = x; }
+
+
+    @Basic @Display(order=9.2,rp=true,alt="Phone number (e.g. 732-932-0000)") 
     //@Usedin(phone=true)
         @Column(length=32)      String phoneNumber;
     public void setPhoneNumber(String val) {  phoneNumber        = val;    }
     public String getPhoneNumber() {        return phoneNumber ;    }
 
 
-    @Basic @Display(order=9.2,rp=true,alt="Best times to reach you (e.g. 'weekday evenings')") 
+    @Basic @Display(order=9.3,rp=true,alt="Best times to reach you (e.g. 'weekday evenings')") 
          @Column(length=64)      String timesToReach;
     public void setTimesToReach(String val) {      timesToReach    = val;    }
     public String getTimesToReach() {        return timesToReach ;    }
+
   
-    @Basic @Display(order=9.3, alt="Do you approve the use of audio recording for the telephone interview?")
+    @Basic @Display(order=9.4, alt="Do you approve the use of audio recording for the telephone interview?")
         @Column(nullable=false) boolean approvedAudio;
     public  boolean getApprovedAudio() { return approvedAudio; }
     public void setApprovedAudio( boolean x) { approvedAudio = x; }

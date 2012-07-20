@@ -203,7 +203,7 @@ Thank you for choosing to participate in the arXiv research at the confidential 
       action="newUserSelf.jsp" 
       style="text-align:center;">
 
-<%= Tools.inputHidden(EditUser.SURVEY, survey) %>
+<%= Tools.inputHidden(EntryFormTag.PREFIX + EditUser.SURVEY, survey) %>
 
 	<table style="width: 100%;" cellspacing="0" cellpadding="0">
 <tr><td colspan="2"><h3>Choose your user name and password</h3></td></tr>

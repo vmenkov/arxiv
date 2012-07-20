@@ -172,11 +172,12 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 
     public String toString() {
 	String s = "(Task(id="+getId()+", "+getOp()+ " | " + getDays()+" days)";
-	s += ", canceled="+
-	    getCanceled()+", failed="+getFailed()+", entered " +
-	    getRequestTime()+", done="+getCompleteTime()+"; pid="+
-	    getPid()+". inputFile=" + getInputFile()+
-	    ", outputFile=" + getOutputFile();
+	s += ", canceled="+  getCanceled()+", failed="+getFailed()+
+	    ", request=" +	    getRequestTime()+
+	    ", start=" +	    getStartTime()+
+	    ", done="+getCompleteTime()+"; pid="+  getPid()+
+	    ", input=" + getInputFile()+
+	    ", output=" + getOutputFile();
 	return s;
     }
 

@@ -41,7 +41,8 @@
 lost password if necessary.
 
 <p>Other contact information only needs to be supplied if you have
-agreed to participate in the follow-up interview.
+agreed to participate in the follow-up interview; please see the relevant
+<a href="../interview-information-sheet.html">information sheet</a>.
 
 <p><icd:UserEntryForm user_name="<%=id%>"/>
 

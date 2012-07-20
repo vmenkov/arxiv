@@ -48,7 +48,7 @@ public class EditUser extends ResultsBase {
 	super(_request,_response);
 
 	// Did we come from a CREATE_SELF form that talked about an agreement to pariticipate in a follow-up interview?
-	boolean survey = getBoolean(EditUser.SURVEY, false);
+	boolean survey = getBoolean(EntryFormTag.PREFIX +EditUser.SURVEY,false);
 	
 	uname = (mode==Mode.EDIT_SELF) ? user: 
 	    Tools.getString(request,USER_NAME, "").trim();
@@ -98,6 +98,7 @@ public class EditUser extends ResultsBase {
 	    // set various fields
 	    editUser(r, request);
 	    if (error) return;
+
 
 	    StringBuffer b = new 	StringBuffer();
 	    if (!r.validate(em,b)) {
