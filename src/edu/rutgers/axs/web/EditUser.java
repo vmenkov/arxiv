@@ -96,7 +96,7 @@ public class EditUser extends ResultsBase {
 	    }
 
 	    // set various fields
-	    editUser(r, request);
+	    boolean prefChanged = editUser(r, request);
 	    if (error) return;
 
 
@@ -221,12 +221,18 @@ public class EditUser extends ResultsBase {
 	}
     }
 
-    private void editUser(User r, HttpServletRequest request)
+    /** @return true if the user's preferences have changed in such a way that
+	it may be appropriate to update the user's suggestion list.
+     */
+    private boolean  editUser(User r, HttpServletRequest request)
     throws IllegalInputException {
 
+	int changeCnt=0;
 	try {
+	    int days0 = r.getDays();
 	    Tools.editEntity(EntryFormTag.PREFIX, r, request);
 	    if (r.getDays()<=0 || r.getDays()>30) r.setDays(Search.DEFAULT_DAYS);
+	    if (r.getDays() != days0)  changeCnt++;
 
 	    // Set subject categories
 	    Set<String> c = r.getCats();
@@ -236,9 +242,11 @@ public class EditUser extends ResultsBase {
 		if (sent == null) {
 		    Logging.info("Removing cat " + name);
 		    c.remove(name);
+		    changeCnt++;
 		} else {
 		    Logging.info("Adding cat " + name);
 		    c.add(name);
+		    changeCnt++;
 		}
 	    }
 	    r.setCats(c);
@@ -247,7 +255,9 @@ public class EditUser extends ResultsBase {
 	    setEx(ex);
 	} catch( java.lang.reflect.InvocationTargetException ex) {
 	    setEx(ex);
-	}	
+	}		
+	return (changeCnt!=0);
+	    
     }
 
     /** Various params that may come from HTML forms */
