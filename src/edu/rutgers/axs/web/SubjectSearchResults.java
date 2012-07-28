@@ -5,8 +5,6 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-//import javax.servlet.*;
-//import javax.servlet.http.*;
 import javax.persistence.*;
 
 import org.apache.lucene.document.*;
@@ -70,7 +68,7 @@ public  class SubjectSearchResults extends SearchResults {
 	String[] cats = actor.getCats().toArray(new String[0]);
 	Date since = SearchResults.daysAgo( days );
 	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
-	sr.reorderCatSearchResults(searcher.getIndexReader(), sr.scoreDocs, cats, since);
+	sr.reorderCatSearchResults(searcher.getIndexReader(), cats, since);
 	return sr;
     }
 

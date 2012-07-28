@@ -9,6 +9,7 @@
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% 
 	ViewSuggestions main=new ViewSuggestions(request,response);
+	SearchResults sr = main.sr;
 %>
 <!-- © 2011 by AEP -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -56,7 +57,7 @@
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else {     %>
 <%
-     if (!main.force && main.entries!=null) {
+     if (!main.force && sr.entries!=null) {
        long since = main.actor.getLastActionId() -main.df.getLastActionId();
  %>
 
@@ -102,15 +103,25 @@ list has been generated).  </p>
 <p>Suggestion generation method: <%=main.df.getType() %>
  ( <%=main.df.getType().description() %>)
 
-<p>The list contains <%=main.entries.size() %> articles; the top <%= Math.min(main.entries.size(), main.maxRows) %> are shown below.
-</p>
+<p>The entire list contains at least <%= sr.reportedLength %>
+articles; articles ranked from <%= sr.entries.elementAt(0).i %>
+through <%= sr.entries.lastElement().i %> are shown below.
 
+</p>
 		<% 
-		int rowCnt=0;
-for( ArticleEntry e: main.entries) { 
-		  if (++rowCnt >= main.maxRows) break;%>
+for( ArticleEntry e: sr.entries) { %>
 <%= main.resultsDivHTML(e) %>	
-		<% }%>		
+		<% }%>
+
+	 <!-- Links to prev/next pages, if necessary, will go here -->
+
+		</div>
+		
+		<% if (sr.excludedEntries.size()>0) { %>
+		<div><small>We have excluded <%=sr.excludedEntries.size()%> articles from the list, because you have earlier asked not to show them anymore.</small></div>
+		<% } %>
+
+		
 
 <% } else if (!main.force) { %>
 <P>No suggestion list of the specified type for user <em><%= main.actorUserName %></em> has been generated yet. 

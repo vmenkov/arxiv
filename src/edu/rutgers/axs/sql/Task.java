@@ -22,7 +22,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 @Entity
     public class Task  implements Serializable, OurTable {
 
-  /** Transaction ID */
+    /** Transaction ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
 	private long id;
     public void setId(long val) {        id = val;    }
@@ -181,7 +181,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	return s;
     }
 
-    /** Get the next task from the queue.  If there is none, return
+    /** Gets the next task from the queue.  If there is none, returns
 	null.
      */
     static public Task getNextTask(EntityManager em) {
@@ -207,8 +207,9 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
      * of a certain type for a certain user.
      */
     static public List<Task> findOutstandingTasks(EntityManager em, String username, Op op) {
-	Query q = em.createQuery("select m from Task m where m.user=:u and m.completeTime is null and m.canceled=FALSE and m.failed=FALSE order by m.requestTime asc");
+	Query q = em.createQuery("select m from Task m where m.user=:u and m.completeTime is null and m.canceled=FALSE and m.failed=FALSE and m.op=:op order by m.requestTime asc");
 	q.setParameter("u", username);
+	q.setParameter("op", op);
 	List<Task> res = (List<Task>)q.getResultList();
 	return res;
     }
@@ -217,4 +218,24 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
     public boolean appearsActive() {
 	return !getCanceled() && getStartTime()!=null && getCompleteTime()==null;
     }
+
+    /** Marks apparently "stale" tasks as failed. Those are
+	tasks that were started a long(ish) time ago, by a process
+	different from this one, and never completed.
+	null.
+     */
+    /*
+    static public Task cancelStalledTasks(EntityManager em) {
+	Query q = em.createQuery("update select m from Task m where m.startTime is null and m.canceled=FALSE  and m.failed=FALSE order by m.requestTime asc");
+	q.setMaxResults(1);
+	List<Task> res = (List<Task>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+    */
+
+
 }

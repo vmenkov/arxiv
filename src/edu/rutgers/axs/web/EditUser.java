@@ -200,20 +200,35 @@ public class EditUser extends ResultsBase {
 		return;		    
 	    }
 
+	    int days = r.getDays();
+
 	    // saving data into the database
 	    em.persist(r);
 	    em.getTransaction().commit();
-	    em.close();
 	    
 	    // read back
-	    em = sd.getEM();	    
-	    r = User.findByName(em, uname);
-	    em.close();
+	    //em = sd.getEM();	    
+	    //r = User.findByName(em, uname);
+	    //em.close();
 	    
 	    if (r==null) {
 		error = true;
 		errmsg = "Could not re-read the modified entry with user_name=" + uname;
 	    }
+
+	    // Trying to update the profile and re-create sug list, 
+	    // becuase the user's declared preferences have changed.
+	    // We don't do it on initial creation (CREATE_SELF), because
+	    // it is supposed to be taken care of in the Scheduler.
+	    if (prefChanged && mode!=Mode.CREATE_SELF) {
+		scheduleUpdate(em, uname, Task.Op.TJ_ALGO_2_USER_PROFILE, days);
+		scheduleUpdate(em, uname, Task.Op.TJ_ALGO_1_SUGGESTIONS_1, days);
+	    } else {
+		Logging.info("There seem to be no need to schedule updates for user=" + uname +"; mode=" +mode+", prefChanged=" + prefChanged);
+	    }
+	    em.close();
+
+
 	}  catch (Exception _e) {
 	    setEx(_e);
 	} finally {
@@ -240,13 +255,17 @@ public class EditUser extends ResultsBase {
 	    for(String name: Categories.listAllStorableCats()) {
 		String sent=request.getParameter(EditUser.CAT_PREFIX+name);
 		if (sent == null) {
-		    Logging.info("Removing cat " + name);
-		    c.remove(name);
-		    changeCnt++;
+		    if (c.contains(name)) {
+			Logging.info("Removing cat " + name);
+			c.remove(name);
+			changeCnt++;
+		    }
 		} else {
-		    Logging.info("Adding cat " + name);
-		    c.add(name);
-		    changeCnt++;
+		    if (!c.contains(name)) {
+			Logging.info("Adding cat " + name);
+			c.add(name);
+			changeCnt++;
+		    }
 		}
 	    }
 	    r.setCats(c);
@@ -256,6 +275,7 @@ public class EditUser extends ResultsBase {
 	} catch( java.lang.reflect.InvocationTargetException ex) {
 	    setEx(ex);
 	}		
+	Logging.info("EditUser: changeCnt=" + changeCnt);
 	return (changeCnt!=0);
 	    
     }
@@ -309,5 +329,40 @@ public class EditUser extends ResultsBase {
 	return true;
     } 
 
+    
+    static boolean scheduleUpdate(EntityManager em, String  uname, Task.Op taskOp, int days) {
+	Task activeTask=null, queuedTask=null;
+	List<Task> tasks = 
+	    Task.findOutstandingTasks(em, uname, taskOp);
+	if (tasks != null) {
+	    for(Task t: tasks) {
+		if (days>=0 && t.getDays()!=days) continue; // range mismatch
+		if (t.appearsActive()) {
+		    if ( activeTask==null) 	activeTask=t; 
+		    //break;
+		} else if (!t.getCanceled()) {
+		    if (queuedTask==null) queuedTask = t;
+		    //break;
+		}
+	    }
+	}
+
+	if (activeTask!=null) {
+	    Logging.info("Did not schedule op="+taskOp+" for user " + uname +", because a task (no. "+activeTask.getId()+") is already in progress");
+	    return false;
+	} else if (queuedTask!=null) {
+	    Logging.info("Did not schedule op="+taskOp+" for user " + uname +", because a task (no. "+queuedTask.getId()+") is already scheduled");
+	    return false;
+	} else {
+	    em.getTransaction().begin();
+	    Task newTask = new Task(uname, taskOp);
+	    newTask.setDays(days);
+	    //if (basedon!=null) newTask.setInputFile(basedon);
+	    em.persist(newTask);
+	    em.getTransaction().commit();
+	    Logging.info( "Scheduled task="+newTask+" for user " + uname +", because preferences have changed" );
+	    return true;
+	}
+    }
 
 }

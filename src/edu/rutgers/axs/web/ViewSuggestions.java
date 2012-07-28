@@ -31,9 +31,7 @@ public class ViewSuggestions extends PersonalResultsBase {
      */
     public boolean onTheFly = false;
 
-    /** Null indicates that no file has been found */
-    public Vector<ArticleEntry> entries = null;//new Vector<ArticleEntry>();
-    /** Data file whose content is to be displayed */
+     /** Data file whose content is to be displayed */
     public DataFile df =null;
 
     /** The type of the requested suggestion list, as specified by the
@@ -43,7 +41,7 @@ public class ViewSuggestions extends PersonalResultsBase {
     public int days= 0;
     /** Max length to display. (Note that the suggestion list
      * generator may have its own truncation criteria!)  */
-    public static final int maxRows = 100;
+    //    public static final int maxRows = 100;
     
     /** If this is supplied, this specifies the particular user
 	profile on which the requested suggestion list must be based.
@@ -59,7 +57,11 @@ public class ViewSuggestions extends PersonalResultsBase {
 
     private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
 
-
+    /** List scrolling */
+    public int startat = 0;
+    /** the actual suggestion list to be displayed is stored here */
+    public SearchResults sr;
+ 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
     }
@@ -87,6 +89,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	try {
 
 	    actor=User.findByName(em, actorUserName);
+	    startat = (int)Tools.getLong(request, "startat",0);
 	    
 	    if (mainPage) {
 		initMainPage(em, actor);
@@ -134,16 +137,16 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 	    List<Task> tasks = 
 		Task.findOutstandingTasks(em, actorUserName, taskOp);
-
+	    activeTask=queuedTask=null;
 	    if (tasks != null) {
 		for(Task t: tasks) {
 		    if (days>=0 && t.getDays()!=days) continue; // range mismatch
 		    if (t.appearsActive()) {
-			activeTask=t; 
-			break;
-		    } else if (!t.getCanceled()){			    
-			queuedTask = t;
-			break;
+			if ( activeTask==null) 	activeTask=t; 
+			//break;
+		    } else if (!t.getCanceled()) {
+			if (queuedTask==null) queuedTask = t;
+			//break;
 		    }
 		}
 	    }
@@ -184,7 +187,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    actorLastActionId= actor.getLastActionId();
 
 	    if (df!=null) {
-		initList(df, false);
+		initList(df, startat, false);
 	    }
 
 	}  catch (Exception _e) {
@@ -226,22 +229,17 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    days = df.getDays();
 	}
 	    	    
-	initList(df, onTheFly);
+	initList(df, startat, onTheFly);
     }
 
-    private void initList(DataFile df, boolean onTheFly) throws Exception {
+    private void initList(DataFile df, int startat, boolean onTheFly) throws Exception {
 	IndexReader reader=ArticleAnalyzer.getReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
+	int M = 25;
 	
 	if (onTheFly) {
 	    // simply generate and use cat search results for now
-	    SearchResults bsr = catSearch(searcher);
-	    
-	    int startat = 0;
-	    int M = 100;
-	    bsr.setWindow( searcher, startat, M, null);
-	    entries = bsr.entries;
-	    
+	    sr = catSearch(searcher);    
 	} else if (teamDraft) {
 	    // merge the list from the file with the cat search res
 	    SearchResults asr = new SearchResults(df, searcher);
@@ -249,24 +247,19 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    SearchResults bsr = catSearch(searcher);
 		    
 	    long seed =  (actorUserName.hashCode() << 16) | dfmt.format(new Date()).hashCode();
-	    SearchResults merged = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
-	    int startat = 0;
-	    int M = 100;
-	    merged.setWindow( searcher, startat, M, null);
-	    
-	    entries = merged.entries;
+	    // merge
+	    sr = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
 	} else {
-	    
-	    // read the artcile IDs and scores from the file
-	    File f = df.getFile();
-	    entries = ArticleEntry.readFile(f);
-	    
+	    // simply read the artcile IDs and scores from the file
+	    sr = new SearchResults(df, searcher);
 	}
-	applyUserSpecifics(entries, actor);
+	sr.setWindow( searcher, startat, M, null);
+	applyUserSpecifics(sr.entries, actor);
 	
 	// In docs to be displayed, populate other fields from Lucene
-	for(int i=0; i<entries.size() && i<maxRows; i++) {
-	    ArticleEntry e = entries.elementAt(i);
+	for(int i=0; i<sr.entries.size()// && i<maxRows
+		; i++) {
+	    ArticleEntry e = sr.entries.elementAt(i);
 	    int docno = e.getCorrectDocno(searcher);
 	    Document doc = reader.document(docno);
 	    e.populateOtherFields(doc);

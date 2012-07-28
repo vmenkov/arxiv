@@ -17,10 +17,6 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-//import edu.cornell.cs.osmot.cache.Cache;
-//import edu.cornell.cs.osmot.options.Options;
-//import edu.cornell.cs.osmot.logger.Logger;
-
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
@@ -33,7 +29,9 @@ public class Search extends ResultsBase {
     
 
     public String query, queryEncoded ;
+    /** the actual search results list is stored here */
     public SearchResults sr;
+    /** List "paging" */
     public int startat = 0;
     //public boolean useLog = false;
 
@@ -106,7 +104,7 @@ public class Search extends ResultsBase {
 		    Logging.warning(msg);
 		    infomsg += msg + "<br>";
 		}
-		sr.reorderCatSearchResults(reader, sr.scoreDocs, cats, since);
+		sr.reorderCatSearchResults(reader, cats, since);
 
 
 	    } else {

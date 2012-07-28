@@ -142,14 +142,15 @@ window.onload = StartScripts;
 		<div><small>System message: <%= main.infomsg%> </small></div>
 
 		<!-- #EndEditable -->	
+<icd:RU/>
 	</div> <!-- Wrapping -->
 
 <% }     %>	
 	</div> <!-- Middle frame ends-->
 
-<div id="lower_frame">
+<!-- div id="lower_frame" -->
 	
-</div> <!-- Lower frame ends -->		
+<!-- /div --> <!-- Lower frame ends -->		
 
 <!-- #BeginEditable "Scripts" -->
 <!-- #EndEditable -->

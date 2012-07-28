@@ -650,21 +650,12 @@ public class UserProfile {
 
 
 
-    /** Produces a list of articles sorted in accordance with Thorsten's
-	Algorithm 1 
+   
 
-    @param le Entries sorted by their linear contribution */
-    /*
-    Vector<ArticleEntry> tjAlgo1(Vector<ArticleEntry> le) {
-	double psi = 0;
-	
-
-    }
-    */
-
-    /** Modifies an existing profile by adding to it, with 0 coefficients,
-	all terms present in the current user activity log. Updates
-	lastActionId accordingly.
+    /** Modifies this existing profile by adding to it, with 0
+	coefficients, all terms present in the current user activity
+	log. (So this blows up the profile's vocabulary, but does
+	not affect any term's weight). Updates this profile's lastActionId accordingly.
 
 	@return ranked list of pages viewed since the last update
      */

@@ -9,6 +9,7 @@
 <% 
 //        ResultsBase main=new ResultsBase(request,response);
   	  ViewSuggestions main=new  ViewSuggestions(request,response,true);
+	  SearchResults sr = main.sr;
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -286,13 +287,12 @@ to the
 
 <% } %>
 
-<p>The list contains <%=main.entries.size() %> articles; the top <%= Math.min(main.entries.size(), main.maxRows) %> are shown below.
-</p>
+<p>The entire list contains at least <%= sr.reportedLength %>
+articles; articles ranked from <%= sr.entries.elementAt(0).i %>
+through <%= sr.entries.lastElement().i %> are shown below.  </p>
 
-		<% 
-		int rowCnt=0;
-for( ArticleEntry e: main.entries) { 
-		  if (++rowCnt >= main.maxRows) break;%>
+<% 
+for( ArticleEntry e: sr.entries) { %>
 <%= main.resultsDivHTML(e) %>	
 		<% }%>		
 

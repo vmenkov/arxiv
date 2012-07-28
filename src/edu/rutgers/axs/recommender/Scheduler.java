@@ -75,6 +75,7 @@ public class Scheduler {
     /** Do we need to run the scheduler again? */
     boolean needsToRunNow() {
 	if (lastSchedulingRunAt == null) return true;
+	if (stage2) return true; 
 	Date now = new Date();
 	return (now.getTime() >= lastSchedulingRunAt.getTime() + 
 		 schedulingIntervalSec * 1000);
@@ -92,6 +93,10 @@ public class Scheduler {
 	decides what type of updates it will be scheduling now
 	(profile updates or suggestion list updates), and checks
 	every user's situation, scheduling necessary updates for him.
+
+	As a side effect, this method  flips the stage2 flag,
+	so that consecutive calls to it schedule alternating types
+	of operations.
     */
     int schedule() {
 	int createdCnt=0;
@@ -193,7 +198,12 @@ public class Scheduler {
 		    need = need || articlesUpdated && sugg.getTime().before(startTime);
 
 
-		    Logging.info("Scheduler: user " + uname + "; needed "+mode+" ("+days +"d) update? " + need);
+		    Logging.info("Scheduler: au="+articlesUpdated+", user " + uname + "; needed "+mode+" ("+days +"d) update? " + need);
+		    
+		    if ( articlesUpdated && !need) {
+			Logging.info("Explain au: sugg.getTime()="+sugg.getTime()+", startTime=" +startTime + ", before=" +   sugg.getTime().before(startTime));
+		    }
+
 		    if (need) {
 			String requiredInput =
 			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?

@@ -9,8 +9,6 @@ import java.io.*;
 
 import javax.persistence.*;
 
-//import edu.cornell.cs.osmot.options.Options;
-
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
@@ -171,7 +169,9 @@ public class TaskMaster {
 		    }
 
 		    UserProfile upro = 
-			getSuitableUserProfile(task, ptr, em, reader);
+			getSuitableUserProfile(task, ptr, em, reader,
+					       op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1 ?  DataFile.Type.TJ_ALGO_2_USER_PROFILE : DataFile.Type.USER_PROFILE);
+
 		    inputFile = ptr.elementAt(0);
 		    final boolean raw=true;
 		    //ArticleStats[] allStats = asr.getResults();
@@ -192,7 +192,7 @@ public class TaskMaster {
 			IndexSearcher searcher = new IndexSearcher(reader);	
 			SearchResults sr = new SubjectSearchResults(searcher, cats, since, 10000);
 			// set scores for use in tie-breaking
-			sr.setCatSearchScores(reader, sr.scoreDocs,cats,since);
+			sr.setCatSearchScores(reader,cats,since);
 
 			sd = ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
 			searcher.close();
@@ -323,10 +323,13 @@ public class TaskMaster {
 	the user profile from, or to what file we have just written
 	the user profile, as the case may be.
 
+	@param ptype   DataFile.Type.USER_PROFILE or ...
+
      */
     private static UserProfile 
 	getSuitableUserProfile(Task task, Vector<DataFile> ptr, 
-			       EntityManager em, IndexReader reader)
+			       EntityManager em, IndexReader reader,
+			       DataFile.Type ptype)
 	throws IOException {
 
 	if (ptr.size()>0) { //explicitly specified input file
@@ -334,8 +337,7 @@ public class TaskMaster {
 	}
 	
 	DataFile inputFile = 
-	    DataFile.getLatestFile(em, task.getUser(),
-				   DataFile.Type.USER_PROFILE);
+	    DataFile.getLatestFile(em, task.getUser(), ptype);
 
 	UserProfile upro;
 	if (inputFile != null) {
@@ -343,9 +345,17 @@ public class TaskMaster {
 	    upro = new UserProfile(inputFile, reader);
 	} else {
 	    // generate it
-	    upro = new UserProfile(task.getUser(), em, reader);
+	    if (ptype== DataFile.Type.USER_PROFILE) {
+		// based on user activity, in a linear way (obsolete?)
+		upro = new UserProfile(task.getUser(), em, reader);
+	    } else if (ptype==  DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
+		// empty profile, as TJ wants (06-2012)
+		upro = new UserProfile(reader);
+	    } else {
+		throw new AssertionError("TM.getSuitableUserProfile(): unsupported type=" + ptype);
+	    }
 	    DataFile uproFile=
-		upro.saveToFile(task, DataFile.Type.USER_PROFILE);
+		upro.saveToFile(task, ptype);
 	    //		upro.saveToFile(task, DataFile.Type.TJ_ALGO_2_USER_PROFILE_1);
 	    if (uproFile==null) {
 		

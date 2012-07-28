@@ -28,7 +28,11 @@ public class  SearchResults {
 	ArxivFields.ARTICLE};
 
 
-    /** Search results */
+    /** All search results (not just the displayed page), as they came
+	from the searcher (or were back-converted from a DataFile).
+	
+	FIXME: very little reason to make this public!
+    */
     public ScoreDoc[] 	scoreDocs = new ScoreDoc[0];
     /** Collection size */
     public int numdocs =0;
@@ -55,8 +59,10 @@ public class  SearchResults {
 	scoreDocs =  v.toArray(new ScoreDoc[0]);
     }
 
-    /** Fill a SearchResults object from a DataFile. This involves looking
-	up Lucene's internal document IDs using a searcher.
+    /** Fill a SearchResults object from a DataFile. To achieve a
+	degree of compatibility with SearchResults object avchieved by
+	normal search, this process involves looking up Lucene's
+	internal document IDs using a searcher.
      */
     SearchResults(DataFile df, IndexSearcher searcher) throws IOException {
 
@@ -90,7 +96,8 @@ public class  SearchResults {
 	@param seed Random number generator seed. The caller can make it a function of the user name and calendar date,
 	to ensure that during same-day page reload the user will see the same list. (Thorsten's suggestion, 2012-06)
 
-	@return A wrapper around the "merged" ScoreDoc array
+	@return A wrapper around the "merged" ScoreDoc array. The
+	"entries" values are not set yet; one needs to call setWindow
     */
     public static SearchResults teamDraft(ScoreDoc[] a,  ScoreDoc[] b, long seed) {
 	HashSet<Integer> saved = new 	HashSet<Integer> ();
@@ -160,15 +167,25 @@ public class  SearchResults {
 	    return b;
 	}
     }
+    
 
-    /** Fills the "entries" array with a section [startat:startat+M-1]
-       of the full search results array */
+    /** Fills the "entries" array with a section
+       scoreDocs[startat:startat+M-1] of the full search results array
+       "scoreDocs". Sets "pointers" to the prev/next pages.
+
+       @param searcher A valid Searcher object; used to get document
+       information based on Lucene doc ids stored in scoreDocs[]
+       entries.
+
+       @param exclusions Controls the removal of some articles from
+       the viewable list.
+    */
     void setWindow(IndexSearcher searcher, int startat, int M, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
 	prevstart = Math.max(startat - M, 0);
 	nextstart = startat + M;
 	needPrev = (prevstart < startat);
 	
-	needNext=(scoreDocs.length > 	nextstart);
+	needNext=(scoreDocs.length > nextstart);
 	if (needNext) {
 	    reportedLength =scoreDocs.length-1;
 	    atleast = "over";
@@ -234,7 +251,11 @@ public class  SearchResults {
 	of the category search (Treatment A) can be reordered as
 	needed for June 2012 experiments. The number of matching cats
 	is the primary key, the date is the secondary */	
-    public static void setCatSearchScores(IndexReader reader, ScoreDoc[] scoreDocs, String[] _cats, Date since) throws IOException, CorruptIndexException{
+    public 
+//static 
+void setCatSearchScores(IndexReader reader,
+					  // ScoreDoc[] scoreDocs,
+					  String[] _cats, Date since) throws IOException, CorruptIndexException{
 	String[] cats = Arrays.copyOf(_cats, _cats.length);
 	Arrays.sort(cats);
 
@@ -266,8 +287,8 @@ public class  SearchResults {
     /** Reorder the results of the category search (Treatment A) as
 	needed for June 2012 experiments. The number of matching cats is
 	the primary key, the date is the secondary */	
-    static void reorderCatSearchResults(IndexReader reader, ScoreDoc[] scoreDocs, String[] _cats, Date since) throws IOException, CorruptIndexException{
-	setCatSearchScores(reader, scoreDocs, _cats, since);
+    void reorderCatSearchResults(IndexReader reader,String[] _cats, Date since) throws IOException, CorruptIndexException{
+	setCatSearchScores(reader,  _cats, since);
 	Arrays.sort(scoreDocs, new SDComparator());
     }
     
@@ -326,7 +347,7 @@ public class  SearchResults {
 	SearchResults sr;
 	if (cat) {
 	    sr = new SubjectSearchResults(searcher, argv, since, 10000);
-	    sr.reorderCatSearchResults(reader, sr.scoreDocs, argv, since);
+	    sr.reorderCatSearchResults(reader,  argv, since);
 	} else {
 	    sr =  new TextSearchResults(searcher, s,  200);
 	}

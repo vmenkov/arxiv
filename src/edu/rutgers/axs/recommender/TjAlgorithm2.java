@@ -9,8 +9,6 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-//import org.apache.commons.lang.mutable.MutableDouble;
-
 import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.ParseConfig;
@@ -74,7 +72,9 @@ class TjAlgorithm2 {
     }
 
     /**
-       @param entries The suggestion list that was built for that profile
+       @param sda0 The previous suggestion list that was built for
+       that profile.  User's activity since then will be used as the
+       source of the updates.
      */
     void updateProfile(String uname, EntityManager em,
 		       ArxivScoreDoc[] sda0//,
@@ -88,6 +88,11 @@ class TjAlgorithm2 {
 
 	double[] phi0 = computePhi( sda0, em);
 	
+	// v will contain (in this order): the docs the user has
+	// recently interacted with in a "positive" way, followed
+	// by all docs from sd0 with which the user has not
+	// recently interacted in any way. In other words,
+	//  v = frontListed (+) (sd0 \ frontListed \ negativeSet)
 	Vector<ArxivScoreDoc> v = new 	Vector< ArxivScoreDoc>();
 	HashSet<Integer> frontListed = new HashSet<Integer>();
 	HashSet<Integer> negativeSet = new HashSet<Integer>();
@@ -118,7 +123,7 @@ class TjAlgorithm2 {
 	for(ArxivScoreDoc sd: sda0) {
 	    Integer key =new Integer(sd.doc);
 	    if (frontListed.contains(key)) continue;
-	    // also. esxclude docs for which we got *negative* feedback
+	    // also. exclude docs for which we got *negative* feedback
 	    if (negativeSet.contains(key)) continue;
 	    v.add(sd);
 	}
