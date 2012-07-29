@@ -73,7 +73,8 @@ public class Search extends ResultsBase {
 	    SessionData sd = SessionData.getSessionData(request);  
             edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 
-	    startat = (int)Tools.getLong(request, "startat",0);
+	    startat = (int)Tools.getLong(request, STARTAT,0);
+
 	    User u = null;
 
 	    if (user!=null) {

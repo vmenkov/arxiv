@@ -63,6 +63,10 @@ public class  SearchResults {
 	degree of compatibility with SearchResults object avchieved by
 	normal search, this process involves looking up Lucene's
 	internal document IDs using a searcher.
+
+	Note: the "entries" array is intialized here using the entire
+	data file. You may want to call setWindow() later to restrict the
+	size.
      */
     SearchResults(DataFile df, IndexSearcher searcher) throws IOException {
 
@@ -171,7 +175,9 @@ public class  SearchResults {
 
     /** Fills the "entries" array with a section
        scoreDocs[startat:startat+M-1] of the full search results array
-       "scoreDocs". Sets "pointers" to the prev/next pages.
+       "scoreDocs". Sets "pointers" to the prev/next pages. (If before a call
+       to this method there is   something in "entries" already, it is
+       deleted).
 
        @param searcher A valid Searcher object; used to get document
        information based on Lucene doc ids stored in scoreDocs[]
@@ -197,6 +203,7 @@ public class  SearchResults {
 	//Document doc = s.doc(scoreDocs[0].doc);
 	System.out.println("" + scoreDocs.length + " results");
 	
+	entries.setSize(0);  // just in case something's in already
 	int pos = startat+1;
 	for(int i=startat; i< scoreDocs.length && i<nextstart; i++) {
 	    int docno=scoreDocs[i].doc;

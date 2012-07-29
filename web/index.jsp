@@ -296,9 +296,21 @@ for( ArticleEntry e: sr.entries) { %>
 <%= main.resultsDivHTML(e) %>	
 		<% }%>		
 
+	 <!-- Links to prev/next pages, if necessary -->
+
+	<% if (sr.needPrev) {	%> 
+	<a href="<%= main.repageUrl(sr.prevstart) %>">[PREV PAGE]</a> 
+	<% }	
+	 if (sr.needNext) { %>	
+	<a href="<%= main.repageUrl(sr.nextstart) %>">[NEXT PAGE]</a> 	 
+	<% }	 %>
+		<% if (sr.excludedEntries.size()>0) { %>
+		<div><small>We have excluded <%=sr.excludedEntries.size()%> articles from the list, because you have earlier asked not to show them anymore.</small></div>
+		<% } %>
 
 <% } %>
 <p><small>(<%= main.actor.dayMsg()%>)</small>
+
 <% } %>
 
 <h2><a name="physics">Physics</a></h2>

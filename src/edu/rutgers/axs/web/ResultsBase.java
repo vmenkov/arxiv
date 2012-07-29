@@ -43,7 +43,7 @@ public class ResultsBase {
 
     final public String USER_NAME = "user_name",
 	FORCE="force", FILE="file";
-
+    static final String STARTAT = "startat";
 
     /** Returns the user object for the currently logged-in user */
     public User getUserEntry() {
@@ -215,13 +215,14 @@ public class ResultsBase {
 					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER  );
     } 
 
-    /** An "A" HTML element */
+    /** Generates a "A" HTML element */
     static String a(String url, String body) {
 	return  "<a href=\"" + url+ "\">"+body+"</a>";	
     }
 
-    /** Generates an HTML "div" element with everything pertaining to a single
-	search result.
+    /** Generates an "div" HTML element with everything pertaining to
+	a single article in a list of articles (e.g., a single search
+	result or a single element of a suggestion list).
      */
     public String resultsDivHTML(ArticleEntry e, boolean isSelf) {
 	String s = 

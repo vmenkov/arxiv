@@ -113,15 +113,19 @@ for( ArticleEntry e: sr.entries) { %>
 <%= main.resultsDivHTML(e) %>	
 		<% }%>
 
-	 <!-- Links to prev/next pages, if necessary, will go here -->
+	 <!-- Links to prev/next pages, if necessary -->
 
-		</div>
+	<% if (sr.needPrev) {	%> 
+	<a href="<%= main.repageUrl(sr.prevstart) %>">[PREV PAGE]</a> 
+	<% }	
+	 if (sr.needNext) { %>	
+	<a href="<%= main.repageUrl(sr.nextstart) %>">[NEXT PAGE]</a> 	 
+	<% }	 %>
 		
 		<% if (sr.excludedEntries.size()>0) { %>
 		<div><small>We have excluded <%=sr.excludedEntries.size()%> articles from the list, because you have earlier asked not to show them anymore.</small></div>
 		<% } %>
-
-		
+	
 
 <% } else if (!main.force) { %>
 <P>No suggestion list of the specified type for user <em><%= main.actorUserName %></em> has been generated yet. 
@@ -188,14 +192,13 @@ Most recent <input type="text" name="<%=main.DAYS%>" value="<%=main.days%>"> day
 </form>
 </p>
 
-
 <%  } }  %>
-
-
 
 <hr> <p><small>System message: <%= main.infomsg%> </small></p> <%  %>
 
 <icd:RU/>
+
+
 
 		<!-- #EndEditable -->	
 	</div> <!-- Wrapping -->

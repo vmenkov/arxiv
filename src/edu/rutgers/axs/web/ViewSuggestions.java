@@ -2,6 +2,7 @@ package edu.rutgers.axs.web;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 import java.text.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -11,8 +12,6 @@ import javax.persistence.*;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
-
-import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.*;
@@ -89,7 +88,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	try {
 
 	    actor=User.findByName(em, actorUserName);
-	    startat = (int)Tools.getLong(request, "startat",0);
+	    startat = (int)Tools.getLong(request, STARTAT,0);
 	    
 	    if (mainPage) {
 		initMainPage(em, actor);
@@ -235,7 +234,7 @@ public class ViewSuggestions extends PersonalResultsBase {
     private void initList(DataFile df, int startat, boolean onTheFly) throws Exception {
 	IndexReader reader=ArticleAnalyzer.getReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
-	int M = 25;
+	int M = 10; //page size
 	
 	if (onTheFly) {
 	    // simply generate and use cat search results for now
@@ -310,6 +309,26 @@ public class ViewSuggestions extends PersonalResultsBase {
 	s += "&" + MODE + "=" +mode;
 	if (days!=0) 	    s +=  "&" + DAYS+ "=" +days;
 	return s;
+    }
+
+    /** Generates a URL for a page similar to the currently viewed one,
+	but showing a different section of the result list.
+
+	@param startat The value for the "startat" param in the new page's 
+	URL.
+     */
+    public String repageUrl(int startat) {
+	String sp = request.getServletPath();
+	String qs0=request.getQueryString();
+	if (qs0==null) qs0="";
+
+	Pattern p = Pattern.compile("\\b"+ STARTAT + "=\\d+");
+	Matcher m = p.matcher(qs0);
+	String rep = STARTAT + "=" + startat;
+	String qs = m.find()?  m.replaceAll( rep ) :
+	    qs0 + (qs0.length()>0 ?  "&" : "") + rep;
+	String x = cp + sp + "?" + qs;
+	return x;
     }
 
     /** Wrapper for the same method in ResultsBase */
