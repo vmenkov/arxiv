@@ -1062,3 +1062,11 @@ background:#dddddd;
 border-bottom-left-radius:10px;
 border-bottom-right-radius:10px;
 }
+
+/* class="researcher" attribute is used on elements that are only shown to
+ researcher-role users, and contain information not needed to
+ the rank-and-file participants */
+.researcher {
+color:#0000ff;
+background:#ffffa0;    
+}

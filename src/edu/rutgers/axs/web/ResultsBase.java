@@ -50,11 +50,34 @@ public class ResultsBase {
 	return sd.getUserEntry(user);
     }
 
-    /** Is this command run by an admin? */
-    boolean runByAdmin() {
-	User u = getUserEntry();
-	return u!=null && u.isAdmin();
+    /** Cached bits reflecting the roles of the user who has requested
+	this page */
+    private boolean roleBitsSet = false,
+	isRunByAdmin=false, isRunByResearcher=false;
+    
+    private void checkRoleBits() {
+	if (roleBitsSet) return;
+ 	User u = getUserEntry();
+	if (u!=null) {
+	    isRunByAdmin = u.isAdmin();
+	    isRunByResearcher = u.isResearcher();
+	}
+	roleBitsSet = true;
+   }
+
+
+    /** Is this command run by an admin-level user? */
+    public boolean runByAdmin() {
+	checkRoleBits();
+	return isRunByAdmin;
     }
+
+    /** Is this command run by a researcher-level user? */
+    public boolean runByResearcher() {
+	checkRoleBits();
+	return isRunByResearcher;
+    }
+
 
     /**
        @param response If null, don't bother with checking.

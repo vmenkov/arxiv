@@ -181,25 +181,34 @@ import edu.rutgers.axs.web.Tools;
 	return false;
     }
 
-    public boolean hasAnyRole(Role.Name[] names) {
+   /** Does this user have any of the roles in the specifed list? 
+
+       @names An array of roles. It must be non-null, but may be empty
+       (in which case, of course, false will be returned). 
+
+       @return True if the user has any of the listed roles. 
+   */
+     public boolean hasAnyRole(Role.Name[] names) {
 	for(Role.Name r: names) {
 	    if (hasRole(r)) return true;
 	}
 	return false;
     }
 
+    /** Does this user have the "admin" role? */
     public boolean isAdmin() {
 	return hasRole(Role.Name.admin);
     }
 
+    /** Does this user have the "researcher" role? */
     public boolean isResearcher() {
 	return hasRole(Role.Name.researcher);
     }
 
 
     /** What kind of "experimental day" we have for this user now? 
-	"Learning" or "Evaluation" as per June 2012 scheme.
-	By default, null is stored */
+	"Learning" or "Evaluation" as per TJ+PK June 2012 scheme.
+	By default, null is stored here. */
     public static enum Day {
 	LEARN, EVAL;
     }

@@ -63,7 +63,7 @@ window.onload = StartScripts;
 
 	<!-- <div id="MenuPos" style="position:absolute; left: 86px; top: 42px; z-index:5000;"></div> -->
 	<img src="_technical/images/bar-rutgers.jpg" style="border:none; width:1000px; height:75px; position:absolute; top:0px; left:0px;" alt="" />
-	<div style="position:absolute; top:10px; left:10px; font-size:4em; font-weight:bold; text-shadow: 2px 2px 2px #000; right: 813px;"><span style="color:#CCCCCC; font-weight:normal;">my:</span>arXiv</div>
+	<div style="position:absolute; top:10px; left:10px; font-size:4em; font-weight:bold; text-shadow: 2px 2px 2px #000; right: 813px;"><a href="index.jsp"><span style="color:#CCCCCC; font-weight:normal;">my:</span><span style="color:#FFFFFF">arXiv</span></a></div>
 	
 	<div style="width:100%; text-align:center; position:relative; top:25px;">
 		<form name="simple_search" style="position:relative; text-align:center;" action="">

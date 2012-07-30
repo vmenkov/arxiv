@@ -64,8 +64,9 @@ public class TextSearchResults extends SearchResults {
 	
 	reportedLuceneQuery=q;
 	TopDocs 	 top = searcher.search(q, maxlen + 1);
-	    scoreDocs = top.scoreDocs;
-	    
+	scoreDocs = top.scoreDocs;
+	mayHaveBeenTruncated= (scoreDocs.length >= maxlen+1);
+    
 
     }
 

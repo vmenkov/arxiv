@@ -9,9 +9,9 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.persistence.*;
 
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
+//import org.apache.lucene.util.Version;
+//import org.apache.lucene.store.Directory;
+//import org.apache.lucene.store.FSDirectory;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;

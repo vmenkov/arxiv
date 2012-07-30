@@ -19,7 +19,12 @@ import edu.rutgers.axs.recommender.*;
 public class PersonalResultsBase extends ResultsBase {
     /** The user name of the user whose activity we research */
     public String actorUserName=null;
-    /** The object for the user whose activity we research */
+    /** The object for the user whose activity we research. 
+	Note that the "actor" may be different from the 
+	user who is viewing the data, since researchers can
+	(and will) view other users' action history,
+	suggestion lists, etc.
+     */
     public User actor;
 
     /** Is the user requesting a list for his own activity (rather
