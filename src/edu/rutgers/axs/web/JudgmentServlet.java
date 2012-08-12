@@ -15,10 +15,11 @@ import javax.persistence.*;
 import edu.rutgers.axs.sql.*;
 
 
-/** Records the user's "judgment" about an article. A "judgment" results
-    from the user's clicking on one of the action buttons, such as 
-    rating an article, "copying" it in one's personal folder, asking 
-    the server not to show it again, etc.
+/** Records the user's "judgment" (explicit feedback) about an
+    article. A "judgment" results from the user's clicking on one of
+    the action buttons, such as rating an article, "copying" it in
+    one's personal folder, asking the server not to show it again,
+    etc.
 
     <p>
     The "page" returned by this servlet is not actually
@@ -27,7 +28,7 @@ import edu.rutgers.axs.sql.*;
     http://api.jquery.com/jQuery.get/ )
  */
 public class JudgmentServlet extends BaseArxivServlet {
-  
+    
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
 	reinit(request);
@@ -54,8 +55,15 @@ public class JudgmentServlet extends BaseArxivServlet {
 		
 		User u = User.findByName(em, user);
 		
-		u.addAction(id, op);
-		
+		Action a = u.addAction(id, op);
+
+		Action.Source src = (Action.Source)Tools.getEnum(request, Action.Source.class,
+								 ResultsBase.SRC, Action.Source.UNKNOWN);	 
+
+		a.setSrc(src);
+		long dataFileId =  Tools.getLong(request, ResultsBase.DF, 0);
+		a.setDataFileId(dataFileId );
+
 		em.persist(u);
 		em.getTransaction().commit(); 
 		em.close();
@@ -76,8 +84,8 @@ public class JudgmentServlet extends BaseArxivServlet {
     }
 
      /** Returns a URL for this servlet */
-    static String mkUrl(String cp, String id, Action.Op op) {
-	return cp + "/ArticleServlet?" +  ID +"="+id + "&"+ ACTION+ "="+op;
-    }
+    //static String mkUrl(String cp, String id, Action.Op op) {
+    //	return cp + "/ArticleServlet?" +  ID +"="+id + "&"+ ACTION+ "="+op;
+    //}
 
 }

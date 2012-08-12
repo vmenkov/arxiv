@@ -7,10 +7,10 @@ import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.sql.*;
 
 /** Generating rating buttons (and accompanying buttons) that go under
-    each article's info in various article lists (such as in search.jsp).
-    One must include scripts/buttons_control.js into the JSP file that
-    uses this class.
-*/
+    each article's info in various article lists (such as the search
+    results list in search.jsp, or recommendation list in index.jsp).
+    One must include scripts/buttons_control.js into each JSP file
+    that uses this class.  */
 public class RatingButton //extends HTML
 {
    
@@ -59,9 +59,10 @@ public class RatingButton //extends HTML
 	return on? "" : att("style", "display:none;");
     }
     
-    /**
-       @param on If false,  'style="display: none;"' is used to render the span
-       (initially) invisible.
+    /** Generates an HTML "span" element, possibly with a "style"
+       attribute making it (initially) invisible.
+       @param on If false, a 'style="display: none;"' attribute is
+       added, in order to render the span (initially) invisible.
      */
     static private String span(String id, boolean on, String text) {
 	String s=  	
@@ -71,6 +72,9 @@ public class RatingButton //extends HTML
 	return s;
     }
 
+    /** Generates 2 HTML "span" elements, one of which is (initially) visible
+	and the other isn't.	
+    */
     static private String twoSpans(String id, boolean on, String texton, String textoff) {
 	return 
 	    span(id +  "_checked", on, texton) + "\n" +
@@ -81,6 +85,7 @@ public class RatingButton //extends HTML
 	return img(path, null);
     }
 
+    /** Generates an HTML "img" element */
     static private String img(String path, String longdesc) {
 	String s ="<img" +
 	    att("src", path) +
@@ -100,13 +105,16 @@ public class RatingButton //extends HTML
 	return text.replaceAll(" ", "&nbsp;");
     }
 
-    /** The URL (relative to the CP) for recording a judgment on this doc */
-    public static String judge(String cp, String aid, Action.Op op) {
+    /** The URL (relative to the CP) for recording a judgment (or
+	performing another user action) on this doc */
+    public static String judge(String cp, String aid, Action.Op op,
+			       Action.Source src, long dfid) {
 	return cp + "/JudgmentServlet?"+BaseArxivServlet.ID +"=" + aid +
-	    "&" +BaseArxivServlet.ACTION+ "=" + op;
+	    "&" +BaseArxivServlet.ACTION+ "=" + op + 
+	    ResultsBase.packSrcInfo(src,dfid);
     }
 
-    /** This are bit flags from which the "flags" parameter of
+    /** The following are bit flags from which the "flags" parameter of
 	judgmentBarHTML() may be composed. */
     /** If the bit is set, create the "add to my folder" button */
     public static final int NEED_FOLDER=1, 
@@ -118,17 +126,23 @@ public class RatingButton //extends HTML
 	FOLD_JB=4;
 
     /** Generates the HTML inserted into various pages where articles
-	are listed. Includes the enclosing DIV element (DIV ...  /DIV).
+	are listed. (E.g. the search results list in search.jsp, or
+	the suggestion list in index.jsp) This HTML code includes the
+	enclosing DIV element (DIV ...  /DIV), with various rating buttons
+	etc. inside it.
 
+	<p>
 	Note that the "A" elements contain no "HREF" attribute, not even
 	one with the "#" value. This is in order to prevent the page from
 	scrolling needlessly when the user clicks on a link.
 
+	@param cp The context path for this application.
 	@param flags Controls the appearance of the button set. E.g.  NEED_FOLDER | NEED_HIDE
      */
     static public String judgmentBarHTML(String cp, ArticleEntry e,
 					 RatingButton [] buttons,
-					 int flags) {
+					 int flags,
+					 Action.Source src, long dfid) {
 	final String imgDir= cp + "/_technical/images/";
 	String aid = e.id;
 	boolean willRate=false;
@@ -138,7 +152,7 @@ public class RatingButton //extends HTML
 	if ((flags & NEED_FOLDER)!=0) {
 	    String sn = "folder" + e.i;
 	    String imgPath = imgDir + "folder_page.png";
-	    String js = "$.get('" + judge(cp,aid, Action.Op.COPY_TO_MY_FOLDER)+ "', " +
+	    String js = "$.get('" + judge(cp,aid, Action.Op.COPY_TO_MY_FOLDER,src,dfid)+ "', " +
 		"function(data) { flipCheckedOn('#"+sn+"')})";
 	    String title="Copy this document to your personal folder";
 	    s += twoSpans(sn, e.isInFolder,
@@ -173,17 +187,17 @@ public class RatingButton //extends HTML
 		RatingButton b = buttons[j];
 		boolean checked= (e.latestRating==b.op);
 		someChecked = (someChecked || checked);
-		String src= imgDir + b.imgSrc;
+		String imgSrc= imgDir + b.imgSrc;
 		String text="&nbsp;" + nbsp(b.text);
 		
-		String js = "$.get('" + judge(cp,aid,b.op) + "', ratingEntered("+e.i + "," + j + ","+buttons.length+"))";
+		String js = "$.get('" + judge(cp,aid,b.op,src,dfid) + "', ratingEntered("+e.i + "," + j + ","+buttons.length+"))";
 		
 		String q=twoSpans("ratings" +e.i + "_" + j, 
 				  checked,
-				  img( src ) + strong(text),
+				  img( imgSrc ) + strong(text),
 				  "<a " + att("title", b.descr) +
 				  att("onclick", js) + ">" +
-				  img(src, b.descr) + text + "</a>");
+				  img(imgSrc, b.descr) + text + "</a>");
 		q += "&nbsp;&nbsp;";
 		spanBody += q;
 	    }
@@ -193,7 +207,8 @@ public class RatingButton //extends HTML
 
        	if ((flags & NEED_HIDE)!=0) {
 
-	    String js="$.get('"+judge(cp,aid,Action.Op.DONT_SHOW_AGAIN)+"', " + 
+	    String js="$.get('"+
+		judge(cp,aid,Action.Op.DONT_SHOW_AGAIN,src,dfid)+"', " + 
 	    "function(data) { $('#result"+e.i+"').hide();} )";
 	    String title="Permanently remove this document from the search results";
 	    s += "<a " + att("class", "remove") + att("id", "remove"+e.i) +

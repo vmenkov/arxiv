@@ -15,7 +15,9 @@ import javax.persistence.*;
 import edu.rutgers.axs.sql.*;
 
 
- /** Records the user's choice, 
+ /** Mostly, simply redirects to FilterServlet. It used to records the
+     user's action before doing the redirect, but now even that is not done,
+     as FilterServlet does the recording on its own.
  */
 public class ArticleServlet extends BaseArxivServlet {
   
@@ -56,13 +58,20 @@ public class ArticleServlet extends BaseArxivServlet {
 	    }
 	    */
 
+	    Action.Source src = (Action.Source)Tools.getEnum(request, Action.Source.class,
+							     ResultsBase.SRC, Action.Source.UNKNOWN);	 
+	    long dataFileId =  Tools.getLong(request, ResultsBase.DF, 0);
 
 	    //String base = ARXIV_BASE;
 	    String base =   getContextPath() +  FilterServlet.FS;
-	    String url = (op==Action.Op.VIEW_ABSTRACT) ?
-		base + "/abs/" + id :
-		base + "/format/" + id;
+	    String url = base +
+		FilterServlet.packActionSource( src,dataFileId ) +
+		(op==Action.Op.VIEW_ABSTRACT ?  "/abs/" : "/format/" ) + id;
 	    
+	    // sendRedirect() sends a temporary redirect response to
+	    // the client (code 302). Then the browser will send
+	    // a request to the indicated FilterServlet URL.
+
 	    String eurl = response.encodeRedirectURL(url);
 	    response.sendRedirect(eurl);
 
@@ -78,8 +87,10 @@ public class ArticleServlet extends BaseArxivServlet {
     }
 
      /** Returns a URL for this servlet */
-    static String mkUrl(String cp, String id, Action.Op op) {
-	return cp + "/ArticleServlet?" +  ID +"="+id + "&"+ ACTION+ "="+op;
+    static String mkUrl(String cp, String id, Action.Op op, 
+			Action.Source src, long dfid) {
+	return cp + "/ArticleServlet?" +  ID +"="+id + "&"+ ACTION+ "="+op +
+	    ResultsBase.packSrcInfo(src,dfid);
     }
 
 }

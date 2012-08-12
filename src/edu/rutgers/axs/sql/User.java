@@ -478,6 +478,13 @@ import edu.rutgers.axs.web.Tools;
         return r;
     }
 
+    public Action addAction(String p, Action.Op op, ActionSource a  ) {
+	Action r = addAction(p, op);
+	r.setActionSource(a);
+	return r;
+    }
+
+
 
     /** User's search queries */
     @OneToMany(cascade=CascadeType.ALL)

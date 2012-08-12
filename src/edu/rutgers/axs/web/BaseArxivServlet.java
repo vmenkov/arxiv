@@ -48,12 +48,13 @@ public class BaseArxivServlet extends HttpServlet {
 	//cp= context.getContextPath(); 
     }
 
-    /** Every child servlet must call this from service(). This is a cludge,
-	set up due to the absence of ServletContext.getContextPath()
-	in early versions of the Servlet API.
+    /** Every child servlet must call reinit() from its service()
+	method. This is a cludge, set up due to the absence of
+	ServletContext.getContextPath() in early versions of the
+	Servlet API.
      */
     synchronized void reinit(HttpServletRequest request) {
-	    cp=  request.getContextPath();	
+	cp=  request.getContextPath();	
     }
 
     String getContextPath() { return cp; }

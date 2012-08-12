@@ -109,6 +109,64 @@ import java.lang.reflect.*;
     public Op getOp() { return op; }
     public void setOp(Op _op) { op = _op; }
 
+    /** On Thorsten's request (as discussed in June-July 2012) we record
+	the general context wherein the user effected a particular action.
+    */
+    public static enum Source {
+	UNKNOWN,
+	/** Main page: suggestion list produced by Thorsten's Algorithm 2;
+	    or a "view abstract" page reached from the above.	    
+	 */
+	MAIN_SL,
+	    /** Main page: suggestion list produced by the
+		"team-draft" merge of the list from Thorsten's
+		Algorithm 2, and the one from a simple user cat
+		search; or a "view abstract" page reached from the
+		above.
+	    */
+	    MAIN_MIX,
+	    /** The search results list produced by My.ArXiv's own
+	     search tool; or a "view abstract" page reached from the
+	     above. */
+	    SEARCH,
+	    /** User's own personal folderl; or a "view abstract" page reached from the
+	     above. */
+	    FOLDER,
+	    /** Some kind of page (probably, "view abstract") reached as
+		a result of the user's own free browsing via arxiv.org,
+		served via My.ArXiv.org/arxiv/FilterServlet
+	     */
+	    FILTER;
+    };
+
+
+    /** The type of "experimental day" during which the action occurred */
+    @Column(nullable=true,length=8) @Enumerated(EnumType.STRING) 
+	@Display(editable=false, order=5.2) 
+    private Source src;
+    
+    public Source getSrc() { return src; }
+    public void setSrc(Source x) { src = x; }
+
+    /** Optional link to the DataFile which contains the (original,
+	Algo-2-generated) suggestion list from whose context the user
+	effected this action. This field is only applicable to actions
+	whose source is Source.MAIN_SL or Source.MAIN_MIX. Even then,
+	it may not be set if it is the very first suggestion list
+	presentation done by the system for this user, and the SL is
+	generated on the fly (because it is know to be identical to the 
+	user cat search results).
+     */
+    @Column(nullable=true) 	@Display(editable=false, order=5.3)  @Basic
+	private long dataFileId;
+    public void setDataFileId(long val) {     dataFileId    = val;    }
+    public long getDataFileId() {        return  dataFileId;    }
+
+    public void setActionSource(ActionSource a) {
+	setSrc(a.src);
+	setDataFileId(a.dataFileId);
+    }
+
     /** The type of "experimental day" during which the action occurred */
     @Column(nullable=true,length=6) @Enumerated(EnumType.STRING) 
 	@Display(editable=false, order=5) 
@@ -116,6 +174,7 @@ import java.lang.reflect.*;
     
     public User.Day getDay() { return day; }
     void setDay(User.Day x) { day = x; }
+
 
 
 

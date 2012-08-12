@@ -90,5 +90,4 @@ public class PersonalResultsBase extends ResultsBase {
 	return "<a href=\"" + viewSuggestionsLink(file)+ "\">"+file+"</a>";
     }
     
-
 }

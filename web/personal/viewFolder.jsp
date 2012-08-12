@@ -44,14 +44,13 @@
 	Action a =  main.list.elementAt(i);
 	ArticleEntry e = main.entries.elementAt(i);
 %>
-	<!-- %= Reflect.htmlRow(a, true) % -->
 	<tr id="result<%=e.i%>">
 	<td><%=(i+1)%>
 	<td><%=a.getTime()%> <br>
 
 	<a id="remove<%=e.i%>"
 href="#" title="Remove from the folder"
-onclick="$.get('<%=RatingButton.judge("..", e.id, Action.Op.REMOVE_FROM_MY_FOLDER)%>', 
+onclick="$.get('<%=RatingButton.judge("..", e.id, Action.Op.REMOVE_FROM_MY_FOLDER, Action.Source.FOLDER, 0)%>', 
 function(data) { $('#result<%=e.i%>').hide(100);} )"
 ><img src="../_technical/images/bin.png" 
 longdesc="Remove this document from your personal folder"

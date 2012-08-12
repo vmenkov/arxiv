@@ -19,7 +19,7 @@ public class Version {
     public static String getInfo() { return version + "("+date+")"; }
     
     
-    /** Compares two version number (described as strings). 
+    /** Compares two version numbers (described as strings). 
 	@return a negative number if the first argument is smaller, a positive if the second is smaller; 0 if they are the same.
      */
     static public int compare(String v1, String v2) 

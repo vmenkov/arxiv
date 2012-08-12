@@ -31,11 +31,69 @@ public class FilterServlet extends  BaseArxivServlet  {
 	super.init(config);
     }
 
+    static private String myPrefix = "/my.";
+
+    /** Generating the string that needs to be inserted into the
+	beginning of PathInfo when ArticleServlet redirects to 
+	FilterServlet
+     */
+    static String packActionSource(Action.Source src, long dfid) {
+	String q="";
+	if (src == null || src == Action.Source.UNKNOWN) return q;
+	q = myPrefix + ResultsBase.SRC + ":" + src;
+	if (dfid>0) {
+	    q +=  myPrefix + ResultsBase.DF + ":" + dfid;
+	}
+	return q;	
+    }
+
+    static private Pattern patSrc = 
+	Pattern.compile( Pattern.quote( myPrefix + ResultsBase.SRC + ":" ) + "([A-Z_0-9]+)"),
+	patDf =
+	Pattern.compile( Pattern.quote( myPrefix + ResultsBase.DF + ":" ) + "([0-9]+)");
+
+    /** Checks if a special text, such as '/my.src:MAIN_SL/my.df:128',
+	has been prepended to the PathInfo, to indicate that 
+
+	@param asrc Primarily an output parameter: modified based on what we've found
+     */
+    private String extractActionSrcInfo(String pi, ActionSource asrc) {
+	Matcher m = patSrc.matcher(pi);
+
+	//	Logging.info("FS: Matching: pi=" + pi + "\npat=" + patSrc +
+	// "\nlookingAt=" + m.lookingAt());
+
+
+	if (!m.lookingAt() || m.start()!=0) return pi;
+	asrc.src = (Action.Source)Enum.valueOf(Action.Source.class, m.group(1));
+	pi = pi.substring(m.end());
+
+	m = patDf.matcher(pi);
+	if (!m.lookingAt() || m.start()!=0) return pi;
+	asrc.dataFileId = Long.parseLong(m.group(1));
+	return pi.substring(m.end());
+    }
+
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
 	reinit(request);
 
+	/** For handling action source, as applicable. The default source
+	    for FilterServlet is FILTER, but it is overridden via the HTTP
+	    request if we've come e.g. from a suggestion list of some
+	    kind */
+	
+	ActionSource asrc = new ActionSource(Action.Source.FILTER,0);
+
 	String pi=request.getPathInfo();
+
+	//Logging.info("FS: trying extractActionSrcInfo");
+	pi =  extractActionSrcInfo(pi,asrc);
+
+	// This won't do, as a different algorithm is used
+	//src = (Action.Source)Tools.getEnum(request, Action.Source.class,
+	//					   ResultsBase.SRC, src);
+	//dataFileId =  Tools.getLong(request, ResultsBase.DF, 0);
 
 	EntityManager em = null;
 	try {
@@ -53,8 +111,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 		article-wise operations */
 	    //Action.Op op = Action.Op.NONE;
 
-	    // A (partial) entry for the article. Only set in article-wise operations, and only when there is 
-	    // a real user logged in. 
+	    // A (partial) entry for the article. Only set in
+	    // article-wise operations, and only when there is a real
+	    // user logged in.
 	    ArticleEntry  skeletonAE=null;
 
     
@@ -70,8 +129,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 		em.getTransaction().begin();		
 		User u = User.findByName(em, user);
 		if (u!=null) {
-		    Logging.info("pi="+pi+", recording as " + actionable);
-		    u.addAction(actionable.aid, actionable.op);
+		    Logging.info("FS: pi="+pi+", recording as " + actionable);
+		    Action a = u.addAction(actionable.aid, actionable.op, asrc);
+
 		    skeletonAE = ArticleEntry.getDummyArticleEntry(actionable.aid, 1);
 		    Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
 		    entries.add(skeletonAE);
@@ -105,7 +165,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		response.sendRedirect(eurl);
 	    } else {
 		// get the page from the arxiv.org server, modify, and serve
-		pullPage(request, response, skeletonAE);
+		pullPage(request, response, pi, asrc, skeletonAE);
 	    }
 
 
@@ -172,6 +232,9 @@ public class FilterServlet extends  BaseArxivServlet  {
     /** Retrieves the page from the arxiv.org server, modifies it as
 	needed, and serves to our user.
 
+	@param pi PathInfo, extracted from the request, and possibly further
+	modified by the caller.
+
        @param ae In article-wise pages, when a user is logged in, this
        should be the information about the currently viewed article.
        Otherwise, this must be null.
@@ -179,9 +242,9 @@ public class FilterServlet extends  BaseArxivServlet  {
        @throws WebException If we have a unique meaningful message
 	and don't need to print a stack trace etc to the end user.
      */
-    private void pullPage(HttpServletRequest request, HttpServletResponse response, ArticleEntry ae) 
+    private void pullPage(HttpServletRequest request, HttpServletResponse response, String pi, ActionSource asrc, ArticleEntry ae) 
 	throws WebException, IOException, java.net.MalformedURLException {
-	String pi=request.getPathInfo();
+
 	String qs=request.getQueryString();
 	boolean lPost = request.getMethod().equals("POST");
  	if (pi==null)   throw new WebException(HttpURLConnection.HTTP_BAD_REQUEST, "No page specified");
@@ -227,7 +290,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	String gotResponseMsg = lURLConnection.getResponseMessage();
 
 	Logging.info("code = " + code +", msg=" + gotResponseMsg);
-	LineConverter conv = new LineConverter(request, ae);
+	LineConverter conv = new LineConverter(request, ae, asrc);
 
 	boolean willParse=false, willAddNote=false;
 	if (code == HttpURLConnection.HTTP_OK) {
@@ -472,16 +535,22 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	final ArticleEntry skeletonAE;
 
+	ActionSource asrc;
+
 	/**
 	   @param _ae In article-wise pages, when a user is logged in,
 	   this should be the information about the currently viewed article.
 	   Otherwise, this must be null.
 	 */
-	LineConverter(HttpServletRequest request, ArticleEntry _ae)  {
+	LineConverter(HttpServletRequest request, ArticleEntry _ae,
+		      ActionSource _asrc      )  {
 	    skeletonAE = _ae;
+	    asrc = _asrc;
+
 	    try {
 		SessionData sd =  SessionData.getSessionData(request);
 		user = sd.getRemoteUser(request);
+
 	    } catch(Exception ex) {}
 	}
 
@@ -624,7 +693,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    s += RatingButton.judgmentBarHTML
 			(cp, skeletonAE, 
 			 RatingButton.allRatingButtons,
-			 RatingButton.NEED_FOLDER);
+			 RatingButton.NEED_FOLDER, asrc.src, asrc.dataFileId);
 		    return s;
 		}
 	    }

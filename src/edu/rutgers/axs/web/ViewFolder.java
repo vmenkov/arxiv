@@ -80,7 +80,11 @@ public class ViewFolder extends ResultsBase {
 	}
     }
 
-    
+    /** Overrides the method in ResultsBase */
+    void customizeSrc() {
+	src = Action.Source.FOLDER;
+	dataFileId = 0;
+    }
 
 
 }

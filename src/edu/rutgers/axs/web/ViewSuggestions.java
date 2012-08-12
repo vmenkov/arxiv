@@ -23,10 +23,11 @@ public class ViewSuggestions extends PersonalResultsBase {
 
     public Task activeTask = null, queuedTask=null, newTask=null;
 
-    /** This flag is set by this module if it found no suitable data
-	file, but generated a suggestion list directly when processing
-	the HTTP request. This is done in our June 2012 experiment
-	when the user has no profile yet.
+    /** This flag is set by this module if it has found no suitable
+	data file, but generated a suggestion list directly when
+	processing the HTTP request. This is done in our June 2012
+	experiment for very recently created users, when the user has
+	no profile yet.
      */
     public boolean onTheFly = false;
 
@@ -229,9 +230,12 @@ public class ViewSuggestions extends PersonalResultsBase {
 	}
 	    	    
 	initList(df, startat, onTheFly);
+
     }
 
     private void initList(DataFile df, int startat, boolean onTheFly) throws Exception {
+	customizeSrc();
+
 	IndexReader reader=ArticleAnalyzer.getReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 	int M = 10; //page size
@@ -332,7 +336,21 @@ public class ViewSuggestions extends PersonalResultsBase {
     }
 
     /** Wrapper for the same method in ResultsBase */
-    public String resultsDivHTML(ArticleEntry e) {
-	return resultsDivHTML(e, isSelf);
+    public String resultsDivHTML(ArticleEntry e
+				 //,				 Article.Source src, long dfid
+				 ) {
+	return resultsDivHTML(e, isSelf);//, src, dfid);
     }
+
+    /** Overrides the method in ResultsBase */
+    void customizeSrc() {
+	src = teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL;
+	if (df != null) {
+	    dataFileId = df.getId();
+	} else {
+	    dataFileId = 0;
+	}
+    }
+
+
 }
