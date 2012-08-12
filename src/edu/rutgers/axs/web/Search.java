@@ -41,6 +41,9 @@ public class Search extends ResultsBase {
     public Search(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	if (error) return;
+
+	customizeSrc();
+
 	EntityManager em = null;
 	try {
 	    query = request.getParameter(SIMPLE_SEARCH);
@@ -122,7 +125,9 @@ public class Search extends ResultsBase {
 		if (u!=null) {
 		    em.getTransaction().begin();
 		    u = User.findByName(em, user); // re-read, just in case   
-		    u.addQuery(query, sr.nextstart, sr.scoreDocs.length);
+		    EnteredQuery eq=u.addQuery(query, sr.nextstart, sr.scoreDocs.length);
+		    // FIXME: ideally, we may want to store a link to
+		    // EQ as part of the ActionSource info of recorded actions
 		    em.persist(u);
 		    em.getTransaction().commit(); 
 		}
@@ -138,5 +143,13 @@ public class Search extends ResultsBase {
 	    ResultsBase.ensureClosed( em, false);
 	}
     }
+
+    /** Overrides the method in ResultsBase */
+    void customizeSrc() {
+	src = Action.Source.SEARCH;
+	dataFileId = 0;
+    }
+
+
 
 }
