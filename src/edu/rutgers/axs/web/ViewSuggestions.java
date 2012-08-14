@@ -336,20 +336,14 @@ public class ViewSuggestions extends PersonalResultsBase {
     }
 
     /** Wrapper for the same method in ResultsBase */
-    public String resultsDivHTML(ArticleEntry e
-				 //,				 Article.Source src, long dfid
-				 ) {
-	return resultsDivHTML(e, isSelf);//, src, dfid);
+    public String resultsDivHTML(ArticleEntry e) {
+	return resultsDivHTML(e, isSelf);
     }
 
     /** Overrides the method in ResultsBase */
     void customizeSrc() {
-	src = teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL;
-	if (df != null) {
-	    dataFileId = df.getId();
-	} else {
-	    dataFileId = 0;
-	}
+	asrc= new ActionSource(teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL,
+				df != null ? df.getId() : 0);
     }
 
 

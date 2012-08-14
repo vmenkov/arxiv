@@ -102,7 +102,7 @@ public class Tools {
       the HTTP request, also looks in the attributes (which can be used
       by SurveyLogicServlet in case of internal redirect)
      */
-    static long getLong(HttpServletRequest request, String name, long defVal) {
+    static public long getLong(HttpServletRequest request, String name, long defVal) {
 	String s = request.getParameter(name);
 	if (s==null) {
 	    Long a = (Long)request.getAttribute(name);
@@ -116,7 +116,7 @@ public class Tools {
     }
 
 
-    static boolean getBoolean(HttpServletRequest request, String name, boolean defVal) {
+    static public boolean getBoolean(HttpServletRequest request, String name, boolean defVal) {
 	String s = request.getParameter(name);
 	if (s==null) {
 	    Boolean a = (Boolean)request.getAttribute(name);
@@ -129,7 +129,7 @@ public class Tools {
 	}
     }
 
-    static Enum getEnum(HttpServletRequest request, Class retType, String name, Enum defVal) {
+    static public Enum getEnum(HttpServletRequest request, Class retType, String name, Enum defVal) {
 	String s = request.getParameter(name);
 	if (s==null) {
 	    return defVal;
@@ -142,7 +142,7 @@ public class Tools {
     }
 
 
-    static String getString(HttpServletRequest request, String name, String defVal) {
+    static public String getString(HttpServletRequest request, String name, String defVal) {
 	String s = request.getParameter(name);
 	return  (s==null)? defVal : s;
     }

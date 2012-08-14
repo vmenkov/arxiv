@@ -57,12 +57,8 @@ public class JudgmentServlet extends BaseArxivServlet {
 		
 		Action a = u.addAction(id, op);
 
-		Action.Source src = (Action.Source)Tools.getEnum(request, Action.Source.class,
-								 ResultsBase.SRC, Action.Source.UNKNOWN);	 
-
-		a.setSrc(src);
-		long dataFileId =  Tools.getLong(request, ResultsBase.DF, 0);
-		a.setDataFileId(dataFileId );
+		ActionSource asrc = new ActionSource(request);
+		a.setActionSource(asrc);
 
 		em.persist(u);
 		em.getTransaction().commit(); 

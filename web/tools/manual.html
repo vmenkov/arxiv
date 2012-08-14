@@ -1,29 +1,19 @@
-<%@ page import="java.io.*" %>
-<%@ page import="edu.rutgers.axs.web.*" %>
-<%@ page import="edu.rutgers.axs.sql.*" %>
-<%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
-<% 
-   ResultsBase main=new ResultsBase(request,response);
-%>
 <html>
 <head>
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
-<title>My.arXiv: database query</title>
+<title>My.arXiv: database query guide</title>
 </head>
 <body>
 
-<%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
-<%   } else {      %>
+<h1>My.arXiv database query guide</h1>
 
-<h1>My.arXiv database query form</h1>
+<p>This document discusses the data stored in My.ArXiv's database, and ways of accessing them with JPQL and SQL queries, using the <a href="queryForm.jsp">JPQL and SQL query form</a>.
 
 <h2>Data description</h2>
 
-<p>This form allows you to send a free-form <a href="http://download.oracle.com/docs/cd/E11035_01/kodo41/full/html/ejb3_overview_query.html">JPQL</a> or SQL query to our database. 
+<p>The  <a href="queryForm.jsp">query form</a> allows you to send a free-form <a href="http://download.oracle.com/docs/cd/E11035_01/kodo41/full/html/ejb3_overview_query.html">JPQL</a> or SQL query to our database. 
 </p>
 
-<p>Please refer to the <a href="manual.html">User Guide</a> for the
-high-level overview of the tables existing in the database, and more queries that can be used to access data.</p>
 
 <h2>JPQL vs. SQL</h2>
 
@@ -35,16 +25,24 @@ the Respondent being called), SQL "talks" in terms of the actual
 stored table column (here, respondent_id), while JPQL "talks" in terms
 of objects being references.<p>
 
-</p>
-To help you get started, below are
-equivalent sample queries in the two langauges. Note that table names are case-sensitive. See <a href="manual.html">the manual</a> for more examples and interpretation.</p>
 
 <p>Hint: you can use the first 3 JPQL queries from the table below to see what the names of all fields in each table are.</p>
 
 <p>
 <table border=1>
 <tr><th>JPQL <th>SQL <th>comments
+<tr><th colspan=3>The <tt>arxiv_users</tt> table (<tt>User</tt> entries)</th></tr>
+<tr><td colspan=3>Each <tt>User</tt> object describes one registered My.ArXiv user. The information about a user is stored in a row of the <tt>arxiv_users</tt> table. (Usually, the names of SQL tables are the same as those of OpenJPA objects, so that you can use the same name in SQL and JPQL queries. However, in this case, due to historical reasons, the two names are different.
+</td></tr>
 <tr><td>select x from User x <td> select x.* from arxiv_users x
+<td>Show all User entries.
+
+<tr><th colspan=3>The <tt>Action</tt> table (<tt>Action</tt> entries)</th></tr>
+<tr><td colspan=3>Each <tt>Action</tt> entry contains information about one recordable user action. Each action is performed by a particular user, and has a particular ArXiv article as its object. Action types include adding an article to the user's folder (sort of a bookmark list), or removing it from the folder; viewing the article's abstract page or PDF page; explicitly rating an article as "new and useful", "useless", etc; marking the article as "not to be shown to me again"; etc.
+
+<br>For each action we record the "action source", which contains information about the "context" in which the action was effected.
+
+</td></tr>
 <tr><td>select x from Action x <td> select x.* from Action x
 <tr><td> -
     <td> select x.* from Action x where x.user_id=1 

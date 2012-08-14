@@ -47,7 +47,7 @@ public class ResultsBase {
 
 
     /** Special (optional) parameters for JudgmentServlet, Search, etc */
-    public final static String SRC = "src", DF = "df";
+    //public final static String SRC = "src", DF = "df";
 
 
     /** These two vars are here (and not e.g. in PersonalResultsBase)
@@ -55,8 +55,7 @@ public class ResultsBase {
 	invoked anonymously). Of course, the values are only set in some
 	situations.
     */
-    Action.Source src = Action.Source.UNKNOWN;	 
-    long dataFileId = 0;
+    public ActionSource asrc = new ActionSource(Action.Source.UNKNOWN,0);	 
 
     /** This is an empty method in this class, but it will be overridden
 	in some pages */
@@ -144,8 +143,8 @@ public class ResultsBase {
 	    }
 
 	    // for the benefit of e.g. Search or ViewSuggestions
-	    src = (Action.Source)getEnum(Action.Source.class, SRC, src);
-	    dataFileId =  getLong( DF, dataFileId);
+	    asrc = new ActionSource(request);
+
 	    // we call customizeSrc now, but some child classes may
 	    // call it again later, once they have set their own params
 	    customizeSrc(); 
@@ -250,13 +249,11 @@ public class ResultsBase {
 
 
     public  String urlAbstract( String id) {
-	return ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_ABSTRACT,
-				    src, dataFileId);
+	return ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_ABSTRACT, asrc);
     }
 
     public  String urlPDF( String id) {
-	return  ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_PDF,
-				    src, dataFileId);
+	return  ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_PDF,asrc);
     }
 
 
@@ -269,10 +266,7 @@ public class ResultsBase {
 	a single article in a list of articles (e.g., a single search
 	result or a single element of a suggestion list).
      */
-    public String resultsDivHTML(ArticleEntry e, boolean isSelf
-				 //,
-				 //Article.Source src, long dfid
-				 ) {
+    public String resultsDivHTML(ArticleEntry e, boolean isSelf ) {
 	String s = 
 	    "<div class=\"result\" id=\"result" + e.i + "\">\n" +
 	    "<div class=\"document\">\n" +
@@ -296,7 +290,7 @@ public class ResultsBase {
 	return RatingButton.judgmentBarHTML( cp, entry, 
 					     RatingButton.allRatingButtons,
 					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER, 
-					     src, dataFileId);
+					     asrc);
     } 
 
     /** Extracts information containing action source information from
@@ -304,15 +298,18 @@ public class ResultsBase {
 	added to the query string of the next servlet to be
 	called. This, of course, should only be used when the "next
 	servlet" inherits the action source of the caller servlet */
+    /*
     static String packSrcInfo( HttpServletRequest request) {
 	Action.Source src = (Action.Source)Tools.getEnum(request, Action.Source.class,
 							 SRC, Action.Source.UNKNOWN);	 
 	long dataFileId =  Tools.getLong(request, DF, 0);
 	return packSrcInfo( src, dataFileId);
     }
+    */
 
     /** Produces a component to be added to the query string, containing
 	action source information.*/
+    /*
     public static String packSrcInfo( Action.Source src, long dfid) {
 	String s="";	       
 	if (src==null || src==Action.Source.UNKNOWN) return s;
@@ -322,7 +319,7 @@ public class ResultsBase {
 	}
 	return s;
     }
-
+    */
 
 }
 

@@ -146,8 +146,7 @@ public class Search extends ResultsBase {
 
     /** Overrides the method in ResultsBase */
     void customizeSrc() {
-	src = Action.Source.SEARCH;
-	dataFileId = 0;
+	asrc = new ActionSource(Action.Source.SEARCH,0);
     }
 
 

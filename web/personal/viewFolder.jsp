@@ -39,7 +39,8 @@
 <th>Article
 </tr>
  	<!-- %= Reflect.htmlHeaderRow(Action.class, true) % -->
-<%	
+<%
+
 	for(int i=0; i<main.list.size(); i++) {
 	Action a =  main.list.elementAt(i);
 	ArticleEntry e = main.entries.elementAt(i);
@@ -50,7 +51,7 @@
 
 	<a id="remove<%=e.i%>"
 href="#" title="Remove from the folder"
-onclick="$.get('<%=RatingButton.judge("..", e.id, Action.Op.REMOVE_FROM_MY_FOLDER, Action.Source.FOLDER, 0)%>', 
+onclick="$.get('<%=RatingButton.judge("..", e.id, Action.Op.REMOVE_FROM_MY_FOLDER, main.asrc)%>', 
 function(data) { $('#result<%=e.i%>').hide(100);} )"
 ><img src="../_technical/images/bin.png" 
 longdesc="Remove this document from your personal folder"

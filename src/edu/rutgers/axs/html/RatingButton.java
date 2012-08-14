@@ -108,10 +108,10 @@ public class RatingButton //extends HTML
     /** The URL (relative to the CP) for recording a judgment (or
 	performing another user action) on this doc */
     public static String judge(String cp, String aid, Action.Op op,
-			       Action.Source src, long dfid) {
+			       ActionSource asrc) {
 	return cp + "/JudgmentServlet?"+BaseArxivServlet.ID +"=" + aid +
 	    "&" +BaseArxivServlet.ACTION+ "=" + op + 
-	    ResultsBase.packSrcInfo(src,dfid);
+	    asrc.toQueryString();
     }
 
     /** The following are bit flags from which the "flags" parameter of
@@ -141,8 +141,7 @@ public class RatingButton //extends HTML
      */
     static public String judgmentBarHTML(String cp, ArticleEntry e,
 					 RatingButton [] buttons,
-					 int flags,
-					 Action.Source src, long dfid) {
+					 int flags, ActionSource asrc) {
 	final String imgDir= cp + "/_technical/images/";
 	String aid = e.id;
 	boolean willRate=false;
@@ -152,7 +151,7 @@ public class RatingButton //extends HTML
 	if ((flags & NEED_FOLDER)!=0) {
 	    String sn = "folder" + e.i;
 	    String imgPath = imgDir + "folder_page.png";
-	    String js = "$.get('" + judge(cp,aid, Action.Op.COPY_TO_MY_FOLDER,src,dfid)+ "', " +
+	    String js = "$.get('" + judge(cp,aid, Action.Op.COPY_TO_MY_FOLDER,asrc)+ "', " +
 		"function(data) { flipCheckedOn('#"+sn+"')})";
 	    String title="Copy this document to your personal folder";
 	    s += twoSpans(sn, e.isInFolder,
@@ -190,7 +189,7 @@ public class RatingButton //extends HTML
 		String imgSrc= imgDir + b.imgSrc;
 		String text="&nbsp;" + nbsp(b.text);
 		
-		String js = "$.get('" + judge(cp,aid,b.op,src,dfid) + "', ratingEntered("+e.i + "," + j + ","+buttons.length+"))";
+		String js = "$.get('" + judge(cp,aid,b.op,asrc) + "', ratingEntered("+e.i + "," + j + ","+buttons.length+"))";
 		
 		String q=twoSpans("ratings" +e.i + "_" + j, 
 				  checked,
@@ -208,7 +207,7 @@ public class RatingButton //extends HTML
        	if ((flags & NEED_HIDE)!=0) {
 
 	    String js="$.get('"+
-		judge(cp,aid,Action.Op.DONT_SHOW_AGAIN,src,dfid)+"', " + 
+		judge(cp,aid,Action.Op.DONT_SHOW_AGAIN,asrc)+"', " + 
 	    "function(data) { $('#result"+e.i+"').hide();} )";
 	    String title="Permanently remove this document from the search results";
 	    s += "<a " + att("class", "remove") + att("id", "remove"+e.i) +

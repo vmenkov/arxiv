@@ -31,48 +31,6 @@ public class FilterServlet extends  BaseArxivServlet  {
 	super.init(config);
     }
 
-    static private String myPrefix = "/my.";
-
-    /** Generating the string that needs to be inserted into the
-	beginning of PathInfo when ArticleServlet redirects to 
-	FilterServlet
-     */
-    static String packActionSource(Action.Source src, long dfid) {
-	String q="";
-	if (src == null || src == Action.Source.UNKNOWN) return q;
-	q = myPrefix + ResultsBase.SRC + ":" + src;
-	if (dfid>0) {
-	    q +=  myPrefix + ResultsBase.DF + ":" + dfid;
-	}
-	return q;	
-    }
-
-    static private Pattern patSrc = 
-	Pattern.compile( Pattern.quote( myPrefix + ResultsBase.SRC + ":" ) + "([A-Z_0-9]+)"),
-	patDf =
-	Pattern.compile( Pattern.quote( myPrefix + ResultsBase.DF + ":" ) + "([0-9]+)");
-
-    /** Checks if a special text, such as '/my.src:MAIN_SL/my.df:128',
-	has been prepended to the PathInfo, to indicate that 
-
-	@param asrc Primarily an output parameter: modified based on what we've found
-     */
-    private String extractActionSrcInfo(String pi, ActionSource asrc) {
-	Matcher m = patSrc.matcher(pi);
-
-	//	Logging.info("FS: Matching: pi=" + pi + "\npat=" + patSrc +
-	// "\nlookingAt=" + m.lookingAt());
-
-
-	if (!m.lookingAt() || m.start()!=0) return pi;
-	asrc.src = (Action.Source)Enum.valueOf(Action.Source.class, m.group(1));
-	pi = pi.substring(m.end());
-
-	m = patDf.matcher(pi);
-	if (!m.lookingAt() || m.start()!=0) return pi;
-	asrc.dataFileId = Long.parseLong(m.group(1));
-	return pi.substring(m.end());
-    }
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
@@ -87,13 +45,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	String pi=request.getPathInfo();
 
-	//Logging.info("FS: trying extractActionSrcInfo");
-	pi =  extractActionSrcInfo(pi,asrc);
-
-	// This won't do, as a different algorithm is used
-	//src = (Action.Source)Tools.getEnum(request, Action.Source.class,
-	//					   ResultsBase.SRC, src);
-	//dataFileId =  Tools.getLong(request, ResultsBase.DF, 0);
+	pi = asrc.extractFromFilterServletPathInfo(pi);
 
 	EntityManager em = null;
 	try {
@@ -123,6 +75,12 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	    Actionable actionable = new Actionable(pi);
 	    
+	    // should (some) pages linked from here inherit the action source?
+	    asrc.filterServletMustInheritSrc =
+		(asrc.src != Action.Source.FILTER &&
+		 asrc.src != Action.Source.UNKNOWN) &&
+		actionable.isActionable();
+
 	    // FIXME: need to record the viewing act for all other arxiv.org pages as well
 	    if (user!=null &&  actionable.isActionable())  {
 		em = sd.getEM();
@@ -210,7 +168,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		aid = idv;
 	    }
 	    
-	    // List of formats as of Simeon Warner, 2012-01-04
+	    // List of formats as per Simeon Warner, 2012-01-04
 	    if (prefix.equals("abs")) op = Action.Op.VIEW_ABSTRACT;
 	    else if (prefix.equals("format")) op=Action.Op.VIEW_FORMATS;
 	    else if (prefix.equals("pdf")) op= Action.Op.VIEW_PDF;
@@ -589,7 +547,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 		}
 	    }
 
-
+	    String effectiveFs = fs + 
+		(asrc.filterServletMustInheritSrc? asrc.toFilterServletString() : "");
+				  
 
 	    if (link.equals("/favicon.ico")) {
 		return cp+"/filter.ico";
@@ -598,7 +558,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		// absolute link with a host name
 		if (mayRewrite && link.startsWith( ARXIV_BASE )) {
 		    // abs link to a rewriteable target on arxiv.org
-		    return link.replace( ARXIV_BASE , fs);
+		    return link.replace( ARXIV_BASE , effectiveFs);
 		} else {
 		    // abs link to eslewhere, or to a non-rewriteable
 		    // file on arxiv.org; no change
@@ -607,14 +567,22 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    } else if (link.startsWith("/")) {
 		// absolute URL on the same host
 		if (mayRewrite) {
-		    return fs + link;
+		    return effectiveFs + link;
 		} else {
 		    return ARXIV_BASE + link;
 		}
 	    } else {
 		// relative URL
 		// (converting to ARXIV_BASE in the !mayRewrite case would
-		// have been useful, but too much trouble)
+		// have been useful, but too much trouble). 
+		
+		// FIXME: Note that using relative links also causes
+		// the automatic (implicit) inheritance of the "action
+		// source", when it's supplied. This may perhaps
+		// become inappropriate in the case of a long browsing
+		// session... but it apparently is not a real issue,
+		// as arxiv.org does not seem to actually have
+		// relative URLs
 		return link;
 	    }
 	}
@@ -625,9 +593,13 @@ public class FilterServlet extends  BaseArxivServlet  {
 	Pattern pHref = Pattern.compile("(href|action|src)=\"(.*?)\"");
 
 	//if (m.matches()) {
-    //	String charsetName = charsetName=m.group(1);
+	//	String charsetName = charsetName=m.group(1);
 
-	/**
+	/** Processes one line of the original HTML file, modifying
+	    it so that it can be used in the HTML code served by our
+	    server's FilterServlet.
+
+	    <p>
 //<li><a href="/arxiv/FilterServlet/pdf/0806.4449v1" accesskey="f">PDF</a></li>
 
 //<li><a href="/pdf/q-bio/0611055v1" accesskey="f">PDF only</a></li>
@@ -693,7 +665,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    s += RatingButton.judgmentBarHTML
 			(cp, skeletonAE, 
 			 RatingButton.allRatingButtons,
-			 RatingButton.NEED_FOLDER, asrc.src, asrc.dataFileId);
+			 RatingButton.NEED_FOLDER, asrc);
 		    return s;
 		}
 	    }

@@ -58,14 +58,12 @@ public class ArticleServlet extends BaseArxivServlet {
 	    }
 	    */
 
-	    Action.Source src = (Action.Source)Tools.getEnum(request, Action.Source.class,
-							     ResultsBase.SRC, Action.Source.UNKNOWN);	 
-	    long dataFileId =  Tools.getLong(request, ResultsBase.DF, 0);
+	    ActionSource asrc = new ActionSource(request);
 
 	    //String base = ARXIV_BASE;
 	    String base =   getContextPath() +  FilterServlet.FS;
 	    String url = base +
-		FilterServlet.packActionSource( src,dataFileId ) +
+		asrc.toFilterServletString() +
 		(op==Action.Op.VIEW_ABSTRACT ?  "/abs/" : "/format/" ) + id;
 	    
 	    // sendRedirect() sends a temporary redirect response to
@@ -88,9 +86,9 @@ public class ArticleServlet extends BaseArxivServlet {
 
      /** Returns a URL for this servlet */
     static String mkUrl(String cp, String id, Action.Op op, 
-			Action.Source src, long dfid) {
+			ActionSource asrc) {
 	return cp + "/ArticleServlet?" +  ID +"="+id + "&"+ ACTION+ "="+op +
-	    ResultsBase.packSrcInfo(src,dfid);
+	    asrc.toQueryString();
     }
 
 }
