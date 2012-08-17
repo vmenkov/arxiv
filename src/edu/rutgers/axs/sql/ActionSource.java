@@ -6,24 +6,21 @@ import java.util.regex.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-//import java.text.*;
 //import javax.persistence.*;
 
-//import java.lang.reflect.*;
 import edu.rutgers.axs.web.Tools;
 import edu.rutgers.axs.web.ResultsBase;
 
 public class ActionSource {
 
-
-/** Special (optional) parameters for JudgmentServlet, Search, etc */
-    public final static String SRC = "src", DF = "df";
+    /** Special (optional) parameters for JudgmentServlet, Search, etc */
+    private final static String SRC = "src", PL = "pl";
 
     public Action.Source src=Action.Source.UNKNOWN;
-    public long dataFileId=0;
-    public ActionSource( Action.Source _src, long _dataFileId) {
+    public long presentedListId=0;
+    public ActionSource( Action.Source _src, long _presentedListId) {
 	src = _src;
-	dataFileId= _dataFileId;
+	presentedListId= _presentedListId;
     }
 
     /** Used for inserting ActionSource info into a FilterServlet url */
@@ -37,8 +34,8 @@ public class ActionSource {
 	String q="";
 	if (src == null || src == Action.Source.UNKNOWN) return q;
 	q = myPrefix + SRC + ":" + src;
-	if (dataFileId>0) {
-	    q +=  myPrefix + DF + ":" + dataFileId;
+	if (presentedListId>0) {
+	    q +=  myPrefix + PL + ":" + presentedListId;
 	}
 	return q;	
     }
@@ -46,7 +43,7 @@ public class ActionSource {
     static private Pattern patSrc = 
 	Pattern.compile( Pattern.quote(myPrefix + SRC + ":" ) + "([A-Z_0-9]+)"),
 	patDf =
-	Pattern.compile( Pattern.quote(myPrefix + DF + ":" ) + "([0-9]+)");
+	Pattern.compile( Pattern.quote(myPrefix + PL + ":" ) + "([0-9]+)");
 
     /** Checks if a special text, such as '/my.src:MAIN_SL/my.df:128',
 	has been prepended to the PathInfo, to indicate that 
@@ -66,14 +63,14 @@ public class ActionSource {
 
 	m = patDf.matcher(pi);
 	if (!m.lookingAt() || m.start()!=0) return pi;
-	dataFileId = Long.parseLong(m.group(1));
+	presentedListId = Long.parseLong(m.group(1));
 	return pi.substring(m.end());
     }
 
     public ActionSource( HttpServletRequest request) {
 	src = (Action.Source)Tools.getEnum(request, Action.Source.class,
 					  SRC, Action.Source.UNKNOWN);	 
-	dataFileId =  Tools.getLong(request, DF, 0);
+	presentedListId =  Tools.getLong(request, PL, 0);
     }
 
     /** Produces a component to be added to the query string, containing
@@ -82,8 +79,8 @@ public class ActionSource {
 	String s="";	       
 	if (src==null || src==Action.Source.UNKNOWN) return s;
 	s += "&"+SRC +"=" + src;
-	if (dataFileId >0) {
-	    s += "&"+DF +"=" + dataFileId;
+	if (presentedListId >0) {
+	    s += "&"+PL +"=" + presentedListId;
 	}
 	return s;
     }

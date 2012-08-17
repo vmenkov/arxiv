@@ -6,6 +6,7 @@
 <html>
 <head>
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
+<link rel="stylesheet" type="text/css" href="_technical/styles/styles_all.css" />
 <title>My.arXiv data research main page</title>
 </head>
 <body>
@@ -34,6 +35,11 @@
 <li><A href="../admin/manageUsers.jsp">Manage users</a>
 </ul>
 
+
+<h2>Algorithms center</h2>
+<ul>
+<li><A href="internals.jsp">My.ArXiv algortithm internals</a>: view all kinds of user profiles and suggestion lists used now, or potentially, by My.ArXiv. These are various things that we mostly don't expose to the end user.
+</ul>
 
 <h2>Data Research Center</h2>
 <ul>

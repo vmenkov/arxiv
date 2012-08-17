@@ -140,7 +140,7 @@ import java.lang.reflect.*;
     };
 
 
-    /** The type of "experimental day" during which the action occurred */
+    /** The type of experimental context wherein the action occurred */
     @Column(nullable=true,length=8) @Enumerated(EnumType.STRING) 
 	@Display(editable=false, order=5.2) 
     private Source src;
@@ -158,13 +158,13 @@ import java.lang.reflect.*;
 	user cat search results).
      */
     @Column(nullable=true) 	@Display(editable=false, order=5.3)  @Basic
-	private long dataFileId;
-    public void setDataFileId(long val) {     dataFileId    = val;    }
-    public long getDataFileId() {        return  dataFileId;    }
+	private long presentedListId;
+    public void setPresentedListId(long val) {     presentedListId    = val;    }
+    public long getPresentedListId() {        return  presentedListId;    }
 
     public void setActionSource(ActionSource a) {
 	setSrc(a.src);
-	setDataFileId(a.dataFileId);
+	setPresentedListId(a.presentedListId);
     }
 
     /** The type of "experimental day" during which the action occurred */

@@ -187,7 +187,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    actorLastActionId= actor.getLastActionId();
 
 	    if (df!=null) {
-		initList(df, startat, false);
+		initList(df, startat, false, em);
 	    }
 
 	}  catch (Exception _e) {
@@ -229,12 +229,14 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    days = df.getDays();
 	}
 	    	    
-	initList(df, startat, onTheFly);
-
+	initList(df, startat, onTheFly, em);
     }
 
-    private void initList(DataFile df, int startat, boolean onTheFly) throws Exception {
-	customizeSrc();
+    /**
+       @param em Just so that we could save the list
+     */
+    private void initList(DataFile df, int startat, boolean onTheFly, EntityManager em) throws Exception {
+	//customizeSrc();
 
 	IndexReader reader=ArticleAnalyzer.getReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -269,6 +271,14 @@ public class ViewSuggestions extends PersonalResultsBase {
 	}
 	searcher.close();
 	reader.close();
+
+	// Save the presented (section of the) suggestion list in the
+	// database, and set ActionSource appropriately (to be
+	// embedded in the HTML page)
+ 	Action.Source srcType = teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL;
+	PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName,
+						   df, null);
+	asrc= new ActionSource(srcType, plist.getId());
     }
     
 
@@ -341,10 +351,10 @@ public class ViewSuggestions extends PersonalResultsBase {
     }
 
     /** Overrides the method in ResultsBase */
-    void customizeSrc() {
-	asrc= new ActionSource(teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL,
-				df != null ? df.getId() : 0);
-    }
+    //void customizeSrc() {
+    //	asrc= new ActionSource(teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL,
+    //				df != null ? df.getId() : 0);
+    //}
 
 
 }

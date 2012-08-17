@@ -17,7 +17,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 @Entity
     public class DataFile  implements Serializable, OurTable {
 
-  /** Transaction ID */
+  /** SQL Object ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
 	private long id;
     public void setId(long val) {        id = val;    }
@@ -166,8 +166,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public String getThisFile() { return thisFile; }
     public void setThisFile( String x) { thisFile = x; }
 
-    /** In case of a suggestion list, this refers to the list of
-	article info entries; otherwise, empty */
+    /** In the case of a suggestion list, this refers to the list of
+	article info entries; otherwise (i.e., for a user profile), it
+	is empty */
     @OneToMany(cascade=CascadeType.ALL)
     //        private Set<ListEntry> docs = new LinkedHashSet<ListEntry>();
         private Vector<ListEntry> docs = new Vector<ListEntry>();
@@ -177,16 +178,19 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
         return docs;
     }
 
+    /** Fills this DataFile's list of ListEntries based on the specified list of
+	ArticleEntries.
+     */
     public void fillArticleList(Vector<ArticleEntry> entries, ArticleAnalyzer aa, EntityManager em) {
 	for(int rank=0; rank<entries.size(); rank++) {
 	    ListEntry le = null;
 	    try {
-		le = new  ListEntry(aa, em, this, entries.elementAt(rank), rank);
+		le = new ListEntry(aa, em, this, entries.elementAt(rank), rank);
 	    } catch(Exception ex) {
 		Logging.error("DataFile.initList: Can't record data for article  " + entries.elementAt(rank).getAid() + " (rank="+rank+"), as it may not be in Lucene yet");
 		continue;
 	    }
-	    docs.add( le );
+	    docs.add( le ); // FIXME: should not we use get/set?
 	}
     }
 

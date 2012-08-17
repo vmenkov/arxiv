@@ -45,20 +45,20 @@ public class ResultsBase {
 	FORCE="force", FILE="file";
     static final String STARTAT = "startat";
 
-
-    /** Special (optional) parameters for JudgmentServlet, Search, etc */
-    //public final static String SRC = "src", DF = "df";
-
-
     /** These two vars are here (and not e.g. in PersonalResultsBase)
 	because they are also used by Search (which may or may not be
 	invoked anonymously). Of course, the values are only set in some
 	situations.
     */
-    public ActionSource asrc = new ActionSource(Action.Source.UNKNOWN,0);	 
+    public ActionSource asrc = new ActionSource(Action.Source.UNKNOWN,0);
 
     /** This is an empty method in this class, but it will be overridden
-	in some pages */
+	in some pages.
+	
+	FIXME: customizeSrc() is not of much use in Search and ViewSuggestions;
+	there, asrc is set directly in the code. This really ought to be
+	refactored.
+    */
     void customizeSrc() {}
 
 
@@ -292,34 +292,6 @@ public class ResultsBase {
 					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER, 
 					     asrc);
     } 
-
-    /** Extracts information containing action source information from
-	the query string, and packs it again into a string that can be
-	added to the query string of the next servlet to be
-	called. This, of course, should only be used when the "next
-	servlet" inherits the action source of the caller servlet */
-    /*
-    static String packSrcInfo( HttpServletRequest request) {
-	Action.Source src = (Action.Source)Tools.getEnum(request, Action.Source.class,
-							 SRC, Action.Source.UNKNOWN);	 
-	long dataFileId =  Tools.getLong(request, DF, 0);
-	return packSrcInfo( src, dataFileId);
-    }
-    */
-
-    /** Produces a component to be added to the query string, containing
-	action source information.*/
-    /*
-    public static String packSrcInfo( Action.Source src, long dfid) {
-	String s="";	       
-	if (src==null || src==Action.Source.UNKNOWN) return s;
-	s += "&"+SRC +"=" + src;
-	if (dfid>0) {
-	    s += "&"+DF +"=" + dfid;
-	}
-	return s;
-    }
-    */
 
 }
 

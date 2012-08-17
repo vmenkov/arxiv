@@ -265,9 +265,9 @@ public class  SearchResults {
 	is the primary key, the date is the secondary */	
     public 
 //static 
-void setCatSearchScores(IndexReader reader,
-					  // ScoreDoc[] scoreDocs,
-					  String[] _cats, Date since) throws IOException, CorruptIndexException{
+	void setCatSearchScores(IndexReader reader,
+				// ScoreDoc[] scoreDocs,
+				String[] _cats, Date since) throws IOException, CorruptIndexException{
 	String[] cats = Arrays.copyOf(_cats, _cats.length);
 	Arrays.sort(cats);
 
@@ -302,6 +302,19 @@ void setCatSearchScores(IndexReader reader,
     void reorderCatSearchResults(IndexReader reader,String[] _cats, Date since) throws IOException, CorruptIndexException{
 	setCatSearchScores(reader,  _cats, since);
 	Arrays.sort(scoreDocs, new SDComparator());
+    }
+
+    /** Saves this SearchResults list in the SQL database as a PresentedList
+	object. Creates that object, and then persists it. */
+    PresentedList saveAsPresentedList(EntityManager em, Action.Source type, String username, DataFile df,  EnteredQuery eq) {
+	PresentedList plist = new PresentedList(type, username);
+	plist.fillArticleList(entries);	
+	if (df!=null) plist.setDataFileId( df.getId());
+	if (eq!=null) plist.setQueryId( eq.getId());
+	em.getTransaction().begin();
+	em.persist(plist);
+	em.getTransaction().commit();
+	return plist;
     }
     
     /** Creates a Date object for a time point that is a specified

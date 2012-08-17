@@ -53,6 +53,24 @@ of objects being references.<p>
 <tr><td> select x from EnteredQuery x
     <td> select x.* from EnteredQuery x
     <td> List of search queries entered by users
+
+<tr>
+<td colspan=3>PresentedList table: article lists shown to users. Each list corresponds to an actual screen shown to a user.
+<tr>
+<td> -
+<td>
+select li.*, (select count(*) from PresentedList_PresentedListEntry where PRESENTEDLIST_ID=li.id) from PresentedList li
+<td>How many articles were in each presented list? 
+
+<tr>
+<td> -
+<td>
+select a.*, li.time, li.dataFileId, li.queryId from Action a, PresentedList li where a.presentedListId = li.id
+<td>
+Link user actions with presented lists. This shows for each user action (a) the context ("presented list") in which it was effected. This selection does <em>not</em> user actions that did not originate in the "suggestion list" or "search" constants, as those other context (e.g., FOLDER or FILTER) don't have "presented lists" as such.
+
+<tr>
+<td colspan=3>Other tables
 <tr>
 <td>select x from ArticleStats x
 <td>select x.* from ArticleStats x

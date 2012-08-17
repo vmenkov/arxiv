@@ -16,8 +16,6 @@ import org.apache.lucene.search.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
-import edu.rutgers.axs.html.RatingButton;
-import edu.rutgers.axs.ParseConfig;
 
 /** Our interface for Lucene searches
  */
@@ -38,18 +36,25 @@ public class Search extends ResultsBase {
     static final String DAYS="days",
 	SIMPLE_SEARCH="simple_search", USER_CAT_SEARCH="user_cat_search";
 
+    /** The web interface to various searches My.ArXiv carries out
+      over its own Lucene article repository. In the user_cat_search
+      mode, it retrieves all recent articles from the user's
+      categories of interest. Otherwise, a user-entered query is
+      expected. In this case, we conduct either phrase search (when
+      the entire query is double-quoted) or keyword search.
+     */
     public Search(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	if (error) return;
 
-	customizeSrc();
+	//customizeSrc();
 
 	EntityManager em = null;
 	try {
 	    query = request.getParameter(SIMPLE_SEARCH);
 	    boolean user_cat_search = getBoolean( USER_CAT_SEARCH, false);
 
-	    if (user_cat_search) {
+	    if (user_cat_search) { 
 		if (query != null) {
 		    error=true;
 		    errmsg="You cannot use " + SIMPLE_SEARCH + " and " + USER_CAT_SEARCH + " at the same time!";
@@ -80,7 +85,8 @@ public class Search extends ResultsBase {
 		u = User.findByName(em, user);    
 	    }
 
-	    // Pages the user does not want ever shown (may be empty)
+	    // The list (possibly empty) of pages that the user does
+	    // not want ever shown 
 	    HashMap<String, Action> exclusions = 
 		(u==null) ? new HashMap<String, Action>() :
 		u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
@@ -88,11 +94,12 @@ public class Search extends ResultsBase {
 	    IndexReader reader = ArticleAnalyzer.getReader();
 	    IndexSearcher searcher = new IndexSearcher( reader);
 
-	    final int M=25; // window size
+	    // "Window" size (how many results are displayed on one screen)
+	    final int M=25;
 	    
 	    if (user_cat_search) {
 		String[] cats = u.getCats().toArray(new String[0]);
-		if (u!=null) days=u.getDays(); // user-specific horizon!
+		if (u!=null) days=u.getDays(); // Use user-specific horizon!
 		if (days<=0) days = DEFAULT_DAYS;
 		days = getInt( DAYS, days);
 		Date since = SearchResults.daysAgo( days );
@@ -104,8 +111,6 @@ public class Search extends ResultsBase {
 		    infomsg += msg + "<br>";
 		}
 		sr.reorderCatSearchResults(reader, cats, since);
-
-
 	    } else {
 		int maxlen = startat + M;
 		sr  = new TextSearchResults(searcher, query,  maxlen);
@@ -121,18 +126,32 @@ public class Search extends ResultsBase {
 					 u.getActionHashMap(Action.ratingOps));
 	    }
 
+	    EnteredQuery eq=null;
 	    if (!user_cat_search && user!=null) {
 		if (u!=null) {
 		    em.getTransaction().begin();
 		    u = User.findByName(em, user); // re-read, just in case   
-		    EnteredQuery eq=u.addQuery(query, sr.nextstart, sr.scoreDocs.length);
+		    eq=u.addQuery(query, sr.nextstart, sr.scoreDocs.length);
 		    // FIXME: ideally, we may want to store a link to
 		    // EQ as part of the ActionSource info of recorded actions
 		    em.persist(u);
 		    em.getTransaction().commit(); 
 		}
-		em.close();
 	    }
+
+	    PresentedList plist = null;
+	    if (user!=null) {
+		// Save the presented search results in the database
+		plist = sr.saveAsPresentedList(em, Action.Source.SEARCH, user, null, eq);
+	    }
+	
+	    if (em!=null) em.close();
+
+	    long plid = (plist==null? 0: plist.getId());
+	    // ActionSource, for use in the web page 
+	    asrc = new ActionSource(Action.Source.SEARCH,plid);
+
+
 	}  catch (WebException _e) {
 	    error=true;
 	    errmsg=_e.getMessage();
@@ -145,9 +164,7 @@ public class Search extends ResultsBase {
     }
 
     /** Overrides the method in ResultsBase */
-    void customizeSrc() {
-	asrc = new ActionSource(Action.Source.SEARCH,0);
-    }
+    //    void customizeSrc() {    }
 
 
 
