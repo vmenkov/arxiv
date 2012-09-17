@@ -17,11 +17,12 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     fact that a link was presented (at a certain high-enough-ranked
     position) to a user, but not clicked on by him.
 
+<p>
     This, of course, is a duplication of data being saved in disk files;
     see DataFile.
  */
 @Entity
-    public class PresentedListEntry  implements OurTable {
+    public class PresentedListEntry extends OurTable {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
 	private long id;
     public void setId(long x) {        id = x;    }
