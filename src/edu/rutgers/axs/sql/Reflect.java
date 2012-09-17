@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 import java.lang.reflect.*;
 
+
 /** A bunch of methods to figure what fields a class has, and how to
  * print them out in a more or less sensible way.
  */
@@ -51,8 +52,23 @@ public class Reflect {
 	/** The name of the field, or the alt value, if provided */
 	String compactTitle() {
 	    Display anDisplay = (Display)f.getAnnotation(Display.class);
-	    return (anDisplay!=null && anDisplay.alt()!=null && anDisplay.alt().length()>0) ?
-		anDisplay.alt() :    name;
+	    if (anDisplay!=null) {
+		if (anDisplay.alt()!=null && anDisplay.alt().length()>0) 
+		    return anDisplay.alt();
+	    } 
+	    return  name;
+	}
+
+	/** The name of the field with the "explanation", or the alt value, if provided */
+	String explainedTitle() {
+	    Display anDisplay = (Display)f.getAnnotation(Display.class);
+	    if (anDisplay!=null) {
+		if (anDisplay.alt()!=null && anDisplay.alt().length()>0) 
+		    return anDisplay.alt();
+		if (anDisplay.text()!=null && anDisplay.text().length()>0) 
+		    return name + " ("+anDisplay.text()+")";
+	    } 
+	    return  name;
 	}
 
 	/** Does this field store an MD5 digest, rather than the actual value?
@@ -66,6 +82,7 @@ public class Reflect {
 	public String destName() {
 	    return f.getDeclaringClass().getSimpleName()+"."+ f.getName();
 	}
+	
 	
 
     }
@@ -248,9 +265,11 @@ public class Reflect {
 
     /** Returns a complete TR  element, or just a bunch of TD cells  **/
     public static String htmlRow(Object o, boolean TR) {
-	Vector<String> row = asStringVector(o, "");
+	Vector<String> row = asStringVector(o, "", true);
+
 	StringBuffer b = new StringBuffer("");
 	if (TR) b.append("<tr>");
+	/// XXX
 	for(String s: row) {
 	    b.append("<td>"+ s +"</td>");
 	}
@@ -263,15 +282,22 @@ public class Reflect {
 	if (TR) b.append("<tr>");
 	Reflect r = Reflect.getReflect(c);
 	for(Reflect.Entry e: r.entries) {
-	    b.append("<th>"+ e.name +"</th>");
+	    b.append("<th>"+ e.explainedTitle() +"</th>");
 	}
 	if (TR) b.append("</tr>");
 	return b.toString();
     }
 
 
-    /** @param quote the string to use for quotes (may be an empty string, if no quotes are needed) */
     public static Vector<String>  asStringVector(Object o, String quote) {
+	return asStringVector(o,quote,false);
+    }
+
+    /** @param quote The string to use for quotes (may be an empty string, if no quotes are needed)  
+	@param isHTML If true, attention is paid to the link() attribute, converting some fields into hyperlinks
+     */
+
+    public static Vector<String>  asStringVector(Object o, String quote, boolean isHTML) {
 
 	Vector<String> v = new Vector<String>();
 
@@ -288,7 +314,21 @@ public class Reflect {
 		Logging.error(ex.getMessage());
 		val = "INVOCATION_TARGET_ERROR";
 	    }
-	    v.addElement( formatAsString(val,quote));
+	    String q=formatAsString(val,quote);
+
+	    // FIXME: the "<= 0" test must be generalized or made pragma-controlled
+	    if (isHTML &&
+		!((val instanceof Number) && ((Number)val).longValue()<=0)) {
+
+		Display anDisplay = (Display)e.f.getAnnotation(Display.class);
+		if (anDisplay!=null && anDisplay.link()!=null &&
+		    !anDisplay.link().equals("")) {
+		    // FIXME: encode id if it's not just a number...
+		    String url = anDisplay.link() + "?id=" + q;
+		    q = "<a href=\"" + url + "\">" + q + "</a>"; 
+		}
+	    }
+	    v.addElement( q);
 	}
 	return v;
     }

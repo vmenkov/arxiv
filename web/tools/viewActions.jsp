@@ -10,12 +10,12 @@
 <html>
 <head>
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
-<title>Interaction history for user <%= main.actorUserName %>
+<title>My.ArXiv interaction history for user <%= main.actorUserName %>
 </title>
 </head>
 <body>
 
-<h1>Interaction history for user <em><%= main.actorUserName %></em>
+<h1>My.ArXiv interaction history for user <em><%= main.actorUserName %></em>
 </h1>
 
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>

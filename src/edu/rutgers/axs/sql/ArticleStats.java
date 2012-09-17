@@ -22,7 +22,7 @@ import edu.rutgers.axs.indexer.ArxivFields;
     all docs in the index, store it in the SQL database, and later
     re-use as needed for individual queries. */
 @Entity  
-    public class ArticleStats implements OurTable 
+    public class ArticleStats extends OurTable 
 {
 
    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)

@@ -17,7 +17,7 @@ import edu.rutgers.axs.web.Tools;
 @Entity 
     @Table(name="arxiv_users", 
 	   uniqueConstraints=@UniqueConstraint(name="arxiv_user_name_cnstrt", columnNames="user_name") )
-    public class User implements OurTable 
+    public class User extends OurTable 
 {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1.1)
     	private long id;

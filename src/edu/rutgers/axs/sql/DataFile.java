@@ -15,7 +15,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     suggestion list.
  */
 @Entity
-    public class DataFile  implements Serializable, OurTable {
+    public class DataFile extends OurTable implements Serializable  {
 
   /** SQL Object ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)

@@ -38,15 +38,57 @@ of objects being references.<p>
 <td>Show all User entries.
 
 <tr><th colspan=3>The <tt>Action</tt> table (<tt>Action</tt> entries)</th></tr>
-<tr><td colspan=3>Each <tt>Action</tt> entry contains information about one recordable user action. Each action is performed by a particular user, and has a particular ArXiv article as its object. Action types include adding an article to the user's folder (sort of a bookmark list), or removing it from the folder; viewing the article's abstract page or PDF page; explicitly rating an article as "new and useful", "useless", etc; marking the article as "not to be shown to me again"; etc.
+<tr><td colspan=3>Each <tt>Action</tt> entry contains information about one recordable user action. Each action is performed by a particular user, and has a particular ArXiv article as its object. Action types include adding an article to the user's folder (sort of a bookmark list), or removing it from the folder; viewing the article's abstract page or PDF page; explicitly rating an article as "new and useful", "useless", etc; marking the article as "not to be shown to me again"; etc. Each action contains the id of the PresentedList object (see below), which is understood as its contex.t
 
 <br>For each action we record the "action source", which contains information about the "context" in which the action was effected.
 
 </td></tr>
 <tr><td>select x from Action x <td> select x.* from Action x
-<tr><td> -
+<tr><td> select x from Action x where x.user.id=1 
     <td> select x.* from Action x where x.user_id=1 
+<td>Show all actions for a particular user (specified by the numeric user id)
 
+<tr><td>select x from Action x where x.user.user_name='vmenkov' 
+<td>select x.* from Action x, arxiv_users u where x.user_id=u.id and u.user_name='vmenkov' 
+<td>Show all actions for a particular user (specified by the symbolic user id)
+
+<tr>
+<th colspan=3>The <tt>PresentedList</tt> table
+<tr><td colspan=3>Each  <tt>PresentedList</tt> object corresponds to an actual screen shown to a user. Each individual article in the list is described as an entry in the <tt>PresentedListEntry</tt> table.
+<tr>
+<td>select x from PresentedList x 
+<td>select x.* from PresentedList x 
+<td>List all such lists.
+<tr>
+<td>
+select li.id, d from PresentedList li join li.docs d where li.id=5 
+<br><em>Also, there is alternative syntax:</em><br>
+select li.id, foo  from PresentedList li, in(li.docs) foo where li.id=5
+<td>select li.id, e.* from PresentedList li, PresentedList_PresentedListEntry r, PresentedListEntry e where r.PRESENTEDLIST_ID = li.id and r.DOCS_ID =e.id and li.id=5
+<td>Show the content of presented list no. 5
+<tr>
+<td>
+select li.id, count(d) from PresentedList li, in(li.docs) d group by li.id -
+<td>
+select li.id, (select count(*) from PresentedList_PresentedListEntry where PRESENTEDLIST_ID=li.id) from PresentedList li
+<td>How many articles were in each presented list? (Only show list ID for each list)
+
+<tr>
+<td>
+select li, count(d) from PresentedList li, in(li.docs) d group by li 
+<td>
+select li.*, (select count(*) from PresentedList_PresentedListEntry where PRESENTEDLIST_ID=li.id) from PresentedList li
+<td>How many articles were in each presented list? (Also show list details for each list)
+
+<tr>
+<td>
+<td>
+select a.*, li.time, li.dataFileId, li.queryId from Action a, PresentedList li where a.presentedListId = li.id
+<td>
+Link user actions with presented lists. This shows for each user action (a) the context ("presented list") in which it was effected. This selection does <em>not</em> user actions that did not originate in the "suggestion list" or "search" constants, as those other context (e.g., FOLDER or FILTER) don't have "presented lists" as such.
+
+<tr>
+<th colspan=3>The <tt>EnteredQuery</tt> table
 <tr>
 <td>select x from Action x, User u where x.user=u and u.user_name='vmenkov'
 <td>select x.* from Action x, arxiv_users u where x.user_id=u.id and u.user_name='vmenkov'
@@ -54,23 +96,10 @@ of objects being references.<p>
     <td> select x.* from EnteredQuery x
     <td> List of search queries entered by users
 
-<tr>
-<td colspan=3>PresentedList table: article lists shown to users. Each list corresponds to an actual screen shown to a user.
-<tr>
-<td> -
-<td>
-select li.*, (select count(*) from PresentedList_PresentedListEntry where PRESENTEDLIST_ID=li.id) from PresentedList li
-<td>How many articles were in each presented list? 
+
 
 <tr>
-<td> -
-<td>
-select a.*, li.time, li.dataFileId, li.queryId from Action a, PresentedList li where a.presentedListId = li.id
-<td>
-Link user actions with presented lists. This shows for each user action (a) the context ("presented list") in which it was effected. This selection does <em>not</em> user actions that did not originate in the "suggestion list" or "search" constants, as those other context (e.g., FOLDER or FILTER) don't have "presented lists" as such.
-
-<tr>
-<td colspan=3>Other tables
+<th colspan=3>Other tables
 <tr>
 <td>select x from ArticleStats x
 <td>select x.* from ArticleStats x

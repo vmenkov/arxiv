@@ -1,14 +1,12 @@
 package edu.rutgers.axs.sql;
 
 import java.util.*;
-//import javax.persistence.*;
-//import edu.rutgers.axs.web.Logging;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
-/** An annotation describing how, if at all, this field is to be
- * displayed in HTML data entry forms etc
-*/
+/** An annotation describing how, if at all, a particular data field
+    (content of a SQL database column) is to be displayed in HTML
+    tables and data entry forms etc.  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Display {
@@ -22,14 +20,13 @@ public @interface Display {
 	sending a payment
      */    
     boolean payment() default false;
-    /** If not null and not empty, this text will be displayed in parnethesis <em>after</em>
-     * the field's name in entry tables etc. */
+    /** If not null and not empty, this text will be displayed in
+      parnethesis <em>after</em> the field's name in entry tables
+      etc. */
     String text() default "";
 
-
-    /** If not null and not empty, this text will be displayed in
-     * parnethesis <em>instead</em> the field's name in entry tables
-     * etc. */
+    /** If not null and not empty, this text will be displayed
+	 <em>instead</em> the field's name in entry tables etc. */
     String alt() default "";
 
     /** If true, the field actually stores the MD5-digest of the
@@ -40,5 +37,9 @@ public @interface Display {
     boolean digest() default false;
     /** Should be treated as illegal value, if submitted */
     //String illegal() default USStates.Select_One.toString();
+
+    /** */
+    String link() default "";
+
 }
 

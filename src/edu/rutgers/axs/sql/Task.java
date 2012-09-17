@@ -20,7 +20,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
     </pre>
  */
 @Entity
-    public class Task  implements Serializable, OurTable {
+    public class Task   extends OurTable implements Serializable {
 
     /** Transaction ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)

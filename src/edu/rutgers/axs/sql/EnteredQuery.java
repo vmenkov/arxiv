@@ -10,7 +10,7 @@ import java.lang.reflect.*;
 /** An EnteredQuery instance records a single search query entered by the user.
  */
 @Entity
-    public class EnteredQuery  implements Serializable, OurTable  {
+    public class EnteredQuery  extends OurTable implements Serializable  {
 
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=2)
 	private long id;
@@ -20,7 +20,7 @@ import java.lang.reflect.*;
     // Link to the user whose action this is
     @ManyToOne
     @Column(nullable=false)
-    @Display(editable=false, order=1) 
+	@Display(editable=false, order=1, link="viewUser.jsp") 
 	User user;
     public User getUser() {	return user;    }
     public void setUser(User c) { user=c;    }

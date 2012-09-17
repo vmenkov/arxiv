@@ -21,7 +21,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     see DataFile.
  */
 @Entity
-    public class ListEntry  implements OurTable {
+    public class ListEntry  extends OurTable {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
 	private long id;
     public void setId(long x) {        id = x;    }

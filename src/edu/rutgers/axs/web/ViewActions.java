@@ -3,8 +3,7 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-import java.lang.reflect.*;
-
+//import java.lang.reflect.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -13,7 +12,7 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 
-/** Retrieves the action history of a user
+/** Retrieves the action history of a user.
  */
 public class ViewActions extends ResultsBase {
     

@@ -22,7 +22,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     user performed a particular action.
  */
 @Entity
-    public class PresentedList  implements Serializable, OurTable {
+    public class PresentedList extends OurTable implements Serializable  {
 
   /** SQL Object ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
@@ -78,7 +78,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	was generated. This only applies to lists presenting a (section of)
 	search result list.
      */
-    @Column(nullable=true) 	@Display(editable=false, order=5.4)  @Basic
+    @Column(nullable=true)
+ 	@Display(editable=false, order=5.4, link="viewEnteredQuery.jsp") 
+	@Basic
 	private long queryId;
     public void setQueryId(long val) {     queryId    = val;    }
     public long getQueryId() {        return  queryId;    }
@@ -89,6 +91,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     @OneToMany(cascade=CascadeType.ALL)
     //        private Set<ListEntry> docs = new LinkedHashSet<ListEntry>();
         private Vector<PresentedListEntry> docs = new Vector<PresentedListEntry>();
+    public Vector<PresentedListEntry> getDocs() { return docs; }
 
     /** Don't use this. It exists just to keep the enhancer from complaining */
     private PresentedList() {}
@@ -119,5 +122,13 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	return true; 
     }
     
+    /** Causes JPA fill in the docs array from the database.
+     */
+    public void fetchVecs() {
+	Vector<PresentedListEntry> dummy = new Vector<PresentedListEntry>();	
+	for (PresentedListEntry m : getDocs()) {
+	    dummy.add(m);
+	}
+    }
 
 }

@@ -12,8 +12,8 @@ import java.lang.reflect.*;
  * usefulness for him. 
  */
 @Entity
-    public class Action  implements Serializable, OurTable, 
-				    Comparable<Action>  {
+    public class Action extends OurTable 
+    implements Serializable, Comparable<Action>  {
 
     /** Transaction ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=2)
@@ -102,7 +102,7 @@ import java.lang.reflect.*;
 				  Op.INTERESTING_BUT_KNOWN, 
 				  Op.USELESS };
 
-    @Display(editable=false, order=4) 
+    @Display(editable=false, order=4, text="Action type") 
 	@Enumerated(EnumType.ORDINAL) 
     	private Op op;   
 
@@ -157,7 +157,10 @@ import java.lang.reflect.*;
 	generated on the fly (because it is know to be identical to the 
 	user cat search results).
      */
-    @Column(nullable=true) 	@Display(editable=false, order=5.3)  @Basic
+
+    @Column(nullable=true) 
+	@Display(editable=false, order=5.3, link="viewPresentedList.jsp")  
+	@Basic
 	private long presentedListId;
     public void setPresentedListId(long val) {     presentedListId    = val;    }
     public long getPresentedListId() {        return  presentedListId;    }
@@ -169,11 +172,11 @@ import java.lang.reflect.*;
 
     /** The type of "experimental day" during which the action occurred */
     @Column(nullable=true,length=6) @Enumerated(EnumType.STRING) 
-	@Display(editable=false, order=5) 
+	@Display(editable=false, order=3.2, alt="Type of experiment day") 
     private User.Day day;
     
     public User.Day getDay() { return day; }
-    void setDay(User.Day x) { day = x; }
+    public void setDay(User.Day x) { day = x; }
 
 
 
