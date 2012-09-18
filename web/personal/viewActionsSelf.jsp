@@ -30,7 +30,7 @@
 	for(int i=0; i<main.list.size(); i++) {
 	Action a =  main.list.elementAt(i);
 %>
-	<%= Reflect.htmlRow(a, true) %>
+	<%= Reflect.htmlRow(a, true, false) %>
  <%  }  %>
 </table></p>
 
@@ -42,7 +42,7 @@
 	for(int i=0; i<main.qlist.size(); i++) {
 	EnteredQuery a =  main.qlist.elementAt(i);
 %>
-	<%= Reflect.htmlRow(a, true) %>
+	<%= Reflect.htmlRow(a, true, false) %>
  <%  }  %>
 </table></p>
 

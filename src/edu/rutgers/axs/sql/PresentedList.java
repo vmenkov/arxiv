@@ -69,7 +69,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	applicable to lists presenting a (section of a) suggestion list
 	of some kind.
      */
-    @Column(nullable=true) 	@Display(editable=false, order=5.3)  @Basic
+    @Column(nullable=true) 	
+	@Display(editable=false, order=5.3, link="../personal/viewSuggestions.jsp")  
+	@Basic
 	private long dataFileId;
     public void setDataFileId(long val) {     dataFileId    = val;    }
     public long getDataFileId() {        return  dataFileId;    }

@@ -79,19 +79,34 @@ public class ViewSuggestions extends PersonalResultsBase {
 	super(_request,_response);
 	if (error) return; // authentication error?
 
-	if (actorUserName==null) {
-	    error = true;
-	    errmsg = "No user name specified!";
-	    return;
-	}
-
 	EntityManager em = sd.getEM();
 	try {
-
-	    actor=User.findByName(em, actorUserName);
-	    startat = (int)Tools.getLong(request, STARTAT,0);
 	    
-	    if (mainPage) {
+	    // One very special mode: database ID only. This is used 
+	    // for navigation inside the "view activity" system
+	    long id = Tools.getLong(request, "id", 0);
+	    if (id>0) {
+		df = (DataFile)em.find(DataFile.class, id);
+		if (df==null) throw new WebException("No suggestion list with id=" + id + " exists");
+		//		if (
+		actorUserName = df.getUser();
+	    }
+
+	    if (actorUserName==null) {
+		error = true;
+		errmsg = "No user name specified!";
+		return;
+	    }
+
+
+	    startat = (int)Tools.getLong(request, STARTAT,0);
+	    actor=User.findByName(em, actorUserName);
+
+	    // Special modes
+	    if (id>0) {
+		initList(df, startat, false, em);
+		return;
+	    } else if (mainPage) {
 		initMainPage(em, actor);
 		return;
 	    } 

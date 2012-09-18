@@ -263,13 +263,21 @@ public class Reflect {
 	return b.toString();
     }
 
-    /** Returns a complete TR  element, or just a bunch of TD cells  **/
     public static String htmlRow(Object o, boolean TR) {
-	Vector<String> row = asStringVector(o, "", true);
+	return htmlRow(o, TR, true);
+    }
+
+    /** Returns a complete TR  element, or just a bunch of TD cells.
+	@param TR Include the TR element
+	@param dolinks Include hyperlinks to other pages on fields that have 
+	the "link" value set in their "Display" attribute. This is useful
+	in research pages, but (usually) not in user-facing pages.
+     **/
+    public static String htmlRow(Object o, boolean TR, boolean dolinks) {
+	Vector<String> row = asStringVector(o, "", dolinks);
 
 	StringBuffer b = new StringBuffer("");
 	if (TR) b.append("<tr>");
-	/// XXX
 	for(String s: row) {
 	    b.append("<td>"+ s +"</td>");
 	}
@@ -294,10 +302,10 @@ public class Reflect {
     }
 
     /** @param quote The string to use for quotes (may be an empty string, if no quotes are needed)  
-	@param isHTML If true, attention is paid to the link() attribute, converting some fields into hyperlinks
+	@param dolinks If true, attention is paid to the link() attribute, converting some fields into hyperlinks
      */
 
-    public static Vector<String>  asStringVector(Object o, String quote, boolean isHTML) {
+    public static Vector<String>  asStringVector(Object o, String quote, boolean dolinks) {
 
 	Vector<String> v = new Vector<String>();
 
@@ -317,7 +325,7 @@ public class Reflect {
 	    String q=formatAsString(val,quote);
 
 	    // FIXME: the "<= 0" test must be generalized or made pragma-controlled
-	    if (isHTML &&
+	    if (dolinks &&
 		!((val instanceof Number) && ((Number)val).longValue()<=0)) {
 
 		Display anDisplay = (Display)e.f.getAnnotation(Display.class);
