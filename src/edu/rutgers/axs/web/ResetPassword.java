@@ -48,13 +48,13 @@ public class ResetPassword extends ResultsBase {
 		return;
 	    }
 
-	    doResetPassword(sd.getEM(), uname, email);
+	    doResetPassword(sd.getEM(), uname, email, null);
 	}  catch (Exception _e) {
 	    setEx(_e);
 	} finally {}
     }
 
-    static void doResetPassword(	EntityManager em, String uname, String email) throws WebException, javax.mail.MessagingException,  javax.mail.internet.AddressException   {
+    static void doResetPassword(	EntityManager em, String uname, String email, String password) throws WebException, javax.mail.MessagingException,  javax.mail.internet.AddressException   {
 
 	try {
 	    // Begin a new local transaction so that we can persist a new entity
@@ -77,7 +77,7 @@ public class ResetPassword extends ResultsBase {
 		    (char)('a' + (z - 10));
 		p.append(c);		    
 	    }
-	    String password = p.toString();
+	    if (password==null) {  password = p.toString(); }
 
 	    System.out.println("New password=" + password);
 
@@ -96,10 +96,12 @@ public class ResetPassword extends ResultsBase {
 
     /**  Sending mail.
 	 The hostname for the SMTP server. The typical values are "smtp" (on
-	 Telus ADSL machines) or "localhost" (on hosting.ca).  
+	 Telus ADSL machines) or "localhost" (on hosting.ca, or on cactuar).  
     */
-    static String smtp = "smtp";
-    static String businessEmail = "vmenkov@gmail.com";
+    //    static String smtp = "smtp";
+    static String smtp = "localhost";
+    //    static String businessEmail = "vmenkov@gmail.com";
+    static String businessEmail = "vmenkov@rci.rutgers.edu";
 
     /** Sends a message to the customer service */
     static private void sendMail(String uname, String email, String password)
@@ -137,7 +139,7 @@ public class ResetPassword extends ResultsBase {
 
 	    String text = 
 	    "At your request, we have reset your password for accessing \n" +
-	    "the " + firm + ". Your new password for account '"+uname+"' + is:\n"+
+	    "the " + firm + " web site. The new password for account '"+uname+"' is:\n"+
 	    "\n" +
 	    password +
 	    "\n" +
@@ -193,11 +195,12 @@ public class ResetPassword extends ResultsBase {
 	smtp = ht.getOption("smtp", smtp);
 	businessEmail = ht.getOption("from", businessEmail);
 
-	if (argv.length!=2) usage();
+	if (argv.length<2) usage();
 	String uname = argv[0];
 	String email = argv[1];
+	String password = (argv.length < 3)? null: argv[2];
 	EntityManager em = Main.getEM();
-	doResetPassword(em, uname, email);
+	doResetPassword(em, uname, email, password);
     }
 
 }

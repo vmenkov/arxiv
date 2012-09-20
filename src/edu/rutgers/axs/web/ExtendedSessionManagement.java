@@ -24,7 +24,7 @@ public class ExtendedSessionManagement {
     public final static String COOKIE_NAME = "MyArxivExtendedSession";
 
     /** max lifetime of an extended session, in hours */
-    static public final int maxDays = 3;   
+    static public final int maxDays = 180;   
     static private final int maxHours = maxDays*24;   
 
     /** Creates a cookie with a temporary password for an "extended session",

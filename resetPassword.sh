@@ -15,6 +15,9 @@ set cp="${cp}:../lucene/lucene-3.3.0/contrib/benchmark/lib/commons-logging-1.0.4
 
 set cp="${cp}:/usr/local/tomcat/bin/tomcat-juli.jar"
 
+# on cactuar
+set cp="${cp}:../tomcat-lib-to-copy/catalina.jar"
+
 set jmlib=$home/arxiv/javamail-1.4.5/lib
 
 # set cp="${cp}:$jmlib/mailapi.jar"
