@@ -88,6 +88,8 @@
   <available file="${tomcat.home.rutgers}"/>
 </condition>
 
+<property name="javamail.lib"  location="../javamail-1.4.5/lib"/>
+
 
 <path id="classpath"
        description="The classpath to use for compiling and running AXS">
@@ -110,6 +112,9 @@
    </fileset>
    <fileset dir="${openjpa}">
      <include name="**/*.jar"/>
+   </fileset>
+   <fileset dir="${javamail.lib}">
+     <include name="*.jar"/>
    </fileset>
    <pathelement location="/usr/local/tomcat/bin/tomcat-juli.jar"/>
  </path>
@@ -219,6 +224,7 @@ Building a JAR file
   <lib dir="${lib}"><include name="**/*.jar"/></lib>
   <lib dir="${openjpa}">    <include name="*.jar"/> </lib>
   <lib dir="${openjpa}/lib"> <include name="*.jar"/> </lib>
+  <lib dir="${javamail.lib}">    <include name="*.jar"/> </lib>
   <lib dir="${tomcat.lib.copy2}"> <include name="*.jar"/> </lib>
   <webinf dir="WEB-INF"/>
   <webinf dir="."><include name="osmot.conf"/></webinf>
@@ -234,6 +240,7 @@ Building a JAR file
     <fileset dir="${lib}"><include name="**/*.jar"/></fileset>
     <fileset dir="${openjpa}">    <include name="*.jar"/> </fileset>
     <fileset dir="${openjpa}/lib"> <include name="*.jar"/> </fileset>
+    <fileset dir="${javamail.lib}">    <include name="*.jar"/> </fileset>
 
     <!-- On scils and cactuar (with tomcat 5.5), but not at home (with
 	 Tomcat 6.0), we must copy catalina.jar, for the RealmBase
