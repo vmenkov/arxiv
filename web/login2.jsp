@@ -43,6 +43,8 @@ please login with your user name and password:
 	</tr>
 </table>
 
+<p>Forgot your password? You can <a href="resetPasswordForm.jsp">request password reset.</a>
+
 <p>Not a subscriber? <a href="participation.html">Join the project now!</a>
 </p>
 

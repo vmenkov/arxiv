@@ -28,6 +28,7 @@ import edu.rutgers.axs.ParseConfig;
 public class ResetPassword extends ResultsBase {
     public String email;
     public String uname;
+    //public boolean passwordReset=false;
 
     /** sets the new password and sends it to the user by e-mail */
     public ResetPassword(HttpServletRequest _request, HttpServletResponse _response) {
@@ -54,10 +55,17 @@ public class ResetPassword extends ResultsBase {
 	} finally {}
     }
 
-    static void doResetPassword(	EntityManager em, String uname, String email, String password) throws WebException, javax.mail.MessagingException,  javax.mail.internet.AddressException   {
+    /** Resets the password for a specified user, and sends the new
+	password to him by email.
+	
+	@param uname The name of the user whose password is to be reset.
+	@param email The email address to which the new password will be set. This must match the address in the user's database record.
+	@param password If not null, this will be the new password; otherwise, the new password will be generated randomly. 
+     */
+    static void doResetPassword(EntityManager em, String uname, String email, String password) throws WebException, javax.mail.MessagingException,  javax.mail.internet.AddressException   {
 
 	try {
-	    // Begin a new local transaction so that we can persist a new entity
+	    // Begin a new local transaction 
 	    em.getTransaction().begin();
 	    
 	    User r = User.findByName(em, uname);
@@ -68,29 +76,33 @@ public class ResetPassword extends ResultsBase {
 	    
 	    if (!r.isEnabled())  throw new WebException("User account with the name '" + uname + "' is currently disabled. If this is your account, please contact a site administrator to enable it and reset the password");
 
-	    // the new password
-	    StringBuffer p = new StringBuffer(6);
-	    for(int i=0; i<6; i++) {
-		int z = (int)(36 * Math.random());
-		char c = (z < 10) ? 
-		    (char)('0' + z) :    
-		    (char)('a' + (z - 10));
-		p.append(c);		    
-	    }
-	    if (password==null) {  password = p.toString(); }
-
+	    if (password==null) {  password = generatePassword(); }
 	    System.out.println("New password=" + password);
 
 	    r.encryptAndSetPassword( password);
 	    Logging.info("Reset password for user " + uname + "; sending email to " + email);
+	    sendMail(uname, email, password);
+	    // don't commit until an email message has been sent!
 	    em.persist(r);
 	    em.getTransaction().commit();
-	    sendMail(uname, email, password);
 
 	} finally {
 	    ensureClosed(em, false);
 	}
 		
+    }
+
+    /** Generates the new password, randomly */
+    private static String generatePassword() {
+	StringBuffer p = new StringBuffer(6);
+	for(int i=0; i<6; i++) {
+	    int z = (int)(36 * Math.random());
+	    char c = (z < 10) ? 
+		(char)('0' + z) :    
+		(char)('a' + (z - 10));
+	    p.append(c);		    
+	}
+	return p.toString();
     }
 
 
@@ -101,7 +113,7 @@ public class ResetPassword extends ResultsBase {
     //    static String smtp = "smtp";
     static String smtp = "localhost";
     //    static String businessEmail = "vmenkov@gmail.com";
-    static String businessEmail = "vmenkov@rci.rutgers.edu";
+    public static String businessEmail = "vmenkov@rci.rutgers.edu";
 
     /** Sends a message to the customer service */
     static private void sendMail(String uname, String email, String password)
