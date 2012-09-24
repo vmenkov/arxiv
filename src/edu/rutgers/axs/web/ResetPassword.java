@@ -30,6 +30,9 @@ public class ResetPassword extends ResultsBase {
     public String uname;
     //public boolean passwordReset=false;
 
+    /** For command-line testing on machines that don't allow email sending */
+    private static boolean dontSend = false;
+
     /** sets the new password and sends it to the user by e-mail */
     public ResetPassword(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
@@ -39,6 +42,10 @@ public class ResetPassword extends ResultsBase {
 	    if (email==null) {
 		error=true;
 		errmsg = "No email supplied";
+		return;
+	    } else if (email.indexOf("@")<=0) {
+		error=true;
+		errmsg = "Invalid email address: '"+email+"'";
 		return;
 	    }
 
@@ -81,7 +88,12 @@ public class ResetPassword extends ResultsBase {
 
 	    r.encryptAndSetPassword( password);
 	    Logging.info("Reset password for user " + uname + "; sending email to " + email);
-	    sendMail(uname, email, password);
+
+	    if (dontSend) {		
+		System.out.println("Not sending email (dontSend flag on)");
+	    } else {
+		sendMail(uname, email, password);
+	    }
 	    // don't commit until an email message has been sent!
 	    em.persist(r);
 	    em.getTransaction().commit();
@@ -205,11 +217,13 @@ public class ResetPassword extends ResultsBase {
 	ParseConfig ht = new ParseConfig();
 	//int maxDocs = ht.getOption("maxDocs", -1);
 	smtp = ht.getOption("smtp", smtp);
+	dontSend = ht.getOption("dontSend", false);
 	businessEmail = ht.getOption("from", businessEmail);
 
 	if (argv.length<2) usage();
 	String uname = argv[0];
 	String email = argv[1];
+	
 	String password = (argv.length < 3)? null: argv[2];
 	EntityManager em = Main.getEM();
 	doResetPassword(em, uname, email, password);

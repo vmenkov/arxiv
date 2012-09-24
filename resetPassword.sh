@@ -28,12 +28,13 @@ end
 # set cp="${cp}:/usr/local/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
-set opt="-cp ${cp} ${opt}"
+# set opt="-cp ${cp} ${opt}"
+set opt="-cp ${cp} ${opt} -DdontSend=true"
 
 echo "opt=$opt"
 
 
-time java $opt -Dsmtp=localhost  edu.rutgers.axs.web.ResetPassword $1 $2
+time java $opt -Dsmtp=localhost  edu.rutgers.axs.web.ResetPassword $1 $2 $3
 
 
 

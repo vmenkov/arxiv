@@ -57,7 +57,7 @@
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else {     %>
 <%
-     if (!main.force && sr.entries!=null) {
+     if (!main.force && sr !=null && sr.entries!=null) {
        long since = main.actor.getLastActionId() -main.df.getLastActionId();
  %>
 
