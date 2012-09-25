@@ -546,9 +546,7 @@ public class ArticleAnalyzer {
     }
     
     static public IndexReader getReader()  throws IOException {
-	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-	IndexReader reader =  IndexReader.open( indexDirectory);            
-	return reader;
+	return Common.newReader();
     }
 
     /** FIXME: maybe need to resize allStats[]... */

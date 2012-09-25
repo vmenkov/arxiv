@@ -13,14 +13,10 @@ import javax.persistence.*;
 
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-
-import edu.cornell.cs.osmot.options.Options;
-
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.indexer.Common;
+import edu.rutgers.axs.html.RatingButton;
 
 /** Retrieves the list of artciles in the user's personal folder
  */
@@ -52,12 +48,10 @@ public class ViewFolder extends ResultsBase {
 		return;
 	    }
 
+	    IndexSearcher s=null; 
 
-	    IndexSearcher s = null;
 	    try {
-		Directory indexDirectory =  
-		    FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-		s = new IndexSearcher( indexDirectory);
+		s =  new IndexSearcher( Common.newReader() );
 	    } catch(Exception ex) {}
 
 	    int cnt=0;
@@ -67,11 +61,12 @@ public class ViewFolder extends ResultsBase {
 	    for (Action m : folder.values()) {
 		list.add(m);
 		ArticleEntry e=
-		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt);
+		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt+1);
 		entries.add(e); 
 		cnt++;
 	    }
 
+	    ArticleEntry.applyUserSpecifics(entries, actor);
 
 	}  catch (Exception _e) {
 	    setEx(_e);
@@ -85,5 +80,9 @@ public class ViewFolder extends ResultsBase {
 	asrc= new ActionSource( Action.Source.FOLDER, 0);
     }
 
+
+    public String resultsDivHTML(ArticleEntry e) {
+	return resultsDivHTML( e, true,  RatingButton.NEED_RM_FOLDER);
+    } 
 
 }

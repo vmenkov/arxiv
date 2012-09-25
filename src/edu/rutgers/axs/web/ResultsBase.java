@@ -262,11 +262,17 @@ public class ResultsBase {
 	return  "<a href=\"" + url+ "\">"+body+"</a>";	
     }
 
+    private static int defaultFlags = RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER;
+
     /** Generates a "div" HTML element with everything pertaining to
 	a single article in a list of articles (e.g., a single search
 	result or a single element of a suggestion list).
      */
     public String resultsDivHTML(ArticleEntry e, boolean isSelf ) {
+	return resultsDivHTML(e, isSelf, defaultFlags);
+    }
+    
+    public String resultsDivHTML(ArticleEntry e, boolean isSelf, int flags) {
 	String s = 
 	    "<div class=\"result\" id=\"result" + e.i + "\">\n" +
 	    "<div class=\"document\">\n" +
@@ -279,7 +285,7 @@ public class ResultsBase {
 	    (!e.commline.equals("") ? e.commline + "<br>" : "") +
 	    e.subjline+ "<br>\n" +
 	    "</div>\n" +
-	    (isSelf? judgmentBarHTML(e): "") +
+	    (isSelf? judgmentBarHTML(e, flags): "") +
 	    "</div>";
 	return s;
     }
@@ -287,10 +293,13 @@ public class ResultsBase {
 
     public String judgmentBarHTML(ArticleEntry entry) {
 	// ... but not RatingButton.FOLD_JB
+	return judgmentBarHTML(entry, defaultFlags);
+    }
+
+    public String judgmentBarHTML(ArticleEntry entry, int flags) {
 	return RatingButton.judgmentBarHTML( cp, entry, 
 					     RatingButton.allRatingButtons,
-					     RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER, 
-					     asrc);
+					     flags, asrc);
     } 
 
 }

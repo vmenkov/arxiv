@@ -117,13 +117,15 @@ public class RatingButton //extends HTML
     /** The following are bit flags from which the "flags" parameter of
 	judgmentBarHTML() may be composed. */
     /** If the bit is set, create the "add to my folder" button */
-    public static final int NEED_FOLDER=1, 
+    public static final int NEED_FOLDER=1,
+    /** If the bit is set, create the "remove from my folder" button */
+	 NEED_RM_FOLDER=2, 
     /** If the bit is set, create the "never show again" button */
-	NEED_HIDE=2, 
+	NEED_HIDE=4, 
     /** If the bit is set, initially hide the ratings buttons inside a
 	single "Rate" button, which the user will need to expand with
 	a separate click */
-	FOLD_JB=4;
+	FOLD_JB=8;
 
     /** Generates the HTML inserted into various pages where articles
 	are listed. (E.g. the search results list in search.jsp, or
@@ -162,6 +164,23 @@ public class RatingButton //extends HTML
 			  att("title", title) +
 			  att( "onclick", js) + ">" +
 			  img(imgPath) + nbsp("Copy to my folder") +
+			  "</a>" +"&nbsp;&nbsp;") + "\n";
+	}
+
+	if ((flags & NEED_RM_FOLDER)!=0) {
+	    String sn = "remove" + e.i;
+	    String imgPath = imgDir + "bin.png";
+	    String js = "$.get('" + judge(cp,aid, Action.Op.REMOVE_FROM_MY_FOLDER,asrc)+ "', " +
+		"function(data) { flipCheckedOn('#"+sn+"')})";
+	    String title="Remove this document from your personal folder";
+	    s += twoSpans(sn, !e.isInFolder,
+			  img(imgPath) + 
+			  strong("(Removed from your folder)"),
+			  "<a" +
+			  att("class", "add") +
+			  att("title", title) +
+			  att( "onclick", js) + ">" +
+			  img(imgPath) + nbsp("Remove from my folder") +
 			  "</a>" +"&nbsp;&nbsp;") + "\n";
 	}
 
@@ -217,7 +236,8 @@ public class RatingButton //extends HTML
 		nbsp( "Don't show again") + "</a>&nbsp;&nbsp\n";
 	}
 
-	if (willRate && !someChecked) {
+	// we probably don't need this text inside a ViewFolder screen
+	if (willRate && !someChecked && (flags & NEED_RM_FOLDER)==0) {
 
 	    // font-size:0.7em; 
 

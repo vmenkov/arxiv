@@ -45,7 +45,7 @@ public class ExtendedSessionManagement {
 	u.setEncEsPass( x);
 
 	Date now = new Date();	
-	Date expiration = new Date( now.getTime() + 1000 * maxSec ); // msec
+	Date expiration = new Date( now.getTime() + 1000L * (long)maxSec ); // msec
 	u.setEsEnd( expiration );
 
 	String val = unameEncoded + ":" + tmpPass;

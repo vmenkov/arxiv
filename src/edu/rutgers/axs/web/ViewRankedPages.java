@@ -13,14 +13,9 @@ import javax.persistence.*;
 
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-
-import edu.cornell.cs.osmot.options.Options;
-
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.indexer.Common;
 
 /** Retrieves the list of artciles on which the user performed various actions,
     and ranks them based on these actions.
@@ -55,10 +50,8 @@ public class ViewRankedPages extends ResultsBase {
 	    ups =  UserPageScore.rankPagesForUser(actor);
 
 	    IndexSearcher s = null;
-	    try {
-		Directory indexDirectory =  
-		    FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-		s = new IndexSearcher( indexDirectory);
+	    try {		
+		s =  new IndexSearcher( Common.newReader() );
 	    } catch(Exception ex) {}
 
 	    for(int cnt=0; cnt<ups.length; cnt++) {

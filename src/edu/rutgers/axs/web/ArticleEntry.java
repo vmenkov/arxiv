@@ -243,6 +243,28 @@ public class ArticleEntry {
 	return docno;
     }
 
+    /** Applies this user's exclusions, folder inclusions, and ratings */
+    static void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
+	if (u==null) return;
+    
+	HashMap<String, Action> exclusions = 
+	    u.getActionHashMap(new Action.Op[]{Action.Op.DONT_SHOW_AGAIN});
+		    
+	// exclude some...
+	// FIXME: elsewhere, this can be used as a strong negative
+	// auto-feedback (e.g., Thorsten's two-pager's Algo 2)
+	for(int i=0; i<entries.size(); i++) {
+	    if (exclusions.containsKey(entries.elementAt(i).id)) {
+		entries.removeElementAt(i); 
+		i--;
+	    }
+	}
+
+	// Mark pages currently in the user's folder, or rated by the user
+	markFolder(entries, u.getFolder());
+	markRatings(entries, u.getActionHashMap(Action.ratingOps));
+    }
+
  
 
 }

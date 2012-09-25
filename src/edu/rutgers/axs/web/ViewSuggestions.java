@@ -274,7 +274,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    sr = new SearchResults(df, searcher);
 	}
 	sr.setWindow( searcher, startat, M, null);
-	applyUserSpecifics(sr.entries, actor);
+	ArticleEntry.applyUserSpecifics(sr.entries, actor);
 	
 	// In docs to be displayed, populate other fields from Lucene
 	for(int i=0; i<sr.entries.size()// && i<maxRows
@@ -309,29 +309,6 @@ public class ViewSuggestions extends PersonalResultsBase {
 	return bsr;
     }
 		    
-    /** Applies this user's exclusions, folder inclusions, and ratings */
-    private void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
-	if (u==null) return;
-    
-	HashMap<String, Action> exclusions = 
-	    u.getActionHashMap(new Action.Op[]{Action.Op.DONT_SHOW_AGAIN});
-		    
-	// exclude some...
-	// FIXME: elsewhere, this can be used as a strong negative
-	// auto-feedback (e.g., Thorsten's two-pager's Algo 2)
-	for(int i=0; i<entries.size(); i++) {
-	    if (exclusions.containsKey(entries.elementAt(i).id)) {
-		entries.removeElementAt(i); 
-		i--;
-	    }
-	}
-
-	// Mark pages currently in the user's folder, or rated by the user
-	ArticleEntry.markFolder(entries, u.getFolder());
-	ArticleEntry.markRatings(entries, 
-				 u.getActionHashMap(Action.ratingOps));
-    }
-
     public String forceUrl() {
 	String s = cp + "/viewSuggestions.jsp?" + USER_NAME + "=" + actorUserName;
 	s += "&" + FORCE + "=true";
@@ -360,7 +337,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	return x;
     }
 
-    /** Wrapper for the same method in ResultsBase */
+    /** Wrapper for the same method in ResultsBase. */
     public String resultsDivHTML(ArticleEntry e) {
 	return resultsDivHTML(e, isSelf);
     }
