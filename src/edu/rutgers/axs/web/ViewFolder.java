@@ -62,6 +62,9 @@ public class ViewFolder extends ResultsBase {
 		list.add(m);
 		ArticleEntry e=
 		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt+1);
+		// A somewhat cludgy way of presenting the added-to-folder date
+		if (e.commline==null) e.commline="";
+		e.commline += " (Added to my folder on " + m.getTime() + ")";
 		entries.add(e); 
 		cnt++;
 	    }
