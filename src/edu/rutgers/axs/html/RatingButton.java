@@ -125,7 +125,9 @@ public class RatingButton //extends HTML
     /** If the bit is set, initially hide the ratings buttons inside a
 	single "Rate" button, which the user will need to expand with
 	a separate click */
-	FOLD_JB=8;
+	FOLD_JB=8,
+    /** Add the "please come back" text */
+	NEED_COME_BACK_TEXT = 16;
 
     /** Generates the HTML inserted into various pages where articles
 	are listed. (E.g. the search results list in search.jsp, or
@@ -237,7 +239,7 @@ public class RatingButton //extends HTML
 	}
 
 	// we probably don't need this text inside a ViewFolder screen
-	if (willRate && !someChecked && (flags & NEED_RM_FOLDER)==0) {
+	if (willRate && !someChecked && (flags & NEED_COME_BACK_TEXT)!=0) {
 
 	    // font-size:0.7em; 
 

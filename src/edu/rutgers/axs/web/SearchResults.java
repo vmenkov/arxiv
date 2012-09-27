@@ -13,7 +13,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.recommender.ArticleAnalyzer;
+//import edu.rutgers.axs.recommender.ArticleAnalyzer;
 import edu.rutgers.axs.ParseConfig;
 
 /** A SearchResults object is designed to store (a page of) a list of
@@ -365,7 +365,7 @@ public class  SearchResults {
 	System.out.println( (cat? "Subject search":"Text search") +
 			    " for: " + s + "; since " + since);
 
-	IndexReader reader = ArticleAnalyzer.getReader();
+	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
 
 	//	HashMap<String, Action> exc = new HashMap<String, Action>();

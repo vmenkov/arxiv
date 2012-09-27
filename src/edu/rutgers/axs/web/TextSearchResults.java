@@ -14,7 +14,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.recommender.ArticleAnalyzer;
+//import edu.rutgers.axs.recommender.ArticleAnalyzer;
 import edu.rutgers.axs.ParseConfig;
 
 /** Our interface for Lucene searches: Full-text search */

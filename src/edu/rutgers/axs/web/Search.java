@@ -15,7 +15,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.recommender.ArticleAnalyzer;
+//import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 /** Our interface for Lucene searches
  */
@@ -91,7 +91,7 @@ public class Search extends ResultsBase {
 		(u==null) ? new HashMap<String, Action>() :
 		u.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
 
-	    IndexReader reader = ArticleAnalyzer.getReader();
+	    IndexReader reader = Common.newReader();
 	    IndexSearcher searcher = new IndexSearcher( reader);
 
 	    // "Window" size (how many results are displayed on one screen)

@@ -15,6 +15,18 @@
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <title>Ranked pages for user <%= main.actorUserName %>
 </title>
+
+
+<link rel="stylesheet" type="text/css" href="../_technical/styles/styles_all.css" />
+<!--[if lte IE6]>
+<link rel="stylesheet" type="text/css" href="../_technical/styles/styles_ie.css" /><![endif]-->
+<link rel="stylesheet" type="text/css" href="../styles/results.css" />
+<!--[if IE]>
+<link rel="stylesheet" type="text/css" href="../styles/results_ie.css" />
+<![endif]-->
+<link rel="icon" type="image/x-icon" href="../favicon.ico" />
+
+
 <script type="text/javascript" src="../_technical/scripts/jquery.js"></script>
 <script type="text/javascript" src="../_technical/scripts/jquery-transitions.js"></script>
 </head>
@@ -77,18 +89,8 @@ interests in order to generate personalized recommendations.
 	<tr id="result<%=i%>">
 	<td><%=(i+1)%>. <br> <%= u.score %>
 	<td>
-	<% if (e!=null) { %>
-	 <%= e.idline %> 
-	 [<a href ="<%=main.urlAbstract(e.id)%>">Abstract</a>]
-	 [<a href="<%=main.urlPDF(e.id)%>">PDF/PS/etc</a>] <br>
-	<%= e.titline %><br />
-			<%= e.authline %><br>
-	<% if(!e.commline.equals("")) { %>	<%= e.commline %><br> <%}%>
-			<%= e.subjline %><br>
-	
-	<% } else { %>
-	   <%=u.getArticle()%>
-	<% }  %>
+	<%=  (e!=null) ?
+           main.resultsDivHTML(e, true, RatingButton.NEED_FOLDER) : u.getArticle()%>
 	<td>
 	<% for(Action a: u.reasons) { %>
 	<%= a.getOp() %><br>

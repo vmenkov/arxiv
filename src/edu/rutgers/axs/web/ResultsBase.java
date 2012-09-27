@@ -262,7 +262,9 @@ public class ResultsBase {
 	return  "<a href=\"" + url+ "\">"+body+"</a>";	
     }
 
-    private static int defaultFlags = RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER;
+    private static int defaultFlags = RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER
+	|  RatingButton.NEED_COME_BACK_TEXT;
+
 
     /** Generates a "div" HTML element with everything pertaining to
 	a single article in a list of articles (e.g., a single search

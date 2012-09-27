@@ -14,7 +14,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.recommender.*;
+import edu.rutgers.axs.indexer.Common;
 
 /** Retrieves and displays a "suggestion list": a list of articles which some
     kind of automatic process has marked as potentially interesting to the user.
@@ -253,7 +253,8 @@ public class ViewSuggestions extends PersonalResultsBase {
     private void initList(DataFile df, int startat, boolean onTheFly, EntityManager em) throws Exception {
 	//customizeSrc();
 
-	IndexReader reader=ArticleAnalyzer.getReader();
+	//	IndexReader reader=ArticleAnalyzer.getReader();
+	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 	int M = 10; //page size
 	
