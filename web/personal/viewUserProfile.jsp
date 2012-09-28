@@ -88,7 +88,7 @@ value="<%=DataFile.Type.LINEAR_SUGGESTIONS_1%>" checked> - linear similarity
 <input type="radio" name="<%=main.MODE%>" 
 value="<%=DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1%>"> - sublinear utility (Algo 1)
 <br>
-Apply Most recent <input type="text" name="<%=main.DAYS%>" value="0"> days. (Enter a positive number for a desired range, or 0 for "all time").
+Apply Most recent <input type="text" name="<%=main.DAYS%>" value="<%=actor.getDays()%>"> days. (Enter a positive number for a desired range, or 0 for "all time").
 <br>
 <input type="submit" value="View suggestions">
 </form>
