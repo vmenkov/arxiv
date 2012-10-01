@@ -484,6 +484,26 @@ import edu.rutgers.axs.web.Tools;
 	return r;
     }
 
+    public int actionCnt(EntityManager em) {
+	return actionCnt(em, -1);
+    }
+   /** How many operations have been recorded for a given user? 
+	@param maxId : max action id. If negative, means "all".
+     */
+    public int actionCnt(EntityManager em, long maxId) {
+
+	String qs= 	    "select count(a) from Action a where a.user.id=:uid" ;
+	if (maxId>=0) qs += " and a.id<=:m";
+	Query q = em.createQuery(qs);
+	
+	q.setParameter("uid",getId());
+	if (maxId>=0) q.setParameter("m",  maxId);
+
+	try {
+	    Object o = q.getSingleResult();
+	    return ((Number)o).intValue();
+	} catch(Exception ex) { return 0; }
+    }
 
 
     /** User's search queries */

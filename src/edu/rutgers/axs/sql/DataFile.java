@@ -123,7 +123,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    else if (this == LINEAR_SUGGESTIONS_1) return "Linear similarity: dot product of documents (normalized) with the user profile. Reported scores are dot products";	    
 	    else if (this == LOG_SUGGESTIONS_1) return "Log similarity: dot product of documents' log(TF) with the user profile. Reported scores are dot products";
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return  "Joachims' Algorithm 1: ranking documents to maximize the utility function. Reported 'scores' are documents' increments to the utility function.";
-	    else if (this == TJ_ALGO_2_USER_PROFILE) return "Joachim's Alghorithm 2: user profile updated based by updating the previously current user profile using the user's recent activity";
+	    else if (this == TJ_ALGO_2_USER_PROFILE) return "Joachims' Alghorithm 2: user profile updated based by updating the previously current user profile using the user's recent activity";
 	    else return "Unknown";
 	}
 

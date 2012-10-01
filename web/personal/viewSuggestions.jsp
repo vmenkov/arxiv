@@ -104,9 +104,13 @@ list has been generated).  </p>
  ( <%=main.df.getType().description() %>)
 
 <p>The entire list contains at least <%= sr.reportedLength %>
-articles; articles ranked from <%= sr.entries.elementAt(0).i %>
+articles.
+<% if (sr.entries==null || sr.entries.size()==0) {%> 
+  No articles are shown below.
+<% } else { %>
+ Articles ranked from <%= sr.entries.elementAt(0).i %>
 through <%= sr.entries.lastElement().i %> are shown below.
-
+<% } %>
 </p>
 		<% 
 for( ArticleEntry e: sr.entries) { %>

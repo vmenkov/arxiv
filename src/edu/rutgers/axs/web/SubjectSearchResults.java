@@ -1,7 +1,5 @@
 package edu.rutgers.axs.web;
 
-import java.net.*;
-
 import java.io.*;
 import java.util.*;
 
@@ -13,7 +11,6 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.recommender.ArticleAnalyzer;
 import edu.rutgers.axs.ParseConfig;
 
 /** Subject search */

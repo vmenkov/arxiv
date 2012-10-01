@@ -14,13 +14,11 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-//import edu.rutgers.axs.recommender.ArticleAnalyzer;
 import edu.rutgers.axs.ParseConfig;
 
 /** Our interface for Lucene searches: Full-text search */
 public class TextSearchResults extends SearchResults {
 	/**@param query Text that the user typed into the Search box
-	   @param startat How many top search results to skip (0, 25, ...)
 	 */
     TextSearchResults(IndexSearcher searcher, String query,  int maxlen) 
 	throws Exception {

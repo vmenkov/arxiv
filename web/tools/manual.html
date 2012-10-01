@@ -53,6 +53,17 @@ of objects being references.<p>
 <td>Show all actions for a particular user (specified by the symbolic user id)
 
 <tr>
+<td>select x.user.id,  count(x) from Action x group by x.user.id
+<td>
+<td>Show the number of actions recorded for each user. (With only the numeric id being shown for each user).
+
+<tr>
+<td>select x.user.id, x.user.user_name, count(x) from Action x group by x.user.id, x.user.user_name 
+<td>
+<td>Show the number of actions recorded for each user. (With both the  numeric and symbolic id being shown for each user).
+
+
+<tr>
 <th colspan=3>The <tt>PresentedList</tt> table
 <tr><td colspan=3>Each  <tt>PresentedList</tt> object corresponds to an actual screen shown to a user. Each individual article in the list is described as an entry in the <tt>PresentedListEntry</tt> table.
 <tr>

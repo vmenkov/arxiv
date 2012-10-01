@@ -258,6 +258,15 @@ public class ViewSuggestions extends PersonalResultsBase {
 	IndexSearcher searcher = new IndexSearcher( reader );
 	int M = 10; //page size
 	
+	// The list (possibly empty) of pages that the user does
+	// not want ever shown 
+	HashMap<String, Action> exclusions = 
+	    (actor==null) ? new HashMap<String, Action>() :
+	    actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
+
+
+
+
 	if (onTheFly) {
 	    // simply generate and use cat search results for now
 	    sr = catSearch(searcher);    
@@ -274,7 +283,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    // simply read the artcile IDs and scores from the file
 	    sr = new SearchResults(df, searcher);
 	}
-	sr.setWindow( searcher, startat, M, null);
+	sr.setWindow( searcher, startat, M, exclusions);
 	ArticleEntry.applyUserSpecifics(sr.entries, actor);
 	
 	// In docs to be displayed, populate other fields from Lucene

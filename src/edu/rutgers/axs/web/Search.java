@@ -36,7 +36,7 @@ public class Search extends ResultsBase {
     static final String DAYS="days",
 	SIMPLE_SEARCH="simple_search", USER_CAT_SEARCH="user_cat_search";
 
-    /** The web interface to various searches My.ArXiv carries out
+    /** The web interface to various searches that My.ArXiv can carry out
       over its own Lucene article repository. In the user_cat_search
       mode, it retrieves all recent articles from the user's
       categories of interest. Otherwise, a user-entered query is
@@ -94,8 +94,13 @@ public class Search extends ResultsBase {
 	    IndexReader reader = Common.newReader();
 	    IndexSearcher searcher = new IndexSearcher( reader);
 
-	    // "Window" size (how many results are displayed on one screen)
-	    final int M=25;
+	    // "Display window" size (how many results are displayed on one screen)
+	    //	    final int M=25;
+	    final int M=10;
+
+	    int maxlen = ( user_cat_search ? 10000 : 100);
+	    int necessary = startat + M + exclusions.size() + 1;
+	    if (maxlen <= necessary) maxlen = necessary;
 	    
 	    if (user_cat_search) {
 		String[] cats = u.getCats().toArray(new String[0]);
@@ -103,7 +108,6 @@ public class Search extends ResultsBase {
 		if (days<=0) days = DEFAULT_DAYS;
 		days = getInt( DAYS, days);
 		Date since = SearchResults.daysAgo( days );
-		int maxlen = 10000;
 		sr = new SubjectSearchResults(searcher, cats, since, maxlen);
 		if (sr.scoreDocs.length>=maxlen) {
 		    String msg = "Catsearch: At least, or more than, " + maxlen + " results found; displayed list may be incomplete";
@@ -112,7 +116,6 @@ public class Search extends ResultsBase {
 		}
 		sr.reorderCatSearchResults(reader, cats, since);
 	    } else {
-		int maxlen = startat + M;
 		sr  = new TextSearchResults(searcher, query,  maxlen);
 	    }
 	    sr.setWindow( searcher, startat, M, exclusions);

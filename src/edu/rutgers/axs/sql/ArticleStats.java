@@ -6,8 +6,6 @@ import java.text.*;
 import java.net.*;
 import javax.persistence.*;
 
-//import org.apache.openjpa.persistence.jdbc.Unique;
-//import org.apache.openjpa.persistence.jdbc.Index;
 import org.apache.openjpa.persistence.jdbc.*;
 
 import org.apache.lucene.index.*;

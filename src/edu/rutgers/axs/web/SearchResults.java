@@ -210,7 +210,12 @@ public class  SearchResults {
 	
 	entries.setSize(0);  // just in case something's in already
 	int pos = startat+1;
-	for(int i=startat; i< scoreDocs.length && i<nextstart; i++) {
+	//	for(int i=startat; i< scoreDocs.length && i<nextstart; i++) {
+
+	int prevSkipped = 0;
+	for(int i=0; 
+	    i< scoreDocs.length && (prevSkipped < startat || entries.size() < M); i++) {
+
 	    int docno=scoreDocs[i].doc;
 	    Document doc = searcher.doc(docno);
 	    
@@ -219,6 +224,8 @@ public class  SearchResults {
 	    if (exclusions!=null && exclusions.containsKey(aid)) {
 		int epos = excludedEntries.size()+1;
 		excludedEntries.add( new ArticleEntry(epos, doc, docno, scoreDocs[i].score));
+	    } else if ( prevSkipped < startat ) {	
+		prevSkipped ++;
 	    } else {
 		entries.add( new ArticleEntry(pos, doc, docno, scoreDocs[i].score));
 		pos++;

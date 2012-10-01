@@ -35,7 +35,7 @@ for user
 <%   } else {
 
      if (!main.force && main.upro!=null) {      
-       long since = main.actor.getLastActionId() -main.df.getLastActionId();
+       long since = main.allOpCnt -main.reflectedOpCnt;
 %>
 
 
@@ -45,8 +45,9 @@ for user
 <p>Profile generation method: <%=main.df.getType() %> 
 (<%=main.df.getType().description() %>)
 
-<p>This profile reflects <%= main.df.getLastActionId() %> operations recorded in the user's 
-<a href="<%=main.viewActionsLink()%>">activity log</a>. There have been <%= since %> user activity operations recorded since.
+<p>This profile reflects  <%= main.reflectedOpCnt %> operations recorded in the user's 
+<a href="<%=main.viewActionsLink()%>">activity log</a> (operation id thru 
+ <%= main.df.getLastActionId() %>). There have been <%= since %> user activity operations recorded since.
 
 <% if (main.df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE && 
        main.ancestor!=null ) {
@@ -82,6 +83,7 @@ href="<%=main.viewLatestProfileLink()%>">click here</a>.
 <form action="viewSuggestions.jsp">
 <input type="hidden" name="<%=main.USER_NAME%>" value="<%=main.actorUserName%>">
 <input type="hidden" name="<%=main.BASEDON%>" value="<%=main.df.getThisFile() %>">
+<input type="hidden" name="<%=main.EXPERT%>" value="<%=main.expert %>">
 <input type="radio" name="<%=main.MODE%>" 
 value="<%=DataFile.Type.LINEAR_SUGGESTIONS_1%>" checked> - linear similarity
 <br>

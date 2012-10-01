@@ -30,10 +30,10 @@ public class ViewUserProfile extends PersonalResultsBase {
      */
     public DataFile ancestor =null;
 
-
-
     /** The currently recorded last action id for the user in question */
     public long actorLastActionId=0;
+
+    public long reflectedOpCnt=0, allOpCnt=0;
 
     public DataFile.Type mode = DataFile.Type.USER_PROFILE;
 
@@ -63,6 +63,9 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    } else {
 		df = DataFile.getLatestFile(em, actorUserName, mode);
 	    }
+
+	    allOpCnt = actor.actionCnt( em);
+	    reflectedOpCnt = actor.actionCnt( em, df.getLastActionId());
 
 	    Task.Op op = mode.producerFor();
 	    List<Task> tasks = 
@@ -130,4 +133,19 @@ public class ViewUserProfile extends PersonalResultsBase {
 	}
     }
 
+    /** How many operations have been recorded for a given user? */
+    /*
+    static private int actionCnt(EntityManager em, String actorUserName, long maxId) {
+	String qs= "select count(a) from Action a where a.id<=:m and a.user.user_name=:u";
+	Query q = em.createQuery(qs);
+	
+	q.setParameter("u",actorUserName );
+	q.setParameter("m",  maxId);
+
+	try {
+	    Object o = q.getSingleResult();
+	    return ((Number)o).intValue();
+	} catch(Exception ex) { return 0; }
+    }
+    */
 }
