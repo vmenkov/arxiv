@@ -273,6 +273,13 @@ import edu.rutgers.axs.web.Tools;
     public void setDays( int x) { days = x; }
  
 
+    /** This exclusion only applies to suggestion lists, not to search results */
+    @Basic @Display(order=13, alt="Exclude already-viewed articles from the list of recommendations")
+        @Column(nullable=false) boolean excludeViewedArticles;
+    public  boolean getExcludeViewedArticles() { return excludeViewedArticles; }
+    public void setExcludeViewedArticles( boolean x) { excludeViewedArticles = x; }
+
+
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	    return true; 
     }

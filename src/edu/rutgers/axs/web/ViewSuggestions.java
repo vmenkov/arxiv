@@ -262,9 +262,9 @@ public class ViewSuggestions extends PersonalResultsBase {
 	// not want ever shown 
 	HashMap<String, Action> exclusions = 
 	    (actor==null) ? new HashMap<String, Action>() :
+	    actor.getExcludeViewedArticles()?
+	    actor.getActionHashMap() :
 	    actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
-
-
 
 
 	if (onTheFly) {

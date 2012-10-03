@@ -27,7 +27,7 @@
 
 <p>
 <ul>
-<li><a href="editUserFormSelf.jsp">Modify your account information</a></li>
+<li><a href="editUserFormSelf.jsp">Modify your account information</a> - here you can change various settings that control what articles are recommended to you</li>
 </ul>
 </p>
 
@@ -36,7 +36,7 @@
 <ul>
 <li><a href="viewFolder.jsp">Your personal folder</a>
 <li><a href="viewActionsSelf.jsp">Your browsing activity history</a>
-<li><a href="viewRankedPages.jsp">Pages ranked based on your actions</a>
+<li><a href="viewRankedPages.jsp">Articles ranked based on your actions</a>
 <li><a href="viewUserProfile.jsp?mode=TJ_ALGO_2_USER_PROFILE">User profile</a> - the current "iteration" of Algorithm 2 (based on the user profile on which the last Algo 1 suggestion list was generated, with updates based on the user's activity since then.)
 (This page also has a link to the sugg list based on this profile)
 <li><a href="viewUserProfile.jsp?mode=USER_PROFILE"><!--?expert=false-->User profile</a> - weighted list of terms from the articles you've interacted with. (This is directly derived from the entire history; it is <em>not</em> currently used for the main-page suggestion list.)
@@ -48,7 +48,7 @@
 <h2>Recommendation lists</h2>
 
 <p>
-Various algorithms for finding pages possibly interesting to you.
+Various algorithms for finding articles possibly interesting to you.
 </p>
 
 <p>

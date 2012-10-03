@@ -297,7 +297,7 @@ through <%= sr.entries.lastElement().i %> are shown below.
 <% 
 for( ArticleEntry e: sr.entries) { %>
 <%= main.resultsDivHTML(e) %>	
-		<% }%>		
+<% }%>		
 
 	 <!-- Links to prev/next pages, if necessary -->
 
@@ -307,8 +307,22 @@ for( ArticleEntry e: sr.entries) { %>
 	 if (sr.needNext) { %>	
 	<a href="<%= main.repageUrl(sr.nextstart) %>">[NEXT PAGE]</a> 	 
 	<% }	 %>
-		<% if (sr.excludedEntries.size()>0) { %>
-		<div><small>We have excluded <%=sr.excludedEntries.size()%> articles from the list, because you have earlier asked not to show them anymore.</small></div>
+
+		<% 
+		boolean excludeViewed = (main.actor != null && main.actor.getExcludeViewedArticles());
+		if (sr.excludedEntries.size()>0) { %>
+		<div><small><p>We have excluded <%=sr.excludedEntries.size()%> articles from the list <%= sr.needPrev? "(including previous pages)": ""%>, 
+		<% if (excludeViewed) { %>
+because you have earlier asked not to show them anymore, or because you have already viewed them. To see the complete list of the pages you've viewed or judged, please refer to your <a href="personal/viewActionsSelf.jsp">history</a>.</p> 
+
+<p>Note: Presently, already-viewed pages are excluded from the  the recommendation list. You can choose to have them shown. To do this, go to your  <a href="personal/editUserFormSelf.jsp">settings</a> and toggle the "exclude already-viewed articles" flag.</p> 
+
+<%		} else { %>
+because you have earlier asked not to show them anymore.</p>
+
+<p>Note: You can choose not to have already-viewed pages removed from your recommendation lists. To do this, go to your  <a href="personal/editUserFormSelf.jsp">settings</a> and toggle the "exclude already-viewed articles" flag.</p> 
+	        <% } %>
+</small></div>
 		<% } 
  } %>
 
