@@ -36,6 +36,7 @@
 <ul>
 <li><a href="viewFolder.jsp">Your personal folder</a>
 <li><a href="viewActionsSelf.jsp">Your browsing activity history</a>
+<li><a href="viewActionsSelfDetailed.jsp">Your browsing activity history</a> - detailed
 <li><a href="viewRankedPages.jsp">Articles ranked based on your actions</a>
 <li><a href="viewUserProfile.jsp?mode=TJ_ALGO_2_USER_PROFILE">User profile</a> - the current "iteration" of Algorithm 2 (based on the user profile on which the last Algo 1 suggestion list was generated, with updates based on the user's activity since then.)
 (This page also has a link to the sugg list based on this profile)

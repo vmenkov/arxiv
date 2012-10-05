@@ -265,6 +265,17 @@ public class ArticleEntry {
 	markRatings(entries, u.getActionHashMap(Action.ratingOps));
     }
 
+    /** Appends an extra text to the article's comment line.  This is a somewhat cludgy
+	way to add extra information to the display formatted in a standard way.
+
+	FIXME: It would be better to have a separate field besides
+	commline, so that the formatting can be more flexible.
+     */
+    void appendComment(String s) {
+	if (commline==null) commline="";
+	commline += (commline.length()==0? "" : " ") + s;
+    }
+
  
 
 }

@@ -48,12 +48,7 @@ public class ViewFolder extends ResultsBase {
 		return;
 	    }
 
-	    IndexSearcher s=null; 
-
-	    try {
-		s =  new IndexSearcher( Common.newReader() );
-	    } catch(Exception ex) {}
-
+	    IndexSearcher s=  new IndexSearcher( Common.newReader() );
 	    int cnt=0;
 
 	    HashMap<String, Action> folder = actor.getFolder();
@@ -63,8 +58,7 @@ public class ViewFolder extends ResultsBase {
 		ArticleEntry e=
 		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt+1);
 		// A somewhat cludgy way of presenting the added-to-folder date
-		if (e.commline==null) e.commline="";
-		e.commline += " (Added to my folder on " + m.getTime() + ")";
+		e.appendComment( "(Added to my folder on " + m.getTime() + ")");
 		entries.add(e); 
 		cnt++;
 	    }

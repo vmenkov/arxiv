@@ -129,9 +129,12 @@ import java.lang.reflect.*;
 	     search tool; or a "view abstract" page reached from the
 	     above. */
 	    SEARCH,
-	    /** User's own personal folderl; or a "view abstract" page reached from the
+	    /** User's own personal folder; or a "view abstract" page reached from the
 	     above. */
 	    FOLDER,
+	    /** User's own history page; or a "view abstract" page reached from the
+	     above. */
+	    HISTORY,
 	    /** Some kind of page (probably, "view abstract") reached as
 		a result of the user's own free browsing via arxiv.org,
 		served via My.ArXiv.org/arxiv/FilterServlet

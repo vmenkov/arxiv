@@ -3,13 +3,16 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-//import java.lang.reflect.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 
 import javax.persistence.*;
 
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
+
+import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 
 /** Retrieves the action history of a user.
@@ -21,8 +24,6 @@ public class ViewActions extends ResultsBase {
 
     public Vector<Action> list = new Vector<Action>();
     public Vector<EnteredQuery> qlist = new Vector<EnteredQuery>();
-
-    //final public static String USER_NAME = "user_name";
 
     public ViewActions(HttpServletRequest _request, HttpServletResponse _response, boolean self) {
 	super(_request,_response);
@@ -56,4 +57,46 @@ public class ViewActions extends ResultsBase {
 	}
     }
 
+    /** This is only loaded if you call loadArticleInfo(). */
+    public Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
+
+    /** Get ArticleEntry instances for all pages, for more detailed
+     * and user-friendly display,
+     */
+    public void loadArticleInfo() {
+	if (error) return; // won't do!
+	EntityManager em = sd.getEM();
+	try {
+
+	    IndexSearcher s=  new IndexSearcher( Common.newReader() );
+	    int cnt=0;
+	    for( Action m:  list) {
+		ArticleEntry e=
+		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt+1);
+		// A somewhat cludgy way of presenting the added-to-folder date
+		e.appendComment( "(" + m.getOp() + " at " + m.getTime() + ")");
+		entries.add(e); 
+		cnt++;
+	
+	    }
+ 
+
+	}  catch (Exception _e) {
+	    setEx(_e);
+	} finally {
+	    em.close(); 
+	}
+    }
+
+
+    /** Overrides the method in ResultsBase */
+    void customizeSrc() {
+	asrc= new ActionSource( Action.Source.HISTORY, 0);
+    }
+
+
+
+    public String resultsDivHTML(ArticleEntry e) {
+	return resultsDivHTML( e, true);
+    } 
 }
