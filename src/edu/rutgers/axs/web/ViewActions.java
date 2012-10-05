@@ -97,6 +97,6 @@ public class ViewActions extends ResultsBase {
 
 
     public String resultsDivHTML(ArticleEntry e) {
-	return resultsDivHTML( e, true);
+	return resultsDivHTML( e, true, 0);
     } 
 }

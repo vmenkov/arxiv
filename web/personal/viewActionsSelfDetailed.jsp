@@ -32,8 +32,6 @@
 <script type="text/javascript" src="../scripts/buttons_control.js"></script>
 
 
-
-
 </head>
 <body>
 
@@ -45,6 +43,11 @@
 <p>
 
 <h2>Page interactions recorded</h2>
+
+<p>This list contains the list of your actions (article views,
+ratings, etc) on My.ArXiv, in reverse chronological order (most recent
+first). All actions, even clicking the "Don't show this article again" button are shown here, for your ccmplete reference.
+</p>
 
 <%
 	for(int i=main.list.size()-1; i>=0; i--) {
