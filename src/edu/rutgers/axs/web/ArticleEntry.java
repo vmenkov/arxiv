@@ -23,6 +23,8 @@ public class ArticleEntry {
     public String id;
     /** Various metadata, in a printable form. */
     public String idline, titline, authline, commline, subjline;
+    /** A line that our own server may add in some circumstances (for rendering with additional info) */
+    public String ourCommline="";
     /** True if this article is in the user's personal folder */
     public boolean isInFolder=false;
     /** The most recent rating, if any, given by the user to this article. */
@@ -272,8 +274,8 @@ public class ArticleEntry {
 	commline, so that the formatting can be more flexible.
      */
     void appendComment(String s) {
-	if (commline==null) commline="";
-	commline += (commline.length()==0? "" : " ") + s;
+	if (ourCommline==null) ourCommline="";
+	ourCommline += (ourCommline.length()==0? "" : " ") + s;
     }
 
  
