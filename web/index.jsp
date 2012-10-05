@@ -313,7 +313,7 @@ for( ArticleEntry e: sr.entries) { %>
 		if (sr.excludedEntries.size()>0) { %>
 		<div><small><p>We have excluded <%=sr.excludedEntries.size()%> articles from the list <%= sr.needPrev? "(including previous pages)": ""%>, 
 		<% if (excludeViewed) { %>
-because you have earlier asked not to show them anymore, or because you have already viewed them. To see the complete list of the pages you've viewed or judged, please refer to your <a href="personal/viewActionsSelf.jsp">history</a>.</p> 
+because you have earlier asked not to show them anymore, or because you have already viewed them. To see the complete list of the pages you've viewed or rated, please refer to your <a href="personal/viewActionsSelfDetailed.jsp">activity history</a>.</p> 
 
 <p>Note: Presently, already-viewed pages are excluded from the  the recommendation list. You can choose to have them shown. To do this, go to your  <a href="personal/editUserFormSelf.jsp">settings</a> and toggle the "exclude already-viewed articles" flag.</p> 
 

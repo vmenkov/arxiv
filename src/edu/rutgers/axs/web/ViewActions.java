@@ -14,6 +14,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.html.*;
 
 /** Retrieves the action history of a user.
  */
@@ -68,6 +69,7 @@ public class ViewActions extends ResultsBase {
 	EntityManager em = sd.getEM();
 	try {
 
+	    actor = User.findByName(em, actorUserName);
 	    IndexSearcher s=  new IndexSearcher( Common.newReader() );
 	    int cnt=0;
 	    for( Action m:  list) {
@@ -79,6 +81,15 @@ public class ViewActions extends ResultsBase {
 		cnt++;
 	
 	    }
+
+
+	    // Mark pages currently in the user's folder, or rated by the user
+	    ArticleEntry.markFolder(entries, actor.getFolder());
+	    ArticleEntry.markRatings(entries, actor.getActionHashMap(Action.ratingOps));
+
+	    // Do NOT remove "excluded" pages for this display!
+	    //ArticleEntry.applyUserSpecifics(entries, actor);
+
  
 
 	}  catch (Exception _e) {
@@ -97,6 +108,6 @@ public class ViewActions extends ResultsBase {
 
 
     public String resultsDivHTML(ArticleEntry e) {
-	return resultsDivHTML( e, true, 0);
+	return resultsDivHTML( e, true, RatingButton.NEED_FOLDER);
     } 
 }

@@ -12,7 +12,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
-<<link rel="icon" type="image/x-icon" href="../favicon.ico" />
+<link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <title>Interaction history for user <%= main.actorUserName %>
 </title>
 
@@ -46,7 +46,7 @@
 
 <p>This list contains the list of your actions (article views,
 ratings, etc) on My.ArXiv, in reverse chronological order (most recent
-first). All actions, even clicking the "Don't show this article again" button are shown here, for your ccmplete reference.
+first). All actions, even clicking the "Don't show this article again" button are shown here, for your complete reference.
 </p>
 
 <%
