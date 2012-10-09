@@ -327,26 +327,6 @@ public class ViewSuggestions extends PersonalResultsBase {
 	return s;
     }
 
-    /** Generates a URL for a page similar to the currently viewed one,
-	but showing a different section of the result list.
-
-	@param startat The value for the "startat" param in the new page's 
-	URL.
-     */
-    public String repageUrl(int startat) {
-	String sp = request.getServletPath();
-	String qs0=request.getQueryString();
-	if (qs0==null) qs0="";
-
-	Pattern p = Pattern.compile("\\b"+ STARTAT + "=\\d+");
-	Matcher m = p.matcher(qs0);
-	String rep = STARTAT + "=" + startat;
-	String qs = m.find()?  m.replaceAll( rep ) :
-	    qs0 + (qs0.length()>0 ?  "&" : "") + rep;
-	String x = cp + sp + "?" + qs;
-	return x;
-    }
-
     /** Wrapper for the same method in ResultsBase. */
     public String resultsDivHTML(ArticleEntry e) {
 	return resultsDivHTML(e, isSelf);

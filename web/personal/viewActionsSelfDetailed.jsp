@@ -7,7 +7,6 @@
    main.loadArticleInfo();
    User actor = main.actor;
 %>
-
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -35,29 +34,49 @@
 </head>
 <body>
 
-<h1>Interaction history for user <em><%= main.actorUserName %></em>
+<h1>Page interaction history for user <em><%= main.actorUserName %></em>
 </h1>
 
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else {      %>
 <p>
 
-<h2>Page interactions recorded</h2>
-
 <p>This list contains the list of your actions (article views,
 ratings, etc) on My.ArXiv, in reverse chronological order (most recent
 first). All actions, even clicking the "Don't show this article again" button are shown here, for your complete reference.
 </p>
 
+	 <!-- Links to prev/next pages, if necessary -->
+<p>
+<% if (main.needPrev) {	%> 
+<a href="<%= main.repageUrl(main.prevstart) %>">[PREV PAGE (LATER)]</a> 
+<% } else { %> [THIS IS THE TOP OF THE LIST] <% } 	
+ if (main.needNext) { %>	
+<a href="<%= main.repageUrl(main.nextstart) %>">[NEXT PAGE (EARLIER)]</a>
+<% }	 %>
+</p>
+
+<p>
 <%
-	for(int i=main.list.size()-1; i>=0; i--) {
-	Action a =  main.list.elementAt(i);
+	for(int i=0; i<main.entries.size(); i++) {
 	ArticleEntry e = main.entries.elementAt(i);
 %>
 <%= main.resultsDivHTML(e) %>	
 <% } %>
+</p>
+
+	 <!-- Links to prev/next pages, if necessary -->
+<p>
+<% if (main.needPrev) {	%> 
+<a href="<%= main.repageUrl(main.prevstart) %>">[PREV PAGE (LATER)]</a> 
+<% }
+ if (main.needNext) { %>	
+<a href="<%= main.repageUrl(main.nextstart) %>">[NEXT PAGE (EARLIER)]</a>
+<% } else { %> [THIS IS THE END OF THE LIST] <% } 	%>
+</p>
 
 
+<!--
 <h2>Queries recorded</h2>
 
 <table border=1>
@@ -66,9 +85,12 @@ first). All actions, even clicking the "Don't show this article again" button ar
 	for(int i=0; i<main.qlist.size(); i++) {
 	EnteredQuery a =  main.qlist.elementAt(i);
 %>
-	<%= Reflect.htmlRow(a, true, false) %>
+-->
+	<!-- %= Reflect.htmlRow(a, true, false) % -->
+<!--
  <%  }  %>
 </table></p>
+-->
 
 <hr> <p>System message: <%= main.infomsg%> </p> <% } %>
 

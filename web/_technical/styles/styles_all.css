@@ -3,7 +3,7 @@
 html {
 margin:0px;
 padding:0px;
-width:100%;
+width:100%; 
 height:100%;
 
 font-family: Arial, sans-serif;
@@ -13,7 +13,10 @@ font-size:0.8em;
 
 body {
 position:absolute;
-overflow:hidden;
+/* The overflow:hidden line seems to have been preventing scrolling in Chrome
+ (VM, 2012-10-08) */
+/* overflow:hidden;  */ 
+overflow:auto;  
 width:100%;
 height:100%;
 
@@ -30,7 +33,7 @@ text-align:justify;
 
 #upper_frame {
 position: absolute;
-overflow:hidden;
+overflow:hidden; 
 
 left:0;
 top:0;
@@ -133,7 +136,8 @@ position: absolute;
 overflow:auto;
 
 top:75px;
-bottom:18px;
+/* bottom:18px; */ /* Reduced to 0px after the deletion of the uselsss lower frame. VM, 2012-10-09 */
+bottom:0px;
 left:0;
 right:0;
 
@@ -147,7 +151,7 @@ background:none;
 #lower_frame {
 position:absolute;
 
-overflow:hidden;
+/* overflow:hidden; */
 
 left:0;
 bottom:0;

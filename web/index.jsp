@@ -119,7 +119,7 @@ window.onload = StartScripts;
 <div id="upper_frame">
 
 	<!-- <div id="MenuPos" style="position:absolute; left: 86px; top: 42px; z-index:5000;"></div> -->
-	<img src="_technical/images/bar-rutgers.jpg" style="border:none; width:1000px; height:75px; position:absolute; top:0px; left:0px;" alt="" />
+	<img src="_technical/images/bar-rutgers.jpg" style="border:none; width:100%; height:75px; position:absolute; top:0px; left:0px;" alt="" />
 	<div style="position:absolute; top:10px; left:10px; font-size:4em; font-weight:bold; text-shadow: 2px 2px 2px #000; right: 813px;"><a href="index.jsp"><span style="color:#CCCCCC; font-weight:normal;">my:</span><span style="color:#FFFFFF">arXiv</span></a></div>
 	
 	<div style="width:100%; text-align:center; position:relative; top:25px;">
@@ -135,15 +135,11 @@ window.onload = StartScripts;
 	<!-- <img src="../images/face.jpg" style="border:none; position:absolute; left:0px; top:5px;" alt="" /> -->
 	<div id="layer_page_title" style="z-index: 10">
 		<!-- #BeginEditable "Page_Title" -->
-
 		
 		<div id="status" style="position: absolute; right: 65px; top: 2px;">
 		  <icd:YouAre/>
 		  </div>
-		  <!-- this has been moved inside the tag, icd:YouAre -->
-		  <!-- div class="button_div" style="position: absolute; right: -8px; top: 0px; width: 65px; height: 15px;">
-			<a href="participation.html" target="_self">More Info</a></div -->
-
+	
 		<!-- #EndEditable -->
 		</div>
 	
@@ -403,9 +399,7 @@ includes (see <a href="FilterServlet/new/stat.html">detailed description</a>): <
 	
 	</div> <!-- Middle frame ends-->
 
-<div id="lower_frame">
-	
-</div> <!-- Lower frame ends -->		
+<!-- Lower frame deleted -->		
 
 <!-- #BeginEditable "Scripts" -->
 <!-- #EndEditable -->

@@ -21,6 +21,7 @@ public class LoginServlet extends HttpServlet {
 	String p= request.getParameter("j_password");
 	String sp =  request.getParameter("sp");
 	String qs =  request.getParameter("qs");
+	if (qs!=null && qs.equals("null")) qs=null;
 	String remember = request.getParameter("remember");
 	
 	//boolean error = false;

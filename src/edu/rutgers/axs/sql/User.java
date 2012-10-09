@@ -349,7 +349,7 @@ import edu.rutgers.axs.web.Tools;
     /** User's article-related "actions", such as viewing an article's abstract
         or making a judgment on an article */
     @OneToMany(cascade=CascadeType.ALL)
-        private Set<Action> actions = new LinkedHashSet<Action>();
+        private LinkedHashSet<Action> actions = new LinkedHashSet<Action>();
 
     public Set<Action> getActions() {
         return actions;

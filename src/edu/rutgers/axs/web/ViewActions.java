@@ -26,10 +26,17 @@ public class ViewActions extends ResultsBase {
     public Vector<Action> list = new Vector<Action>();
     public Vector<EnteredQuery> qlist = new Vector<EnteredQuery>();
 
+    /** List scrolling */
+    public int startat = 0;
+
+    static final int M = 25;
+
+
     public ViewActions(HttpServletRequest _request, HttpServletResponse _response, boolean self) {
 	super(_request,_response);
 
 	actorUserName = self ? user :  getString(USER_NAME, null);
+	startat = (int)Tools.getLong(request, STARTAT,0);
 
 	EntityManager em = sd.getEM();
 	try {
@@ -44,11 +51,15 @@ public class ViewActions extends ResultsBase {
 		return;
 	    }
 
-	    for (Action m : actor.getActions()) {
-		list.add(m);
+	    // reverse order. There is an assumption here that the
+	    // elements of the set will be retrieved in the ID order.
+	    Action[] ar =actor.getActions().toArray(new Action[0]); 
+	    for (int i=ar.length-1; i>=0; i--) {
+		list.add(ar[i]);
 	    }
-	    for (EnteredQuery m : actor.getQueries()) {
-		qlist.add(m);
+	    EnteredQuery[] eqr = actor.getQueries().toArray(new EnteredQuery[0]); 
+	    for (int i=eqr.length-1; i>=0; i--) {
+		qlist.add(eqr[i]);
 	    }
 
 	}  catch (Exception _e) {
@@ -57,6 +68,11 @@ public class ViewActions extends ResultsBase {
 	    em.close(); 
 	}
     }
+
+    /** Links to prev/next pages; only applies to the "entries" array */
+    public int prevstart, nextstart;
+    public boolean needPrev=false, needNext=false;
+    
 
     /** This is only loaded if you call loadArticleInfo(). */
     public Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
@@ -72,14 +88,25 @@ public class ViewActions extends ResultsBase {
 	    actor = User.findByName(em, actorUserName);
 	    IndexSearcher s=  new IndexSearcher( Common.newReader() );
 	    int cnt=0;
-	    for( Action m:  list) {
-		ArticleEntry e=
-		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt+1);
-		// A somewhat cludgy way of presenting the added-to-folder date
-		e.appendComment( "(" + m.getOp() + " at " + m.getTime() + ")");
-		entries.add(e); 
-		cnt++;
+
+	    prevstart = Math.max(startat - M, 0);
+	    nextstart = startat + M;
+	    needPrev = (prevstart < startat);
 	
+	    for( Action m:  list) {
+		if (cnt < startat) {
+		    // skip
+		} else if (cnt < startat + M) {
+		    ArticleEntry e=
+			ArticleEntry.getArticleEntry( s, m.getArticle(), list.size()-cnt);
+		    // A somewhat cludgy way of presenting the added-to-folder date
+		    e.appendComment( "(Your action: '" + m.getOp() + "' at " + m.getTime() + ")");
+		    entries.add(e); 
+		} else {
+		    needNext = true;
+		    break;
+		}
+		cnt++;       
 	    }
 
 
