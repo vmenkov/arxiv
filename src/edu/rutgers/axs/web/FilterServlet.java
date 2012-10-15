@@ -631,8 +631,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    sb = new StringBuffer();
 		    s = sb.toString();
 		    m.appendReplacement(sb, m.group(0));
-		    String msg = "<div>" + 
-			"Please note: You are browsing arxiv.org via My.arXiv, "+
+		    String msg = "<div style=\"border:1px;color:#00FF00;position:fixed\">" + 
+			"Please note: You are now browsing arxiv.org via My.arXiv, "+
 			(user==null? "anonymously" : "as user <em>" + user + "</em>") +
 			". You can return to the <a href=\""+cp+"\">My.arXiv main page</a>." + 
 			"</div>";

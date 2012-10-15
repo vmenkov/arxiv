@@ -31,6 +31,9 @@ public class ExtendedSessionManagement {
 	and adds the pertinent information to the user record. This method
 	should be called inside a transaction, and followed by a "persist"
 	call.
+
+	@param u The user record. Information about the new session will be added to this record by this method.
+	@return The new cookie, to be sent to the user agent
     */
     static Cookie makeCookie(User u) {
 	final int maxSec = 3600 * maxHours;
@@ -52,6 +55,10 @@ public class ExtendedSessionManagement {
 	Cookie cookie=new Cookie(COOKIE_NAME, val);
 	cookie.setMaxAge( maxSec); // max age in seconds
 	cookie.setPath("/");
+
+	Logging.info("Created cookie for user " + u.getUser_name() + " ["+val+"]; tmp pass encoded as " + x);
+
+
 	return cookie; 
     }
 
@@ -64,6 +71,7 @@ public class ExtendedSessionManagement {
 
     /** Checks if the cookie identifies a still-valid extended session, 
 	and if so, returns the pertinent User instance.
+	@param cookie The cookie received by the server from the user agent
 	@return A User object, or null if there is no valid extended session. */
     static User getValidEsUser( EntityManager em, Cookie cookie) {
 	if (cookie==null) return null;
@@ -71,6 +79,9 @@ public class ExtendedSessionManagement {
 	if (val==null) return null;
 	String[] z = val.split(":");
 	if (z.length!=2) return null;
+
+	Logging.info("received cookie: ["+val+"]");
+
 	String uname = z[0];
 	try {
 	    uname=URLDecoder.decode(uname, "UTF-8");
@@ -81,7 +92,7 @@ public class ExtendedSessionManagement {
 	User u = User.findByName(em, uname);
 	String storedEncPass = u.getEncEsPass();
 	if (storedEncPass == null || !encPass.equals(storedEncPass)) {
-	    Logging.info("Extended session password mismatch; ignoring cookie");
+	    Logging.info("Extended session password mismatch (stored="+storedEncPass+", cookie has="+z[1]+", which encrypts to "+encPass+"); ignoring cookie");
 	    return null;
 	}
 	Date expiration = u.getEsEnd();
