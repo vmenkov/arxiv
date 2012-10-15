@@ -101,12 +101,12 @@ window.onload = StartScripts;
 </div>
 
 
-<div id="middle_frame">
+<div id="search_results_frame">
 
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else {      %>
 	
-		<div id="wrapping"> 
+		<!--div id="wrapping"--> 
 		<!-- #BeginEditable "Body" -->	
 	
 		<h1>Search Results</h1>
@@ -139,7 +139,7 @@ window.onload = StartScripts;
 
 		<!-- #EndEditable -->	
 <icd:RU/>
-	</div> <!-- Wrapping -->
+	<!--/div--> <!-- Wrapping -->
 
 <% }     %>	
 

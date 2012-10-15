@@ -154,12 +154,12 @@ window.onload = StartScripts;
 </div>
 
 
-<div id="middle_frame">
+<!-- div id="middle_frame" -->
 	
-  <div id="wrapping"> 
+  <!-- div id="wrapping" --> 
     <!-- #BeginEditable "Body" -->	
     
-    <h1>arXiv</h1>
+    <!--h1>arXiv</h1-->
     <div id="left_frame">
 
   <h2>Personalization tools</h2>
@@ -225,7 +225,7 @@ window.onload = StartScripts;
     </div>
     <!-- Left Frame -->
 
-    <div id="right_frame" style="padding-top: 0px;">
+    <div id="right_frame">
   <% if (main.user!=null) { 
 %>
     
@@ -395,9 +395,9 @@ includes (see <a href="FilterServlet/new/stat.html">detailed description</a>): <
 		<!-- Right Frame -->
 	
 		<!-- #EndEditable -->	
-	</div> <!-- Wrapping -->
+	<!-- /div --> <!-- Wrapping -->
 	
-	</div> <!-- Middle frame ends-->
+	<!-- /div --> <!-- Middle frame ends-->
 
 <!-- Lower frame deleted -->		
 
