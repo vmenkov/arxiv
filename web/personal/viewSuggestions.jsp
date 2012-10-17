@@ -29,12 +29,7 @@
 <meta http-equiv="Content-Style-Type" content="text/css" />
 
 <link rel="stylesheet" type="text/css" href="../_technical/styles/styles_all.css" />
-<!--[if lte IE6]>
-<link rel="stylesheet" type="text/css" href="../_technical/styles/styles_ie.css" /><![endif]-->
 <link rel="stylesheet" type="text/css" href="../styles/results.css" />
-<!--[if IE]>
-<link rel="stylesheet" type="text/css" href="../styles/results_ie.css" />
-<![endif]-->
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
 
 <script type="text/javascript" src="../_technical/scripts/jquery.js"></script>

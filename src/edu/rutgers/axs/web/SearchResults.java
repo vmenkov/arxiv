@@ -13,7 +13,6 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-//import edu.rutgers.axs.recommender.ArticleAnalyzer;
 import edu.rutgers.axs.ParseConfig;
 
 /** A SearchResults object is designed to store (a page of) a list of

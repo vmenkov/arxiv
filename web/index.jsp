@@ -27,8 +27,7 @@
 <meta http-equiv="Content-Style-Type" content="text/css" />
 
 <link rel="stylesheet" type="text/css" href="_technical/styles/styles_all.css" />
-<!--[if lte IE6]>
-<link rel="stylesheet" type="text/css" href="_technical/styles/styles_ie.css" /><![endif]-->
+
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
 <script type="text/javascript" src="_technical/scripts/jquery.js"></script>
 <script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>
@@ -78,7 +77,7 @@ h2 {
 	border: 0px;
 }
 </style>
-<!--[if IE]>
+<!-- ***  [if IE]>
 <style type="text/css">
 #left_frame {
 	width: 195px;
@@ -94,7 +93,7 @@ h2 {
 	height: expression((document.getElementById('Right_Frame').offsetHeight - 47) + "px");
 }
 </style>
-<![endif]-->
+<[endif] ***  -->
 <script type="text/javascript">
 
 function StartScripts() { 
