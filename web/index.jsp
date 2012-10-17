@@ -175,7 +175,9 @@ window.onload = StartScripts;
 
       <a class="button" href="personal/viewFolder.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your personal folder</a>
 
-      <a class="button" href="personal/index.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your account and personalization tools </a>
+      <a class="button" href="personal/editUserFormSelf.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your account settings</a>
+      
+     <a class="button" href="personal/index.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>All personalization tools</a>
 
 
  <% } %>

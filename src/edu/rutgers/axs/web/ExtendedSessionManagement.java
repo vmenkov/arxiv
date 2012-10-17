@@ -16,6 +16,12 @@ import edu.rutgers.axs.sql.*;
     web server restart. This feature is used when the user checks the
     "remember me" button on login. The information is stored
     persistently in a User structure in the database,
+
+    <p>
+    FIXME: Since a new cookie (with a new single-use password) is generated 
+    every time a user tries to log in, and only one such single-use password 
+    is stored, a user cannot be logged in from more than one user agent at
+    once. 
  */
 public class ExtendedSessionManagement {
 
