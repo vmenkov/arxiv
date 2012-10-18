@@ -315,9 +315,9 @@ because you have earlier asked not to show them anymore, or because you have alr
 <p>Note: Presently, already-viewed pages are excluded from the  the recommendation list. You can choose to have them shown. To do this, go to your  <a href="personal/editUserFormSelf.jsp">settings</a> and toggle the "exclude already-viewed articles" flag.</p> 
 
 <%		} else { %>
-because you have earlier asked not to show them anymore.</p>
+because you have earlier asked not to show them anymore, or because you have moved them to your <a href="personal/viewFolder.jsp">personal folder</a>.</p>
 
-<p>Note: You can choose not to have already-viewed pages removed from your recommendation lists. To do this, go to your  <a href="personal/editUserFormSelf.jsp">settings</a> and toggle the "exclude already-viewed articles" flag.</p> 
+<p>Note: You can choose to have already-viewed pages removed from your recommendation lists. To do this, go to your  <a href="personal/editUserFormSelf.jsp">settings</a> and toggle the "exclude already-viewed articles" flag.</p> 
 	        <% } %>
 </small></div>
 		<% } 

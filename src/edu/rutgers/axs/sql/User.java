@@ -378,7 +378,8 @@ import edu.rutgers.axs.web.Tools;
 
     /** Returns the list of actions with the specified operations. For
 	each article, only the most recent action (of one of the
-	specified types) on that article is included.
+	specified types) on that article is included.  
+
 	@param ops List of specified operations. If null, all operations 
 	are included.
 	@return a HashMap with the article ID being a key, and the most recent operation (of one of the specified type) on that article being the value.
@@ -579,6 +580,22 @@ import edu.rutgers.axs.web.Tools;
     is interested in. */
     public String mkCatBoxes() {
 	return Categories.mkCatBoxes(this);
+    }
+
+    /** Given two Action maps, produce a union of sorts, each page being 
+	mapped to the more recent action applied to it.
+     */
+    public static HashMap<String, Action> union(  HashMap<String, Action> a,
+					    HashMap<String, Action> b) {
+	HashMap<String, Action> c = new HashMap<String, Action>(a);
+	for(String key: b.keySet()) {
+	    Action z = b.get(key);
+	    Action y = a.get(key);
+	    if (y==null || z.after(y)) {
+		c.put(key,z);
+	    }
+	}
+	return c;
     }
 
   

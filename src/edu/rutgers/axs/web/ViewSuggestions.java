@@ -259,13 +259,15 @@ public class ViewSuggestions extends PersonalResultsBase {
 	int M = 10; //page size
 	
 	// The list (possibly empty) of pages that the user does
-	// not want ever shown 
+	// not want ever shown.
+	// FIXME: strictly speaking, a positive rating should perhaps
+	// "cancel" a "Don't show again" request
 	HashMap<String, Action> exclusions = 
 	    (actor==null) ? new HashMap<String, Action>() :
 	    actor.getExcludeViewedArticles()?
 	    actor.getActionHashMap() :
-	    actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
-
+	    User.union(actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN}),
+		       actor.getFolder());
 
 	if (onTheFly) {
 	    // simply generate and use cat search results for now
@@ -306,8 +308,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	asrc= new ActionSource(srcType, plist.getId());
     }
     
-
-    private SearchResults catSearch(IndexSearcher searcher) throws Exception {
+     private SearchResults catSearch(IndexSearcher searcher) throws Exception {
 	int maxlen = 10000;
 	SearchResults bsr = 
 	    SubjectSearchResults.orderedSearch( searcher, actor, days, maxlen);

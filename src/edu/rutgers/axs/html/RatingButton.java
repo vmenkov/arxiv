@@ -10,12 +10,17 @@ import edu.rutgers.axs.sql.*;
     each article's info in various article lists (such as the search
     results list in search.jsp, or recommendation list in index.jsp).
     One must include scripts/buttons_control.js into each JSP file
-    that uses this class.  */
+    that uses this class. 
+
+    <p>
+    Button list, labels, and functionality updated on 2012-10-17, as per
+    an email exchange with Paul K and Thorsten.
+ */
 public class RatingButton //extends HTML
 {
    
     static final Action.Op[] ops = {Action.Op.INTERESTING_AND_NEW,
-		       Action.Op.INTERESTING_BUT_SEEN_TODAY,
+				    //Action.Op.INTERESTING_BUT_SEEN_TODAY,
 		       Action.Op.INTERESTING_BUT_KNOWN,
 		       Action.Op.USELESS};
 
@@ -35,16 +40,16 @@ public class RatingButton //extends HTML
 			 "Interesting and new",
 			 "Mark this document as interesting, relevant, and new.",
 			 "page_up.png"),
-	new RatingButton(Action.Op.INTERESTING_BUT_SEEN_TODAY,
-			 "Interesting, but seen today",
-			 "Mark this if you have already seen a similar interesting and relevant document during this search session.",
-			 "pages.png"),
+	//	new RatingButton(Action.Op.INTERESTING_BUT_SEEN_TODAY,
+	//			 "Interesting, but seen today",
+	//			 "Mark this if you have already seen a similar interesting and relevant document during this search session.",
+	//			 "pages.png"),
 	new RatingButton(Action.Op.INTERESTING_BUT_KNOWN,
 			 "Interesting, but known",
 			 "Mark this if document is interesting, but contains known information.",
 			 "page_ok.png"),
 	new RatingButton(Action.Op.USELESS,
-			 "Useless",
+			 "Not useful for me",
 			 "Mark this document as useles or irrelevant for you.",
 			 "page_down.png")
     };
@@ -157,7 +162,7 @@ public class RatingButton //extends HTML
 	    String imgPath = imgDir + "folder_page.png";
 	    String js = "$.get('" + judge(cp,aid, Action.Op.COPY_TO_MY_FOLDER,asrc)+ "', " +
 		"function(data) { flipCheckedOn('#"+sn+"')})";
-	    String title="Copy this document to your personal folder";
+	    String title="Move this document to your personal folder. It will not show in recommendations in the future.";
 	    s += twoSpans(sn, e.isInFolder,
 			  img(imgPath) + 
 			  strong("(In your <a href=\""+cp+"/personal/viewFolder.jsp\">folder</a>)"),
@@ -165,7 +170,7 @@ public class RatingButton //extends HTML
 			  att("class", "add") +
 			  att("title", title) +
 			  att( "onclick", js) + ">" +
-			  img(imgPath) + nbsp("Copy to my folder") +
+			  img(imgPath) + nbsp("Move to my folder") +
 			  "</a>" +"&nbsp;&nbsp;") + "\n";
 	}
 
@@ -230,12 +235,12 @@ public class RatingButton //extends HTML
 	    String js="$.get('"+
 		judge(cp,aid,Action.Op.DONT_SHOW_AGAIN,asrc)+"', " + 
 	    "function(data) { $('#result"+e.i+"').hide();} )";
-	    String title="Permanently remove this document from the search results";
+	    String title="Permanently remove this document from recommendations and search results";
 	    s += "<a " + att("class", "remove") + att("id", "remove"+e.i) +
 		att("title", title) +
 		att("onclick", js) + ">" +
 		img( imgDir + "bin.png" , title) +
-		nbsp( "Don't show again") + "</a>&nbsp;&nbsp\n";
+		nbsp( "Not interesting") + "</a>&nbsp;&nbsp\n";
 	}
 
 	// we probably don't need this text inside a ViewFolder screen
