@@ -34,6 +34,8 @@ import edu.rutgers.axs.sql.Logging;
  */
 public class ArxivImporter {
 
+    static final String GZ = ".gz";
+
     static private XMLtoLucene  xml2luceneMap = XMLtoLucene.makeMap();
 
     static class Tags {
@@ -125,8 +127,7 @@ public class ArxivImporter {
 	their cache directory into their web server's file system, as
 	per VM's request; 2012-01-16.
      */
-    boolean getBodyFromWeb(String id, File storeTo) throws IOException
-    {
+    boolean getBodyFromWeb(String id, File storeTo) throws IOException    {
 	String doc_file = Cache.getFilename(id , "arXiv-cache");
 	if (doc_file==null) {
 	    System.out.println("Cannot figure remote file name for article id=" + id);
@@ -197,31 +198,35 @@ public class ArxivImporter {
 	return true;
     }
 
+    /** Sets the root for the input directory from which file bodies 
+	(earlier transferred by FTP from Cornell) can be found.
+     */
     public void setBodySrcRoot(String _bodySrcRoot)  {
 	bodySrcRoot=_bodySrcRoot;
     }
 
-    /** finds the body file in the specified dir tree, and reads it in if available
+    /** Finds the body file in the specified dir tree, and reads it in
+	if available. Both original files (*.txt) and gzipped ones
+	(*.*.gz) are looked for and read.
+
+	@param  bodySrcRoot The root of a file directory tree in which 
+	we'll look for the document body.
      */
     private String readBody( String id,  String bodySrcRoot) {
-	String doc_file = Cache.getFilename(id , bodySrcRoot);
-	System.out.println("id="+id+", body at " + doc_file);
+ 
+	File q =  Indexer.locateBodyFile(id,  bodySrcRoot);
 
-	if (doc_file==null) {
-	    System.out.println("Cannot figure file name for article id=" + id);
-	    return null;
-	} 
-	File f = new File( doc_file);
-
-	if (!f.exists()) {
+	if (q==null) {
 	    // can we get it from the web?
-	    File g = f.getParentFile();
+	    String doc_file = Cache.getFilename(id , bodySrcRoot);
+	    q = new File( doc_file);
+	    File g = q.getParentFile();
 	    if (g!=null && !g.exists()) {
 		boolean code = g.mkdirs();
 		System.out.println("Creating dir " + g + "; success=" + code);
 	    }
 	    try {
-		boolean code=getBodyFromWeb( id, f);
+		boolean code=getBodyFromWeb( id, q);
 		System.out.println("Tried to get data from the web for  document file " + doc_file +", success=" + code);
 	    } catch (IOException E) {
 		System.out.println("Failed to copy data from the web for  document file " + doc_file);
@@ -229,14 +234,15 @@ public class ArxivImporter {
 	    }	
 	}
 
-	if (!f.canRead()) {
-	    System.out.println("Document file " + doc_file + " missing.");   
+	if (!q.canRead()) {
+	    System.out.println("Document file is not readable: " + q);
 	    return null;
 	}
+
 	try {
-	    return Indexer.parseDocFile(doc_file);
+	    return Indexer.parseDocFile(q.getCanonicalPath());
 	} catch (IOException E) {
-	    System.out.println("Failed to read document file " + doc_file);
+	    System.out.println("Failed to read or parse document file " + q);
 	    return null;
 	}	
     }
@@ -314,7 +320,7 @@ public class ArxivImporter {
 	}
 	    
 
-	String whole_doc = readBody( paper,  bodySrcRoot);
+	String whole_doc = readBody(paper, bodySrcRoot);
    
 	if (whole_doc!=null) {
 	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
@@ -334,8 +340,9 @@ public class ArxivImporter {
 
 	// write data to Lucene, and cache the doc body
 	Indexer.processDocument(doc, 
-			whole_doc==null? null: Cache.getFilename(paper, bodySrcRoot),
-			true, writer, bodyCacheRoot);
+				whole_doc==null? null:
+				Indexer.locateBodyFile(paper,  bodySrcRoot).getCanonicalPath(),
+				true, writer, bodyCacheRoot);
 
 	pcnt++;
 	// cache the metadata - unless, of course, we ARE reading from the 
@@ -627,8 +634,10 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	 	System.out.println("Processing " + s);
 		Element e = XMLUtil.readFileToElement(s);
 		if (e.getNodeName().equals(Tags.RECORD)) {
+		    System.out.println("Found a record; processing");
 		    imp.importRecord(e, writer, reader, rewrite);
 		} else {
+		    System.out.println("parseResponse");
 		    tok = imp.parseResponse(e, writer, reader, rewrite);
 		    System.out.println("resumptionToken =  " + tok);
 		}

@@ -17,6 +17,7 @@ import edu.cornell.cs.osmot.logger.Logger;
 
 import java.util.*;
 import java.util.regex.*;
+import java.util.zip.*;
 import java.text.*;
 import java.io.*;
 
@@ -191,12 +192,18 @@ public class Indexer {
 	    writer.close();
 	}
 
-    /** @param doc_file File name
+    /** @param doc_file File name. It can be a text file, or a "*.gz"
+	GZipped text file.
      */
     static String parseDocFile(String doc_file) throws IOException {
 	
 	char chars[] = new char[Options.getInt("INDEXER_MAX_LENGTH")];
-	FileReader fr = new FileReader(doc_file);
+
+	InputStreamReader fr = 
+	    doc_file.endsWith(ArxivImporter.GZ) ?
+	    new InputStreamReader(new GZIPInputStream(new FileInputStream(doc_file))) :
+	    new FileReader(doc_file);
+
 	int i = fr.read(chars, 0, Options.getInt("INDEXER_MAX_LENGTH"));
 	fr.close();
 	String s = new String(chars);
@@ -467,7 +474,7 @@ public class Indexer {
        and caches the document body. This is a top level method, used
        from ArxivImporter.
        
-       @param      doc_file The name of the disk file from which the document body is to be read. If null, there is no document body.
+       @param   doc_file The name of the disk file from which the document body is to be read. If null, there is no document body.
      */
     static void processDocument(Document doc, String doc_file, boolean allowUpdate,
 				IndexWriter writer, String cacheDirectory) throws IOException {
@@ -495,24 +502,41 @@ public class Indexer {
 	}
     }
 
-    private String readBody( String id,  String bodySrcRoot) {
-
-	String doc_file = Cache.getFilename(id , bodySrcRoot);
+    /** Returnd path/id.txt. path/id.txt.gz, or null, based on what
+	can be found
+     */
+    static File locateBodyFile( String id,  String bodySrcRoot) {
+ 	String doc_file = Cache.getFilename(id , bodySrcRoot);
 	System.out.println("id="+id+", body at " + doc_file);
-
-	if (doc_file==null) {
+ 	if (doc_file==null) {
 	    System.out.println("No Document file " + doc_file + " missing.");
 	    return null;
 	} 
-	File f = new File( doc_file);
-	if (!f.canRead()) {
-	    System.out.println("Document file " + doc_file + " missing.");   
+	String doc_file_gz = doc_file + ArxivImporter.GZ;
+
+	File f0 = new File( doc_file);
+	File fz = new File( doc_file_gz);
+
+	
+	File q = f0.exists() ? f0 : fz.exists()? fz : null;
+	if (q==fz) {
+	    System.out.println("Will use compressed file: " + q);
+	}
+	return q;
+    }
+
+    private String readBody( String id,  String bodySrcRoot) {
+
+	File q =  locateBodyFile(id,  bodySrcRoot);
+
+	if (!q.canRead()) {
+	    System.out.println("Document file " + q + " is not readable.");   
 	    return null;
 	}
 	try {
-	    return parseDocFile(doc_file);
+	    return parseDocFile(q.getCanonicalPath());
 	} catch (IOException E) {
-	    System.out.println("Failed to read document file " + doc_file);
+	    System.out.println("Failed to read document file " + q);
 	    return null;
 	}	
     }
@@ -526,7 +550,7 @@ public class Indexer {
 	Document doc = ArxivImporter.parseRecordElement( e);
 	String paper =	    doc.get(ArxivFields.PAPER);
 
-	String whole_doc = 	readBody( paper,  bodySrcRoot);
+	String whole_doc = readBody( paper,  bodySrcRoot);
    
 	if (whole_doc!=null) {
 	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
@@ -542,7 +566,8 @@ public class Indexer {
 
 	IndexWriter writer = new IndexWriter(indexDirectory, iwConf);
 	processDocument(doc, 
-			whole_doc==null? null: Cache.getFilename(paper, bodySrcRoot),
+			whole_doc==null? null:
+			Indexer.locateBodyFile(paper,  bodySrcRoot).getCanonicalPath(),
 			true, writer, cacheDirectory);
 	writer.optimize();
 	writer.close();
