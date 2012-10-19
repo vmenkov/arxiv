@@ -286,7 +286,6 @@ public class ResultsBase {
 	    e.titline + "<br>\n" +
 	    e.authline+ "<br>\n" +
 	    (!e.commline.equals("") ? e.commline + "<br>" : "") +
-	    (!e.commline.equals("") ? e.commline + "<br>" : "") +
 	    e.subjline+ "<br>\n" +
 	    (!e.ourCommline.equals("") ? "<strong>"  + e.ourCommline + "</strong><br>" : "") +
 	    "</div>\n" +
