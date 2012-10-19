@@ -38,9 +38,9 @@ public class Cache {
 	 * @param cacheDir
 	 *            The cache directory.
 	 */
-	public Cache(String cacheDir) throws IOException {
-	    this(cacheDir, Options.getInt("CACHE_DEFAULT_LENGTH"));
-	}
+    public Cache(String cacheDir) throws IOException {
+	this(cacheDir, Options.getInt("CACHE_DEFAULT_LENGTH"));
+    }
 
 	/**
 	 * Create a cache with the specified cache directory and default length.
@@ -51,31 +51,31 @@ public class Cache {
 	 *            The maximum number of bytes returned for any document, by
 	 *            default.
 	 */
-	public Cache(String cacheDir, int defLength) {
+    public Cache(String cacheDir, int defLength) {
 
-		this.cacheDirectory = cacheDir;
-		this.maxLength = defLength;
-
-		// Make the cache directory if it doesn't exist;
-		File f = new File(cacheDir);
-		if (f.mkdirs()) {
-			log("CACHE: Created cache directory: " + cacheDir);
-		}
-
-		log("Created a Cache.");
+	this.cacheDirectory = cacheDir;
+	this.maxLength = defLength;
+	
+	// Make the cache directory if it doesn't exist;
+	File f = new File(cacheDir);
+	if (f.mkdirs()) {
+	    log("CACHE: Created cache directory: " + cacheDir);
 	}
+	
+	log("Created a Cache.");
+    }
 
-	/**
-	 * Returns up to the first maxLength bytes given this unique identifier
-	 * 
-	 * @param uniqId
-	 *            Identifier of the document to retrieve.
-	 * @return The first maxLength bytes of the document.
-	 */
-	public String getContents(String uniqId) {
-
-		return getContents(uniqId, maxLength);
-	}
+    /**
+     * Returns up to the first maxLength bytes given this unique identifier
+     * 
+     * @param uniqId
+     *            Identifier of the document to retrieve.
+     * @return The first maxLength bytes of the document.
+     */
+    public String getContents(String uniqId) {
+	
+	return getContents(uniqId, maxLength);
+    }
 
 	/**
 	 * Returns up to the first <length>bytes given this unique identifier
@@ -86,7 +86,7 @@ public class Cache {
 	 *            Length to retrieve.
 	 * @return The first <length>bytes of the document.
 	 */
-	public String getContents(String uniqId, int length) {
+    public String getContents(String uniqId, int length) {
 
 		FileReader in;
 		char contents[] = new char[length];
@@ -104,7 +104,7 @@ public class Cache {
 		}
 
 		return new String(contents);
-	}
+    }
 
     /** Is there a cache file for this id?
      */
@@ -130,7 +130,7 @@ public class Cache {
 	    cacheFile(uniqId, document, ".xml");
 	}
     */
-    	public boolean cacheDocument(String uniqId, String document) {
+    public boolean cacheDocument(String uniqId, String document) {
 
 		// Make sure all the directories exist, if not, make them
 		String dirs = getFilename(uniqId);
@@ -151,7 +151,7 @@ public class Cache {
 			return false;
 		}
 		return true;
-	}
+    }
 
 	/**
 	 * Delete a document from the cache.
@@ -160,7 +160,7 @@ public class Cache {
 	 *            The indentifier of the document
 	 * @return True on success, false on failure.
 	 */
-	public boolean deleteDocument(String uniqId) {
+    public boolean deleteDocument(String uniqId) {
 
 		File f = new File(getFilename(uniqId));
 
@@ -170,7 +170,19 @@ public class Cache {
 		}
 
 		return false;
-	}
+    }
+
+	/**
+	 * Return the filename this document is/would be stored in.
+	 * 
+	 * @param uniqId
+	 *            The unique identifier of the document.
+	 * @return The filename this document is/would be stored in.
+	 */
+    public String getFilename(String uniqId) {
+
+	return getFilename(uniqId, cacheDirectory, extension);
+    }
 
 	/**
 	 * Return the filename the document with unique identifier uniqId is stored
@@ -185,54 +197,42 @@ public class Cache {
 
 	 @deprecated
 	 */
-	public static String getFilename(String uniqId, String rootDir) {
-	    return getFilename( uniqId,  rootDir, ".txt");
-	}
-
+    public static String getFilename(String uniqId, String rootDir) {
+	return getFilename( uniqId,  rootDir, ".txt");
+    }
+    
     public static String getFilename(String uniqId, String rootDir, String ext) {
 
-		int l = uniqId.length();
-		String filename;
+	int l = uniqId.length();
+	String filename;
+	
+	if (l > 3 && uniqId.indexOf("/") != -1) {
 
-		if (l > 3 && uniqId.indexOf("/") != -1) {
+	    // The usual filename code we use
+	    filename = rootDir + "/" + uniqId.substring(0, l - 3) + "/"
+			    + uniqId.substring(uniqId.indexOf("/") + 1, l);
 
-			// The usual filename code we use
-			filename = rootDir + "/" + uniqId.substring(0, l - 3) + "/"
-					+ uniqId.substring(uniqId.indexOf("/") + 1, l);
+	    // A dot followed by stuff in the type should be discarded
+	    // (e.g. cs.th/1234567 => cs/1234567)
+	    filename = filename.replaceFirst("\\.[A-Z]+/", "/");
 
-			// A dot followed by stuff in the type should be discarded
-			// (e.g. cs.th/1234567 => cs/1234567)
-			filename = filename.replaceFirst("\\.[A-Z]+/", "/");
+	    filename = filename + ext;
 
-			filename = filename + ext;
-
-		} else if (l > 3) {
+	} else if (l > 3) {
 			
-			// New arXiv ids have no slashes, just YYMM.nnnn			
-			filename = rootDir + "/" + uniqId.replace('.','/')+ext;
+	    // New arXiv ids have no slashes, just YYMM.nnnn			
+	    filename = rootDir + "/" + uniqId.replace('.','/')+ext;
 			
-		} else {
+	} else {
 
-			// In case a user wants to use simple short ids, especially when
-			// first installing this code
-			// and experimenting with it.
-			filename = rootDir + "/" + uniqId;
-		}
-
-		return filename;
+	    // In case a user wants to use simple short ids, especially when
+	    // first installing this code
+	    // and experimenting with it.
+	    filename = rootDir + "/" + uniqId;
 	}
 
-	/**
-	 * Return the filename this document is/would be stored in.
-	 * 
-	 * @param uniqId
-	 *            The unique identifier of the document.
-	 * @return The filename this document is/would be stored in.
-	 */
-	public String getFilename(String uniqId) {
-
-	    return getFilename(uniqId, cacheDirectory, extension);
-	}
+	return filename;
+    }
 
 	/**
 	 * Log something to the general log.
@@ -240,8 +240,8 @@ public class Cache {
 	 * @param s
 	 *            The string to log.
 	 */
-	private static void log(String s) {
+    private static void log(String s) {
 
-		Logger.log(s);
-	}
+	Logger.log(s);
+    }
 }
