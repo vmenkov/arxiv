@@ -34,8 +34,6 @@ import edu.rutgers.axs.sql.Logging;
  */
 public class ArxivImporter {
 
-    static final String GZ = ".gz";
-
     static private XMLtoLucene  xml2luceneMap = XMLtoLucene.makeMap();
 
     static class Tags {
@@ -285,7 +283,8 @@ public class ArxivImporter {
 	    return;
 	}
 
-	Cache metacache = new Cache(metaCacheRoot);	
+	Cache metacache = new Cache(metaCacheRoot);
+	Cache bodycache = new Cache(bodyCacheRoot);
 	metacache.setExtension(".xml");
 
 	if (!rewrite || fixCatsOnly) {
@@ -295,7 +294,7 @@ public class ArxivImporter {
 	    TopDocs 	 top = searcher.search(tq, 1);
 	    if (top.scoreDocs.length >0) {
 		boolean isCached = metacache.fileExists(paper) && 
-		    (new Cache( bodyCacheRoot)).fileExists(paper);
+		    bodycache.fileOrGzExists(paper);
 
 		if (!rewrite) {
 		    if (isCached) {

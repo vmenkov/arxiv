@@ -21,6 +21,9 @@ import edu.cornell.cs.osmot.logger.Logger;
  */
 public class Cache {
 
+   /** Additional suffix for GZipped files */
+    static private final String GZ = ".gz";
+
     private int maxLength;
 
     private String cacheDirectory;
@@ -113,6 +116,15 @@ public class Cache {
 	return (new File(filename)).exists();
     }
 
+    /**  Is there a cache file (plain or GZipped) for this id?
+     */
+    public boolean fileOrGzExists(String uniqId) {
+	String filename = getFilename(uniqId);
+	return (new File(filename)).exists() ||
+	    (new File(filename + GZ)).exists();
+    }
+
+
 	/**
 	 * Insert a given document into the cache.
 	 * 
@@ -130,27 +142,49 @@ public class Cache {
 	    cacheFile(uniqId, document, ".xml");
 	}
     */
+    /** Caches the document body at an appropriate location. The document
+	is saved as a plain (*.txt) file. If there is already a file
+	with the same name, it's overwritten; if there is a matching *.gz
+	file, it's explicitly deleted.
+     */
     public boolean cacheDocument(String uniqId, String document) {
 
-		// Make sure all the directories exist, if not, make them
-		String dirs = getFilename(uniqId);
-		dirs = dirs.substring(0, dirs.lastIndexOf('/'));
-		File f = new File(dirs);
+	// Make sure all the directories exist, if not, make them
+	String path = getFilename(uniqId);
 
-		// If the directories exist, this does nothing.
-		if (f.mkdirs()) {
-			log("CACHE: Created directories in path: " + dirs);
-		}
+	if (isGZipped(path)) throw new AssertionError("cacheDocument:  getFilename(" + uniqId + ") returned " + path +": why is it GZipped?");
 
-		try {
-			FileWriter fw = new FileWriter(getFilename(uniqId), false);
-			fw.write(document);
-			fw.close();
-		} catch (Exception e) {
-			log("CACHE: Error caching document " + uniqId + ": " + e.toString());
-			return false;
-		}
-		return true;
+
+	String dirs = path.substring(0, path.lastIndexOf('/'));
+	File f = new File(dirs);
+	
+	// If the directories exist, this does nothing.
+	if (f.mkdirs()) {
+	    log("CACHE: Created directories in path: " + dirs);
+	}
+	
+	try {
+	    FileWriter fw = new FileWriter(path, false);
+	    fw.write(document);
+	    fw.close();
+	} catch (Exception e) {
+	    log("CACHE: Error caching document " + uniqId + ": " + e.toString());
+	    return false;
+	}
+
+	String pathgz = path + GZ;
+	File fgz = new File(pathgz);
+	if (fgz.exists()) {
+	    try {
+		boolean success = fgz.delete();
+		if (!success) log("Deletion failed " + fgz);
+	    } catch (Exception ex) {
+		log("Deletion failed " + fgz + "; ex=" +ex);
+	    }
+	}
+
+
+	return true;
     }
 
 	/**
@@ -244,4 +278,10 @@ public class Cache {
 
 	Logger.log(s);
     }
+
+    static boolean isGZipped(String path) {
+	return path.endsWith(GZ);
+    }
+
+
 }

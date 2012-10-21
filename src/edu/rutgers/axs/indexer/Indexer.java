@@ -29,9 +29,14 @@ import java.io.*;
  * 
  * @author Filip Radlinski
  * @version 1.0, April 2005
+ * @author Vladimir Menkov
+ * @version 1.1, 2012
  */
 
 public class Indexer {
+
+    /** Additional suffix for GZipped files */
+    static private final String GZ = ".gz";
 
     // This should be in j.u.GregorianCalendar... Its used to fetch
     // the current year later.
@@ -192,6 +197,11 @@ public class Indexer {
 	    writer.close();
 	}
 
+    static boolean isGZipped(String path) {
+	return path.endsWith(GZ);
+    }
+
+
     /** @param doc_file File name. It can be a text file, or a "*.gz"
 	GZipped text file.
      */
@@ -200,7 +210,7 @@ public class Indexer {
 	char chars[] = new char[Options.getInt("INDEXER_MAX_LENGTH")];
 
 	InputStreamReader fr = 
-	    doc_file.endsWith(ArxivImporter.GZ) ?
+	    isGZipped(doc_file) ?
 	    new InputStreamReader(new GZIPInputStream(new FileInputStream(doc_file))) :
 	    new FileReader(doc_file);
 
@@ -475,10 +485,12 @@ public class Indexer {
        from ArxivImporter.
        
        @param   doc_file The name of the disk file from which the document body is to be read. If null, there is no document body.
+
+       @param cacheDirectory The root of the cache directory tree, into which a copy of the document body will be saved, at an appropriate location.
      */
     static void processDocument(Document doc, String doc_file, boolean allowUpdate,
 				IndexWriter writer, String cacheDirectory) throws IOException {
-	String aid =  doc.get(ArxivFields.PAPER);
+	String aid = doc.get(ArxivFields.PAPER);
 	// Remove it if its already there
 	if (allowUpdate) {
 	    writer.deleteDocuments(new Term(ArxivFields.PAPER, aid));
@@ -512,7 +524,7 @@ public class Indexer {
 	    System.out.println("No Document file " + doc_file + " missing.");
 	    return null;
 	} 
-	String doc_file_gz = doc_file + ArxivImporter.GZ;
+	String doc_file_gz = doc_file + GZ;
 
 	File f0 = new File( doc_file);
 	File fz = new File( doc_file_gz);
