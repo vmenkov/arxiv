@@ -178,6 +178,28 @@ public class  SearchResults {
     }
     
 
+    /** Removes specified "excluded" entries from the list stored in this SearchResults object */
+    void excludeSome(IndexSearcher searcher, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
+	if (exclusions==null) return;
+	//public ScoreDoc[] 	scoreDocs = new ScoreDoc[0];
+	Vector<ScoreDoc> kept = new 	Vector<ScoreDoc>();
+
+	for(int i=0; i< scoreDocs.length ; i++) {
+	    int docno=scoreDocs[i].doc;
+	    Document doc = searcher.doc(docno);
+	    
+	    // check if it's been "removed" by the user.
+	    String aid = doc.get(ArxivFields.PAPER);
+	    if ( exclusions.containsKey(aid)) {
+		int epos = excludedEntries.size()+1;
+		excludedEntries.add( new ArticleEntry(epos, doc, docno, scoreDocs[i].score));
+	    } else {
+		kept.add( scoreDocs[i]);
+	    }			
+	}
+	scoreDocs = (Vector<ScoreDoc>)kept.toArray(new ScoreDoc[0]);
+    }
+
     /** Fills the "entries" array with a section
        scoreDocs[startat:startat+M-1] of the full search results array
        "scoreDocs". Sets "pointers" to the prev/next pages. (If before a call
@@ -189,7 +211,10 @@ public class  SearchResults {
        entries.
 
        @param exclusions Controls the removal of some articles from
-       the viewable list.
+       the viewable list. This method first applies the exclusions to the list,
+       and then selects the "window" out what remains; thus, the numbering
+       of entries reflects their post-exclusion positions.
+       
     */
     void setWindow(IndexSearcher searcher, int startat, int M, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
 	prevstart = Math.max(startat - M, 0);
@@ -204,26 +229,22 @@ public class  SearchResults {
 	    atleast = "";
 	}
 
-	//Document doc = s.doc(scoreDocs[0].doc);
-	System.out.println("" + scoreDocs.length + " results");
+	int len0 = scoreDocs.length;
+	// check if some have been "removed" by the user.
+	if (exclusions!=null) excludeSome(searcher, exclusions);
+
+	System.out.println("SearchResults: " + len + " results; after exclusions, " + scoreDocs.length + " remains");
 	
 	entries.setSize(0);  // just in case something's in already
 	int pos = startat+1;
-	//	for(int i=startat; i< scoreDocs.length && i<nextstart; i++) {
 
 	int prevSkipped = 0;
-	for(int i=0; 
-	    i< scoreDocs.length && (prevSkipped < startat || entries.size() < M); i++) {
+	for(int i=0; i< scoreDocs.length && (prevSkipped < startat || entries.size() < M); i++) {
 
 	    int docno=scoreDocs[i].doc;
 	    Document doc = searcher.doc(docno);
 	    
-	    // check if it's been "removed" by the user.
-	    String aid = doc.get(ArxivFields.PAPER);
-	    if (exclusions!=null && exclusions.containsKey(aid)) {
-		int epos = excludedEntries.size()+1;
-		excludedEntries.add( new ArticleEntry(epos, doc, docno, scoreDocs[i].score));
-	    } else if ( prevSkipped < startat ) {	
+	    if ( prevSkipped < startat ) {	
 		prevSkipped ++;
 	    } else {
 		entries.add( new ArticleEntry(pos, doc, docno, scoreDocs[i].score));

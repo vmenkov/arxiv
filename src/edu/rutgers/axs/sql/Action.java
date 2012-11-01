@@ -139,7 +139,9 @@ import java.lang.reflect.*;
 		a result of the user's own free browsing via arxiv.org,
 		served via My.ArXiv.org/arxiv/FilterServlet
 	     */
-	    FILTER;
+	    FILTER,
+	    /** Peter Frazier's Exploration Engine */
+	    BERNOULLI_EXPLORATION,	    BERNOULLI_EXPLOITATION,
     };
 
 
