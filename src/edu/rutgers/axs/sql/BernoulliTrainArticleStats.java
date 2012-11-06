@@ -10,7 +10,7 @@ import org.apache.openjpa.persistence.jdbc.*;
     in this table for every new article in any of the eligible categories.
 */
 @Entity  
-    public class BernoulliArticleStats extends OurTable 
+    public class BernoulliTrainArticleStats extends OurTable 
 {
 
     /** The categories to which the experiment is presently restricted */
@@ -51,6 +51,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public int getCluster() { return cluster ;}
     public void setCluster(int x) { cluster =x;}
 
+    /*
     @Basic	@Display(editable=false, order=4)
 	double ptilde;
     public double getPtilde() { return ptilde; }
@@ -75,19 +76,37 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	double beta;
     public double getBeta() { return beta; }
     public void setBeta(double x) {beta =x;}
- 
+    */
+
   /** Find the matching record.
      @return The ArticleStats object with  the matching name, or null if none is found */
-    public static BernoulliArticleStats findByAidAndCluster( EntityManager em, String _aid, int _cluster) {
-	Query q = em.createQuery("select m from BernoulliArticleStats m where m.aid=:a and m.cluster=:c");
+    public static BernoulliTrainArticleStats findByAidAndCluster( EntityManager em, String _aid, int _cluster) {
+	Query q = em.createQuery("select m from BernoulliTrainArticleStats m where m.aid=:a and m.cluster=:c");
 	q.setParameter("a", _aid);
 	q.setParameter("c", _cluster);
-	List<BernoulliArticleStats> res = (List<BernoulliArticleStats>)q.getResultList();
+	List<BernoulliTrainArticleStats> res = (List<BernoulliTrainArticleStats>)q.getResultList();
 	if (res.size() != 0) {
 	    return  res.iterator().next();
 	} else {
 	    return null;
 	}
     }    
+
+    @Basic	@Display(editable=false, order=4)
+	double norm;
+    public double getNorm() { return norm; }
+    public void setNorm(double x) {norm =x;}
+
+
+    @Basic	@Display(editable=false, order=8)
+	double bigR;
+    public double getBigR() { return bigR; }
+    public void setBigR(double x) {bigR =x;}
+ 
+   @Basic	@Display(editable=false, order=9)
+	double bigI;
+    public double getBigI() { return bigI; }
+    public void setBigI(double x) {bigI =x;}
+
 
 }

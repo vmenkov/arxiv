@@ -197,7 +197,7 @@ public class  SearchResults {
 		kept.add( scoreDocs[i]);
 	    }			
 	}
-	scoreDocs = (Vector<ScoreDoc>)kept.toArray(new ScoreDoc[0]);
+	scoreDocs =kept.toArray(new ScoreDoc[0]);
     }
 
     /** Fills the "entries" array with a section
@@ -233,7 +233,7 @@ public class  SearchResults {
 	// check if some have been "removed" by the user.
 	if (exclusions!=null) excludeSome(searcher, exclusions);
 
-	System.out.println("SearchResults: " + len + " results; after exclusions, " + scoreDocs.length + " remains");
+	System.out.println("SearchResults: " + len0 + " results; after exclusions, " + scoreDocs.length + " remains");
 	
 	entries.setSize(0);  // just in case something's in already
 	int pos = startat+1;
@@ -276,8 +276,10 @@ public class  SearchResults {
 	return cnt;
     }
 
-
-    static class SDComparator implements Comparator<ScoreDoc> {
+    /** Used with Arrays.sort() to an array of ScoreDoc object by 
+	the score field, in descending order.
+     */
+    static public class SDComparator implements Comparator<ScoreDoc> {
 	// Descending order! 
 	public int compare(ScoreDoc a, ScoreDoc  b) {
 	    double d = b.score - a.score; 
@@ -332,7 +334,16 @@ public class  SearchResults {
     }
 
     /** Saves this SearchResults list in the SQL database as a PresentedList
-	object. Creates that object, and then persists it. */
+	object. Creates that object, and then persists it via an OpenJPA
+	transaction. 
+
+	@param df The DataFile object from which this list has come,
+	if applicable (e.g., on ViewSuggestion lists). It is only used
+	to record its ID in the PresentedList.
+ 	@param eq The EnteredQuery object associated with this list,
+	if applicable (e.g. on search results lists). It is only used
+	to record its ID in the PresentedList.
+    */
     PresentedList saveAsPresentedList(EntityManager em, Action.Source type, String username, DataFile df,  EnteredQuery eq) {
 	PresentedList plist = new PresentedList(type, username);
 	plist.fillArticleList(entries);	
@@ -343,6 +354,11 @@ public class  SearchResults {
 	em.getTransaction().commit();
 	return plist;
     }
+
+    PresentedList saveAsPresentedList(EntityManager em, Action.Source type, String username) {
+	return saveAsPresentedList(em,  type, username, null, null); 
+    }
+
     
     /** Creates a Date object for a time point that is a specified
 	number of days ago */

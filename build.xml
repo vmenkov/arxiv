@@ -197,6 +197,9 @@ code. -->
       <include name="PresentedListEntry.class" />
       <include name="SimRow.class" />
       <include name="SimRowEntry.class" />
+      <include name="BernoulliArticleStats.class" />
+      <include name="BernoulliTrainArticleStats.class" />
+      <include name="BernoulliVote.class" />
     </fileset>
   </openjpac>
 

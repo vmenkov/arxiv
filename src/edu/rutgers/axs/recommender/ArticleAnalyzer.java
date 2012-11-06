@@ -34,7 +34,7 @@ public class ArticleAnalyzer {
     ArticleAnalyzer() throws IOException {
 	this(   getReader(), upFields);
     }
-    ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
+    public ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
 	fields = _fields;
 	reader =_reader;
 
@@ -404,9 +404,24 @@ public class ArticleAnalyzer {
 	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
 	ArxivFields.ARTICLE};
 
+
     private static double[] initBoost(String [] fields) {
-	double baseBoost[] = {3, 1, 3, 3};
-	if (baseBoost.length != fields.length) throw new IllegalArgumentException("Expected 4 fields");
+	double q[] = {3, 1, 3, 3};
+	HashMap<String,Double> h=new HashMap<String,Double> ();
+	for(int i=0; i< upFields.length; i++)  {
+	    h.put( upFields[i], new Double(q[i]));
+	}
+
+	double baseBoost[] = new double[fields.length];
+	for(int i=0; i< fields.length; i++)  {
+	    Double d = h.get(fields[i]);
+	    if (d==null) {
+		throw new IllegalArgumentException("Unexpected field: " + fields[i]);
+	    }
+	    baseBoost[i] = d.doubleValue();
+	}
+
+	//	if (baseBoost.length != fields.length) throw new IllegalArgumentException("Expected 4 fields");
 	return baseBoost;
     }
     

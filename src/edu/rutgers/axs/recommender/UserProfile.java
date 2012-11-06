@@ -21,7 +21,7 @@ public class UserProfile {
 
     private static Stoplist stoplist=null;   
     
-    static void setStoplist( Stoplist x) {
+    public static void setStoplist( Stoplist x) {
 	stoplist = x;
 	System.out.println("UserProfile.setStoplist: |stoplist|="+
 			   stoplist.size());
@@ -88,7 +88,7 @@ public class UserProfile {
 
     /** Is this term to be excluded from the user profile?
      */
-    static boolean isUseless(String t) {
+    public static boolean isUseless(String t) {
 	if (t.length() <= 2) return true;
 	if (Character.isDigit( t.charAt(0))) return true;
 	if (stoplist!=null && stoplist.contains(t)) return true;

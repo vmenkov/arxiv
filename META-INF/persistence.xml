@@ -53,6 +53,9 @@
         <class>edu.rutgers.axs.sql.PresentedListEntry</class>
         <class>edu.rutgers.axs.sql.SimRow</class>
         <class>edu.rutgers.axs.sql.SimRowEntry</class>
+        <class>edu.rutgers.axs.sql.BernoulliArticleStats</class>
+        <class>edu.rutgers.axs.sql.BernoulliTrainArticleStats</class>
+        <class>edu.rutgers.axs.sql.BernoulliVote</class>
 
         <properties>
             <!--

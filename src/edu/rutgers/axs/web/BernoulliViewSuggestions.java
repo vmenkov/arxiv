@@ -21,14 +21,20 @@ import edu.rutgers.axs.indexer.Common;
  */
 public class BernoulliViewSuggestions extends PersonalResultsBase {
 
+    public Mode mode;
     public boolean exploitation = false;
+    // FIXME: eventually, we'll have multiple clusters
+    final int cluster = 0;
+
+    /** Time horizon = 28 days, as per PF's writeup ver 3 */
+    int days=28;
 
     /** List scrolling */
     public int startat = 0;
     /** the actual suggestion list to be displayed is stored here */
     public SearchResults sr;
  
-    public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
+    public BernoulliViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
     }
 
@@ -42,7 +48,7 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
        @param mainPage If true, we're preparing a list to appear on
        the main page.
      */
-    public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
+    public BernoulliViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
 	if (error) return; // authentication error?
 
@@ -59,13 +65,12 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	    actor=User.findByName(em, actorUserName);
 
 
-	    Made mode = (Mode)getEnum(Mode.class, MODE, Mode.ER);
+	    mode = (Mode)getEnum(Mode.class, MODE, Mode.ER);
 	    exploitation = (mode == Mode.ET);
 
-	    days = 28; // as per PF's writeup ver 3
 	    //	    days =actor.getDays();
 	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
-	    //	    days = (int)getLong(DAYS, days);
+	    days = (int)getLong(DAYS, days); // can override via cmd line
 
 	    
 	    final int maxDays=30;
@@ -75,14 +80,11 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 
 	    initList( startat, em);
 
-	    em.getTransaction().begin();
+	    //	    em.getTransaction().begin();
 	    
 
-	    em.getTransaction().commit();
+	    //	    em.getTransaction().commit();
 
-	    if (df!=null) {
-		initList(df, startat, false, em);
-	    }
 
 	}  catch (Exception _e) {
 	    setEx(_e);
@@ -110,14 +112,11 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 
 	// score based 
 	
-
-
 	sr.setWindow( searcher, startat, M, exclusions);
 	ArticleEntry.applyUserSpecifics(sr.entries, actor);
 	
 	// In docs to be displayed, populate other fields from Lucene
-	for(int i=0; i<sr.entries.size()// && i<maxRows
-		; i++) {
+	for(int i=0; i<sr.entries.size(); i++) {
 	    ArticleEntry e = sr.entries.elementAt(i);
 	    int docno = e.getCorrectDocno(searcher);
 	    Document doc = reader.document(docno);
@@ -133,8 +132,7 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	    Action.Source.BERNOULLI_EXPLOITATION :
 	    Action.Source.BERNOULLI_EXPLORATION;	   
 
-	PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName,
-						   df, null);
+	PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName);
 	asrc= new ActionSource(srcType, plist.getId());
     }
     
@@ -142,10 +140,10 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	int maxlen = 10000;
 
 	//String[] cats = actor.getCats().toArray(new String[0]);
-	String[] cats = {"cs.AI", "cs.IR", "stat.ML"};
+	String[] cats = BernoulliArticleStats.cats;
 	Date since = SearchResults.daysAgo( days );
 	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
-	sr.reorderCatSearchResults(searcher.getIndexReader(), cats, since);
+	//sr.reorderCatSearchResults(searcher.getIndexReader(), cats, since);
 
 	if (sr.scoreDocs.length>=maxlen) {
 	    String msg = "Catsearch: At least, or more than, " + maxlen + " results found; displayed list may be incomplete";
