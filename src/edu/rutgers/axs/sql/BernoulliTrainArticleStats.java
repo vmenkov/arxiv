@@ -92,6 +92,13 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }    
 
+
+    public static List<BernoulliTrainArticleStats> findAllByCluster( EntityManager em, int _cluster) {
+	Query q = em.createQuery("select m from BernoulliTrainArticleStats m where m.cluster=:c");
+	q.setParameter("c", _cluster);
+	List<BernoulliTrainArticleStats> res = (List<BernoulliTrainArticleStats>)q.getResultList();
+    }   
+
     @Basic	@Display(editable=false, order=4)
 	double norm;
     public double getNorm() { return norm; }

@@ -5,7 +5,6 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.net.*;
-//import java.lang.reflect.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -104,7 +103,8 @@ public class ResetPassword extends ResultsBase {
 		
     }
 
-    /** Generates the new password, randomly */
+    /** Generates the new password, randomly. It will be composed of 6
+	alphanumeric characters. */
     private static String generatePassword() {
 	StringBuffer p = new StringBuffer(6);
 	for(int i=0; i<6; i++) {
@@ -124,8 +124,13 @@ public class ResetPassword extends ResultsBase {
     */
     //    static String smtp = "smtp";
     static String smtp = "localhost";
-    //    static String businessEmail = "vmenkov@gmail.com";
-    public static String businessEmail = "vmenkov@rci.rutgers.edu";
+
+    /** This is a mailing list address. To manage, login to 
+	https://www.list.cornell.edu:9443/
+	as one of the mailing list administrators.
+     */
+    public static String businessEmail = "myarxiv-admin-l@list.cornell.edu";
+
 
     /** Sends a message to the customer service */
     static private void sendMail(String uname, String email, String password)

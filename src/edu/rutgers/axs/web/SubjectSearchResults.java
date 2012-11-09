@@ -23,7 +23,9 @@ public  class SubjectSearchResults extends SearchResults {
        @param startat How many top search results to skip (0, 25, ...)
     */
     public SubjectSearchResults(IndexSearcher searcher, String[] cats, 
-				Date rangeStartDate, int maxlen) throws Exception {
+				Date rangeStartDate, int maxlen) 
+    throws IOException 
+{
 
 	    org.apache.lucene.search.Query q;
 	    if (cats.length<1) {

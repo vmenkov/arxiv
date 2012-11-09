@@ -638,8 +638,7 @@ public class ArticleAnalyzer {
 	ArxivScoreDoc[] sd = new ArxivScoreDoc[maxdoc];
 	int  nnzc=0, abovecnt[]= new int[threshold.length];
 
-
-	final SimRow.CatInfo catInfo = new SimRow.CatInfo(cat);
+	final CatInfo catInfo = new CatInfo(cat, true);
 
 	for(int k=0; k<scores.length; k++) {
 	    if (scores[k]>0) {

@@ -17,8 +17,6 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-
-//import org.apache.lucene.document.*;
 import edu.rutgers.axs.indexer.ArxivFields;
 
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
@@ -52,14 +50,13 @@ public class SimRow implements Serializable {
     /** Computes similarities of a given document (d1) to all other
 	docs in the database. Used for Bernoulli rewards.
 
-	@param cat If not null, restrict matches to docs from the specified category
     */
     public SimRow( int docno, ArticleStats[] allStats, EntityManager em,ArticleAnalyzer z) throws IOException {
 	entries =new Vector<SimRowEntry>();
 	HashMap<String, Double> doc1 = z.getCoef(docno, null);		
 	Document doc = z.reader.document(docno);
 	String cats =doc.get(ArxivFields.CATEGORY);
-	CatInfo catInfo=new CatInfo(cats);
+	CatInfo catInfo=new CatInfo(cats, true);
 	Logging.info("Doing sims for doc " + allStats[docno].getAid() +", cats=" + cats + ", cat bases=" + catInfo);
 
 	final double threshold = 0.1;
@@ -173,59 +170,5 @@ public class SimRow implements Serializable {
 	entries = v;
 	return this;
     }
-
-    /** Category matcher tool */
-    public static class CatInfo {
-   
-	Vector<String> bases;
-
-	public CatInfo(String cats) {
-	    bases=catBases(cats);
-	}
-
-	public String toString() {
-	    String s="";
-	    for(String q: bases) {
-		s += (s.length()==0 ? "(" : ", ") + q;
-	    }
-	    return s+")";
-	}
-
-	public boolean match(String otherCats) {	    
-	    for(String a: catBases(otherCats)) {
-		if (dup(bases,a)) return true;
-	    }
-	    return false;
-	}
-
-	/** Creates an array of (unique) category prefixes */
-	private static Vector<String> catBases(String cats) {
-	    if (cats==null) return new  Vector<String>();
-	    String[] x = cats.split("\\s+");
-	    Vector<String> vb = new  Vector<String>(x.length);
-	    for(String c: x) {
-		String b = catBase(c);
-		if (!dup(vb,b)) vb.add(b);
-	    }
-	    return vb;
-	}
-
-	/** If b contained in vb? */
-	private static boolean dup(Vector<String> vb, String b) {
-	    for(String z: vb) {
-		if (b.equals(z)) return true;
-	    }
-	    return false;	
-	}
-
-	/** converts "cat.subcat" to "cat"
-	 */
-	private static String catBase(String cat) {
-	    if (cat==null) return null;
-	    int p = cat.indexOf(".");
-	    return (p<0)? cat: cat.substring(0, p);
-	}
-    }
- 
 
 }

@@ -14,6 +14,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.bernoulli.*;
 import edu.rutgers.axs.indexer.Common;
 
 /** Retrieves and displays a "suggestion list": a list of articles which some
@@ -27,7 +28,7 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
     final int cluster = 0;
 
     /** Time horizon = 28 days, as per PF's writeup ver 3 */
-    int days=28;
+    int days=Bernoulli.horizon;
 
     /** List scrolling */
     public int startat = 0;
@@ -108,7 +109,7 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	HashMap<String, Action> exclusions = 	    actor.getActionHashMap();
 
 	// eligible candidates: based on categories and date range
-	sr = catSearch(searcher);    
+	sr = Bernoulli.catSearch(searcher, days);    
 
 	// score based 
 	
@@ -134,23 +135,6 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 
 	PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName);
 	asrc= new ActionSource(srcType, plist.getId());
-    }
-    
-     private SearchResults catSearch(IndexSearcher searcher) throws Exception {
-	int maxlen = 10000;
-
-	//String[] cats = actor.getCats().toArray(new String[0]);
-	String[] cats = BernoulliArticleStats.cats;
-	Date since = SearchResults.daysAgo( days );
-	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
-	//sr.reorderCatSearchResults(searcher.getIndexReader(), cats, since);
-
-	if (sr.scoreDocs.length>=maxlen) {
-	    String msg = "Catsearch: At least, or more than, " + maxlen + " results found; displayed list may be incomplete";
-	    Logging.warning(msg);
-	    infomsg += msg + "<br>";
-	}
-	return sr;
     }
 		    
     /** Wrapper for the same method in ResultsBase. */
