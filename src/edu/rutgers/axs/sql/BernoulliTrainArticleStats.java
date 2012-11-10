@@ -97,6 +97,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	Query q = em.createQuery("select m from BernoulliTrainArticleStats m where m.cluster=:c");
 	q.setParameter("c", _cluster);
 	List<BernoulliTrainArticleStats> res = (List<BernoulliTrainArticleStats>)q.getResultList();
+	return res;
     }   
 
     @Basic	@Display(editable=false, order=4)

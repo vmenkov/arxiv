@@ -240,7 +240,7 @@ public class RatingButton //extends HTML
 		att("title", title) +
 		att("onclick", js) + ">" +
 		img( imgDir + "bin.png" , title) +
-		nbsp( "Not interesting") + "</a>&nbsp;&nbsp\n";
+		nbsp( "Not useful, remove") + "</a>&nbsp;&nbsp\n";
 	}
 
 	// we probably don't need this text inside a ViewFolder screen

@@ -90,4 +90,9 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }    
 
+    static void updateStats(String aid) {
+	Query q = em.createQuery("select m from BernoulliArticleStats m where m.aid=:a and m.cluster=:c");
+    }
+
+
 }

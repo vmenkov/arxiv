@@ -42,14 +42,32 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     /** User id (numeric) */
     @Basic 
 	@Display(editable=false, order=3)
-	int user;
-    public int getUser() { return user ;}
-    public void setUser(int x) { user =x;}
+	long user;
+    public long getUser() { return user ;}
+    public void setUser(long x) { user =x;}
 
+    /** Stores +1 or -1 */
     @Basic 
 	@Display(editable=false, order=4)
 	int vote;
     public int getVote() { return vote ;}
     public void setVote(int x) { vote =x;}
 
-}
+    public static BernoulliVote find( EntityManager em, long userid, String aid) {
+	Query q = em.createQuery("select m from BernoulliVote m where m.user=:u and m.aid=:a");
+	q.setParameter("u", userid);
+	q.setParameter("a", aid);
+	try {
+	    return (BernoulliVote)q.getSingleResult();
+	} catch(NoResultException ex) { 
+	    // no such user
+	    return null;
+	}  catch(NonUniqueResultException ex) {
+	    // this should not happen, as we have a uniqueness constraint
+	    Logging.error("Non-unique user entry for user id="+userid+", article="+aid+"!");
+	    return null;
+	}
+    }
+
+    }
+

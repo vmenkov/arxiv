@@ -355,6 +355,33 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
 	    cnt1++;
 	}
 	return s.toArray(new String[0]);
-
     }
+
+	/** This is invoked for users enrolled in Exploration Engine
+	 * experiments, to have the action affect the Bernoulli stats.
+	 */
+	public void bernoulliFeedback(EntityManager em) {
+	    User.Program program = getUser().getProgram();
+	    if (!(program==User.Program.BERNOULLI_EXPLORATION ||
+		  program==User.Program.BERNOULLI_EXPLOITATION)) return;
+	    boolean positive = (getOp()!=Op.USELESS) && 
+		(getOp() != Op.DONT_SHOW_AGAIN);
+	    int val1 = positive? 1: -1;
+	    int val0 = 0;
+	    BernoulliVote vote =  BernoulliVote.find(em, getUser().getId(), getArticle());
+	    if (vote==null) {
+		vote=new BernoulliVote();
+		vote.setUser(getUser().getId());
+		vote.setAid( getArticle());
+	    } else {
+		val0 = vote.getVote();
+	    }
+	    vote.setVote(val1);
+
+	    if (val1 != val0) BernoulliArticleStats.updateStats(getArticle());
+
+	    em.persist(vote);
+	}
+
+
 }

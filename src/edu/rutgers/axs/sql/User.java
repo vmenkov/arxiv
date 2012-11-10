@@ -141,6 +141,22 @@ import edu.rutgers.axs.web.Tools;
     public  Date getEsEnd() { return esEnd; }
     public void setEsEnd(       Date x) { esEnd = x; }
 
+    /** Describes what kind of research program the user is currently enrolled in */
+    public static enum Program {
+	/** Thorsten Joachims' set-based */
+	SET_BASED, 
+	    /** Peter Frazeer's Exploration Engine: Exploration mode */
+	    BERNOULLI_EXPLORATION,
+	    /** Peter Frazeer's Exploration Engine: Exploration mode */
+	    BERNOULLI_EXPLOITATION;
+    }
+
+    @Display(editable=false, order=11) 
+	private Program program;
+
+    public Program getProgram() { return program; }
+    public void setProgram(Program x) { program=x; }
+
     /** This is how it's described in context.xml:
     //	     userRoleTable="user_roles" roleNameCol="role_name"
     create table user_roles (

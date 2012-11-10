@@ -35,7 +35,7 @@ public class CatInfo {
 
     /** Looks for an overlap of two lists */
     public boolean match(String otherCats) {	    
-	String [] other =  toMajor?catBases(otherCats): split(otherCats);
+	String [] other =  toMajor? catBases(otherCats).toArray(new String[0]): split(otherCats);
 	for(String a: other) {
 	    if (dup(bases,a)) return true;
 	}
@@ -54,7 +54,7 @@ public class CatInfo {
 	    String b = catBase(c);
 	    if (!dup(vb,b)) vb.add(b);
 	}
-	return vb;
+	return vb; 
     }
     
     /** If b contained in vb? */

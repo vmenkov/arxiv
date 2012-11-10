@@ -32,74 +32,14 @@ public class Bernoulli {
     /** Time horizon, in days */
     static public final int horizon = 28;
 
-    static BernoulliArticleStats  
-	initBernoulliArticleStats(
-				  ArticleAnalyzer analyzer, 
-				  HashMap<Integer, BernoulliTrainArticleStats> trainData,
-				  int docno)  throws org.apache.lucene.index.CorruptIndexException, IOException {
-
-	BernoulliArticleStats  bas = new BernoulliArticleStats();
-	bas.setCluster(defaultCluster);
-
-	CatInfo catInfo = new CatInfo( BernoulliArticleStats.cats, false);
-	IndexReader reader = analyzer.getReader();
-	Document doc = reader.document( docno);
-	bas.setAid(doc.get(ArxivFields.PAPER));
-
-	TermFreqVector tfv=reader.getTermFreqVector(docno, field);
-
-	if (tfv==null) return;
-
-	int numdocs = reader.numDocs(), maxdoc=reader.maxDoc();
-	double scores[] = new double[maxdoc];	
-
-	int[] freqs=tfv.getTermFrequencies();
-	String[] terms=tfv.getTerms();	    
-	for(int i=0; i<terms.length; i++) {
-	    //int df = totalDF(terms[i]);
-	    //if (df <= 1 || UserProfile.isUseless(terms[i])) {
-	    //continue; // skip nonce-words and stop words
-	    //	}
-	    Term term = new Term(field, terms[i]);
-	    TermDocs td = reader.termDocs(term);
-	    double normFactor = analyzer.idf(terms[i]);
-	    double qval =  normFactor * normFactor;
-
-	    td.seek(term);
-	    while(td.next()) {
-		int p = td.doc();
-		int freq = td.freq();			
-		double z =qval * freq;
-		scores[p] += z;		
-	    }
-	    td.close();
-	}
-
-	double sumR=0, sumI = 0;
-	for(int k=0; k<scores.length; k++) {
-	    if (scores[k]==0) continue;
-	    BernoulliTrainArticleStats tbas = trainData.get(new Integer(k));
-	    if (tbas==null) continue;
-	    if (tbas.getNorm()==0) {
-		Logging.error("Retrieved document with norm=0; aid="+
-			      tbas.getAid());
-	    }
-	    double sim = scores[k]/tbas.getNorm();
-	    if (sim>1) {
-		Logging.error("Computed sim("+ docno+","+k+")=" + sim + ">1!");
-	    }
-	    sumR += sim * tbas.getBigR();
-	    sumI += sim * tbas.getBigI();
-	}
-	if (sumI==0) {
-	    Logging.error("sumI=0");
-	    return 0;
-	}
-	bas.setPtilde(sumR/sumI);
-
-
-
+    /** FIXME: this has to be updated once I have good training data */
+    static class ClusterStats {
+	double b = 0;
+	double v = 0;
+	double gamma= 0.999891;
     }
+
+    static ClusterStats clusterStats = new ClusterStats();
 
     static Stoplist stoplist = null;
     static {
@@ -155,7 +95,8 @@ public class Bernoulli {
 	@param cats Restrict to these categories
 	@return A map that maps Lucene's doc id to norm.	
      */
-    private static HashMap<Integer, BernoulliTrainArticleStats> readTrainData(EntityManager em, IndexSearcher searcher, String[] cats) {
+    private static HashMap<Integer, BernoulliTrainArticleStats> readTrainData(EntityManager em, IndexSearcher searcher, String[] cats) 
+	throws IOException, CorruptIndexException {
 	IndexReader reader=searcher.getIndexReader();
 	HashMap<Integer, BernoulliTrainArticleStats> h = new  HashMap<Integer, BernoulliTrainArticleStats>();
 	CatInfo catInfo = new CatInfo(cats, false);
@@ -220,6 +161,89 @@ public class Bernoulli {
 	return sr;
     }
 
+    /** Creates a new BernoulliArticleStats object for a new document,
+	and initializes its fields based on the object's similarity to
+	rated training documents.
+
+	@return The new BernoulliArticleStats object, or null if none
+	could be satisfactorily created.
+     */
+    static BernoulliArticleStats  
+	initBernoulliArticleStats(ArticleAnalyzer analyzer, 
+				  HashMap<Integer, BernoulliTrainArticleStats> trainData,
+				  int docno, String aid)  throws org.apache.lucene.index.CorruptIndexException, IOException {
+
+	BernoulliArticleStats  bas = new BernoulliArticleStats();
+	bas.setCluster(defaultCluster);
+
+	CatInfo catInfo = new CatInfo( BernoulliArticleStats.cats, false);
+	IndexReader reader = analyzer.getReader();
+	//		Document doc = reader.document( docno);
+	// String aid=doc.get(ArxivFields.PAPER);
+	bas.setAid(aid);
+
+	TermFreqVector tfv=reader.getTermFreqVector(docno, field);
+
+	if (tfv==null) return null;
+
+	int numdocs = reader.numDocs(), maxdoc=reader.maxDoc();
+	double scores[] = new double[maxdoc];	
+
+	int[] freqs=tfv.getTermFrequencies();
+	String[] terms=tfv.getTerms();	    
+	for(int i=0; i<terms.length; i++) {
+	    Term term = new Term(field, terms[i]);
+	    TermDocs td = reader.termDocs(term);
+	    double normFactor = analyzer.idf(terms[i]);
+	    double qval =  normFactor * normFactor;
+
+	    td.seek(term);
+	    while(td.next()) {
+		int p = td.doc();
+		int freq = td.freq();			
+		double z =qval * freq;
+		scores[p] += z;		
+	    }
+	    td.close();
+	}
+
+	double sumR=0, sumI = 0;
+	for(int k=0; k<scores.length; k++) {
+	    if (scores[k]==0) continue;
+	    BernoulliTrainArticleStats tbas = trainData.get(new Integer(k));
+	    if (tbas==null) continue;
+	    if (tbas.getNorm()==0) {
+		Logging.error("Retrieved document with norm=0; aid="+
+			      tbas.getAid());
+		continue;
+	    }
+	    double sim = scores[k]/tbas.getNorm();
+	    if (sim>1) {
+		Logging.error("Computed sim("+ docno+","+k+")=" + sim + ">1!");
+	    }
+	    sumR += sim * tbas.getBigR();
+	    sumI += sim * tbas.getBigI();
+	}
+	if (sumI==0) {
+	    Logging.error("sumI=0");
+	    return null;
+	}
+	double pTilde = sumR/sumI;
+	bas.setPtilde(sumR/sumI);
+	double m = pTilde + clusterStats.b;
+	double n = -1 + m*(1-m)/clusterStats.v;
+	double alpha = Math.max( m*n, 0.5);
+	double beta = Math.max( (1-m)*n, 0.5);
+	if (n<0) alpha=beta=0.5;
+
+	bas.setAlphaTrain(alpha);
+	bas.setBetaTrain(beta);
+	// FIXME: need to look at BernoulliVote too
+	bas.setAlpha(alpha);
+	bas.setBeta(beta);
+
+	return bas;
+    }
 
 
     /** Scans recently added documents in the relevant categories.
@@ -232,29 +256,28 @@ public class Bernoulli {
 	EntityManager em  = Main.getEM();
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
+	ArticleAnalyzer analyzer = new  ArticleAnalyzer(reader, new String[] {field});
 
-	HashMap<Integer, BernoulliTrainArticleStats> h = 
+	HashMap<Integer, BernoulliTrainArticleStats> trainData = 
 	    readTrainData(em, searcher, BernoulliArticleStats.cats);
 
-	/** This plays a very auxiliary role; mostly, a cludge to piggyback
-	    on AA's definition of IDF */
-	//ArticleAnalyzer analyzer = new  ArticleAnalyzer(reader, new String[] {field});
-	SearchResults sr = Bernoulli.catSearch(searcher, horizon);    
+	SearchResults sr = Bernoulli.catSearch(searcher, horizon);   
+	Logging.info("Bernoulli: adding new docs: found " + sr.scoreDocs.length + " docs to add");
 	for(ScoreDoc q: sr.scoreDocs) {
 	    int docno = q.doc;
 	    Document doc = reader.document( docno);
 	    String aid = doc.get(ArxivFields.PAPER);
+	    Logging.info("Adding doc no. " + docno +", aid=" + aid);
 	    em.getTransaction().begin();
 	    BernoulliArticleStats bas = BernoulliArticleStats.findByAidAndCluster(em, aid, defaultCluster);
 	    if (bas == null) {
-		bas = initBernoulliArticleStats();
+		bas = initBernoulliArticleStats(analyzer, trainData, docno, aid);
 
 		em.persist(bas);
 	    }
 	    em.getTransaction().commit();
 	}
 	
-
     }
 
 
@@ -280,24 +303,32 @@ public class Bernoulli {
 	ParseConfig ht = new ParseConfig();
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 
-	if (argv.length != 1)     usage();
-	String f = argv[0];
+	if (argv.length < 1)     usage();
+	String cmd = argv[0];
 
-	FileReader fr = new FileReader(f);
-	LineNumberReader r =  new LineNumberReader(fr);
-	Vector<String> aids= new 	Vector<String>();
-	String s=null;
-	while((s = r.readLine())!=null) {
-	    s = s.trim();
-	    if (s.equals("") || s.startsWith("#")) continue;
-	    // id : cnt
-	    String[] q = s.split("\\s*:\\s*");
-	    aids.add(q[0]);
-	    //aids.add(s);
+	if (cmd.equals("train")) {
+	    if (argv.length != 2)     usage();
+	    String f = argv[1];
+	    FileReader fr = new FileReader(f);
+	    LineNumberReader r =  new LineNumberReader(fr);
+	    Vector<String> aids= new 	Vector<String>();
+	    String s=null;
+	    while((s = r.readLine())!=null) {
+		s = s.trim();
+		if (s.equals("") || s.startsWith("#")) continue;
+		// id : cnt
+		String[] q = s.split("\\s*:\\s*");
+		aids.add(q[0]);
+		//aids.add(s);
+	    }
+
+	    System.out.println("Importing data for " + aids.size() + " training docs");
+	    initTrainingData( aids.toArray(new String[0])); // IndexSearcher searcher, String aid)
+	} else if (cmd.equals("recent")) {
+	    addNewDocuments();
+	} else {
+	    usage("Unknown commmand '"+cmd+"'");
 	}
-
-	System.out.println("Importing data for " + aids.size() + " training docs");
-	initTrainingData( aids.toArray(new String[0])); // IndexSearcher searcher, String aid)
 
     }
 
