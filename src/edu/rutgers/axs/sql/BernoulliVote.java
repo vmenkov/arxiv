@@ -8,12 +8,12 @@ import org.apache.openjpa.persistence.jdbc.*;
 /** The cumulative "vote" of given user in favor of a particular article,
     in terms of the   Exploration Engine.  */
 @Entity  
-    @Table(uniqueConstraints=@UniqueConstraint(columnNames={"aid","user"}), name="BernoulliVoteUniqueConstraint")
-    public class BernoulliVote extends OurTable 
+    @Table(uniqueConstraints=@UniqueConstraint(columnNames={"aid","user"}), name="BernoulliVote")
+    public class BernoulliVote extends OurTable
 {
 
-   @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
-       private long id;
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
+	private long id;
 
     /** This is the internal ID automatically assigned by the database
       to each entry upon creation. It is important within the database
@@ -38,22 +38,21 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	String aid=null;
     public String getAid() { return aid; }
     public void setAid(String x) { aid=x;}
-
+    
     /** User id (numeric) */
-    @Basic 
-	@Display(editable=false, order=3)
+    @Basic 	@Display(editable=false, order=3)
 	long user;
     public long getUser() { return user ;}
     public void setUser(long x) { user =x;}
 
     /** Stores +1 or -1 */
-    @Basic 
-	@Display(editable=false, order=4)
+    @Basic 	@Display(editable=false, order=4)
 	int vote;
     public int getVote() { return vote ;}
     public void setVote(int x) { vote =x;}
-
-    public static BernoulliVote find( EntityManager em, long userid, String aid) {
+	
+    public static BernoulliVote find( EntityManager em, long userid, String aid)
+    {
 	Query q = em.createQuery("select m from BernoulliVote m where m.user=:u and m.aid=:a");
 	q.setParameter("u", userid);
 	q.setParameter("a", aid);
@@ -65,9 +64,13 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}  catch(NonUniqueResultException ex) {
 	    // this should not happen, as we have a uniqueness constraint
 	    Logging.error("Non-unique user entry for user id="+userid+", article="+aid+"!");
-	    return null;
+		return null;
 	}
     }
-
+    
+    public String toString() {
+	return "{vote: user=" + getUser() +", aid=" + getAid()+
+	    ", vote=" + getVote()+"}";
     }
 
+    }

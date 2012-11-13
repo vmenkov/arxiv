@@ -51,17 +51,22 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public int getCluster() { return cluster ;}
     public void setCluster(int x) { cluster =x;}
 
-    @Basic	@Display(editable=false, order=4)
+   @Basic	@Display(editable=false, order=4)
+	double norm;
+    public double getNorm() { return norm; }
+    public void setNorm(double x) {norm =x;}
+
+    @Basic	@Display(editable=false, order=5)
 	double ptilde;
     public double getPtilde() { return ptilde; }
     public void setPtilde(double x) {ptilde =x;}
 
-    @Basic	@Display(editable=false, order=5)
+    @Basic	@Display(editable=false, order=6)
 	double alphaTrain;
     public double getAlphaTrain() { return alphaTrain; }
     public void setAlphaTrain(double x) {alphaTrain =x;}
    
-    @Basic	@Display(editable=false, order=6)
+    @Basic	@Display(editable=false, order=6.1)
 	double betaTrain;
     public double getBetaTrain() { return betaTrain; }
     public void setBetaTrain(double x) {betaTrain =x;}
@@ -90,8 +95,29 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }    
 
-    static void updateStats(String aid) {
-	Query q = em.createQuery("select m from BernoulliArticleStats m where m.aid=:a and m.cluster=:c");
+    public void updateStats(EntityManager em) {
+	String qs = "select count(m) from BernoulliVote m, User u where m.user = u.id and m.aid=:a and u.cluster=:c and m.vote=:v";
+	int v[] = {-1,1};
+	int s[] = {0,0};
+	Query q = em.createQuery(qs);
+	for(int z=0; z<2; z++) {
+	    q.setParameter("a", getAid());
+	    q.setParameter("c", getCluster());
+	    q.setParameter("v", v[z]);
+	    try {
+		Object o = q.getSingleResult();
+		s[z] = ((Number)o).intValue();
+	    } catch(NoResultException ex) { 
+		Logging.error("BAS.updateStats: NoResultException " + ex);
+	    }  catch(NonUniqueResultException ex) {
+		// this should not happen, as we have a uniqueness constraint
+		Logging.error("BAS.updateStats: NonUniqueResultException " + ex);
+	    }
+	}
+	Logging.info("BAS.updateStats(" + getAid() + ", "+getCluster()+") : " + s[0] + ", " + s[1]);
+	setBeta( getBetaTrain() + s[0]);
+	setAlpha( getAlphaTrain() + s[1]);
+	em.persist(this);
     }
 
 

@@ -88,7 +88,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		User u = User.findByName(em, user);
 		if (u!=null) {
 		    Logging.info("FS: pi="+pi+", recording as " + actionable);
-		    Action a = u.addAction(actionable.aid, actionable.op, asrc);
+		    Action a = u.addAction(em, actionable.aid, actionable.op, asrc);
 
 		    skeletonAE = ArticleEntry.getDummyArticleEntry(actionable.aid, 1);
 		    Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
@@ -99,7 +99,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    ArticleEntry.markRatings(entries, 
 					     u.getActionHashMap(Action.ratingOps));
 
-		    em.persist(u);
+		    //em.persist(u);
 		}
 		em.getTransaction().commit(); 
 		em.close();

@@ -11,6 +11,7 @@ import javax.persistence.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
+import edu.rutgers.axs.html.Html;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.*;
 
@@ -89,5 +90,31 @@ public class PersonalResultsBase extends ResultsBase {
     public String formatSuggestionsLink(String file) {
 	return "<a href=\"" + viewSuggestionsLink(file)+ "\">"+file+"</a>";
     }
+
+    /** Wrapper for the same method in ResultsBase. */
+    public String resultsDivHTML(ArticleEntry e) {
+	return resultsDivHTML(e, isSelf);
+    }
+
+
+    /**  Links to prev/next pages, if necessary */	
+    public String prevNextLinks(SearchResults sr) {
+	String s="";
+	if (sr.needPrev) {     
+	    s += Html.a( repageUrl(sr.prevstart), "[PREV PAGE]");
+	}	
+	if (sr.needNext) { 
+	    s += Html.a( repageUrl(sr.nextstart), "[NEXT PAGE]");
+	}
+	return s;
+    }
+
+     public String researcherText(String s) {
+	if (runByResearcher()) {
+	    return "<p class=\"researcher\">" + s + "</p>\n";
+	} else return "";
+    }
+
+
     
 }

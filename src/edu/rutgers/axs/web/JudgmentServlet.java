@@ -55,12 +55,11 @@ public class JudgmentServlet extends BaseArxivServlet {
 		
 		User u = User.findByName(em, user);
 		
-		Action a = u.addAction(id, op);
-
 		ActionSource asrc = new ActionSource(request);
-		a.setActionSource(asrc);
+		Action a = u.addAction(em, id, op, asrc);
 
-		em.persist(u);
+		//em.persist(u);
+		
 		em.getTransaction().commit(); 
 		em.close();
 	    }

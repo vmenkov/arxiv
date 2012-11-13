@@ -1,0 +1,13 @@
+#left_frame {
+	width: 195px;
+}
+.button {
+	width: 175px;
+}
+#right_frame {
+	left: 202px;
+	width: expression((document.body.clientWidth -221) + "px");
+}
+.adjust_height {
+	height: expression((document.getElementById('Right_Frame').offsetHeight - 47) + "px");
+}

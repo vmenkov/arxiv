@@ -42,22 +42,6 @@ public class ArticleServlet extends BaseArxivServlet {
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
 
-	    /*
-	    if (user!=null) {
-		em = sd.getEM();
-		// Begin a new local transaction so that we can persist a new entity
-		em.getTransaction().begin();
-		
-		User u = User.findByName(em, user);
-		
-		u.addAction(id, op);
-		
-		em.persist(u);
-		em.getTransaction().commit(); 
-		em.close();
-	    }
-	    */
-
 	    ActionSource asrc = new ActionSource(request);
 
 	    //String base = ARXIV_BASE;

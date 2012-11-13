@@ -15,7 +15,6 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-//import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 /** Our interface for Lucene searches
  */
@@ -26,7 +25,6 @@ public class Search extends ResultsBase {
     public SearchResults sr;
     /** List "paging" */
     public int startat = 0;
-    //public boolean useLog = false;
 
     /** Used for cat search, to restrict date range (the default) */
     static final public int DEFAULT_DAYS=7;

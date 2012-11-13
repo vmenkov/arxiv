@@ -12,6 +12,7 @@ import org.apache.catalina.realm.RealmBase;
 
 import edu.rutgers.axs.web.EditUser;
 import edu.rutgers.axs.web.Tools;
+import edu.rutgers.axs.bernoulli.Bernoulli;
 
 
 @Entity 
@@ -37,7 +38,7 @@ import edu.rutgers.axs.web.Tools;
     /** user_name is used as the primary key and is not editable.
      */
     public  String getUser_name() { return user_name; }
-    public void setUser_name(       String x) { user_name = x; }
+    public void setUser_name(String x) { user_name = x; }
     
     @Basic      @Column(length=64) 
 	@Display(order=2, editable=false, text="encrypted password", digest=true) 
@@ -149,9 +150,14 @@ import edu.rutgers.axs.web.Tools;
 	    BERNOULLI_EXPLORATION,
 	    /** Peter Frazeer's Exploration Engine: Exploration mode */
 	    BERNOULLI_EXPLOITATION;
+
+	public boolean needBernoulli() {
+	    return this==BERNOULLI_EXPLORATION || this==BERNOULLI_EXPLOITATION;
+	}
     }
 
-    @Display(editable=false, order=11) 
+    @Display(editable=false, order=11)	@Column(nullable=false,length=24)
+	@Enumerated(EnumType.STRING)     
 	private Program program;
 
     public Program getProgram() { return program; }
@@ -277,7 +283,7 @@ import edu.rutgers.axs.web.Tools;
      * experimental day
      */
     public String dayMsg() {
-	return ""+ getDay() + " since " + getDayStart();
+	return ""+ getDay() + " mode since " + getDayStart();
     }
 
     /** The "time horizon" for selecting "recent articles" (for
@@ -293,8 +299,17 @@ import edu.rutgers.axs.web.Tools;
     @Basic @Display(order=13, alt="Exclude already-viewed articles from the list of recommendations")
         @Column(nullable=false) boolean excludeViewedArticles;
     public  boolean getExcludeViewedArticles() { return excludeViewedArticles; }
-    public void setExcludeViewedArticles( boolean x) { excludeViewedArticles = x; }
+    public void setExcludeViewedArticles(boolean x) {excludeViewedArticles= x;}
 
+    @Basic   @Display(order=14,editable=true)  @Column(nullable=false)
+	private int cluster;
+    public  int getCluster() { return cluster; }
+    public void setCluster( int x) { cluster = x; }
+
+    public User() {
+	setCluster( Bernoulli.defaultCluster);
+	setProgram( Program.SET_BASED);
+    }
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	    return true; 
@@ -495,16 +510,12 @@ import edu.rutgers.axs.web.Tools;
 	return folder;
     }
 
-
-    public Action addAction(String p, Action.Op op  ) {
-        Action r = new  Action( this, p, op); 
-        actions.add(r);
-        return r;
-    }
-
-    public Action addAction(String p, Action.Op op, ActionSource a  ) {
-	Action r = addAction(p, op);
+    public Action addAction(EntityManager em, String p, Action.Op op, ActionSource a  ) {
+	Action r = new  Action( this, p, op); 
 	r.setActionSource(a);
+        actions.add(r);
+	em.persist(r);
+	r.bernoulliFeedback(em); // only affects Bernoulli users
 	return r;
     }
 
@@ -614,5 +625,5 @@ import edu.rutgers.axs.web.Tools;
 	return c;
     }
 
-  
+
 }

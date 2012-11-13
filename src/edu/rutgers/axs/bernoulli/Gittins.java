@@ -24,11 +24,11 @@ class Gittins {
  	double interpolate(double[] x, int r) {
 	    int k = binarySearch(xpoints, x[r]);
 	    if (k<0) {
-		Logging.warning("x=" + x[r] +" below lower bound");
+		//		Logging.warning("x=" + x[r] +" below lower bound");
 		return fpoints[0].interpolate(x,r+1);
 	    } else if (k >= xpoints.length - 1) {
 		if (x[r] > xpoints[ xpoints.length - 1]) {
- 		    Logging.warning("x=" + x[r] +" above upper bound");
+		    // 		    Logging.warning("x=" + x[r] +" above upper bound");
 		}
 		return fpoints[xpoints.length - 1].interpolate(x,r+1);
 	    } else {
@@ -53,11 +53,11 @@ class Gittins {
 	double interpolate(double x) {
 	    int k = binarySearch(xpoints, x);
 	    if (k<0) {
-		Logging.warning("x=" + x +" below lower bound");
+		//		Logging.warning("x=" + x +" below lower bound");
 		return fpoints[0];
 	    } else if (k >= xpoints.length - 1) {
 		if (x > xpoints[ xpoints.length - 1]) {
-		    Logging.warning("x=" + x +" above upper bound");
+		    //		    Logging.warning("x=" + x +" above upper bound");
 		}
 		return fpoints[xpoints.length - 1];
 	    } else {

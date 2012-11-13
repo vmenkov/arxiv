@@ -22,7 +22,7 @@ import edu.rutgers.axs.indexer.Common;
  */
 public class BernoulliViewSuggestions extends PersonalResultsBase {
 
-    public Mode mode;
+    public User.Program mode;
     public boolean exploitation = false;
     // FIXME: eventually, we'll have multiple clusters
     final int cluster = 0;
@@ -38,11 +38,6 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
     public BernoulliViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
     }
-
-    /** Exploration and Exploitation mode */
-    private static enum Mode {
-	ER, ET;
-    };
 
 
     /**
@@ -65,9 +60,10 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	    startat = (int)Tools.getLong(request, STARTAT,0);
 	    actor=User.findByName(em, actorUserName);
 
+	    mode = (User.Program)getEnum(User.Program.class, MODE, actor.getProgram());
+	    if (!mode.needBernoulli()) mode= User.Program.BERNOULLI_EXPLORATION;
 
-	    mode = (Mode)getEnum(Mode.class, MODE, Mode.ER);
-	    exploitation = (mode == Mode.ET);
+	    exploitation = (mode == User.Program.BERNOULLI_EXPLOITATION);
 
 	    //	    days =actor.getDays();
 	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
@@ -79,7 +75,7 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
 
 
-	    initList( startat, em);
+	    initList( startat, em, actor.getCluster());
 
 	    //	    em.getTransaction().begin();
 	    
@@ -98,7 +94,7 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
     /**
        @param em Just so that we could save the list
      */
-    private void initList(int startat, EntityManager em) throws Exception {
+    private void initList(int startat, EntityManager em, int cluster) throws Exception {
 	//customizeSrc();
 
 	IndexReader reader=Common.newReader();
@@ -110,8 +106,9 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 
 	// eligible candidates: based on categories and date range
 	sr = Bernoulli.catSearch(searcher, days);    
+	// score based ordering	
+	Bernoulli.sort(sr, em, reader, mode, cluster);
 
-	// score based 
 	
 	sr.setWindow( searcher, startat, M, exclusions);
 	ArticleEntry.applyUserSpecifics(sr.entries, actor);
