@@ -23,12 +23,6 @@ public class GetUser extends ResultsBase {
     final public static String CREATE = "create";
 
     public GetUser(HttpServletRequest _request, HttpServletResponse _response) {
-	/*
-	this(_request,  Tools.getBoolean(request, CREATE, false));
-    }
-
-    GetUser((HttpServletRequest _request, HttpServletResponse _response), boolean create) {
-	*/
 	super(_request,_response);
 	boolean create= Tools.getBoolean(request, CREATE, false);
 

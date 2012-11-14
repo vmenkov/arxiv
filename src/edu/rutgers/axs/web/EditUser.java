@@ -47,6 +47,9 @@ public class EditUser extends ResultsBase {
     public EditUser(HttpServletRequest _request, HttpServletResponse _response, Mode mode) {
 	super(_request,_response);
 
+	String code = getString("code", null);
+	if (code.equals("") || code.equals("null")) code=null;
+
 	// Did we come from a CREATE_SELF form that talked about an agreement to pariticipate in a follow-up interview?
 	boolean survey = getBoolean(EntryFormTag.PREFIX +EditUser.SURVEY,false);
 	
@@ -98,6 +101,13 @@ public class EditUser extends ResultsBase {
 	    // set various fields
 	    boolean prefChanged = editUser(r, request);
 	    if (error) return;
+
+	    // Using the "code" parameter
+	    User.Program program=User.Program.SET_BASED;
+	    try {
+		program = Enum.valueOf( User.Program.class, code);
+	    } catch(Exception ex) {}
+	    r.setProgram(program);
 
 
 	    StringBuffer b = new 	StringBuffer();
@@ -194,7 +204,7 @@ public class EditUser extends ResultsBase {
 		}
 	    }
 
-	    if (r.catCnt()==0) {
+	    if (r.catCnt()==0 && !program.needBernoulli()) {
 		error = true;
 		errmsg = "You must specify some categories of interest, in order for the system to be able to generate recommendations. Please go back and check boxes next to at least one category!";
 		return;		    

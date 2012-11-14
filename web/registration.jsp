@@ -8,6 +8,14 @@
 <% 
         ResultsBase main=new ResultsBase(request,response);
 	boolean survey = main.getBoolean(EditUser.SURVEY, false);
+	String code=main.getString("code","");
+	if (code.equals("null")) code="";
+	boolean bernoulli = false;
+	try {
+	    bernoulli = Enum.valueOf( User.Program.class, code).needBernoulli();
+        } catch(Exception ex) {}
+	
+
 	String spacer="	<tr>"+
 			"<td style=\"width:50%; text-align:right; vertical-align:middle; height:5px; border:none;\">&nbsp;</td>" +
 			"<td style=\"width:50%; text-align:left; vertical-align:middle; height:5px; border:none;\">&nbsp;</td>" +
@@ -206,6 +214,14 @@ Thank you for choosing to participate in the arXiv research at the confidential 
 <%= Tools.inputHidden(EntryFormTag.PREFIX + EditUser.SURVEY, survey) %>
 
 	<table style="width: 100%;" cellspacing="0" cellpadding="0">
+<tr><td colspan="2"><h3>Registration code</h3></td></tr>
+	<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="username">Registration code</label>
+<br><small>(If your invitation told you to enter a registration code, enter it here; otherwise, leave the field as it was)</small>
+</td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="code" name="code" value="<%=code%>" style="width:150px" /></td>
+		</tr>
+
 <tr><td colspan="2"><h3>Choose your user name and password</h3></td></tr>
 		<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="username">Desired Username</label>
@@ -352,6 +368,7 @@ the use of audio recording for the telephone interview</strong>
 <%}  %>
 	</table>
 
+<% if (!bernoulli) { %>
 <h3>Your interest areas</h3>
 
 	<table>
@@ -377,6 +394,7 @@ href="http://arxiv.org/">ArXiv.org</a>.  </P>
 <p>
 <%= Categories.mkCatBoxes(null) %>
 </p>
+<% } %>
 	<input type="submit" value="Register" id="submit" /> 	
 	
 </form>
@@ -390,9 +408,9 @@ href="http://arxiv.org/">ArXiv.org</a>.  </P>
 	
 	</div> <!-- Middle frame ends-->
 
-<div id="lower_frame">
+<!-- div id="lower_frame">
 	
-</div> <!-- Lower frame ends -->		
+</div --> <!-- Lower frame ends -->		
 
 <!-- #BeginEditable "Scripts" -->
 <!-- #EndEditable -->

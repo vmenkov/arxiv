@@ -12,6 +12,7 @@ import org.apache.catalina.realm.RealmBase;
 
 import edu.rutgers.axs.web.EditUser;
 import edu.rutgers.axs.web.Tools;
+import edu.rutgers.axs.web.WebException;
 import edu.rutgers.axs.bernoulli.Bernoulli;
 
 
@@ -38,7 +39,12 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     /** user_name is used as the primary key and is not editable.
      */
     public  String getUser_name() { return user_name; }
-    public void setUser_name(String x) { user_name = x; }
+    public void setUser_name(String x) throws WebException { 
+	if (x.length()>15) {
+	    throw new WebException("User name '"+x+"' is to long. User names cannot be longer than 15 characters");
+	}
+	user_name = x; 
+    }
     
     @Basic      @Column(length=64) 
 	@Display(order=2, editable=false, text="encrypted password", digest=true) 
@@ -151,6 +157,8 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    /** Peter Frazeer's Exploration Engine: Exploration mode */
 	    BERNOULLI_EXPLOITATION;
 
+	/** Do we need to use the Bernoulli Exploration Engine with
+	 * this program?	 */
 	public boolean needBernoulli() {
 	    return this==BERNOULLI_EXPLORATION || this==BERNOULLI_EXPLOITATION;
 	}

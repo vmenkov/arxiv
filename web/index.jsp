@@ -108,7 +108,7 @@ window.onload = StartScripts;
 
    <% if (main.user==null) { %>
   
-    <a class="button" href="participation.html""><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Join</a>
+    <a class="button" href="participation.jsp""><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Join</a>
 
       <% } else { %>
     
@@ -137,7 +137,7 @@ window.onload = StartScripts;
       <h2>Personalization tools</h2>
 
       <% if (main.user==null) { %>
-      <div style="text-align:center"><a href="participation.html">Join
+      <div style="text-align:center"><a href="participation.jsp">Join
 </a> <br />
 </div>		
       <br /> 

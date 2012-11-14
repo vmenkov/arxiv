@@ -3,6 +3,7 @@ package edu.rutgers.axs.sql;
 import java.util.*;
 import java.lang.reflect.*;
 import javax.persistence.*;
+import edu.rutgers.axs.web.WebException;
 
 
 /** 
@@ -40,7 +41,7 @@ public class CreateRoles {
 
 
     @SuppressWarnings("unchecked")
-    public static void main(String[] args) {
+    public static void main(String[] args) throws WebException {
 	EntityManager em = getEM();
 	try {
 

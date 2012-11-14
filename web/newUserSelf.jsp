@@ -20,7 +20,7 @@
 <% 
    if (main.error) {   %>  <%@include file="include/error.jsp" %>
 
-<p>Use the "back" button of your browser to get back to your data entry page. Or you can reload the <a href="<%=main.cp%>/participation_login.html">registration page</a>.</p>
+<p>Use the "back" button of your browser to get back to your data entry page.</p>
 
 
 <%   } else {      %>

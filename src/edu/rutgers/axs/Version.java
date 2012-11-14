@@ -16,7 +16,7 @@ public class Version {
     public static String getVersion() { return version; }
 
     /** Version number and date */
-    public static String getInfo() { return version + "("+date+")"; }
+    public static String getInfo() { return version + " ("+date+")"; }
     
     
     /** Compares two version numbers (described as strings). 
