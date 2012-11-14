@@ -56,7 +56,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	UI. This is normally the same value as recoreded for the user
 	actions that originated from the context of this presented
 	list. */
-    @Column(nullable=true,length=8) @Enumerated(EnumType.STRING) 
+    @Column(nullable=true,length=24) @Enumerated(EnumType.STRING) 
 	@Display(editable=false, order=5.2) 
     private Action.Source type;
     
