@@ -6,11 +6,14 @@ import java.text.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
-
 import javax.persistence.*;
+
+import org.apache.lucene.index.IndexReader;
+
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.*;
+import edu.rutgers.axs.indexer.Common;
 
 /** Retrieves and displayed a user profile file, which contains a
  * weighted list of terms.
@@ -51,6 +54,7 @@ public class ViewUserProfile extends PersonalResultsBase {
 	   
 
 	EntityManager em = sd.getEM();
+	IndexReader reader = null;
 	try {
 
 	    if (actorUserName==null) throw new WebException("No user name specified!");
@@ -115,7 +119,8 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    em.getTransaction().commit();
 
 	    if (df!=null) {
-		upro = new UserProfile(df, ArticleAnalyzer.getReader());
+		reader = Common.newReader();
+		upro = new UserProfile(df, reader);
 
 		if (df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
 		    ancestor = DataFile.findFileByName(em,actorUserName, df.getInputFile());
@@ -130,6 +135,9 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    setEx(_e);
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
+	    try {
+		if (reader!=null)   reader.close();
+	    } catch(IOException ex) {}
 	}
     }
 

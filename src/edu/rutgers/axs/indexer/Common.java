@@ -14,6 +14,7 @@ public class Common {
     
     static final Version LuceneVersion = Version.LUCENE_33; 
 
+    /** Creates a new Lucene reader */
     static public IndexReader newReader()  throws IOException {
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	IndexReader reader =  IndexReader.open( indexDirectory);            

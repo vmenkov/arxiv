@@ -32,7 +32,7 @@ public class ArticleAnalyzer {
     /** Collection size */
     private int numdocs, maxdoc;
     ArticleAnalyzer() throws IOException {
-	this(   getReader(), upFields);
+	this(   Common.newReader(), upFields);
     }
     public ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
 	fields = _fields;
@@ -560,8 +560,8 @@ public class ArticleAnalyzer {
 	return ArticleEntry.find(s, aid);
     }
     
-    static public IndexReader getReader()  throws IOException {
-	return Common.newReader();
+    public IndexReader getReader()  throws IOException {
+	return reader;
     }
 
     /** FIXME: maybe need to resize allStats[]... */

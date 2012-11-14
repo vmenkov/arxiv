@@ -60,7 +60,6 @@ public class Bernoulli {
 	EntityManager em  = Main.getEM();
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
-	    // searcher.getIndexReader();
 
 	/** This plays a very auxiliary role; mostly, a cludge to piggyback
 	    on AA's definition of IDF */

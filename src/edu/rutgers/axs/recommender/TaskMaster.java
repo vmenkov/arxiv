@@ -12,6 +12,7 @@ import javax.persistence.*;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.indexer.Common;
 
 public class TaskMaster {
   
@@ -77,7 +78,7 @@ public class TaskMaster {
 	ShutDownThread shutDown = new ShutDownThread(Thread.currentThread(), exitAfterTime);
 	Runtime.getRuntime().addShutdownHook(shutDown);	
 
-	IndexReader reader =  ArticleAnalyzer.getReader();
+	IndexReader reader =  Common.newReader();
 	//	AllStatsReader asr = new  AllStatsReader(reader);
 	Main.memory("main:calling CASA");
 	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(reader);

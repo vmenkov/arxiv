@@ -11,6 +11,7 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.ArxivFields;
+import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
@@ -733,12 +734,12 @@ public class UserProfile {
 	System.out.println("User="+username+", profile="+file);
 
 	EntityManager em = Main.getEM();
+	IndexReader reader =  Common.newReader();
 
 	for(int j=2; j<argv.length; j++) {
 	    String aid = argv[j];
 
 	    DataFile df = DataFile.findFileByName( em,  username,  file);
-	    IndexReader reader =  ArticleAnalyzer.getReader();
 	    
 	    UserProfile up = new UserProfile( df, reader);
 

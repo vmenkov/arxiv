@@ -25,7 +25,7 @@ public class Test {
     private IndexReader reader;
 
     public Test()  throws IOException {
-	reader =  ArticleAnalyzer.getReader();
+	reader =  Common.newReader();
     }
    
     static int maxDocs = 100;
