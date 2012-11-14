@@ -163,8 +163,12 @@ window.onload = StartScripts;
 
     <div id="right_frame">
       <% if (main.error) { %>
-<!-- Error message: <%= main.errmsg %> -->
-      <% } else if (main.user!=null && mainB==null) { 
+<!-- <p>Error message: <%= main.errmsg %></p> -->
+      <% if (main.e!=null) { %>
+     <p><pre>
+Exception: <%= main.e %>
+</pre></p>
+      <% }} else if (main.user!=null && mainB==null) { 
      	  DataFile df = mainA.df;
   	  SearchResults sr = mainA.sr;
 %>
