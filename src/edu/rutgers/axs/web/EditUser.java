@@ -48,7 +48,7 @@ public class EditUser extends ResultsBase {
 	super(_request,_response);
 
 	String code = getString("code", null);
-	if (code.equals("") || code.equals("null")) code=null;
+	if (code==null || code.equals("") || code.equals("null")) code=null;
 
 	// Did we come from a CREATE_SELF form that talked about an agreement to pariticipate in a follow-up interview?
 	boolean survey = getBoolean(EntryFormTag.PREFIX +EditUser.SURVEY,false);

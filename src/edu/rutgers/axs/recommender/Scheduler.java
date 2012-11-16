@@ -104,16 +104,15 @@ public class Scheduler {
 	//	    "(select max(a.id) from Action a where a.user = u) > "+
 	//	    "(select max(df.lastActionId) from DataFile df where df.type=:t and df.days=0 and df.user = u.user_name)";
 
-	String qs = "select u.id from User u";
+	String qs = "select u.id from User u where u.program=:p";
 
 	Query q = em.createQuery(qs);
+	q.setParameter("p",User.Program.SET_BASED);
 	//	q.setParameter("t",  DataFile.Type.LINEAR_SUGGESTIONS_1);
 
 	List<Long> lu  =  (List<Long>) q.getResultList();
 	//Logging.info("Scheduler: Found " + lu.size() + " users whose UP or SL may need updating");
 	Logging.info("Scheduler (stage="+(stage2?"SL":"UP")+"), au="+articlesUpdated+": Found " + lu.size() + " users");
-
-	//for(long uid: lu) {	    Logging.info("uid=" + uid);	}
 
 	for(long uid: lu) {
 	    User u = (User)em.find(User.class, uid);

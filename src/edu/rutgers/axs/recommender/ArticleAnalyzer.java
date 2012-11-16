@@ -230,7 +230,6 @@ public class ArticleAnalyzer {
      */
     double linSim(int docno, 
 		  CompactArticleStatsArray   allStats, 
-		  //ArticleStats as, 
 		  HashMap<String, UserProfile.TwoVal> hq) 
 	throws IOException {
 	
