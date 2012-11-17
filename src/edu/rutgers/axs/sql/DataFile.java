@@ -146,9 +146,17 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public int getDays() { return days; }
     public void setDays(int x) { days = x; }
 
+   /** Includes articles selected among those added since that
+       date. (Only applies to suggestion lists).
+    */
+    @Display(editable=false, order=6.2) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date since;
+    public  Date getSince() { return since; }
+    public void setSince(       Date x) { since = x; }
 
     /** Has the physical file been deleted? */
-    @Basic  @Display(editable=false, order=6.2)    boolean deleted = false;
+    @Basic  @Display(editable=false, order=6.3)    boolean deleted = false;
     public boolean getDeleted() { return deleted; }
     public void setDeleted( boolean x) {  deleted = x; }
 
@@ -434,6 +442,5 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     }
 
 
- 
 
 }

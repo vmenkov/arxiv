@@ -1,14 +1,9 @@
 package edu.rutgers.axs.indexer;
 
-import java.util.Collection;
-import java.util.Iterator;
-
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.text.SimpleDateFormat;
-import java.util.regex.*;
 import java.io.*;
-
+import java.util.*;
+import java.util.regex.*;
+import java.text.SimpleDateFormat;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.analysis.Analyzer;
@@ -81,6 +76,7 @@ class Show {
 	Document doc = reader.document(docno);
 	System.out.println("Doc no.=" + docno);
 	System.out.println("dateIndexed=" + doc.get(ArxivFields.DATE_INDEXED));
+	System.out.println("date       =" + doc.get(ArxivFields.DATE));
 	System.out.println("Document=" + doc);
     }
 

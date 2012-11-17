@@ -24,8 +24,7 @@ public  class SubjectSearchResults extends SearchResults {
     */
     public SubjectSearchResults(IndexSearcher searcher, String[] cats, 
 				Date rangeStartDate, int maxlen) 
-    throws IOException 
-{
+    throws IOException {
 
 	    org.apache.lucene.search.Query q;
 	    if (cats.length<1) {
