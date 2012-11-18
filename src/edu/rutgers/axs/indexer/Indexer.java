@@ -679,6 +679,11 @@ public class Indexer {
 		}
 	    }
 	} else if (args[0].equals("showcoef")) {
+	    System.out.println("Note: the following stop words are not stored:");
+	    for(Object x: org.apache.lucene.analysis.standard.StandardAnalyzer.STOP_WORDS_SET) {
+		System.out.print( x.getClass() + ": " + x + "; ");
+	    }
+	    System.out.println();
 	    Show show = new Show();
 	    for(int j=1; j<args.length; j++) {
 		show.showCoef(args[j]);

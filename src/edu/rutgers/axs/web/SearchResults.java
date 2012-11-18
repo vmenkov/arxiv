@@ -143,6 +143,8 @@ public class  SearchResults {
 	
     }
 
+    /** Creates a date range clause, based on ArxivFields.DATE
+     */
     static TermRangeQuery mkSinceDateQuery(Date since) {
 	String lower = 	DateTools.timeToString(since.getTime(), DateTools.Resolution.MINUTE);
 	//System.out.println("date range: from " + lower);
@@ -292,11 +294,8 @@ public class  SearchResults {
 	of the category search (Treatment A) can be reordered as
 	needed for June 2012 experiments. The number of matching cats
 	is the primary key, the date is the secondary */	
-    public 
-//static 
-	void setCatSearchScores(IndexReader reader,
-				// ScoreDoc[] scoreDocs,
-				String[] _cats, Date since) throws IOException, CorruptIndexException{
+    public void setCatSearchScores(IndexReader reader,
+				   String[] _cats, Date since) throws IOException, CorruptIndexException{
 	String[] cats = Arrays.copyOf(_cats, _cats.length);
 	Arrays.sort(cats);
 

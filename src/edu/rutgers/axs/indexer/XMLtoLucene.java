@@ -3,14 +3,6 @@ package edu.rutgers.axs.indexer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.DateTools;
-/*
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
-*/
 
 import edu.cornell.cs.osmot.cache.Cache;
 import edu.cornell.cs.osmot.options.Options;
@@ -19,9 +11,9 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import java.util.*;
-//import java.text.SimpleDateFormat;
 import java.util.regex.*;
 import java.io.*;
+import java.text.SimpleDateFormat;
 
 // stuff for handling XML
 import org.apache.xerces.parsers.DOMParser;
@@ -128,14 +120,21 @@ class XMLtoLucene {
 	/** Special parsing required for categories, to preserve hyphens */
 	if (q.luceneName.equals(ArxivFields.CATEGORY)) {
 	    field.setTokenStream(new SubjectTokenizer(text));
-
 	}
 
-	doc.add(field);
-	
+	doc.add(field);	
     }
 
 
+    static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+
+    /** Sets conversion rules for various fields. Note the special
+	treatment of the time field: the numbers coming via OAI2, such
+	as 2012-06-01 should be understood as midnight on EST, while
+	strings inside Lucene are interpreted (by
+	org.apache.lucene.document.DateTools) as GMT time stamps.
+     */
     static  XMLtoLucene makeMap( ) {
 	XMLtoLucene  map = new 	XMLtoLucene();
 
@@ -151,7 +150,15 @@ class XMLtoLucene {
 	map.add("created",  ArxivFields.DATE, Flags.NOT_ANALIZED).
 	    setHandler(new FieldHandler() {
 		    String convertText(String text) {
-			return text.replaceAll("-", "") + "0000";
+			//			return text.replaceAll("-", "") + "0000";
+			String s="";
+			try {
+			    // in as local time (EST)
+			    Date d = dateFormat.parse(text);
+			    // out as GMT
+			    s=DateTools.dateToString(d,DateTools.Resolution.DAY);
+			} catch( java.text.ParseException ex) {}
+			return s;
 		    }});
 	map.add(ArxivFields.AUTHORS).
 	    setHandler(new AuthorsHandler());

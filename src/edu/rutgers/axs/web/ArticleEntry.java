@@ -11,10 +11,9 @@ import org.apache.lucene.search.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 
-/** Data for a single search result (an article). This is used
-    primarily for rendering the article entry in the search results
-    page or user folder page.
-*/
+/** An ARticleEntry instance contains data for a single search result
+    (an article). This is used primarily for rendering the article
+    entry in the search results page, suggestions page, or user folder page.  */
 public class ArticleEntry {
     /** Sequence number in the overall search result
      * sequence. (1-based, for human readers' convenience) */
@@ -34,6 +33,7 @@ public class ArticleEntry {
     public double score=0;
     /** This is the Lucene-stored article submission date, as a string */
     public String date=null;
+    public String dateIndexed=null;
 
     static private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -42,7 +42,9 @@ public class ArticleEntry {
 	
 	Date docDate= null;
 	try {
-	    return dateFormat.format( DateTools.stringToDate(date));
+	    String s = dateFormat.format( DateTools.stringToDate(date));
+	    //	    s += "(" + date + "; indexed on " +  dateIndexed + ")";
+	    return s;
 	} catch(java.text.ParseException ex) {
 	    return "date not known"; // ought not happen
 	}
@@ -81,6 +83,8 @@ public class ArticleEntry {
 	commline=(c==null? "": "Comments:" + c);
 	subjline="Subjects:" + doc.get((ArxivFields.CATEGORY));
 	date = doc.get(ArxivFields.DATE);
+	dateIndexed = doc.get(ArxivFields.DATE_INDEXED);
+
     }
     
 

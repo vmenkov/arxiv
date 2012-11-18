@@ -17,7 +17,12 @@ set opt="-cp ${cp} ${opt} -Drewrite=false -Doptimize=false -Ddays=7"
 
 echo "opt=$opt"
 
-#echo java $opt edu.cornell.cs.osmot.indexer.Indexer $1 $2 $3
-/usr/bin/time java $opt  edu.rutgers.axs.indexer.ArxivImporter all $1 $2 $3
+if ("$1" == "") then
+    echo 'Usage: import.sh [all|files ...]'
+    exit
+endif
+
+/usr/bin/time  java $opt edu.rutgers.axs.indexer.ArxivImporter $1 "$2" "$3" "$4"
+
 
 

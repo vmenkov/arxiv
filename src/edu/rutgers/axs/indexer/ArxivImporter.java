@@ -67,18 +67,22 @@ public class ArxivImporter {
     private String parseResponse(Element e, IndexWriter writer, IndexReader reader, boolean rewrite)  throws IOException {
 	//org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
 	XMLUtil.assertElement(e,"OAI-PMH");
-	Element listRecordsE = null;
+	Element listRecordsE = null, getRecordE = null;
 	for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
 	    if (n instanceof Element && n.getNodeName().equals("ListRecords")) {
 		listRecordsE = ( Element )n;
+		break;
+	    } else if (n instanceof Element && n.getNodeName().equals("GetRecord")) {
+		getRecordE = ( Element )n;
 		break;
 	    }
 	}
 	String token=null;
 
-	if (listRecordsE == null) return token; // empty response
+	Element outer = (listRecordsE != null) ? listRecordsE:  getRecordE;
+	if (outer == null) return token; // empty response
 
-	for(Node n = listRecordsE.getFirstChild(); n!=null; n = n.getNextSibling()) {
+	for(Node n = outer.getFirstChild(); n!=null; n = n.getNextSibling()) {
 	    if (!(n instanceof Element)) continue;
 	    String name = n.getNodeName();
 	    if (name.equals(Tags.RECORD)) {
@@ -324,7 +328,7 @@ public class ArxivImporter {
 	if (whole_doc!=null) {
 	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
 
-	    // Date document was indexed
+	    // Rercord current time as the date the document was indexed 
 	    doc.add(new Field(ArxivFields.DATE_INDEXED,
 			      DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND),
 			      Field.Store.YES, Field.Index.NOT_ANALYZED));		
@@ -334,14 +338,13 @@ public class ArxivImporter {
 	    missingBodyIdList.add(paper);
 	}
 
-	System.out.println("id="+paper);//+", Doc = " + doc);
+	System.out.println("id="+paper+", date=" + doc.get(ArxivFields.DATE));//+", Doc = " + doc);
 
 
 	// write data to Lucene, and cache the doc body
-	Indexer.processDocument(doc, 
-				whole_doc==null? null:
-				Indexer.locateBodyFile(paper,  bodySrcRoot).getCanonicalPath(),
-				true, writer, bodyCacheRoot);
+	String doc_file = whole_doc==null? null:
+	    Indexer.locateBodyFile(paper,  bodySrcRoot).getCanonicalPath();
+	Indexer.processDocument(doc, doc_file,	true, writer, bodyCacheRoot);
 
 	pcnt++;
 	// cache the metadata - unless, of course, we ARE reading from the 
@@ -410,8 +413,9 @@ public class ArxivImporter {
 	return true;
     }
 
-    private static Element getPage(String us ) throws IOException,  org.xml.sax.SAXException {
-	URL url = new URL(us);
+    /** Reads the content of a URL into an XML element */
+    private static Element getPage(String urlString ) throws IOException,  org.xml.sax.SAXException {
+	URL url = new URL(urlString);
 
 	HttpURLConnection conn;
 	do {
@@ -587,7 +591,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	-Doptimize=true
 	</pre>
      */
-    static public void main(String[] argv) throws IOException, SAXException {
+    static public void main(String[] argv) throws IOException, SAXException,
+						  java.text.ParseException
+ {
 	if (argv.length==0) usage();
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
@@ -602,8 +608,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	imp.setBodySrcRoot( "../arXiv-text/");
 
 	if (argv.length==0) return;
+	final String cmd =argv[0];
 
-	if ( argv[0].equals("all")) {
+	if ( cmd.equals("all")) {
 	    int max=-1;
 	    if (argv.length>1) {
 		try {
@@ -612,7 +619,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    }
 	    System.out.println("Processing web data, up to "+max + " pages; from=" + from);
 	    imp.importAll(tok, max, rewrite, from);
-	} else if (argv[0].equals("allmeta")) {
+	} else if (cmd.equals("allmeta")) {
 	    if (!rewrite) throw new IllegalArgumentException("For a reload from metachache, ought to use -Drewrite=true");
 	    imp.readingMetacache=true;
 	    IndexWriter writer =  imp.makeWriter(); 
@@ -624,14 +631,18 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    }
 	    reader.close();
 	    writer.close();
-	} else if (argv[0].equals("files")) {
+	} else if (cmd.equals("files")) {
 	    // processing files
 	    IndexWriter writer =  imp.makeWriter(); 
 	    IndexReader reader = IndexReader.open(writer, false);
 	    for(int i=1; i<argv.length; i++) {
 		String s= argv[i];
-	 	System.out.println("Processing " + s);
-		Element e = XMLUtil.readFileToElement(s);
+		if (s.equals("")) continue;
+		final boolean isUrl=
+		    s.startsWith("http://")||s.startsWith("https://");
+		System.out.println("["+i+"] Processing " + (isUrl?"URL ": "file ") + s);
+
+		Element e = isUrl?  getPage(s) :  XMLUtil.readFileToElement(s);
 		if (e.getNodeName().equals(Tags.RECORD)) {
 		    System.out.println("Found a record; processing");
 		    imp.importRecord(e, writer, reader, rewrite);
@@ -647,8 +658,26 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    }
 	    reader.close();
 	    writer.close();
+	} else if (cmd.equals("test")) {
+	    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+	    String a = "2012-11-14";
+	    String b0 = a.replaceAll("-", "") + "0000";
+
+	    Date b1 = dateFormat.parse(a);
+
+	    //  DateTools.timeToString(date.getTime(),DateTools.Resolution.MINUTE),
+
+	    String b = DateTools.dateToString(b1,DateTools.Resolution.HOUR  );
+
+	    // b is understood as time in GMT 
+	    Date c = DateTools.stringToDate(b);
+	    String d = dateFormat.format(c);
+	    System.out.println( a + " --> " + b1 + " --> "+ b + " --> "
+ +c + " --> " +d);
+
 	} else {
-	    System.out.println("Unrecognized command: " + argv[0]);
+	    System.out.println("Unrecognized command: " + cmd);
 	}
 	System.out.println("imported "+imp.pcnt+" docs, among which missing body files for "+ imp.missingBodyIdList.size() +" docs");
 	PrintWriter fw = new PrintWriter(new FileWriter("missing.txt"));
