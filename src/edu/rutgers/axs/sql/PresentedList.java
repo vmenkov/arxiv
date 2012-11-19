@@ -133,4 +133,25 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	}
     }
 
+    /** Find the PresentedList object correcponding to the most recent
+	"set based" suggestion list seen by the specified user. 
+     */
+    static public PresentedList findMostRecentPresntedSugList(EntityManager em, String  username) {
+	String qs = "select m from PresentedList m where m.user=:u and (m.type=:t1 or m.type=:t2) order by id desc";
+	Query q = em.createQuery(qs);
+
+	q.setParameter("u", username);
+	q.setParameter("t1",	Action.Source.MAIN_SL);
+	q.setParameter("t2",	Action.Source.MAIN_MIX);
+
+	q.setMaxResults(1);
+	List<PresentedList> res = (List<PresentedList>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+
+
 }

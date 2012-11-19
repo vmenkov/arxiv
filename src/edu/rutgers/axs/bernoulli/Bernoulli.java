@@ -16,7 +16,6 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.SearchResults;
 import edu.rutgers.axs.web.SubjectSearchResults;
-import edu.rutgers.axs.web.ArticleEntry;
 
 import edu.rutgers.axs.recommender.UserProfile;
 import edu.rutgers.axs.recommender.Stoplist;
@@ -66,7 +65,7 @@ public class Bernoulli {
 	//    static 
 	ArticleAnalyzer analyzer = new  ArticleAnalyzer(reader, new String[] {field});
 	for(String aid: aids) {
-	    int docno = ArticleEntry.find(searcher, aid);
+	    int docno = Common.find(searcher, aid);
 	    double norm = computeNorm(analyzer, docno);
 	    int cluster = defaultCluster;
 	    em.getTransaction().begin();
@@ -96,7 +95,7 @@ public class Bernoulli {
 	CatInfo catInfo = new CatInfo(cats, false);
 	List<BernoulliTrainArticleStats> res = BernoulliTrainArticleStats.findAllByCluster(em,  defaultCluster);
 	for(BernoulliTrainArticleStats bas: res) {
-	    int docno = ArticleEntry.find(searcher, bas.getAid());
+	    int docno = Common.find(searcher, bas.getAid());
 	    // verify categories
 	    Document doc2 = reader.document(docno);
 	    String cat2 =doc2.get(ArxivFields.CATEGORY);

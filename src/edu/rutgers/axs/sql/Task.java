@@ -97,6 +97,17 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
     public int getDays() { return days; }
     public void setDays(int x) { days = x; }
 
+  /** Includes articles selected among those added since that
+       date. (Only applies to suggestion lists). If this field is non-null,
+       it overrides the "days" field.
+    */
+    @Display(editable=false, order=4.2) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date since;
+    public  Date getSince() { return since; }
+    public void setSince(       Date x) { since = x; }
+
+
 
     /** When the web server creates this request. */
     @Display(editable=false, order=5) 

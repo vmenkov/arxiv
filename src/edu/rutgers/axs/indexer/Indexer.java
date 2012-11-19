@@ -514,7 +514,7 @@ public class Indexer {
 	}
     }
 
-    /** Returnd path/id.txt. path/id.txt.gz, or null, based on what
+    /** @return path/id.txt. path/id.txt.gz, or null, based on what
 	can be found
      */
     static File locateBodyFile( String id,  String bodySrcRoot) {

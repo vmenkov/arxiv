@@ -17,7 +17,7 @@ import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
 
 /** A Scheduler object is created by the TaskMaster, and is used to
-    automatically schedule data-updating tasks.  In particular, it
+    automatically create and schedule data-updating tasks.  In particular, it
     checks user activity and schedules user profile updates and
     suggestion list updates for the users who have had recent activity
     not yet reflected in user profiles and suggestion lists.  */
@@ -144,7 +144,7 @@ public class Scheduler {
 		
 		Logging.info("Scheduler: user " + uname + "; lai="+lai+", plai="+plai+"; needed UP0 update? " + need);		
 		if (need) {
-		    addTask(em, uname, mode, days);
+		    addTask(em, uname, mode, days, null, null);
 		    createdCnt++;
 		}
 
@@ -157,7 +157,7 @@ public class Scheduler {
 		     (new Date()).getTime());
 		Logging.info("Scheduler: user " + uname + "; needed UP2 update? " + need);		
 		if (need) {
-		    addTask(em, uname, mode, days);
+		    addTask(em, uname, mode, days, null, null);
 		    createdCnt++;
 		}
 
@@ -208,7 +208,10 @@ public class Scheduler {
 			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
 			    latestProfile.getThisFile() : null;
 
-			addTask(em, uname, mode, days, requiredInput );
+
+			Date since = null;
+
+			addTask(em, uname, mode, days, since, requiredInput );
 			createdCnt++;
 		    }
 		}
@@ -222,17 +225,18 @@ public class Scheduler {
 	return createdCnt;
     }
 
-    private void addTask(EntityManager em, String uname, DataFile.Type mode, int days){
-	addTask(em, uname, mode, days, null);
-    }
+    //    private void addTask(EntityManager em, String uname, DataFile.Type mode, int days, Date since){
+    //	addTask(em, uname, mode, days, since, null);
+    //    }
 
     /** Creates a new task of with the required parameters.
      */
-    private void addTask(EntityManager em, String uname, DataFile.Type mode, int days, String basedon) {
+    private void addTask(EntityManager em, String uname, DataFile.Type mode, int days, Date since, String basedon) {
 	Task.Op taskOp = mode.producerFor(); // producer task type
 	em.getTransaction().begin();
 	Task newTask = new Task(uname, taskOp);
 	newTask.setDays(days);
+	if (since!=null) newTask.setSince(since);
 	if (basedon!=null) newTask.setInputFile(basedon);
 	em.persist(newTask);
 	em.getTransaction().commit();

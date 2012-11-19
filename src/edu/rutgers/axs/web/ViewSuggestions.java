@@ -234,10 +234,6 @@ public class ViewSuggestions extends PersonalResultsBase {
 	basedon=null;
 	mode = DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
 	basedonType =DataFile.Type.TJ_ALGO_2_USER_PROFILE;
-	//	    days = (int)getLong(DAYS,Search.DEFAULT_DAYS);
-	// "-1" means "any horizon"; this way we take care of the case
-	// when the user changes the horizon
-	// days = (int)getLong(DAYS,-1);
 		
 	if (expert || force) throw new WebException("The 'expert' or 'force' mode cannot be used on the main page");
 

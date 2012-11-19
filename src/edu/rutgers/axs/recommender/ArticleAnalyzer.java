@@ -18,7 +18,7 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
-import edu.rutgers.axs.web.ArticleEntry;
+//import edu.rutgers.axs.web.ArticleEntry;
 
 
 /** Tools for getting numbers out of the Lucene index. This includes
@@ -556,7 +556,7 @@ public class ArticleAnalyzer {
     /** Finds a document by ID in the Lucene index */
     int find(String aid) throws IOException{
 	IndexSearcher s = new IndexSearcher( reader );
-	return ArticleEntry.find(s, aid);
+	return Common.find(s, aid);
     }
     
     public IndexReader getReader()  throws IOException {

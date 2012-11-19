@@ -704,7 +704,7 @@ public class UserProfile {
 	    for(int i=0; i<watchAid.length; i++) {
 		watchPos[i]=-1;
 		try {
-		    watchPos[i] =  ArticleEntry.find(s, watchAid[i]);
+		    watchPos[i] =  Common.find(s, watchAid[i]);
 		} catch (IOException ex) {};
 	    }
 	}

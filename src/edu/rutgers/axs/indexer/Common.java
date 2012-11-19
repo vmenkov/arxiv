@@ -6,6 +6,7 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
@@ -20,6 +21,24 @@ public class Common {
 	IndexReader reader =  IndexReader.open( indexDirectory);            
 	return reader;
     }
+
+   /** Find a document by article ID, using a given searcher.
+     @return Lucene internal doc id.
+     @throws IOException if not found.
+    */
+    static public int find(IndexSearcher s, String aid) throws IOException {
+	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
+	//System.out.println("query=("+tq+")");
+	TopDocs 	 top = s.search(tq, 1);
+	ScoreDoc[] 	scoreDocs = top.scoreDocs;
+	if (scoreDocs.length < 1) {
+	    System.out.println("No document found with paper="+aid);
+	    throw new IOException("No document found with paper="+aid);
+	}
+	return scoreDocs[0].doc;
+    }
+
+
 
 
 }

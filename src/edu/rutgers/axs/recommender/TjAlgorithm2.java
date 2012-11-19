@@ -15,7 +15,7 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
-import edu.rutgers.axs.web.ArticleEntry;
+//import edu.rutgers.axs.web.ArticleEntry;
 
 class TjAlgorithm2 {
     private UserProfile upro;
@@ -102,7 +102,7 @@ class TjAlgorithm2 {
 	    String aid = up.getArticle();
 	    int docno;
 	    try {
-		docno = ArticleEntry.find( searcher,aid);
+		docno = Common.find( searcher,aid);
 	    } catch (IOException ex) {
 		Logging.info("A2: ignoring document named " + aid + ", as it's not found in the index");
 		continue;

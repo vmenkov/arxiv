@@ -249,6 +249,35 @@ public class ArxivImporter {
 	}	
     }
 
+    /** Returns the string value that should be stored in the
+	DATE_FIRST_MY field of the new document for a specified article id. 
+	This is a "now" timestamp if the article has never been imported into 
+	Lucene, or the value of that field (or the DATE field) from the
+	pre-existing record. The purpose of this is to keep track
+	when an article was first imported into My.Arxiv
+     */
+    private static String getMyArxivDate(IndexReader reader, String aid) {
+	String now =   DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND);
+	IndexSearcher searcher=null;
+	try {
+	    searcher = new IndexSearcher(reader);
+	    int docno = Common.find(searcher, aid);
+	    Document doc = reader.document(docno);
+	    String s= doc.get(ArxivFields.DATE_FIRST_MY);
+	    if (s!=null) return s;
+	    s = doc.get(ArxivFields.DATE);
+	    if (s!=null) return s;
+	} catch(Exception ex) {    
+	    return now;
+	} finally {
+	    try {
+		searcher.close();
+	    } catch(Exception ex) {}
+	}
+	return now;
+    }
+
+
     /** Takes an XML "record" element from the OAI feed, finds
 	matching body file, and saves all the data as
 	appropriate. This involves creating a Document object (with
@@ -290,6 +319,12 @@ public class ArxivImporter {
 	Cache metacache = new Cache(metaCacheRoot);
 	Cache bodycache = new Cache(bodyCacheRoot);
 	metacache.setExtension(".xml");
+
+	// Keep track of when this article first appeared in My.Arxiv's Lucene
+	// index
+	String dateFirstMy =   getMyArxivDate( reader, paper);
+	doc.add(new Field(ArxivFields.DATE_FIRST_MY,  dateFirstMy,
+			  Field.Store.YES, Field.Index.NOT_ANALYZED));
 
 	if (!rewrite || fixCatsOnly) {
 	    // see if the doc already exists (both the Lucene entry, and the cached body and metadata)

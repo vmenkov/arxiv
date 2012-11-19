@@ -217,23 +217,7 @@ public class ArticleEntry {
 	return entries;
     }
 
-    /** Find a document by article ID, using a given searcher.
-     @return Lucene internal doc id.
-     @throws IOException if not found.
-    */
-    static public int find(IndexSearcher s, String aid) throws IOException {
-	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
-	//System.out.println("query=("+tq+")");
-	TopDocs 	 top = s.search(tq, 1);
-	ScoreDoc[] 	scoreDocs = top.scoreDocs;
-	if (scoreDocs.length < 1) {
-	    System.out.println("No document found with paper="+aid);
-	    throw new IOException("No document found with paper="+aid);
-	}
-	return scoreDocs[0].doc;
-    }
-
-    /** @return the Lucene doc no, or -1 (if we have not queried Lucene yet) 
+     /** @return the Lucene doc no, or -1 (if we have not queried Lucene yet) 
      */
     public int getStoredDocno() {
 	return docno;
@@ -244,7 +228,7 @@ public class ArticleEntry {
      */
     public int getCorrectDocno(IndexSearcher s) throws IOException {
 	if (docno < 0) {
-	    docno = find(s, id);		    
+	    docno = Common.find(s, id);		    
 	}
 	return docno;
     }
