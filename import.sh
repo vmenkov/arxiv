@@ -1,5 +1,9 @@
 #!/bin/csh
 
+# Usage examples:
+# ./import.sh files 'http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:1211.0003'
+
+
 set opt="-DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib

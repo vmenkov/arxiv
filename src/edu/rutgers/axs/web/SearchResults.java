@@ -143,12 +143,23 @@ public class  SearchResults {
 	
     }
 
-    /** Creates a date range clause, based on ArxivFields.DATE
+    /** Creates a date range clause. This was originally based on
+	ArxivFields.DATE, but since 2012-11 we're phasing in 
+     	ArxivFields.DATE_FIRST_MY
      */
-    static TermRangeQuery mkSinceDateQuery(Date since) {
+    static  org.apache.lucene.search.Query mkSinceDateQuery(Date since) {
 	String lower = 	DateTools.timeToString(since.getTime(), DateTools.Resolution.MINUTE);
 	//System.out.println("date range: from " + lower);
-	return new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);
+	//	return new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);
+
+	BooleanQuery bq = new BooleanQuery();
+	bq.setMinimumNumberShouldMatch(1);
+	String fields[] = {ArxivFields.DATE, ArxivFields.DATE_FIRST_MY};
+	for( String field: fields) {
+	    bq.add( new TermRangeQuery(field ,lower,null,true,false),
+		   BooleanClause.Occur.SHOULD );
+	}
+	return bq;
     }
 
 

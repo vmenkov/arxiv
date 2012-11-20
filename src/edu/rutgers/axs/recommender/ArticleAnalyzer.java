@@ -18,7 +18,6 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
-//import edu.rutgers.axs.web.ArticleEntry;
 
 
 /** Tools for getting numbers out of the Lucene index. This includes

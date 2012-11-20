@@ -137,7 +137,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	"set based" suggestion list seen by the specified user. 
      */
     static public PresentedList findMostRecentPresntedSugList(EntityManager em, String  username) {
-	String qs = "select m from PresentedList m where m.user=:u and (m.type=:t1 or m.type=:t2) order by id desc";
+	String qs = "select m from PresentedList m where m.user=:u and (m.type=:t1 or m.type=:t2) order by m.id desc";
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);

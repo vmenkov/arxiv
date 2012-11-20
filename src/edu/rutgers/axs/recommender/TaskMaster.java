@@ -182,14 +182,15 @@ public class TaskMaster {
 		    boolean useLog = (op == Task.Op.LOG_SUGGESTIONS_1);
 		    int days = task.getDays();		    
 		    ArxivScoreDoc[] sd;
-
+		    Date since =null;
 
 		    if (op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1) {
 			// restricting the scope by category and date,
 			// as per Thorsten 2012-06-18
 			User u = User.findByName( em, user);
 			String[] cats = u.getCats().toArray(new String[0]);
-			Date since = SearchResults.daysAgo( days );
+			since = task.getSince();
+			if (since==null) since = SearchResults.daysAgo( days );
 			IndexSearcher searcher = new IndexSearcher(reader);	
 			SearchResults sr = new SubjectSearchResults(searcher, cats, since, 10000);
 			// set scores for use in tie-breaking
@@ -216,10 +217,11 @@ public class TaskMaster {
 		    }
 
 		    Vector<ArticleEntry> entries = upro.packageEntries(sd);
-		    Logging.info("|sd|=" +sd.length+", |entries|=" + entries.size());
+		    Logging.info("since="+since+", |sd|=" +sd.length+", |entries|=" + entries.size());
 		    
 		    outputFile=DataFile.newOutputFile(task);
 		    outputFile.setDays(days);
+		    if (since!=null) outputFile.setSince(since);
 		    outputFile.setLastActionId(upro.getLastActionId());
 		    if (inputFile!=null) {
 			outputFile.setInputFile(inputFile.getThisFile());

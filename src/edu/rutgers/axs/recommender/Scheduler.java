@@ -12,6 +12,7 @@ import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.web.ResultsBase;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
@@ -209,7 +210,17 @@ public class Scheduler {
 			    latestProfile.getThisFile() : null;
 
 
+			Date lastViewed = dateOfLastSeenSugList( em, uname);
+
 			Date since = null;
+			if (lastViewed==null) {
+			    final int maxRange = 90;
+			    since = Common.plusDays(new Date(), -maxRange);
+			} else {
+			    since = Common.plusDays(new Date(), -days);
+			    if (since.after(lastViewed)) since = lastViewed;
+			}
+			Logging.info("For user " + uname + ", last viewed sug list generated at " +  lastViewed + "; set since=" + since);
 
 			addTask(em, uname, mode, days, since, requiredInput );
 			createdCnt++;
@@ -224,6 +235,23 @@ public class Scheduler {
 	stage2 = !stage2; // flip the flag
 	return createdCnt;
     }
+
+    static private Date dateOfLastSeenSugList(EntityManager em, String  uname) {
+
+	PresentedList  plist = PresentedList.findMostRecentPresntedSugList(em,  uname);
+	if (plist == null) {
+	    return null;
+	}
+	long dfid = plist.getDataFileId();
+	if (dfid <= 0) return null;
+	DataFile df = (DataFile)em.find(DataFile.class, dfid);
+	if (df==null) return null;
+	Date dfTime = df.getTime();
+	System.out.println("Looks like the last sug list (df="+dfid+") presented to the user " + uname + " was generated at " + dfTime);
+	return dfTime;
+    }
+
+
 
     //    private void addTask(EntityManager em, String uname, DataFile.Type mode, int days, Date since){
     //	addTask(em, uname, mode, days, since, null);

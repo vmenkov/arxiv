@@ -40,6 +40,10 @@ public class ViewUserProfile extends PersonalResultsBase {
 
     public DataFile.Type mode = DataFile.Type.USER_PROFILE;
 
+    /**
+       FIXME: ought to add reader.close() code, but before that, must modify
+       the JSPs so that they won't be using it
+     */
     public ViewUserProfile(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	if (error) return;
@@ -135,9 +139,10 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    setEx(_e);
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
-	    try {
-		if (reader!=null)   reader.close();
-	    } catch(IOException ex) {}
+	    // Don't close the reader: it will still be used from the JSP file
+	    //	    try {
+	    //		if (reader!=null)   reader.close();
+	    //	    } catch(IOException ex) {}
 	}
     }
 

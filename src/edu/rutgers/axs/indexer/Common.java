@@ -1,6 +1,7 @@
 package edu.rutgers.axs.indexer;
 
 import java.io.*;
+import java.util.*;
 
 import org.apache.lucene.util.Version;
 import org.apache.lucene.store.Directory;
@@ -38,6 +39,11 @@ public class Common {
 	return scoreDocs[0].doc;
     }
 
+    /** Add (or subtract) so many days to the given date */
+    static public Date plusDays(Date d, int days) {
+	long msec = d.getTime() + days * 24L * 3600L * 1000L;
+	return new Date(msec);
+    }
 
 
 

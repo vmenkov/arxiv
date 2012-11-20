@@ -606,9 +606,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	}
 	int days=ht.getOption(DAYS, 0);
 	if (days<=0)  throw new IllegalArgumentException("-Ddays=nnn, if supplied, must be positive!");
-	Date d = new Date();
-	long msec = d.getTime() - days * 24L * 3600L * 1000L;
-	d.setTime(msec);
+	Date d = Common.plusDays(new Date(), -days);
 	final SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
 	from=fmt.format( d );
 	Logging.info("Converted days=" + days + " to from=" + from);
