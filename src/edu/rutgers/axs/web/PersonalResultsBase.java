@@ -109,12 +109,17 @@ public class PersonalResultsBase extends ResultsBase {
 	return s;
     }
 
-     public String researcherText(String s) {
+     public String researcherSpan(String s) {
 	if (runByResearcher()) {
-	    return "<p class=\"researcher\">" + s + "</p>\n";
-	} else return "";
+	    return "<span class=\"researcher\">" + s + "</span>\n";
+	} else return "<!-- "+s+"-->\n";
     }
 
+   public String researcherP(String s) {
+	if (runByResearcher()) {
+	    return "<p class=\"researcher\">" + s + "</p>\n";
+	} else return  "<!-- "+s+"-->\n";
+    }
 
     
 }

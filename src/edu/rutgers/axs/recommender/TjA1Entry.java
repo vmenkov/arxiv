@@ -9,8 +9,6 @@ import java.io.*;
 
 import javax.persistence.*;
 
-//import edu.cornell.cs.osmot.options.Options;
-
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
@@ -189,8 +187,15 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	mcMinus = Coef.uContrib(qminus, phi, gamma);
 	if (mcMinus > mcMinus0) throw new AssertionError("mcMinus increased!");
 	sum -= mcMinus;
+
+	if (Double.isNaN(sum)) {
+	    String msg = "TjA1Entry.wouldContribute(), sum is NaN; mcPlus=" + mcPlus +", mcMinus=" + mcMinus;
+	    Logging.error(msg);
+	    //throw new AssertionError(msg);
+	}
 	
 	lastGamma = gamma;
+
 
 	return sum;
     }

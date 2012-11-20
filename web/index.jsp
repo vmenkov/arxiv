@@ -179,31 +179,15 @@ Exception: <%= main.e %>
     
 <h2><a name="sug">New articles recommended for you</a></h2>
 
-<% if (df == null && !mainA.onTheFly) {   %> 
-<p>
-Presently, no recommendations are available for you.
-</p>
-<%    if (mainA.activeTask!=null) {%> 
-<p>
-Presently, My.Arxiv's recommendation engine is working on 
-generating a suggestion list for you (task no. <%= mainA.activeTask.getId()%>). You may want to wait for a couple of minutes, and then refresh this page to see if the list is ready.</p>
-<%     } else if (mainA.queuedTask!=null) { %>
-<p>
-Presently,  a task is queued to generate a suggestion list for you (task no. <%= mainA.queuedTask.getId()%>). You may want to wait for a few minutes, and then refresh this page to see if it has started and completed.</p>
-<%     } else if (mainA.actor.catCnt()==0) {%>
-<p>
-It appears that you have not specified any subject categories of interest. Please <a href="personal/editUserFormSelf.jsp">modify your user profile</a>, adding some categories!
-</p>
-<%      } else {%> 
-Perhaps you need to wait for a while for a recommendation list to be generated, and then reload this page.
-<%      }
-} else { /* has list */ %>
- <%= mainA.describeList() %>
+<% if (mainA.noList()) {   %> 
+   <%= mainA.noListMsg() %>
+<% } else { %>
+   <%= mainA.describeList() %>
 <% 
 for( ArticleEntry e: sr.entries) { %><%= main.resultsDivHTML(e) %><% }%>
 <%= main.prevNextLinks(sr) %> 
 <%= mainA.excludedPagesMsg() %>
-<%= main.researcherText( main.actor.dayMsg()) %>
+<%= main.researcherP( main.actor.dayMsg()) %>
 <%    }
 } else if (mainB!=null) { 
   	  SearchResults sr = mainB.sr;
