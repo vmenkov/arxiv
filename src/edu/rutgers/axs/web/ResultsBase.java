@@ -263,8 +263,9 @@ public class ResultsBase {
 	return  "<a href=\"" + url+ "\">"+body+"</a>";	
     }
 
-    private static int defaultFlags = RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER
-	|  RatingButton.NEED_COME_BACK_TEXT;
+    /** Ass  RatingButton.NEED_COME_BACK_TEXT to this to provide for a 
+	"come back here to judge" text. */
+    private static int defaultFlags = RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER;
 
 
     /** Generates a "div" HTML element with everything pertaining to
@@ -279,8 +280,10 @@ public class ResultsBase {
 	String s = 
 	    "<div class=\"result\" id=\"result" + e.i + "\">\n" +
 	    "<div class=\"document\">\n" +
-	    e.i + ". [score="+e.score+ "] "+ e.idline + "; "+e.formatDate()+"\n" +
-	    "[" + a( urlAbstract(e.id), "Abstract") + "]\n" +
+	    e.i + ". " + 
+	    researcherSpan("[score="+e.score+ "] ")+ 
+	    e.idline + "; "+e.formatDate()+"\n" +
+	    "[" + a( urlAbstract(e.id), "Details") + "]\n" +
 	    "[" + a( urlPDF(e.id), "PDF/PS/etc") + "]\n" +
 	    "<br>\n" +
 	    e.titline + "<br>\n" +
@@ -328,6 +331,20 @@ public class ResultsBase {
 	return x;
     }
 
+
+    public String researcherSpan(String s) {
+	if (runByResearcher()) {
+	    return "<span class=\"researcher\">" + s + "</span>\n";
+	} else return "<!-- "+s+"-->\n";
+    }
+
+   public String researcherP(String s) {
+	if (runByResearcher()) {
+	    return "<p class=\"researcher\">" + s + "</p>\n";
+	} else return  "<!-- "+s+"-->\n";
+    }
+
+    
 
 
 }

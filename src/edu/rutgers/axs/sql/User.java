@@ -41,7 +41,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public  String getUser_name() { return user_name; }
     public void setUser_name(String x) throws WebException { 
 	if (x.length()>15) {
-	    throw new WebException("User name '"+x+"' is to long. User names cannot be longer than 15 characters");
+	    throw new WebException("User name '"+x+"' is too long. User names cannot be longer than 15 characters");
 	}
 	user_name = x; 
     }

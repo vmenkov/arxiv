@@ -116,12 +116,17 @@ window.onload = StartScripts;
 
       <a class="button" href="personal/viewFolder.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your personal folder</a>
 
+     <a class="button" href="personal/viewActionsSelfDetailed.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Past activity</a>
+
       <a class="button" href="personal/editUserFormSelf.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your account settings</a>
-      
-     <a class="button" href="personal/index.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>All personalization tools</a>
-
-
- <% } %>
+<!--      
+     <a class="button" href="personal/index.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>All personalization tools</a> -->
+<%  if (main.runByResearcher()) {%>
+	<span class="researcher">
+    <a href="tools/"><span>&nbsp;&diams;&nbsp;</span>Research tools (staff only)</a>
+	</span>
+ <% }
+ } %>
  
     <h2>Articles by category</h2>
       <a class="button" href="#physics" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Physics</a>

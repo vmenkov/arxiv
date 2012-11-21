@@ -5,7 +5,7 @@
 <html>
 <head>
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
-<link rel="stylesheet" type="text/css" href="_technical/styles/styles_all.css" />
+<link rel="stylesheet" type="text/css" href="../_technical/styles/styles_all.css" />
 <title>Your Account
 </title>
 <jsp:include page="../include/date-head-include.html" />
