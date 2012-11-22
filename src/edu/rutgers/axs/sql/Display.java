@@ -26,7 +26,7 @@ public @interface Display {
     String text() default "";
 
     /** If not null and not empty, this text will be displayed
-	 <em>instead</em> the field's name in entry tables etc. */
+	 <em>instead</em> of the field's name in entry tables etc. */
     String alt() default "";
 
     /** If true, the field actually stores the MD5-digest of the

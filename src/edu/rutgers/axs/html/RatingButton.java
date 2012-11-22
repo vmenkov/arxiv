@@ -55,7 +55,7 @@ public class RatingButton //extends HTML
     };
 
 
-    static private String att(String name, String val) {
+    static public String att(String name, String val) {
 	return " " + name + "=\""+val+"\"";
     }
 
@@ -80,7 +80,7 @@ public class RatingButton //extends HTML
     /** Generates 2 HTML "span" elements, one of which is (initially) visible
 	and the other isn't.	
     */
-    static private String twoSpans(String id, boolean on, String texton, String textoff) {
+    static public String twoSpans(String id, boolean on, String texton, String textoff) {
 	return 
 	    span(id +  "_checked", on, texton) + "\n" +
 	    span(id, !on, textoff);
@@ -106,7 +106,7 @@ public class RatingButton //extends HTML
 	return "<strong>" + text +  "</strong>";
     }
 
-    static private String nbsp(String text) {
+    static public String nbsp(String text) {
 	return text.replaceAll(" ", "&nbsp;");
     }
 

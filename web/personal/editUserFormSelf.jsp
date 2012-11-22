@@ -48,7 +48,7 @@ agreed to participate in the follow-up interview; please see the relevant
 
 <h3>Changing password and status</h3>
 
-<p>If you want to change the pasword, enter it below (same word in both boxes). Otherwise just leave the boxes empty.</p>
+<p>If you want to change your password, enter the new passowrd below (same word in both boxes). Otherwise just leave the boxes empty.</p>
 
 <p>
 <%= EditUser.pwTable() %>
@@ -56,17 +56,15 @@ agreed to participate in the follow-up interview; please see the relevant
 
 <input type="submit" value="Update account information">
 
+<% if (!u.getProgram().needBernoulli()) { %>
 <h3>Updating interest areas</h3>
 
 <p>You need to specify at least one interest area in order for
 My.ArXiv to be able to generate recommendations for you.
+<%= u.mkCatBoxes() %></p>
 
-<%= u.mkCatBoxes() %>
-</p>
-<p>
-<input type="submit" value="Update account information">
-</p>
-
+<p><input type="submit" value="Update account information"></p>
+<% } %>
 
 </form>
 <%   }      %>

@@ -288,8 +288,31 @@ public class ResultsBase {
 	    "<br>\n" +
 	    e.titline + "<br>\n" +
 	    e.authline+ "<br>\n" +
+	    e.subjline+ "<br>\n";
+	    
+
+	// twoSpans(String id, boolean on, String texton, String textoff) 
+	String id = "abs" + e.i;
+	String title="Expand article details";
+	String js = "$.get('" + RatingButton.judge(cp,e.id, Action.Op.EXPAND_ABSTRACT, asrc)+ "', " +
+		"function(data) { flipCheckedOn('#"+id+"')})";
+
+
+	String expanded = 
 	    (!e.commline.equals("") ? e.commline + "<br>" : "") +
-	    e.subjline+ "<br>\n" +
+	    "Abstract: " + e.abst + "<br>";
+
+	// "on" means expanded
+	s += RatingButton.twoSpans(id, false, expanded,
+				   "<a" +
+				   //			  att("class", "add") +
+				    RatingButton.att("title", title) +
+				    RatingButton.att( "onclick", js) + ">" +
+				   //img(imgPath) +
+				    RatingButton.nbsp("Expand") +
+				   "</a>" +"&nbsp;&nbsp;");
+
+	s += 
 	    (!e.ourCommline.equals("") ? "<strong>"  + e.ourCommline + "</strong><br>" : "") +
 	    "</div>\n" +
 	    (isSelf? judgmentBarHTML(e, flags): "") +

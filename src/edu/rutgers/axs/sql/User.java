@@ -297,7 +297,9 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     /** The "time horizon" for selecting "recent articles" (for
 	suggestion lists, etc). Default is 7 days.
      */
-    @Basic   @Display(order=12,editable=true, alt="Recommend recent articles no older than so many days. The value can be from 1 to 30; default 7")
+    @Basic  @Display(order=12,editable=true, alt=
+		     "Time horizon (days). Recommendations will be selected from articles submited within so many days, or since your last visit to the site, whichever is earlier")
+
 	private int days;
     public  int getDays() { return days; }
     public void setDays( int x) { days = x; }

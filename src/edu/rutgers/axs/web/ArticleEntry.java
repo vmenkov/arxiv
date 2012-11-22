@@ -22,6 +22,8 @@ public class ArticleEntry {
     public String id;
     /** Various metadata, in a printable form. */
     public String idline, titline, authline, commline, subjline;
+    /** The article abstract */
+    public String abst;
     /** A line that our own server may add in some circumstances (for rendering with additional info) */
     public String ourCommline="";
     /** True if this article is in the user's personal folder */
@@ -84,7 +86,7 @@ public class ArticleEntry {
 	subjline="Subjects:" + doc.get((ArxivFields.CATEGORY));
 	date = doc.get(ArxivFields.DATE);
 	dateIndexed = doc.get(ArxivFields.DATE_INDEXED);
-
+	abst = doc.get(ArxivFields.ABSTRACT);
     }
     
 

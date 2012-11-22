@@ -59,6 +59,8 @@ import java.lang.reflect.*;
     public static enum Op {
 	/** No operation - this should not normally be recorded */
 	NONE,
+	    /** "Expand details" in a list page */
+	    EXPAND_ABSTRACT,  // +5
 	    /** "View" actions */
 	    VIEW_ABSTRACT,  // +10
 	    VIEW_FORMATS,   // +20
@@ -81,14 +83,14 @@ import java.lang.reflect.*;
 
 	/** Data types for which FilterServlet does not "filter", but
 	 * redirects to the source, as per Simeon Warner, 2012-01-04 */
-	static public final Op[] VIEW_ARICLE_BODY_TYPES = 
+	static public final Op[] VIEW_ARTICLE_BODY_TYPES = 
 	    {VIEW_PDF,    
 	     VIEW_PS,
 	     VIEW_HTML,
 	     VIEW_OTHER};
 
 	public boolean isViewArticleBody() {
-	    for(Op q: VIEW_ARICLE_BODY_TYPES) {
+	    for(Op q: VIEW_ARTICLE_BODY_TYPES) {
 		if (this==q) return true;
 	    }
 	    return false;
