@@ -106,6 +106,7 @@ public class RatingButton //extends HTML
 	return "<strong>" + text +  "</strong>";
     }
 
+    /** Replaces spaces with the HTML non-breaking space (&nbsp;) */
     static public String nbsp(String text) {
 	return text.replaceAll(" ", "&nbsp;");
     }
