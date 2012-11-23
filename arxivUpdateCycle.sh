@@ -44,6 +44,9 @@ echo "Options for ArticleAnalyzer: $opt"
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.ArticleAnalyzer >& allnorms-${d}.log 
 
+#-- Taking care of new articles for Exploration Engine ver. 3
+time java $opt   edu.rutgers.axs.bernoulli.Bernoulli recent >& bernoulli-${d}.log 
+
 set  opt="-Xmx1024m ${baseopt} -DexitAfter=22 -DarticlesUpdated=true"
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.TaskMaster >& taskmaster-${d}.log
