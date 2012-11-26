@@ -29,7 +29,13 @@ public class GetUser extends ResultsBase {
 	try {
 	    EntityManager em = sd.getEM();
 
-	    String uname = request.getParameter(EditUser.USER_NAME);	    
+	    String uname = request.getParameter(EditUser.USER_NAME);
+	    if (uname==null || uname.trim().equals("")) {
+		error = true;
+		errmsg = "User name must be specified";
+		return;
+	    }
+
 	    if (create) {
 		em.getTransaction().begin();
 		u = User.findByName(em, uname);

@@ -105,7 +105,7 @@ public class ResetPassword extends ResultsBase {
 
     /** Generates the new password, randomly. It will be composed of 6
 	alphanumeric characters. */
-    private static String generatePassword() {
+    public static String generatePassword() {
 	StringBuffer p = new StringBuffer(6);
 	for(int i=0; i<6; i++) {
 	    int z = (int)(36 * Math.random());

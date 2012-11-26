@@ -164,12 +164,20 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	}
     }
 
-    @Display(editable=false, order=11)	@Column(nullable=false,length=24)
+    @Display(editable=false, order=11.1)	@Column(nullable=false,length=24)
 	@Enumerated(EnumType.STRING)     
 	private Program program;
 
     public Program getProgram() { return program; }
     public void setProgram(Program x) { program=x; }
+
+    /** The ID of the invitation (if any) pursuant to which the user
+	entry was created. */
+    @Basic  @Display(order=11.2,editable=false) @Column(nullable=true)
+	private long invitation;
+    public  long getInvitation() { return invitation; }
+    public void setInvitation( long x) { invitation = x; }
+
 
     /** This is how it's described in context.xml:
     //	     userRoleTable="user_roles" roleNameCol="role_name"
@@ -353,6 +361,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public static String header4cells() {
 	return
 	    "<th>User name</th>\n" +
+	    "<th>id</th>\n" +
 	    "<th>Detail (password is encrypted)</th>\n" +
 	    "<th>Roles</th>\n" +
 	    "<th>Enabled</th>\n" +
@@ -363,6 +372,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public String to4cells() {
 	return
 	    "<td>" + getUser_name() + "</td>\n" +
+	    "<td>" + getId() + "</td>\n" +
 	    "<td>" + reflectToString()  + "</td>\n" +
 	    "<td>" + listRoles()  + "</td>\n" +
 	    "<td>" + (isEnabled()? "Yes" : "No")  + "</td>\n" +
@@ -634,6 +644,5 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	}
 	return c;
     }
-
 
 }

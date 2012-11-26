@@ -150,14 +150,14 @@ public class Tools {
 
     static final DecimalFormat hhFmt = new DecimalFormat("00");
 
-    /** Public: used in survey04.jsp 
+    /** 
      @param name May be different from e.name (because of a prefix)
     */
     static public String mkDateTimeBox( String name, Object old, Reflect.Entry e) {
 	StringBuffer b=new StringBuffer();
 	String dpname =  "date-pick";
 	if (old==null) {
-	    b.append("<input name=\""+name+"\" id=\""+name+"\" class=\""+dpname+"\" />\n");
+	    b.append("<input name=\""+name+"\" id=\""+name+"\" class=\""+dpname+"\" size=\"10\"/>\n");
 	} else {
 	    dpname += "-" + name.replace(".", "_");
 	    Calendar cal = new GregorianCalendar();
@@ -169,7 +169,7 @@ public class Tools {
 		cal.get(Calendar.DAY_OF_MONTH)+
 		     ").asString()).trigger('change');  });\n");
 	    b.append(	"</script>\n");
-	    b.append("<input name=\""+name+"\" id=\""+name+"\" class=\""+dpname+"\" />");
+	    b.append("<input name=\""+name+"\" id=\""+name+"\" class=\""+dpname+"\" size=\"10\"/>");
 	}
 	
 	if (e.f.isAnnotationPresent(Timing.class)) {

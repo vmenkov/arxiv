@@ -27,6 +27,7 @@ public class EntryForms {
      */
     static String mkTableRow(String prefix, Object o, Reflect.Entry e) throws IllegalAccessException, InvocationTargetException{
 	final boolean verbose=false;//true;
+	//final boolean verbose=true;
 
 	if (prefix==null) prefix = "";
 
@@ -64,7 +65,11 @@ public class EntryForms {
 	} else if (t.equals(boolean.class)) {
 	    b.append(Tools.mkSelectorBoolean(name, old));
 	} else if (Date.class.isAssignableFrom(t)) {
-	    b.append(Tools.mkDateTimeBox( name, old, e));
+	    Date q = (Date) old;
+	    if (q==null) q=new Date();
+	    b.append(Tools.mkDateTimeBox( name, q, e));
+	} else if (t.equals(int.class)||t.equals(long.class)||t.equals(double.class)) {
+	    b.append(Tools.inputText(name, old, 8));
 	} else {
 	    int len=32;
 	    if (String.class.isAssignableFrom(t)) {
@@ -79,7 +84,7 @@ public class EntryForms {
 		b.append(Tools.inputTextArea(name, old, nr,nc));
 	    }
 	}
-	b.append("</td></tr>");
+	b.append("</td></tr>\n");
 	return b.toString();
     }
 	

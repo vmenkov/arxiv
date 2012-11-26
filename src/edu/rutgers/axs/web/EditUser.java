@@ -22,7 +22,7 @@ import edu.rutgers.axs.web.Search;
  */
 public class EditUser extends ResultsBase {
 
-    /** The user name of the record to modify. It may be supplied with
+     /** The user name of the record to modify. It may be supplied with
 	the request, or, in the case of a user editing his own record,
 	is inferred from the session data.
      */
@@ -43,8 +43,7 @@ public class EditUser extends ResultsBase {
 	@param create Set this param  to true (and selfForm=false)
 	when invoking the constructor from the page that creates
 	a new user entry and fills its fields at the same time.
-     */
-    public EditUser(HttpServletRequest _request, HttpServletResponse _response, Mode mode) {
+     */    public EditUser(HttpServletRequest _request, HttpServletResponse _response, Mode mode) {
 	super(_request,_response);
 
 	String code = getString("code", null);
@@ -103,7 +102,8 @@ public class EditUser extends ResultsBase {
 	    if (error) return;
 
 	    // Using the "code" parameter
-	    User.Program program=User.Program.SET_BASED;
+	    User.Program program=r.getProgram();
+	    if (program==null) program=User.Program.SET_BASED;
 	    try {
 		program = Enum.valueOf( User.Program.class, code);
 	    } catch(Exception ex) {}
