@@ -4,6 +4,7 @@ import java.util.*;
 import java.text.*;
 import java.net.*;
 import javax.persistence.*;
+//import javax.persistence.criteria.CriteriaBuilder;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
@@ -12,7 +13,9 @@ import org.apache.catalina.realm.RealmBase;
 import edu.rutgers.axs.web.Tools;
 import edu.rutgers.axs.web.WebException;
 
-@Entity  public class Invitation extends OurTable {
+@Entity  
+  @Table( uniqueConstraints=@UniqueConstraint(name="invitation_code_cnstrt", columnNames="code") )
+public class Invitation extends OurTable {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
     	private long id;
 
@@ -23,9 +26,13 @@ import edu.rutgers.axs.web.WebException;
      */
     public long getId() {        return id;    }
     /** Don't use it. It's here just for reflection. */
-    private void setId(long x) {id=x;}
+    //private void setId(long x) {id=x;}
 
-    @Display(editable=false, order=2) 	@Column(length=48) 
+    static public final String registrationUrlBase = "../participation.jsp?code=";
+    @Display(editable=false, order=2,  link=registrationUrlBase) 	
+	@Column(length=48) 
+
+
 	String code; 
     public  String getCode() { return code; }
     public void setCode(String x) { 	code = x;     }
@@ -72,6 +79,39 @@ import edu.rutgers.axs.web.WebException;
 	String Creator; 
     public  String getCreator() { return Creator; }
     public void setCreator(String x) { 	Creator = x;     }
+
+
+   public static Invitation findByCode( EntityManager em, String code) {
+
+	Query q = em.createQuery("select m from Invitation m where m.code=:c");
+	q.setParameter("c", code);
+	try {
+	    return (Invitation)q.getSingleResult();
+	} catch(NoResultException ex) { 
+	    // no such invitation code
+	    return null;
+	}  catch(NonUniqueResultException ex) {
+	    // this should not happen, as we have a uniqueness constraint
+	    Logging.error("Non-unique invitation code: '"+code+"'!");
+	    return null;
+	}
+    }
+
+    /** Checks if the invitation still stands (based on the expiration date
+	and the number of users already registered pursuant to it),
+	and if it does not, closes it.
+    */
+    public boolean validityTest( EntityManager em) {
+	if (!getOpen()) return false;
+	if (getExpiration()==null || getExpiration().before(new Date()) ||
+	    User.invitedUserCount(em, getId()) > getMaxUsers())  {
+	    setOpen(false);
+	    em.persist(this);	      
+	    return false;
+	}
+	return true;	
+    }
+
 
 
 }

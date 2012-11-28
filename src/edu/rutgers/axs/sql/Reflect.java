@@ -130,8 +130,7 @@ public class Reflect {
 	)
     */
     static public synchronized Reflect getReflect(Class c) {
-	Class basics [] = {//Respondent.class, PhoneCall.class, Response.class,
-			   User.class, Action.class};
+	Class basics [] = {  User.class, Action.class};
 	for(Class b: basics) {
 	    if (b.isAssignableFrom(c)) {
 		c = b;
@@ -161,9 +160,14 @@ public class Reflect {
 		e.g =c.getMethod(gn);
 		e.s =c.getMethod(sn, e.f.getType() );	      
 	    } catch (Exception ex) { 
-		//Logging.warning("Reflect(" + c +"): failure for " + e.name);
+	    }
+
+	    if (e.g==null) {
+		// Fields with no public getter are not shown. The setter,
+		// OTOH, is optional
 		continue;
 	    }
+
 
 	    Display anno = (Display)e.f.getAnnotation(Display.class);
 	    e.editable = (anno==null) || anno.editable(); // default yes
@@ -341,8 +345,10 @@ public class Reflect {
 		Display anDisplay = (Display)e.f.getAnnotation(Display.class);
 		if (anDisplay!=null && anDisplay.link()!=null &&
 		    !anDisplay.link().equals("")) {
-		    // FIXME: encode id if it's not just a number...
-		    String url = anDisplay.link() + "?id=" + q;
+		    // FIXME: must encode id if it's not just a number...
+		    String url = anDisplay.link();
+		    if (!url.endsWith("=")) { url += "?id="; }
+		    url += q;
 		    q = "<a href=\"" + url + "\">" + q + "</a>"; 
 		}
 	    }

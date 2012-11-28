@@ -6,16 +6,9 @@
 <%@ page import="java.util.*" %>
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% 
-        ResultsBase main=new ResultsBase(request,response);
-	boolean survey = main.getBoolean(EditUser.SURVEY, false);
-	String code=main.getString("code","");
-	if (code.equals("null")) code="";
-	boolean bernoulli = false;
-	try {
-	    bernoulli = Enum.valueOf( User.Program.class, code).needBernoulli();
-        } catch(Exception ex) {}
-	
-
+    Participation  main=new Participation (request,response);
+    boolean survey = main.getBoolean(EditUser.SURVEY, false);
+  
 	String spacer="	<tr>"+
 			"<td style=\"width:50%; text-align:right; vertical-align:middle; height:5px; border:none;\">&nbsp;</td>" +
 			"<td style=\"width:50%; text-align:left; vertical-align:middle; height:5px; border:none;\">&nbsp;</td>" +
@@ -219,7 +212,7 @@ Thank you for choosing to participate in the arXiv research at the confidential 
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="username">Registration code</label>
 <br><small>(If your invitation told you to enter a registration code, enter it here; otherwise, leave the field as it was)</small>
 </td>
-			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="code" name="code" value="<%=code%>" style="width:150px" /></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="code" name="code" value="<%=main.code%>" style="width:150px" /></td>
 		</tr>
 
 <tr><td colspan="2"><h3>Choose your user name and password</h3></td></tr>
@@ -368,7 +361,7 @@ the use of audio recording for the telephone interview</strong>
 <%}  %>
 	</table>
 
-<% if (!bernoulli) { %>
+<% if (!main.bernoulli) { %>
 <h3>Your interest areas</h3>
 
 	<table>

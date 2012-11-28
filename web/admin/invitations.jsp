@@ -18,6 +18,9 @@
 <h1>Invitation Manager</h1>
 <h2>List of existing invitations</h2>
 
+<h4>Editing invitation</h4>
+
+
 <p>You can edit any of the existing invitations. The following changes are possible:
 
 <ul>
@@ -34,17 +37,29 @@ close again.
 </ul>
 </p>
 
+<h4>How to invite users</h4>
+
+<p> The blue links in the "code" column are links to the registration
+page that prospective users must visit to register pursuant to the
+respective invitation. You can send that URL to prospective users by
+email.  </p>
+
 <p>
 <table border="1">
 <tr>
 <%= Reflect.htmlHeaderRow(Invitation.class, false) %>
-<th>Edit</th>
+<th valign="top">Users registered</th>
+<th valign="top">Edit</th>
 </tr>
 <% for(int i=0; i<main.list.size(); i++) {
    Invitation inv = main.list.elementAt(i);
+   String bgColor = inv.getOpen()? "#E0FFE0" :  "#FFE0E0";
 %>
-<tr>
+<tr style="background:<%=bgColor%>;">
 <%= Reflect.htmlRow(inv, false, true) %>
+<td>
+<%= main.userCnt(inv.getId()) %>
+</td>
 <td>
 <a href="editInvitationForm.jsp?id=<%=inv.getId()%>">Edit</a>
 </td>

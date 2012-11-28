@@ -24,6 +24,8 @@ public class EditInvitation extends ResultsBase {
     public long id=0;
 
     public Invitation o=null;
+    
+    public int userCnt = 0;
 
     Vector<String> warnings = new  Vector<String>();
     
@@ -60,6 +62,7 @@ public class EditInvitation extends ResultsBase {
 		if (o==null) {
 		    throw new WebException("Invitation no. " + id + " does not exists");
 		}
+		userCnt = User.invitedUserCount(  em, id);
 	    }
 
 	    // set various fields

@@ -37,14 +37,32 @@ and reenter correct data.
 </table>
 </p>
 
-<p>Invitation code to post in URLs: <%= main.o.getCode()%>
+
+<p>So far, <%= main.userCnt %> users have responded to this invitation and successfully created accounts.</p>
+
+<% if (main.o.getOpen()) { 
+   String regUrl = Invitation.registrationUrlBase +  main.o.getCode();
+%>
+<p>The invitation is presently open. To invite users to make use of it, send to them the following URL:<pre>
+<a href="<%=regUrl%>"><%=regUrl%></a>
+</pre>
 </p>
 
-<% } %>
+<p>If you want to modify this invitation, or to close it, you can <a href="editInvitationForm.jsp?id=<%=main.id%>">edit it</a> again.
+</p>
+<% } else { %>
+<p>This invitation is closed. You should not send its code to users.</p>
+
+<p>If you want to reopen the invitation, you can <a href="editInvitationForm.jsp?id=<%=main.id%>">edit it</a> again.
+</p>
+<% }  %>
 
 <p>
 Back to the <a href="invitations.jsp">Invitation Manager</a>
 </p>
+
+<% } %>
+
 
 <hr>
 <div><small>System messages:<pre>

@@ -237,7 +237,7 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
      */
     /*
     static public Task cancelStalledTasks(EntityManager em) {
-	Query q = em.createQuery("update select m from Task m where m.startTime is null and m.canceled=FALSE  and m.failed=FALSE order by m.requestTime asc");
+	Query q = em.createQuery("update Task set .... ....  where m.startTime is null and m.canceled=FALSE  and m.failed=FALSE");
 	q.setMaxResults(1);
 	List<Task> res = (List<Task>)q.getResultList();
 	if (res.size() != 0) {

@@ -69,6 +69,10 @@ and reenter correct data.
 <input type="submit" value="Submit request">
 </p>
 
+<p>
+Back to the <a href="invitations.jsp">Invitation Manager</a>
+</p>
+
 <% } %>
 
 <icd:RU/>

@@ -1,4 +1,10 @@
-<?php echo '<', '?xml version="1.0" encoding="UTF-8"?', '>'; ?>
+<%@ page import="java.io.*" %>
+<%@ page import="edu.rutgers.axs.web.*" %>
+<%@ page import="edu.rutgers.axs.sql.*" %>
+<%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
+<% 
+ Participation  main=new Participation (request,response);
+%>
 
 <!-- © 2011 by AEP -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -65,6 +71,10 @@ window.onload = StartScripts;
 </head>
 
 <body>
+<%   if (main.error) {   %>  <%@include file="../include/error.jsp"%>
+<%   } else {        
+%>
+
 
 <div id="upper_frame">
 
@@ -273,10 +283,9 @@ You can participate completely anonymously by registering with a username and pa
 
 
 	<div style="height:15px; margin:10px auto 25px auto; text-align:center;">
-<% String code = request.getParameter("code"); %>
 
-		<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_anonymous"><a href="registration.jsp?survey=false&code=<%=code%>" target="_self">Continue with Anonymous Participation</a></div>			
-		<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_loginbased"><a href="registration.jsp?survey=true&code=<%=code%>" target="_self">Continue with Login-based Confidential Participation</a></div>
+		<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_anonymous"><a href="registration.jsp?survey=false&code=<%=main.code%>" target="_self">Continue with Anonymous Participation</a></div>			
+		<div class="button_div" style="margin:0 auto; width:320px; height:15px; display:none;" id="participation_loginbased"><a href="registration.jsp?survey=true&code=<%=main.code%>" target="_self">Continue with Login-based Confidential Participation</a></div>
 
 	</div>
 
@@ -289,5 +298,6 @@ If you do not agree with the consent form and do not wish to participate in this
 Thank you, Paul B. Kantor (Principal Investigator)
 </p>
 
+<%}%>
 </body>
 </html>

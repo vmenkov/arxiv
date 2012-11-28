@@ -329,6 +329,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	setProgram( Program.SET_BASED);
     }
 
+
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	    return true; 
     }
@@ -644,5 +645,48 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	}
 	return c;
     }
+
+    /** How many user entries have been created pursuant to a particular invitation?
+	@param  invId invitation id
+	@return User count
+    */
+    public static int invitedUserCount( EntityManager em, long invId) 
+    //throws Exception	
+    {
+	Query q = em.createQuery("select count(m) from User m where m.invitation=:i");
+	q.setParameter("i", invId);
+	try {
+	    return ((Long)q.getSingleResult()).intValue();
+	} catch(Exception ex) { 
+	    //throw ex;
+	    Logging.error("exception in invitedUserCount: " + ex);
+	    return 0;
+	}
+    }
+
+    static private Integer long2int(Long x) {
+	return new Integer( x.intValue());
+    }
+
+    public static HashMap<Long,Integer> invitedUserCounts( EntityManager em) 
+throws Exception	
+    {
+	Query q = em.createQuery("select m.invitation,count(m) from User m group by m.invitation");
+	HashMap<Long,Integer> h= new HashMap<Long,Integer> ();
+	try {
+	    List list = q.getResultList();
+	    for(Object o: list) {
+		Object[] z = (Object[]) o;
+		h.put((Long)(z[0]), long2int((Long)(z[1])));
+	    }
+	} catch(Exception ex) { 
+	    throw ex;
+	    //Logging.error("exception in invitedUserCount: " + ex);
+	    //return 0;
+	}
+	return h;
+    }
+
+
 
 }
