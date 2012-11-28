@@ -101,14 +101,13 @@ public class EditUser extends ResultsBase {
 	    boolean prefChanged = editUser(r, request);
 	    if (error) return;
 
-	    // Using the "code" parameter
+	    // Using the "code" parameter, if provider
 	    User.Program program=r.getProgram();
 	    if (program==null) program=User.Program.SET_BASED;
 	    try {
 		program = Enum.valueOf( User.Program.class, code);
 	    } catch(Exception ex) {}
 	    r.setProgram(program);
-
 
 	    StringBuffer b = new 	StringBuffer();
 	    if (!r.validate(em,b)) {

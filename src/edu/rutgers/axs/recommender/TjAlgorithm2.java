@@ -9,7 +9,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-import edu.cornell.cs.osmot.options.Options;
+//import edu.cornell.cs.osmot.options.Options;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;

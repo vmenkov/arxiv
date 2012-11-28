@@ -110,6 +110,9 @@ public class UserPageScore implements Comparable<UserPageScore> {
 
     /** Generates an ordered list of pages with which the user has interacted.
 
+	FIXME: Possibly only limit to actions done in some contexts
+	(learning/eval days, etc?)
+
 	@param id0 Only actions with ids greater than this are taken
 	into account.
 

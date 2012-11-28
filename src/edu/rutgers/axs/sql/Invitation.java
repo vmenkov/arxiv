@@ -6,15 +6,11 @@ import java.net.*;
 import javax.persistence.*;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
-//import javax.servlet.http.Cookie;
 
 import org.apache.catalina.realm.RealmBase;
 
-//import edu.rutgers.axs.web.EditUser;
 import edu.rutgers.axs.web.Tools;
 import edu.rutgers.axs.web.WebException;
-//import edu.rutgers.axs.bernoulli.Bernoulli;
-
 
 @Entity  public class Invitation extends OurTable {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
@@ -26,9 +22,10 @@ import edu.rutgers.axs.web.WebException;
       but has no meaning outside of it.
      */
     public long getId() {        return id;    }
+    /** Don't use it. It's here just for reflection. */
+    private void setId(long x) {id=x;}
 
-
-    @Display(editable=false, order=2) 	@Column(length=32) 
+    @Display(editable=false, order=2) 	@Column(length=48) 
 	String code; 
     public  String getCode() { return code; }
     public void setCode(String x) { 	code = x;     }
@@ -69,5 +66,12 @@ import edu.rutgers.axs.web.WebException;
 					     new PairFormatter.CompactPairFormatter());
 	return s;
     }
+
+    /** The user name of the administrator who created the invitation */
+    @Display(editable=false, order=7) 	@Column(length=15) 
+	String Creator; 
+    public  String getCreator() { return Creator; }
+    public void setCreator(String x) { 	Creator = x;     }
+
 
 }

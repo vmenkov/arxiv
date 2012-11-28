@@ -13,18 +13,21 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 
-/** Edits an existing invitation entry, or creates a new one.
-
+/** An administartor-level tool for creating an new invitation, or modifiying 
+    an existing one.
  */
 public class EditInvitation extends ResultsBase {
 
     public static final String ID = "id";
     
+    /** Invitation id. */
     public long id=0;
 
     public Invitation o=null;
- 
 
+    Vector<String> warnings = new  Vector<String>();
+    
+    /** What is being done now? */
     public static enum Mode {
 	EDIT, CREATE;
     }
@@ -42,17 +45,17 @@ public class EditInvitation extends ResultsBase {
 
 	id = getLong(EditInvitation.ID, 0);
 	mode = (id<=0) ? EditInvitation.Mode.CREATE:  EditInvitation.Mode.EDIT;
+	infomsg += "EditInvitaion: mode=" + mode+"\n";
 	EntityManager em =null;
 	try {
 
 	    em = sd.getEM();
 	    em.getTransaction().begin();
 
-	    if (id<=0) {
-		// Creation mode
+	    if (mode==EditInvitation.Mode.CREATE) {// Creation mode
 		o = new Invitation();
-	    } else {
-		// Update mode
+		o.setCreator(user);
+	    } else {		// Update mode
 		o = (Invitation)em.find(Invitation.class, id);
 		if (o==null) {
 		    throw new WebException("Invitation no. " + id + " does not exists");
@@ -63,9 +66,23 @@ public class EditInvitation extends ResultsBase {
 	    editInvitation(o, request);
 	    if (error) return;
 
+	    if (o.getMaxUsers()<0) o.setMaxUsers(0);
+
 
 	    em.persist(o);
 	    em.getTransaction().commit();
+
+	    id = o.getId();
+
+	    if (o.getMaxUsers()<=0) {
+		warnings.add("This invitation has the limit of 0 users; no accounts can be created\n");
+	    }
+
+	    if (mode==EditInvitation.Mode.CREATE) {
+		infomsg += "id was " + id + "\n";
+		// read the object back, to get the new ID (?)
+		System.out.println("Created a new invitation with id=" + id);
+	    }
 
 	} catch (Exception _e) {
 	    setEx(_e);

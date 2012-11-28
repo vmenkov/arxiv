@@ -200,6 +200,7 @@ code. -->
       <include name="BernoulliArticleStats.class" />
       <include name="BernoulliTrainArticleStats.class" />
       <include name="BernoulliVote.class" />
+      <include name="Invitation.class" />
     </fileset>
   </openjpac>
 

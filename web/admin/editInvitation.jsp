@@ -22,11 +22,12 @@ and reenter correct data.
 <%   } else {        
 %>
 
-<% if (main.mode==EditInvitation.CREATE) { %>
-<h1>Created a new invitation</h1>
+<% if (main.mode==EditInvitation.Mode.CREATE) { %>
+<h1>Created new invitation no. <em><%=main.id%></em></h1>
 <% } else { %>
 <h1>Updated invitation no. <em><%=main.id%></em></h1>
 <% } %>
+
 
 <p>
 <table border="1">
@@ -36,26 +37,20 @@ and reenter correct data.
 </table>
 </p>
 
-
-
-<form method=post action="editInvitation.jsp">
-<%= Tools.inputHidden(EditInvitation.ID, main.id) %> <br>
-
-<p>
-<table><tr><td>
-<%= main.entryForm()%>
-</td><td>
-<!--space for the pop-up date selector -->
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</td></tr></table>
-
-</p>
-
-<p>
-<input type="submit" value="Submit request">
+<p>Invitation code to post in URLs: <%= main.o.getCode()%>
 </p>
 
 <% } %>
+
+<p>
+Back to the <a href="invitations.jsp">Invitation Manager</a>
+</p>
+
+<hr>
+<div><small>System messages:<pre>
+<%= main.infomsg%>
+</pre>
+</small></div>
 
 <icd:RU/>
 

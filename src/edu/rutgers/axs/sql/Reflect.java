@@ -61,12 +61,22 @@ public class Reflect {
 
 	/** The name of the field with the "explanation", or the alt value, if provided */
 	String explainedTitle() {
+	    return explainedTitle(false);
+	}
+
+	/** The name of the field with the "explanation", or the alt
+	    value, if provided.
+	@param html If true, some extra HTML formatting may be done.
+	*/
+	String explainedTitle(boolean html) {
 	    Display anDisplay = (Display)f.getAnnotation(Display.class);
 	    if (anDisplay!=null) {
 		if (anDisplay.alt()!=null && anDisplay.alt().length()>0) 
 		    return anDisplay.alt();
 		if (anDisplay.text()!=null && anDisplay.text().length()>0) 
-		    return name + " ("+anDisplay.text()+")";
+		    return name + (html? "<br><small>" : " ") +
+			"("+anDisplay.text()+")" +
+			(html? "</small>" : "");
 	    } 
 	    return  name;
 	}
@@ -290,7 +300,7 @@ public class Reflect {
 	if (TR) b.append("<tr>");
 	Reflect r = Reflect.getReflect(c);
 	for(Reflect.Entry e: r.entries) {
-	    b.append("<th>"+ e.explainedTitle() +"</th>");
+	    b.append("<th valign=\"top\">"+ e.explainedTitle(true) +"</th>");
 	}
 	if (TR) b.append("</tr>");
 	return b.toString();

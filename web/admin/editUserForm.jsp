@@ -50,7 +50,7 @@ main page.
 <h3>Changing password and status</h3>
 
 <ul>
-<li>To change password for already enabled user, simply type (and re-type) the new password.
+<li>To change password for an already enabled user, simply type (and re-type) the new password.
 <li>To enable login for a previously disabled user, type (and re-type) the new password for the user, and check the "enabled" button.
 <li>To disable login for the user, check the "disabled" button. The password field will be ignored.
 <li>To make no changes, don't type anything in the password box, and don't touch the radio buttons.
