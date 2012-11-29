@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.lang.reflect.*;
+import java.net.*;
 
 
 import javax.servlet.*;
@@ -27,6 +28,8 @@ public class EditInvitation extends ResultsBase {
     
     public int userCnt = 0;
 
+    public String regUrl = "?";
+    
     Vector<String> warnings = new  Vector<String>();
     
     /** What is being done now? */
@@ -87,6 +90,10 @@ public class EditInvitation extends ResultsBase {
 		System.out.println("Created a new invitation with id=" + id);
 	    }
 
+	    regUrl = Invitation.registrationUrlBase +  o.getCode();
+	    URL full = new URL(thisUrl(), regUrl);
+	    regUrl = full.toString();
+
 	} catch (Exception _e) {
 	    setEx(_e);
 	} finally {
@@ -116,7 +123,5 @@ public class EditInvitation extends ResultsBase {
 	    setEx(ex);
 	}		
     }
-
-
 
 }

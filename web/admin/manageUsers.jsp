@@ -57,10 +57,16 @@ user entry is disabled.</p>
 
 <form action="editUserForm.jsp">
 <%= Tools.inputHidden(GetUser.CREATE, "true") %> 
-<p>New user name: 
-<%= Tools.inputText(EditUser.USER_NAME) %> 
+<table><tr>
+<td>New user name </td>
+<td><%= Tools.inputText(EditUser.USER_NAME) %> </td>
+</tr>
+<%= main.enterProgramRow %>
+<tr><td colspan=2 align=center>
 <input type=submit value="Continue">
-</p>
+</td>
+</tr>
+</table>
 </form>
 
 <icd:RU/>

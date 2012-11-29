@@ -25,7 +25,10 @@ public class EntryForms {
 	@param o An object one of whose fields, if available, we'll use as the initial value for the field
 	@return A TR element, or an empty string
      */
-    static String mkTableRow(String prefix, Object o, Reflect.Entry e) throws IllegalAccessException, InvocationTargetException{
+    static public String mkTableRow(String prefix, Object o, Reflect.Entry e) throws IllegalAccessException, InvocationTargetException{
+
+	if (!e.editable) return "";
+
 	final boolean verbose=false;//true;
 	//final boolean verbose=true;
 
@@ -41,7 +44,7 @@ public class EntryForms {
 
 	Object old = (o==null)? null : e.g.invoke(o);
 	
-	String title = (anDisplay.alt()!=null && anDisplay.alt().length()>0) ?
+	String title = (anDisplay!=null && anDisplay.alt()!=null && anDisplay.alt().length()>0) ?
 	    anDisplay.alt() :    e.name;
 	b.append("<tr><td>" + title);
 	if (anDisplay!=null && anDisplay.text().length()>0) {

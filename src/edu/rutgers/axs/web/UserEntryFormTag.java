@@ -70,7 +70,7 @@ public class UserEntryFormTag extends TagSupport {
         } catch (Exception ex) {
 	    System.out.println(ex);
 	    ex.printStackTrace(System.out);
-            throw new JspException("IO problems");
+            throw new JspException("IO problems: " + ex);
         } finally {
 	    out.flush();
 	}

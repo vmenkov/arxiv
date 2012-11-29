@@ -18,6 +18,9 @@ public class ListUsers extends ResultsBase {
 
     public Vector<User> list = new Vector<User>();
 
+    /** A field in the "create new user" section */
+    public String enterProgramRow = "";
+
     public ListUsers(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	Logging.info("LU  sd=" + sd);
@@ -31,6 +34,11 @@ public class ListUsers extends ResultsBase {
 	    }
 
 	    em.close(); 
+
+	    Reflect.Entry e= Reflect.getReflect(User.class).getEntry("program");
+	    enterProgramRow = EntryForms.mkTableRow(EntryFormTag.PREFIX,null,e);
+
+
 	}  catch (Exception _e) {
 	    setEx(_e);
 	}

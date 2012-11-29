@@ -17,9 +17,22 @@ public class Participation extends ResultsBase {
     public boolean bernoulli = false;
 
     public Participation(HttpServletRequest _request, HttpServletResponse _response) {
+	this( _request, _response, EditUser.Mode.CREATE_SELF);
+    }
+
+    /** Checks the invitation code, and the invitation rules.
+	@param mode Checks are skipped unless this is EditUser.Mode.CREATE_SELF
+     */
+    Participation(HttpServletRequest _request, HttpServletResponse _response,  EditUser.Mode mode) {
 	super(_request,_response);
+
+	// Codes, invitations, etc. only apply in the CREATE_SELF mode
+	if (mode != EditUser.Mode.CREATE_SELF) return;
+
+
 	code = request.getParameter("code");   
 	if (code==null || code.equals("") || code.equals("null")) code=null;
+
 
 	if (code==null) {
 	    error=true;

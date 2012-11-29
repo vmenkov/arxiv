@@ -170,7 +170,7 @@ public class Reflect {
 
 
 	    Display anno = (Display)e.f.getAnnotation(Display.class);
-	    e.editable = (anno==null) || anno.editable(); // default yes
+	    e.editable = (anno!=null) && anno.editable(); // default no
 	    e.rp = (anno!=null) && anno.rp(); // default no
 	    e.payment = (anno!=null) && anno.payment(); // default no
 	    e.order = (anno==null) ? 0 : anno.order();

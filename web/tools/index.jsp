@@ -33,6 +33,7 @@
 <li><A href="../personal/editUserFormSelf.jsp">Edit your own user record</a>
 <li><A href="listUsers.jsp">List all users</a> (including links to their interaction histories)
 <li><A href="../admin/manageUsers.jsp">Manage users</a>
+<li><A href="../admin/invitations.jsp">Manage invitations</a>
 </ul>
 
 

@@ -79,12 +79,12 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return getUser_pass() !=null && getUser_pass().length()>0;
     }
 
-    @Basic  @Column(length=64) @Display(order=3, alt="First (and middle) name")
+    @Basic  @Column(length=64) @Display(order=3, editable=true, alt="First (and middle) name")
 	String firstName;
     public  String getFirstName() { return firstName; }
     public void setFirstName(       String x) { firstName = x; }
  
-    @Basic  @Column(length=64) @Display(order=4, alt="Last name")
+    @Basic  @Column(length=64) @Display(order=4, editable=true,  alt="Last name")
 	String lastName;
     public  String getLastName() { return lastName; }
     public void setLastName(       String x) { lastName = x; }
@@ -99,7 +99,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return (s.length()>0)? s : getUser_name();
     }
 
-    @Basic  @Column(length=64) @Display(order=5)
+    @Basic  @Column(length=64) @Display(order=5, editable=true )
 	String email = ""; 
     public  String getEmail() { return email; }
     public void setEmail(       String x) { email = x; }
@@ -113,26 +113,26 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public void setEncEsPass(       String x) { encEsPass = x; }
 
 
-    @Basic @Display(order=9.1, alt="Agreed to participate in follow-up telephone survey")
+    @Basic @Display(order=9.1,  editable=true, alt="Agreed to participate in follow-up telephone survey")
         @Column(nullable=false) boolean survey;
     public  boolean getSurvey() { return survey; }
     public void setSurvey( boolean x) { survey = x; }
 
 
-    @Basic @Display(order=9.2,rp=true,alt="Phone number (e.g. 732-932-0000)") 
+    @Basic @Display(order=9.2,rp=true, editable=true, alt="Phone number (e.g. 732-932-0000)") 
     //@Usedin(phone=true)
         @Column(length=32)      String phoneNumber;
     public void setPhoneNumber(String val) {  phoneNumber        = val;    }
     public String getPhoneNumber() {        return phoneNumber ;    }
 
 
-    @Basic @Display(order=9.3,rp=true,alt="Best times to reach you (e.g. 'weekday evenings')") 
+    @Basic @Display(order=9.3,rp=true, editable=true, alt="Best times to reach you (e.g. 'weekday evenings')") 
          @Column(length=64)      String timesToReach;
     public void setTimesToReach(String val) {      timesToReach    = val;    }
     public String getTimesToReach() {        return timesToReach ;    }
 
   
-    @Basic @Display(order=9.4, alt="Do you approve the use of audio recording for the telephone interview?")
+    @Basic @Display(order=9.4, editable=true,  alt="Do you approve the use of audio recording for the telephone interview?")
         @Column(nullable=false) boolean approvedAudio;
     public  boolean getApprovedAudio() { return approvedAudio; }
     public void setApprovedAudio( boolean x) { approvedAudio = x; }
@@ -164,7 +164,8 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	}
     }
 
-    @Display(editable=false, order=11.1)	@Column(nullable=false,length=24)
+    @Display(editable=false, order=11.1, alt="Experiment plan")
+	@Column(nullable=false,length=24)
 	@Enumerated(EnumType.STRING)     
 	private Program program;
 
@@ -252,7 +253,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     }
 
     @Column(nullable=true,length=6) @Enumerated(EnumType.STRING) 
-	@Display(editable=true, order=11.1) 
+	@Display(editable=false, order=11.1) 
     private User.Day day;
     
     public User.Day getDay() { return day; }
@@ -314,12 +315,12 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
  
 
     /** This exclusion only applies to suggestion lists, not to search results */
-    @Basic @Display(order=13, alt="Exclude already-viewed articles from the list of recommendations")
+    @Basic @Display(order=13,  editable=true, alt="Exclude already-viewed articles from the list of recommendations")
         @Column(nullable=false) boolean excludeViewedArticles;
     public  boolean getExcludeViewedArticles() { return excludeViewedArticles; }
     public void setExcludeViewedArticles(boolean x) {excludeViewedArticles= x;}
 
-    @Basic   @Display(order=14,editable=true)  @Column(nullable=false)
+    @Basic   @Display(order=14,editable=false)  @Column(nullable=false)
 	private int cluster;
     public  int getCluster() { return cluster; }
     public void setCluster( int x) { cluster = x; }

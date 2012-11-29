@@ -41,10 +41,9 @@ and reenter correct data.
 <p>So far, <%= main.userCnt %> users have responded to this invitation and successfully created accounts.</p>
 
 <% if (main.o.getOpen()) { 
-   String regUrl = Invitation.registrationUrlBase +  main.o.getCode();
 %>
 <p>The invitation is presently open. To invite users to make use of it, send to them the following URL:<pre>
-<a href="<%=regUrl%>"><%=regUrl%></a>
+<a href="<%=main.regUrl%>"><%=main.regUrl%></a>
 </pre>
 </p>
 

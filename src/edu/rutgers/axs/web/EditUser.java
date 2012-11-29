@@ -20,7 +20,7 @@ import edu.rutgers.axs.web.Search;
  <p>There is also a mode for creating a new entry and filling the
  fields right away. This is used as a self-service tool for new users.
  */
-public class EditUser extends ResultsBase {
+public class EditUser extends Participation  {
 
      /** The user name of the record to modify. It may be supplied with
 	the request, or, in the case of a user editing his own record,
@@ -43,11 +43,9 @@ public class EditUser extends ResultsBase {
 	@param create Set this param  to true (and selfForm=false)
 	when invoking the constructor from the page that creates
 	a new user entry and fills its fields at the same time.
-     */    public EditUser(HttpServletRequest _request, HttpServletResponse _response, Mode mode) {
-	super(_request,_response);
-
-	String code = getString("code", null);
-	if (code==null || code.equals("") || code.equals("null")) code=null;
+    */
+    public EditUser(HttpServletRequest _request, HttpServletResponse _response, Mode mode) {
+	super(_request,_response,mode);
 
 	// Did we come from a CREATE_SELF form that talked about an agreement to pariticipate in a follow-up interview?
 	boolean survey = getBoolean(EntryFormTag.PREFIX +EditUser.SURVEY,false);
@@ -60,6 +58,7 @@ public class EditUser extends ResultsBase {
 	    errmsg = "Username must be provided";
 	    return;
 	}
+	if (error) return; // for the super()
 
 	boolean self = uname.equals(user);
 
@@ -101,13 +100,17 @@ public class EditUser extends ResultsBase {
 	    boolean prefChanged = editUser(r, request);
 	    if (error) return;
 
-	    // Using the "code" parameter, if provider
-	    User.Program program=r.getProgram();
-	    if (program==null) program=User.Program.SET_BASED;
-	    try {
-		program = Enum.valueOf( User.Program.class, code);
-	    } catch(Exception ex) {}
-	    r.setProgram(program);
+	    // In the CREATE_SELF mode, require the "code" parameter
+	    if (mode==Mode.CREATE_SELF) {
+		// code is already validated by the Participation() constructor
+		User.Program program=inv.getProgram();
+		if (program==null) {
+		    error = true;
+		    errmsg="Sorry, we are very unorganized, and have not configured this invitation properly. Please report the problem to "+ResetPassword.businessEmail+", and try again later";
+		    return;
+		}
+		r.setProgram(program);
+	    }
 
 	    StringBuffer b = new 	StringBuffer();
 	    if (!r.validate(em,b)) {
@@ -203,7 +206,7 @@ public class EditUser extends ResultsBase {
 		}
 	    }
 
-	    if (r.catCnt()==0 && !program.needBernoulli()) {
+	    if (r.catCnt()==0 && !r.getProgram().needBernoulli()) {
 		error = true;
 		errmsg = "You must specify some categories of interest, in order for the system to be able to generate recommendations. Please go back and check boxes next to at least one category!";
 		return;		    

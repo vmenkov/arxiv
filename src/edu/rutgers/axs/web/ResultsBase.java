@@ -3,7 +3,7 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import java.net.URLEncoder;
+import java.net.*;
 
 import java.lang.reflect.*;
 import javax.persistence.*;
@@ -373,8 +373,12 @@ public class ResultsBase {
 	} else return  "<!-- "+s+"-->\n";
     }
 
-    
-
+    /** The full URL corresponding to the received request */
+    URL thisUrl() throws java.net.MalformedURLException {
+	//	Logging.info("this URL is apparently " + s);
+	return new URL( request.getScheme(), request.getServerName(),
+			request.getServerPort(), request.getRequestURI());	
+    }
 
 }
 

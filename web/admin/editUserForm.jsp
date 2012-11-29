@@ -27,6 +27,8 @@ main page.
 
 <h1>Editing the entry for user <em><%=id%></em></h1>
 
+<p>Experiment plan: <%= main.u.getProgram() %></P>
+
 <p>
 <table border=1>
 <tr><%= main.u.header4cells()  %> </tr>
