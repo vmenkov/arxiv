@@ -69,6 +69,12 @@ user entry is disabled.</p>
 </table>
 </form>
 
+
+<hr>
+<p>
+[To the main <a href="../tools/">Research Tools</a> page]
+</p>
+
 <icd:RU/>
 
 </body>

@@ -57,7 +57,8 @@ and reenter correct data.
 <% }  %>
 
 <p>
-Back to the <a href="invitations.jsp">Invitation Manager</a>
+[Back to the <a href="invitations.jsp">Invitation Manager</a>] &nbsp;
+[To the main <a href="../tools/">Research Tools</a> page]
 </p>
 
 <% } %>

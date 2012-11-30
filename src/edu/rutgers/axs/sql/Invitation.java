@@ -102,11 +102,14 @@ public class Invitation extends OurTable {
 	and if it does not, closes it.
     */
     public boolean validityTest( EntityManager em) {
+	return  validityTest(em, true);
+    }
+    public boolean validityTest( EntityManager em, boolean persist) {
 	if (!getOpen()) return false;
 	if (getExpiration()==null || getExpiration().before(new Date()) ||
-	    User.invitedUserCount(em, getId()) > getMaxUsers())  {
+	    User.invitedUserCount(em, getId()) >= getMaxUsers())  {
 	    setOpen(false);
-	    em.persist(this);	      
+	    if (persist)  em.persist(this);	      
 	    return false;
 	}
 	return true;	

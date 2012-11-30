@@ -32,6 +32,7 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	jvMap.put( Action.Op.USELESS, new Integer(-200));
 	jvMap.put( Action.Op.DONT_SHOW_AGAIN, new Integer(-50));
 
+	vvMap.put( Action.Op.EXPAND_ABSTRACT,  new Integer(5));
 	vvMap.put( Action.Op.VIEW_ABSTRACT,  new Integer(10));
 	vvMap.put( Action.Op.VIEW_FORMATS,  new Integer(20));
 	for(Action.Op q: Action.Op.VIEW_ARTICLE_BODY_TYPES) {

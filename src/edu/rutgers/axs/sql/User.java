@@ -496,6 +496,8 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return h;
     }
 
+    /** Checks if the day type d is among the listed types
+     */
     boolean isAllowedType(User.Day d, User.Day[] types) {
 	if (types==null) return true;
 	for(User.Day q: types) { if (d==q) return true; }

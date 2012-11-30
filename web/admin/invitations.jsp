@@ -74,6 +74,12 @@ email.  </p>
 <li><a href="editInvitationForm.jsp">Create a new invitation</a>
 </ul>
 
+<hr>
+<p>
+[To the main <a href="../tools/">Research Tools</a> page]
+</p>
+
+
 <% } %>
 
 <hr>

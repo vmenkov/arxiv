@@ -360,20 +360,23 @@ public class ResultsBase {
 	return x;
     }
 
-
+    /** Formats the specified text as a visible "span" element, or as
+	a comment, based on the user's status. */
     public String researcherSpan(String s) {
 	if (runByResearcher()) {
 	    return "<span class=\"researcher\">" + s + "</span>\n";
 	} else return "<!-- "+s+"-->\n";
     }
 
+    /** Formats the specified text as a visible "P" element, or as
+	a comment, based on the user's status. */
    public String researcherP(String s) {
 	if (runByResearcher()) {
 	    return "<p class=\"researcher\">" + s + "</p>\n";
 	} else return  "<!-- "+s+"-->\n";
     }
 
-    /** The full URL corresponding to the received request */
+    /** The full URL corresponding to the request we're serving now */
     URL thisUrl() throws java.net.MalformedURLException {
 	//	Logging.info("this URL is apparently " + s);
 	return new URL( request.getScheme(), request.getServerName(),

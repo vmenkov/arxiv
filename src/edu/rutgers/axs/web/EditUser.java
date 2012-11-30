@@ -102,6 +102,7 @@ public class EditUser extends Participation  {
 
 	    // In the CREATE_SELF mode, require the "code" parameter
 	    if (mode==Mode.CREATE_SELF) {
+		r.setInvitation( inv.getId());
 		// code is already validated by the Participation() constructor
 		User.Program program=inv.getProgram();
 		if (program==null) {
@@ -216,6 +217,12 @@ public class EditUser extends Participation  {
 
 	    // saving data into the database
 	    em.persist(r);
+
+
+	    // check if the invitation needs to be closed right away
+	    inv.validityTest(em);
+
+
 	    em.getTransaction().commit();
 	    
 	    // read back
@@ -223,10 +230,10 @@ public class EditUser extends Participation  {
 	    //r = User.findByName(em, uname);
 	    //em.close();
 	    
-	    if (r==null) {
-		error = true;
-		errmsg = "Could not re-read the modified entry with user_name=" + uname;
-	    }
+	    //	    if (r==null) {
+	    //		error = true;
+	    //		errmsg = "Could not re-read the modified entry with user_name=" + uname;
+	    //	    }
 
 	    // Trying to update the profile and re-create sug list, 
 	    // becuase the user's declared preferences have changed.
@@ -239,8 +246,7 @@ public class EditUser extends Participation  {
 		Logging.info("There seem to be no need to schedule updates for user=" + uname +"; mode=" +mode+", prefChanged=" + prefChanged);
 	    }
 	    em.close();
-
-
+	    
 	}  catch (Exception _e) {
 	    setEx(_e);
 	} finally {

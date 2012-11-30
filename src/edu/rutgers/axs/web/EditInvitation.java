@@ -74,6 +74,7 @@ public class EditInvitation extends ResultsBase {
 
 	    if (o.getMaxUsers()<0) o.setMaxUsers(0);
 
+	    o.validityTest(em,false); // no nested persist is needed here
 
 	    em.persist(o);
 	    em.getTransaction().commit();
