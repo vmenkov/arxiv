@@ -664,6 +664,7 @@ public class Indexer {
 	    i.fromXML(args[1], args[2]);
 
 	} else if (args[0].equals("show")) {
+	    System.out.println("Default encoding is: " + System.getProperty("file.encoding"));
 	    Show show = new Show();
 	    for(int j=1; j<args.length; j++) {
 		String v = args[j];

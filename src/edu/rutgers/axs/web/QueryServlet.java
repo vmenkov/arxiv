@@ -133,7 +133,7 @@ public class QueryServlet extends HttpServlet {
 
 	    response.setContentType(html? "text/html" :
 				    toFile? "text/csv" : "text/plain");
-
+	    response.setCharacterEncoding("UTF-8");
 	    if (toFile) {
 		// suggest the destination file name to the user's web browser
 		String f = html? "query-results.html" : "query-results.csv";

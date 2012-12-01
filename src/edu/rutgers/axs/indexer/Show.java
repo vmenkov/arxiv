@@ -77,6 +77,7 @@ class Show {
 	System.out.println("Doc no.=" + docno);
 	System.out.println("dateIndexed=" + doc.get(ArxivFields.DATE_INDEXED));
 	System.out.println("date       =" + doc.get(ArxivFields.DATE));
+	System.out.println("authors    =" + doc.get(ArxivFields.AUTHORS));
 	System.out.println("Document=" + doc);
     }
 
