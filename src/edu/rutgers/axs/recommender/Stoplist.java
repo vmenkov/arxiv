@@ -16,6 +16,7 @@ public class Stoplist extends TreeSet<String>{
 	    if (s.equals("") || s.startsWith("#")) continue;
 	    add(s);
 	}
-
     }
+
+ 
 }

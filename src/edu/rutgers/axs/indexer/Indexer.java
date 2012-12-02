@@ -680,9 +680,16 @@ public class Indexer {
 		}
 	    }
 	} else if (args[0].equals("showcoef")) {
-	    System.out.println("Note: the following stop words are not stored:");
+	    System.out.println("Note: the following stop words are not stored in the Lucene index:");
 	    for(Object x: org.apache.lucene.analysis.standard.StandardAnalyzer.STOP_WORDS_SET) {
-		System.out.print( x.getClass() + ": " + x + "; ");
+		if (x instanceof char[]) {
+		    char[] ca = (char[]) x;
+		    String q="";
+		    for(char c: ca) q+= c;
+		    System.out.println("["+q+"]" );
+		} else {
+		    System.out.println( x.getClass() + ": " + x + "; ");
+		}
 	    }
 	    System.out.println();
 	    Show show = new Show();
@@ -867,5 +874,5 @@ public class Indexer {
     private static void log(String s) {
 	Logger.log(s);
     }
-    
+ 
 }

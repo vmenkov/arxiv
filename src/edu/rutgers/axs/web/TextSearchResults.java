@@ -5,16 +5,13 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-//import javax.servlet.*;
-//import javax.servlet.http.*;
-
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.ParseConfig;
+//import edu.rutgers.axs.ParseConfig;
 
 /** Our interface for Lucene searches: Full-text search */
 public class TextSearchResults extends SearchResults {
@@ -25,6 +22,11 @@ public class TextSearchResults extends SearchResults {
        As we split query into terms, we preserve all valid Unicode letters
        (\p{L}) and decimal digits (\p{Nd}). For details on Unicode character 
        categories, see http://www.unicode.org/reports/tr18/
+
+       <p>
+       FIXME: we need to strip from the query words that occur in 
+       StandardAnalyzer.STOP_WORDS_SET, because those aren't stored
+       in our Lucene index.
 
        @param query Text that the user typed into the Search box
     */
@@ -38,6 +40,7 @@ public class TextSearchResults extends SearchResults {
 	
 	// ":", "-", "." and "*" are allowed in terms, for later processing
 	String terms[]= query.split("[^\\p{L}\\p{Nd}_:\\.\\*\\-]+");
+	terms = dropStopWords(terms);
 
 	BooleanQuery q = new BooleanQuery();
 	
@@ -113,4 +116,36 @@ public class TextSearchResults extends SearchResults {
 	    return b;
 	}
     }
+
+
+    /** The set of words that are known to be never stored in our Lucene index,
+	because they are the stop words of StandardAnalyzer.
+    */
+    static private HashSet<String> stopWordsSet = fillStopWordsSet();
+
+    /** Converts StandardAnalyzer's stop word list (where words are
+	represented as of arrays of chars, as it happens) into a more
+	convenient set of Strings.
+     */
+    static private HashSet<String> fillStopWordsSet() {
+	HashSet<String> q = new HashSet <String>();
+	for(Object o: org.apache.lucene.analysis.standard.StandardAnalyzer.STOP_WORDS_SET) {
+	    q.add(new String( (char[]) o));
+	}
+	return q;
+    }
+
+    String[]  dropStopWords(String [] terms) {
+	Vector<String> v=new Vector<String>();
+	int rmCnt=0;
+	for(String t: terms) {
+	    if (stopWordsSet.contains(t)) rmCnt++;
+	    else v.add(t);
+	}
+	return (rmCnt>0) ? v.toArray(new String[v.size()]) : terms;
+    }
+
+
+
+
 }
