@@ -5,8 +5,8 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+//import javax.servlet.*;
+//import javax.servlet.http.*;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -18,8 +18,16 @@ import edu.rutgers.axs.ParseConfig;
 
 /** Our interface for Lucene searches: Full-text search */
 public class TextSearchResults extends SearchResults {
-	/**@param query Text that the user typed into the Search box
-	 */
+    /**Parses the user's text query, creates a Lucene query based on it,
+       and obtains the results.
+
+       <p>
+       As we split query into terms, we preserve all valid Unicode letters
+       (\p{L}) and decimal digits (\p{Nd}). For details on Unicode character 
+       categories, see http://www.unicode.org/reports/tr18/
+
+       @param query Text that the user typed into the Search box
+    */
     TextSearchResults(IndexSearcher searcher, String query,  int maxlen) 
 	throws Exception {
 	
@@ -29,7 +37,8 @@ public class TextSearchResults extends SearchResults {
 	if (isPhrase) query = query.substring(1, query.length()-1);
 	
 	// ":", "-", "." and "*" are allowed in terms, for later processing
-	String terms[]= query.split("[^a-zA-Z0-9_:\\.\\*\\-]+");
+	String terms[]= query.split("[^\\p{L}\\p{Nd}_:\\.\\*\\-]+");
+
 	BooleanQuery q = new BooleanQuery();
 	
 	if (isPhrase) {
