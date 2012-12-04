@@ -20,8 +20,8 @@
 <p>Welcome to my.arxiv.org!
 
 <p>
-<a href="../index.jsp">Back to main</a>
-<a href="index.jsp">Your account</a>
+<a href="../index.jsp">To main My.ArXiv page</a>
+<a href="editUserFormSelf.jsp">Edit my account information</a>
 
 <icd:RU/>
 

@@ -41,6 +41,8 @@ and reenter correct data.
 <% } else { %>
 <h1>Editing invitation no.  <em><%=main.id%></em></h1>
 
+<p>So far, <%= main.userCnt %> users have responded to this invitation and successfully created accounts.</p>
+
 <p>
 <table border="1">
 <tr>
@@ -51,6 +53,9 @@ and reenter correct data.
 
 <% } %>
 
+<p>If you want to open an invitation, make sure to set an appropriate
+max number of users and an adequate expiration date, and set "open" to "true".
+</p>
 
 <form method=post action="editInvitation.jsp">
 <%= Tools.inputHidden(EditInvitation.ID, main.id) %> <br>
@@ -60,13 +65,13 @@ and reenter correct data.
 <%= main.entryForm()%>
 </td><td>
 <!--space for the pop-up date selector -->
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 </td></tr></table>
 
 </p>
 
 <p>
-<input type="submit" value="Submit request">
+<input type="submit" value="Submit">
 </p>
 
 <p>

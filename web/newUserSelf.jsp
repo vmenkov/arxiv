@@ -39,16 +39,16 @@
 
 <p>
 Now you can 
-<a href="<%=main.cp%>/personal/logged-in.jsp">Log in with your new user name and password</a> to continue browsing.
+<a href="<%=main.cp%>/login2.jsp?sp=/index.jsp">Log in with your new user name and password</a> to continue browsing.
 </p>
 
-<p>
+<!-- p>
 <ul>
 <li><a href="<%=main.cp%>">Main page</a>
 <li><a href="<%=main.cp%>/personal/index.jsp">Your account</a>
 <li><a href="<%=main.cp%>/personal/editUserFormSelf.jsp">Modify your account information</a>
 </ul>
-
+</p -->
 
 <%   }      %>
 

@@ -8,6 +8,7 @@ import javax.servlet.jsp.tagext.*;
 
 import java.io.*;
 import edu.rutgers.axs.sql.Logging;
+import edu.rutgers.axs.html.Html;
 
 /** This tag prints an information message about the user's current
  * login name */
@@ -28,10 +29,14 @@ public class YouAreTag extends TagSupport {
 
 	    String s= 
 		(user==null)? 
-		 "You are not participating in arXiv research. [<a href=\""
-		+cp +  "/login2.jsp\">Log in?</a>] [<a href=\""
-		+cp +  "/participation.jsp\">Join!</a>]" :
-		"You are logged in as <em>" + user + "</em> [<a href=\""+cp+"/personal/index.jsp\">My account</a>] [<a href=\""+cp+"/LogoutServlet\">Log out?</a>]";				
+		 "You are not participating in arXiv research. [" +
+		Html.a( cp +  "/login2.jsp", "Log in?") + "] [" +
+		Html.a( cp +  "/participation.jsp",  "Join!") + "]" :
+		"You are logged in as <em>" + user + "</em> [" +
+		Html.a( cp+"/personal/editUserFormSelf.jsp", "My account") + 
+		"] [" +
+		Html.a( cp+"/LogoutServlet", "Log out?") + "]";
+
 	    out.println(s);
         } catch (Exception ex) {
 	    System.out.println(ex);

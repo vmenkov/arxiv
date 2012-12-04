@@ -19,7 +19,7 @@ import edu.rutgers.axs.sql.*;
  */
 public class EditInvitation extends ResultsBase {
 
-    public static final String ID = "id";
+    public static final String ID = "id", CODE_PREFIX="code_prefix";
     
     /** Invitation id. */
     public long id=0;
@@ -113,7 +113,12 @@ public class EditInvitation extends ResultsBase {
 	try {
 	    Tools.editEntity(EntryFormTag.PREFIX, o, request);
 	    if (mode == Mode.CREATE) {		
-		String newCode = "" + o.getProgram() + "_" + 
+
+		String codePrefix = getString(CODE_PREFIX, null);
+
+		if (isBlank(codePrefix)) codePrefix= o.getProgram().toString();
+
+		String newCode = codePrefix + "_" + 
 		    ResetPassword.generatePassword() +
 		    ResetPassword.generatePassword();
 		o.setCode(newCode);

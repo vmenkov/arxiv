@@ -31,7 +31,7 @@ public class Participation extends ResultsBase {
 
 
 	code = request.getParameter("code");   
-	if (code==null || code.equals("") || code.equals("null")) code=null;
+	if (isBlank(code)) code=null;
 
 
 	if (code==null) {

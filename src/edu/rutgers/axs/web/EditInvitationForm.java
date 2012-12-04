@@ -19,7 +19,8 @@ public class EditInvitationForm extends ResultsBase {
     public long id=0;
 
     public Invitation o=null;
-
+    public int userCnt = 0;
+    EditInvitation.Mode mode;
 
     public EditInvitationForm(HttpServletRequest _request, HttpServletResponse _response) { //, EditInvitation.Mode mode) {
 	super(_request,_response);
@@ -31,21 +32,24 @@ public class EditInvitationForm extends ResultsBase {
 	}
 
 	id = getLong(EditInvitation.ID, 0);
-	EditInvitation.Mode mode = (id<=0) ? EditInvitation.Mode.CREATE:
-	    EditInvitation.Mode.EDIT;
-
+	mode = (id<=0) ? EditInvitation.Mode.CREATE: EditInvitation.Mode.EDIT;
+	EntityManager em=null;
 	try {
 
+	    em = sd.getEM();
 	    if (id<=0) {
 	    // Blank form
 		o = new Invitation();
 	    } else {
-		EntityManager em = sd.getEM();
 		o = (Invitation)em.find(Invitation.class, id);
 	    }
+	    userCnt = User.invitedUserCount(  em, id);
 	} catch (Exception _e) {
 	    setEx(_e);
-	} 
+	} finally {
+	    ensureClosed(em, false);
+	}
+   
     
 
 
@@ -64,6 +68,18 @@ public class EditInvitationForm extends ResultsBase {
 		if (!e.editable) continue;
 		s.append( EntryForms.mkTableRow(EntryFormTag.PREFIX, o,e));
 	    }
+
+	    if (mode == EditInvitation.Mode.CREATE) {
+		
+		// code prefix
+		s.append("<tr>");
+		s.append("<td valign=top>Code prefix. This will be concatenated with a random string to form the invitation code, which you then will email to prospective users. If you leave this field blank, the experiment name will be used as the code prefix.</td>\n");
+		s.append("<td>");
+		s.append(Tools.inputText(EditInvitation.CODE_PREFIX, 20));
+		s.append("</td>\n");
+		s.append("</tr>\n");
+	    }
+
 	    s.append("</table>");
 	} catch (Exception ex) {
 	    System.out.println(ex);
