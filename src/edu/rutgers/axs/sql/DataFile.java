@@ -58,8 +58,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     /** The task id of the Task pursuant to which the file was created,
 	If the file was not created via the TaskManager, -1 (or 0) will be stored here.
      */
-    @Basic @Display(editable=false, order=4 )
-	@Column(nullable=false)
+    @Basic @Display(editable=false, order=4) @Column(nullable=false)
 	long task;
     public  long getTask() { return task; }
     public void setTask(long x) { task = x; }
@@ -182,7 +181,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
         private Vector<ListEntry> docs = new Vector<ListEntry>();
 
     //    public  Set<ListEntry> getDocs() {
-    public  Vector<ListEntry> getDocs() {
+    private Vector<ListEntry> getDocs() {
         return docs;
     }
 
@@ -411,35 +410,37 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	null if no file needs to be created. The object so created
 	needs to be "persisted" later.
     */
-    static synchronized public DataFile newOutputFile(Task task) {
-    	return  newOutputFile(task, task.getOp().outputFor()); 
+    public DataFile(Task task) {
+    	this(task, task.getOp().outputFor()); 
     }
 
     /**
        @param type : the file type
      */
-    static synchronized public DataFile newOutputFile(Task task, Type type) {
-
+    public DataFile(Task task, Type type) {
+	this(task.getUser(), task.getId(), type);	    
+    }
+    
+    public DataFile(String user, long taskId, Type type) {
+	this();
 	String prefix = type.givePrefix();
 	String f = null;
 	Date now = new Date();
-	if ( prefix==null)  {
+	if ( prefix==null ||  prefix.equals(""))  {
 	    throw new IllegalArgumentException("File type " + type + " not supported for file creation!");
-	} else if ( prefix.equals(""))  { // nothing
-	    return null;
 	} else {
 	    int pid = Main.getMyPid();
 	    f = prefix + File.separator + dayFmt.format(now) + "." +
 		fmt1.format(pid) + "." + fmt2.format(fileCnt++) + ".txt";
 	}
-	DataFile df = new DataFile();
-	df.setType(type);
-	df.setUser(task.getUser());
-	df.setTask(task.getId());	    
-	df.setTime( now);
-	df.setThisFile(f);
-	return df;
-    }
+
+	setType(type);
+	setUser(user);
+	setTask(taskId);	    
+	setTime( now);
+	setThisFile(f);
+   }
+
 
 
 

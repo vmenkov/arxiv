@@ -20,7 +20,7 @@ import edu.rutgers.axs.indexer.Common;
 /** Retrieves and displays a "suggestion list": a list of articles which some
     kind of automatic process has marked as potentially interesting to the user.
  */
-public class BernoulliViewSuggestions extends PersonalResultsBase {
+public class BernoulliViewSuggestions extends ViewSuggestionsBase {
 
     public User.Program mode;
     public boolean exploitation = false;
@@ -30,21 +30,9 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
     /** Time horizon = 28 days, as per PF's writeup ver 3 */
     int days=Bernoulli.horizon;
 
-    /** List scrolling */
-    public int startat = 0;
-    /** the actual suggestion list to be displayed is stored here */
-    public SearchResults sr;
- 
-    public BernoulliViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
-	this(_request, _response, false);
-    }
-
-
-    /**
-       @param mainPage If true, we're preparing a list to appear on
-       the main page.
+    /** The list for the main page.
      */
-    public BernoulliViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
+    BernoulliViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	if (error) return; // authentication error?
 
@@ -68,26 +56,16 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	    //	    days =actor.getDays();
 	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
 	    days = (int)getLong(DAYS, days); // can override via cmd line
-
 	    
 	    final int maxDays=30;
 	    
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
-
-
 	    initList( startat, em, actor.getCluster());
-
-	    //	    em.getTransaction().begin();
-	    
-
-	    //	    em.getTransaction().commit();
-
 
 	}  catch (Exception _e) {
 	    setEx(_e);
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
-	    //em.close(); 
 	}
     }
 
@@ -95,7 +73,6 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
        @param em Just so that we could save the list
      */
     private void initList(int startat, EntityManager em, int cluster) throws Exception {
-	//customizeSrc();
 
 	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -106,9 +83,9 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 
 	// eligible candidates: based on categories and date range
 	sr = Bernoulli.catSearch(searcher, days);    
+	// FIXME: what if there are no BAS for some articles (yet)?
 	// score based ordering	
 	Bernoulli.sort(sr, em, reader, mode, cluster);
-
 	
 	sr.setWindow( searcher, startat, M, exclusions);
 	ArticleEntry.applyUserSpecifics(sr.entries, actor);
@@ -134,16 +111,4 @@ public class BernoulliViewSuggestions extends PersonalResultsBase {
 	asrc= new ActionSource(srcType, plist.getId());
     }
 		    
-    /** Wrapper for the same method in ResultsBase. */
-    public String resultsDivHTML(ArticleEntry e) {
-	return resultsDivHTML(e, isSelf);
-    }
-
-    /** Overrides the method in ResultsBase */
-    //void customizeSrc() {
-    //	asrc= new ActionSource(teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL,
-    //				df != null ? df.getId() : 0);
-    //}
-
-
 }

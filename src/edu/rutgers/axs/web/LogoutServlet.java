@@ -27,7 +27,7 @@ public class LogoutServlet extends HttpServlet {
 		    ExtendedSessionManagement.invalidateEs( u);
 		    em.persist(u);
 		    em.getTransaction().commit(); 
-		    Logging.info("Logout: invalidated ES on user: " + u.reflectToString());
+		    Logging.info("Logout: invalidated ES on user: " + user);
 		}
 		em.close();
 		sd.storeUserName(null);

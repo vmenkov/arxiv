@@ -23,11 +23,11 @@ set cp="${cp}:../tomcat-lib-to-copy/catalina.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 # set opt="-cp ${cp} ${opt}"
-set opt="-cp ${cp} ${opt} -DdontSend=true"
+set opt="-cp ${cp} ${opt}"
 
 echo "opt=$opt"
 
-time java $opt   edu.rutgers.axs.bernoulli.Bernoulli recentRewrite
+time java $opt   edu.rutgers.axs.bernoulli.Bernoulli recent
 #time java $opt   edu.rutgers.axs.bernoulli.Bernoulli recent
 
 

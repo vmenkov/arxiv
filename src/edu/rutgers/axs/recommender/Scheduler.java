@@ -34,6 +34,9 @@ public class Scheduler {
     */
     private int schedulingIntervalSec = 10 * 60;
 
+    /** Max day range for looking back */
+    public    static final  int maxRange = 90;
+
     int getSchedulingIntervalSec()  {
 	return schedulingIntervalSec;	
     }
@@ -214,7 +217,6 @@ public class Scheduler {
 
 			Date since = null;
 			if (lastViewed==null) {
-			    final int maxRange = 90;
 			    since = Common.plusDays(new Date(), -maxRange);
 			} else {
 			    since = Common.plusDays(new Date(), -days);

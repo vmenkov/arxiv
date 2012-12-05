@@ -219,7 +219,7 @@ public class TaskMaster {
 		    Vector<ArticleEntry> entries = upro.packageEntries(sd);
 		    Logging.info("since="+since+", |sd|=" +sd.length+", |entries|=" + entries.size());
 		    
-		    outputFile=DataFile.newOutputFile(task);
+		    outputFile=new DataFile(task);
 		    outputFile.setDays(days);
 		    if (since!=null) outputFile.setSince(since);
 		    outputFile.setLastActionId(upro.getLastActionId());
@@ -349,7 +349,7 @@ public class TaskMaster {
 	} else {
 	    // generate it
 	    if (ptype== DataFile.Type.USER_PROFILE) {
-		// based on user activity, in a linear way (obsolete?)
+		// based on user activity, in a linear way (obsolete)
 		upro = new UserProfile(task.getUser(), em, reader);
 	    } else if (ptype==  DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
 		// empty profile, as TJ wants (06-2012)

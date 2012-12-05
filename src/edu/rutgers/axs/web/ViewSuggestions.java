@@ -16,14 +16,14 @@ import org.apache.lucene.search.IndexSearcher;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.indexer.Common;
+import edu.rutgers.axs.recommender.Scheduler;
 
-/** Retrieves and displays a "suggestion list": a list of articles which some
-    kind of automatic process has marked as potentially interesting to the user.
- */
-public class ViewSuggestions extends PersonalResultsBase {
-    /** This will be set if ViewSuggestion is not the applicable type,
-     and a BernoulliViewSuggestion needs to be created instead. */
-    public boolean needBernoulliInstead = false;
+/** This class is responsible for the retrieval, formatting, and
+    displaying of a "suggestion list": a list of articles which some kind
+    of automatic process has marked as potentially interesting to the
+    user. 
+*/
+public class ViewSuggestions  extends ViewSuggestionsBase {
 
     public Task activeTask = null, queuedTask=null, newTask=null;
 
@@ -61,11 +61,6 @@ public class ViewSuggestions extends PersonalResultsBase {
 
     private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
 
-    /** List scrolling */
-    public int startat = 0;
-    /** the actual suggestion list to be displayed is stored here */
-    public SearchResults sr;
- 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
     }
@@ -86,13 +81,14 @@ public class ViewSuggestions extends PersonalResultsBase {
 	EntityManager em = sd.getEM();
 	try {
 	    
+	    startat = (int)Tools.getLong(request, STARTAT,0);
+
 	    // One very special mode: database ID only. This is used 
 	    // for navigation inside the "view activity" system
 	    long id = Tools.getLong(request, "id", 0);
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
 		if (df==null) throw new WebException("No suggestion list with id=" + id + " exists");
-		//		if (
 		actorUserName = df.getUser();
 	    }
 
@@ -102,22 +98,17 @@ public class ViewSuggestions extends PersonalResultsBase {
 		return;
 	    }
 
-	    startat = (int)Tools.getLong(request, STARTAT,0);
-
 	    actor=User.findByName(em, actorUserName);
 	    User.Program program = actor.getProgram();
-	    if (program!=null && program.needBernoulli()) {
-		// Tell the caller to create a BernoulliViewSuggestion instead
-		needBernoulliInstead = true;
-		//errmsg = "Need to use the Bernoulli model instead!";
-		//error = true;
-		return;
+	    if (program==null) throw new WebException("Not known what experiment plan user "+actor+" is enrolled into");
+	    if (program.needBernoulli()) {
+		throw new WebException("User "+actor+" is enrolled into Bernoulli plan, not set-based!");
 	    }
 
 
 	    // Special modes
-	    if (id>0) {
-		initList(df, startat, false, em);
+	    if (id>0) {  // displaying specific file
+		initList(df, startat, null, em);
 		return;
 	    } else if (mainPage) {
 		initMainPage(em, actor);
@@ -139,7 +130,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	
 	    Task.Op taskOp = mode.producerFor(); // producer task type
 	    
-	    final int maxDays=30;
+	    final int maxDays=Scheduler.maxRange;
 	    
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
 
@@ -215,7 +206,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    actorLastActionId= actor.getLastActionId();
 
 	    if (df!=null) {
-		initList(df, startat, false, em);
+		initList(df, startat, null, em);
 	    }
 
 	}  catch (Exception _e) {
@@ -226,7 +217,9 @@ public class ViewSuggestions extends PersonalResultsBase {
 	}
     }
 
-    /** Generates the list for the main page */
+    /** Generates the list for the main page. This has simpler logic
+     than the general view suggestion page, which has lots of special
+     modes and options. */
     private void initMainPage(EntityManager em, User actor) throws Exception {
 	if (error || user==null) return; // no list needed
 	// disregard most of params
@@ -246,21 +239,31 @@ public class ViewSuggestions extends PersonalResultsBase {
 
 	onTheFly = (df==null);
        
-	if (df == null) {
-	    days =actor.getDays();
-	    if (days<=0) days = Search.DEFAULT_DAYS;
+	if (onTheFly) {
+	    //	    days =actor.getDays();
+	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
+
+	    Date since = SearchResults.daysAgo(Scheduler.maxRange);
+	    initList(null, startat, since, em);
+
 	} else {
 	    days = df.getDays();
+	    initList(df, startat, null, em);
 	}
 	    	    
-	initList(df, startat, onTheFly, em);
     }
 
     /**
+       @param df The data file to read. We will either display the
+       suggestion list from this file, or (if in the teamDraft mode)
+       mix it with the catSearch results.  If null is given, we are in
+       the onTheFly mode, and create the list right here
+       @param since Only used in the onTheFly mode. (Otherwise, the date
+       range is picked from the data file).
        @param em Just so that we could save the list
      */
-    private void initList(DataFile df, int startat, boolean onTheFly, EntityManager em) throws Exception {
-	//customizeSrc();
+    private void initList(DataFile df, int startat, 
+			  Date since, EntityManager em) throws Exception {
 
 	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -277,14 +280,28 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    User.union(actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN}),
 		       actor.getFolder());
 
-	if (onTheFly) {
-	    // simply generate and use cat search results for now
-	    sr = catSearch(searcher);    
+	if (df==null) {
+	    // The on-the-fly mode: simply generate and use cat search results for now
+	    sr = catSearch(searcher, since);    
+
+	    // Save the list
+	    DataFile outputFile= new DataFile(actorUserName, 0, DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
+	    outputFile.setDays(Scheduler.maxRange);
+	    outputFile.setSince(since);
+	    // FIXME: ought to do fillArticleList as well, maybe
+	    // through a TaskMaster job
+	    sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
+	    ArticleEntry.save(sr.entries, outputFile.getFile());
+	    em.persist(outputFile);
+
 	} else if (teamDraft) {
-	    // merge the list from the file with the cat search res
+	    // The team-draft mode: merge the list from the file with
+	    // the cat search res
 	    SearchResults asr = new SearchResults(df, searcher);
 	    
-	    SearchResults bsr = catSearch(searcher);
+	    since = df.getSince();
+	    if (since == null) since = SearchResults.daysAgo( days );
+	    SearchResults bsr = catSearch(searcher, since);
 		    
 	    long seed =  (actorUserName.hashCode() << 16) | dfmt.format(new Date()).hashCode();
 	    // merge
@@ -297,8 +314,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	ArticleEntry.applyUserSpecifics(sr.entries, actor);
 	
 	// In docs to be displayed, populate other fields from Lucene
-	for(int i=0; i<sr.entries.size()// && i<maxRows
-		; i++) {
+	for(int i=0; i<sr.entries.size(); i++) {
 	    ArticleEntry e = sr.entries.elementAt(i);
 	    int docno = e.getCorrectDocno(searcher);
 	    Document doc = reader.document(docno);
@@ -316,10 +332,10 @@ public class ViewSuggestions extends PersonalResultsBase {
 	asrc= new ActionSource(srcType, plist.getId());
     }
     
-     private SearchResults catSearch(IndexSearcher searcher) throws Exception {
+    private SearchResults catSearch(IndexSearcher searcher, Date since) throws Exception {
 	int maxlen = 10000;
 	SearchResults bsr = 
-	    SubjectSearchResults.orderedSearch( searcher, actor, days, maxlen);
+	    SubjectSearchResults.orderedSearch( searcher, actor, since, maxlen);
 	if (bsr.scoreDocs.length>=maxlen) {
 	    String msg = "Catsearch: At least, or more than, " + maxlen + " results found; displayed list may be incomplete";
 	    Logging.warning(msg);
@@ -373,15 +389,7 @@ public class ViewSuggestions extends PersonalResultsBase {
 	    s += researcherP(q);
 	}
 
-	s += "<p>The entire list contains " + sr.atleast + " " + sr.reportedLength + " articles.\n";
-
-	if (sr.entries.size()==0) { 
-	    s += "There is nothing to display.\n";
-	} else { 
-	    s += "Articles ranked from " + sr.entries.elementAt(0).i +
-		" through " + sr.entries.lastElement().i+ " are shown below.\n";
-	}
-	s += "</p>\n";
+	s += super.describeList();
 	return s;
     }
 
@@ -421,32 +429,24 @@ public class ViewSuggestions extends PersonalResultsBase {
     }	
 
 
-    public boolean noList() {
-	return (df == null && !onTheFly);
-    }
-
     /** Generates a message explaining that no sugg list is available, and why */
     public String noListMsg() {
-	String s= "<p>Presently, no recommendations are available for you.</p>\n";
+	String s= super.noListMsg();
 	
 	if (activeTask!=null) {
-	    s += 
-		"<p>" +
+	    s += 		"<p>" +
 		"Presently, My.Arxiv's recommendation engine is working on generating a suggestion list for you (task no. " + activeTask.getId() + 
 		"). You may want to wait for a couple of minutes, and then refresh this page to see if the list is ready.</p>\n";
 	} else if (queuedTask!=null) { 
-	    s += 
-		"<p>" +
+	    s += 		"<p>" +
 		"Presently,  a task is queued to generate a suggestion list for you (task no. " +
 		queuedTask.getId() + 
 		"). You may want to wait for a few minutes, and then refresh this page to see if it has started and completed.</p>\n";
 	} else if (actor.catCnt()==0) {
-	    s +=
-		"<p>" +
+	    s +=		"<p>" +
 		"It appears that you have not specified any subject categories of interest. Please <a href=\"personal/editUserFormSelf.jsp\">modify your user profile</a>, adding some categories!</p>\n";
 	} else {
-	    s +=
-		"<p>" +
+	    s +=		"<p>" +
 		"Perhaps you need to wait for a while for a recommendation list to be generated, and then reload this page.";
 	}
 	return s;

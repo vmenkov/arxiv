@@ -62,11 +62,10 @@ public  class SubjectSearchResults extends SearchResults {
     }
 
     static SubjectSearchResults 
-	orderedSearch(IndexSearcher searcher, User actor, int days,
+	orderedSearch(IndexSearcher searcher, User actor, 	Date since,
 		      int maxlen) throws Exception {
 
 	String[] cats = actor.getCats().toArray(new String[0]);
-	Date since = SearchResults.daysAgo( days );
 	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
 	sr.reorderCatSearchResults(searcher.getIndexReader(), cats, since);
 	return sr;

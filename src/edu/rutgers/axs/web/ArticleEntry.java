@@ -171,6 +171,9 @@ public class ArticleEntry {
 	if (g!=null && !g.exists()) {
 	    boolean code = g.mkdirs();
 	    Logging.info("Creating dir " + g + "; success=" + code);
+	    if (!code) throw new IOException("Failed to create directory: " + g);
+	} else {
+	    Logging.info("Saving " + entries.size() + " article entries to " + g);
 	}
 
 	PrintWriter w= new PrintWriter(new FileWriter(f));

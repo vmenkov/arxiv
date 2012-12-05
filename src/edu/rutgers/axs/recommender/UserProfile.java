@@ -238,12 +238,11 @@ public class UserProfile {
 	//Logging.info("Read " + linecnt + " lines, " + vterms
     }
 
-    /** 	DataFile uproFile=
-			    DataFile.newOutputFile(task, Task.Op.HISTORY_TO_PROFILE);
-			upro.save(uproFile.getFile());
+    /** DataFile uproFile=new DataFile(task, Task.Op.HISTORY_TO_PROFILE);
+	upro.save(uproFile.getFile());
     */
     DataFile saveToFile(Task task, DataFile.Type type) throws IOException {
-	DataFile uproFile=  DataFile.newOutputFile(task, type);
+	DataFile uproFile=  new DataFile(task, type);
 	uproFile.setLastActionId( lastActionId);
 	this.save(uproFile.getFile());
 	return uproFile;

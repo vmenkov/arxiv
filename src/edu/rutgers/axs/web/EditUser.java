@@ -107,7 +107,7 @@ public class EditUser extends Participation  {
 		User.Program program=inv.getProgram();
 		if (program==null) {
 		    error = true;
-		    errmsg="Sorry, we are very unorganized, and have not configured this invitation properly. Please report the problem to "+ResetPassword.businessEmail+", and try again later";
+		    errmsg="Sorry, we are not very organized, and have not configured this invitation properly. Please report the problem to "+ResetPassword.businessEmail+", and try again later";
 		    return;
 		}
 		r.setProgram(program);
@@ -199,8 +199,7 @@ public class EditUser extends Participation  {
 	    
 	    if ( mode==Mode.CREATE_SELF && survey) {
 		// if (!getApprovedAudio()) {	... }
-		if ((r.getEmail()==null || r.getEmail().equals("")) &&
-		    (r.getPhoneNumber()==null || r.getPhoneNumber().equals(""))) {
+		if (isBlank(r.getEmail()) && isBlank(r.getPhoneNumber())) {
 		    error = true;
 		    errmsg = "You have agreed to participate in a follow-up interview, but have not provided any contact information. Please go back and enter your email address and/or telephone number";
 		    return;		    
@@ -236,7 +235,7 @@ public class EditUser extends Participation  {
 	    //	    }
 
 	    // Trying to update the profile and re-create sug list, 
-	    // becuase the user's declared preferences have changed.
+	    // because the user's declared preferences have changed.
 	    // We don't do it on initial creation (CREATE_SELF), because
 	    // it is supposed to be taken care of in the Scheduler.
 	    if (prefChanged && mode!=Mode.CREATE_SELF) {
@@ -264,7 +263,7 @@ public class EditUser extends Participation  {
 	try {
 	    int days0 = r.getDays();
 	    Tools.editEntity(EntryFormTag.PREFIX, r, request);
-	    if (r.getDays()<=0 || r.getDays()>30) r.setDays(Search.DEFAULT_DAYS);
+	    if (r.getDays()<=0 || r.getDays()>90) r.setDays(Search.DEFAULT_DAYS);
 	    if (r.getDays() != days0)  changeCnt++;
 
 	    // Set subject categories

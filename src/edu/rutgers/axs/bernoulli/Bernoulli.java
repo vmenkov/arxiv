@@ -160,9 +160,16 @@ public class Bernoulli {
 	    Document doc = reader.document(sd.doc);
 	    String aid = doc.get(ArxivFields.PAPER);
 	    BernoulliArticleStats bas = BernoulliArticleStats.findByAidAndCluster(em, aid, defaultCluster);
+	    double alpha=0.5, beta=0.5;
+	    if (bas==null) {
+		//		throw new IllegalArgumentException("No Bernoulli stats for article " + aid + " has been computed yet!");
+	    } else {
+		alpha = bas.getAlpha();
+		beta = bas.getBeta();
+	    }
 	    sd.score = (float)(program == User.Program.BERNOULLI_EXPLORATION ?
-		Gittins.nu( bas.getAlpha(), bas.getBeta(), clusterStats.gamma):
-			       bas.getAlpha()/( bas.getAlpha() +  bas.getBeta()));
+			       Gittins.nu( alpha, beta, clusterStats.gamma):
+			       alpha/( alpha +  beta));
 	}    
 
 	Arrays.sort(sr.scoreDocs, new SearchResults.SDComparator());
