@@ -295,7 +295,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    ArticleEntry.save(sr.entries, f);
 	    em.persist(outputFile);
 	    // FIXME: READABLE  by EVERYONE, eh?
-	    f.setReadable(true, false);
+	    outputFile.makeReadable();
+
 	} else if (teamDraft) {
 	    // The team-draft mode: merge the list from the file with
 	    // the cat search res

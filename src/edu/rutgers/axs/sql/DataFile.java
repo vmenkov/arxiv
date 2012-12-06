@@ -369,6 +369,34 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	return s + getUser() + File.separator + 	    getThisFile();
     }
 
+    static File getMainDatafileDirectory()  {
+	String s = "";
+	try {
+	    s = Options.get("DATAFILE_DIRECTORY") +	File.separator;
+	} catch(Exception ex) {
+	    Logging.error(ex.getMessage());
+	    ex.printStackTrace(System.err);
+	}
+	return new File(s);
+    }
+
+    // FIXME: READABLE  by EVERYONE, eh?
+   public void makeReadable() {
+	try {
+	    File mainDir = getMainDatafileDirectory();
+	    String mainPath = mainDir.getCanonicalPath();
+	    for(File g=getFile(); !g.getCanonicalPath().equals( mainDir); g=g.getParentFile()) {
+		g.setReadable(true, false);
+	    }
+	} catch(Exception ex) {
+	    Logging.error(ex.getMessage());
+	    ex.printStackTrace(System.err);
+	}
+
+    }
+
+
+
     public DataFile() {}
     
     /**
