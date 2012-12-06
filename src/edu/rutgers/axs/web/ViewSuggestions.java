@@ -291,9 +291,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    // FIXME: ought to do fillArticleList as well, maybe
 	    // through a TaskMaster job
 	    sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
-	    ArticleEntry.save(sr.entries, outputFile.getFile());
+	    File f = outputFile.getFile();
+	    ArticleEntry.save(sr.entries, f);
 	    em.persist(outputFile);
-
+	    // FIXME: READABLE  by EVERYONE, eh?
+	    f.setReadable(true, false);
 	} else if (teamDraft) {
 	    // The team-draft mode: merge the list from the file with
 	    // the cat search res
