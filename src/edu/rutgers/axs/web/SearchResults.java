@@ -434,9 +434,15 @@ public class  SearchResults {
 	//    sr.setWindow( searcher, startat, exc);
 
 
-	int cnt=0;
+	int cnt=0;	
+	System.out.println("Found " +  sr.scoreDocs.length + " results");
+
   	for(ScoreDoc q: sr.scoreDocs) {
 	    cnt++;
+	    if (cnt > 10) {
+		System.out.println("List truncated");
+		break;
+	    }
 	    int docno = q.doc;
 	    Document d = reader.document(docno);
 	    System.out.println("["+cnt+"][s="+q.score+"] " + d.get(ArxivFields.PAPER) +

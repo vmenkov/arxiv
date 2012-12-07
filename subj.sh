@@ -10,7 +10,7 @@ set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/co
 
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 
-set opt="-cp ${cp} ${opt} -Dcat=true -Ddays=30 -Dcustom=true"
+set opt="-cp ${cp} ${opt} -Dcat=true -Ddays=90 -Dcustom=true"
 
 echo "opt=$opt"
 
