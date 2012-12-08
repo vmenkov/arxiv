@@ -219,8 +219,9 @@ public class EditUser extends Participation  {
 
 
 	    // check if the invitation needs to be closed right away
-	    inv.validityTest(em);
-
+	    if (inv!=null) {
+		inv.validityTest(em);
+	    }
 
 	    em.getTransaction().commit();
 	    
@@ -346,11 +347,11 @@ public class EditUser extends Participation  {
 	return true;
     } 
 
-    
-    static boolean scheduleUpdate(EntityManager em, String  uname, Task.Op taskOp, int days) {
+    /** Schedules an update task of a requested type
+     */
+    private static boolean scheduleUpdate(EntityManager em, String uname, Task.Op taskOp, int days) {
 	Task activeTask=null, queuedTask=null;
-	List<Task> tasks = 
-	    Task.findOutstandingTasks(em, uname, taskOp);
+	List<Task> tasks = Task.findOutstandingTasks(em, uname, taskOp);
 	if (tasks != null) {
 	    for(Task t: tasks) {
 		if (days>=0 && t.getDays()!=days) continue; // range mismatch

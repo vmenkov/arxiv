@@ -5,6 +5,38 @@ import java.util.*;
 import edu.rutgers.axs.web.EditUser;
 import edu.rutgers.axs.web.Tools;
 
+/**
+
+
+As per Simeon Warner, 2012-12-07:
+
+<pre>
+Long ago ao-sci was moved to physics.ao-ph, see http://arxiv.org/list/physics.ao-ph/recent for recent subs.
+
+This list of subsumed categories is:
+
+simeon@ice ~>grep SUBSUMED ~/arXivLib/lib/arXiv/Config/Archives.pm
+..
+$SUBSUMED{'cmp-lg'} = 'cs.CL';
+$SUBSUMED{'adap-org'} = 'nlin.AO';
+$SUBSUMED{'comp-gas'} = 'nlin.CG';
+$SUBSUMED{'chao-dyn'} = 'nlin.CD';
+$SUBSUMED{'solv-int'} = 'nlin.SI';
+$SUBSUMED{'patt-sol'} = 'nlin.PS';
+$SUBSUMED{'alg-geom'} = 'math.AG';
+$SUBSUMED{'dg-ga'} = 'math.DG';
+$SUBSUMED{'funct-an'} = 'math.FA';
+$SUBSUMED{'q-alg'} = 'math.QA';
+$SUBSUMED{'mtrl-th'} = 'cond-mat.mtrl-sci';
+$SUBSUMED{'supr-con'} = 'cond-mat.supr-con';
+$SUBSUMED{'acc-phys'} = 'physics.acc-ph';
+$SUBSUMED{'ao-sci'} = 'physics.ao-ph';
+$SUBSUMED{'atom-ph'} = 'physics.atom-ph';
+$SUBSUMED{'bayes-an'} = 'physics.data-an';
+$SUBSUMED{'chem-ph'} = 'physics.chem-ph';
+$SUBSUMED{'plasm-ph'} = 'physics.plasm-ph';
+</pre>
+*/
 
 public class Categories {
 
@@ -61,9 +93,9 @@ public class Categories {
 
     private static void init()  throws CategoryException{
 addMajor("astro-ph","Astrophysics");
-addMajor("acc-phys","Accelerator Physics");
+//addMajor("acc-phys","Accelerator Physics");
 addMajor("cond-mat","Condensed Matter");
-addMajor("chem-ph","Chemical Physics");
+//addMajor("chem-ph","Chemical Physics");
 addMajor("gr-qc","General Relativity and Quantum Cosmology");
 addMajor("hep-ex","High Energy Physics - Experiment");
 addMajor("hep-ph","High Energy Physics - Phenomenology");
@@ -74,25 +106,25 @@ addMajor("nucl-th","Nuclear Theory");
 addMajor("nucl-ex","Nuclear Experiment");
 addMajor("physics","Physics");
 addMajor("quant-ph","Quantum Physics");
-addMajor("ao-sci","Atmospheric-Oceanic Sciences");
-addMajor("atom-ph","Atomic, Molecular and Optical Physics");
-addMajor("bayes-an","Bayesian Analysis");
-addMajor("mtrl-th","Materials Theory");
-addMajor("plasm-ph","Plasma Physics");
-addMajor("supr-con","Superconductivity");
+//addMajor("ao-sci","Atmospheric-Oceanic Sciences");
+//addMajor("atom-ph","Atomic, Molecular and Optical Physics");
+//addMajor("bayes-an","Bayesian Analysis");
+//addMajor("mtrl-th","Materials Theory");
+//addMajor("plasm-ph","Plasma Physics");
+//addMajor("supr-con","Superconductivity");
 addMajor("math","Mathematics");
-addMajor("alg-geom","Algebraic Geometry");
-addMajor("dg-ga","Differential Geometry");
-addMajor("funct-an","Functional Analysis");
-addMajor("q-alg","Quantum Algebra and Topology");
+//addMajor("alg-geom","Algebraic Geometry");
+//addMajor("dg-ga","Differential Geometry");
+//addMajor("funct-an","Functional Analysis");
+//addMajor("q-alg","Quantum Algebra and Topology");
 addMajor("cs","Computer Science");
-addMajor("cmp-lg","Computation and Language");
+//addMajor("cmp-lg","Computation and Language");
 addMajor("nlin","Nonlinear Sciences");
-addMajor("adap-org","Adaptation, Noise, and Self-Organizing Systems");
-addMajor("chao-dyn","Chaotic Dynamics");
-addMajor("comp-gas","Cellular Automata and Lattice Gases");
-addMajor("patt-sol","Pattern Formation and Solitons");
-addMajor("solv-int","Exactly Solvable and Integrable Systems");
+//addMajor("adap-org","Adaptation, Noise, and Self-Organizing Systems");
+//addMajor("chao-dyn","Chaotic Dynamics");
+//addMajor("comp-gas","Cellular Automata and Lattice Gases");
+//addMajor("patt-sol","Pattern Formation and Solitons");
+//addMajor("solv-int","Exactly Solvable and Integrable Systems");
 addMajor("q-bio","Quantitative Biology");
 addMajor("stat","Statistics");
 addMajor("q-fin","Quantitative Finance");

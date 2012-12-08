@@ -23,46 +23,46 @@ public  class SubjectSearchResults extends SearchResults {
        @param startat How many top search results to skip (0, 25, ...)
     */
     public SubjectSearchResults(IndexSearcher searcher, String[] cats, 
-				Date rangeStartDate, int maxlen) 
+				Date since, int maxlen) 
     throws IOException {
 
-	    org.apache.lucene.search.Query q;
-	    if (cats.length<1) {
-		reportedLuceneQuery=null;
-		scoreDocs = new ScoreDoc[0];
-		Logging.warning("No categories specified for cat search!");
-		return;
-	    } else if (cats.length==1) {
-		q =   mkTermOrPrefixQuery(ArxivFields.CATEGORY, cats[0]);
-	    } else {
-		BooleanQuery bq = new BooleanQuery();
-		for(String t: cats) {
-		    t = t.trim();
-		    if (t.equals("")) continue;
-		    bq.add(  mkTermOrPrefixQuery(ArxivFields.CATEGORY, t),
-			     BooleanClause.Occur.SHOULD);
-		}
-		q = bq;
+	org.apache.lucene.search.Query q;
+	if (cats.length<1) {
+	    reportedLuceneQuery=null;
+	    scoreDocs = new ScoreDoc[0];
+	    Logging.warning("No categories specified for cat search!");
+	    return;
+	} else if (cats.length==1) {
+	    q =   mkTermOrPrefixQuery(ArxivFields.CATEGORY, cats[0]);
+	} else {
+	    BooleanQuery bq = new BooleanQuery();
+	    for(String t: cats) {
+		t = t.trim();
+		if (t.equals("")) continue;
+		bq.add(  mkTermOrPrefixQuery(ArxivFields.CATEGORY, t),
+			 BooleanClause.Occur.SHOULD);
 	    }
-
-	    if ( rangeStartDate!=null) {
-		q = andQuery( q, mkSinceDateQuery(rangeStartDate));
-	    }
-
-	    System.out.println("Lucene query: " +q);
-
-	    numdocs = searcher.getIndexReader().numDocs() ;
-	    System.out.println("index has "+numdocs +" documents");
-	    
-	    reportedLuceneQuery=q;
-	    TopDocs 	 top = searcher.search(q, maxlen+1);
-	    scoreDocs = top.scoreDocs;
-	    mayHaveBeenTruncated= (scoreDocs.length >= maxlen+1);
-
+	    q = bq;
+	}
+	
+	if ( since!=null) {
+	    q = andQuery( q, mkSinceDateQuery(since));
+	}
+	
+	Logging.info("Lucene query: " +q);
+	
+	numdocs = searcher.getIndexReader().numDocs() ;
+	
+	reportedLuceneQuery=q;
+	TopDocs 	 top = searcher.search(q, maxlen+1);
+	scoreDocs = top.scoreDocs;
+	mayHaveBeenTruncated= (scoreDocs.length >= maxlen+1);
+	Logging.info("index has "+numdocs +" documents; |scoreDocs|= "+ scoreDocs.length);
+	
     }
 
-    static SubjectSearchResults 
-	orderedSearch(IndexSearcher searcher, User actor, 	Date since,
+    public static SubjectSearchResults 
+	orderedSearch(IndexSearcher searcher, User actor, Date since,
 		      int maxlen) throws Exception {
 
 	String[] cats = actor.getCats().toArray(new String[0]);

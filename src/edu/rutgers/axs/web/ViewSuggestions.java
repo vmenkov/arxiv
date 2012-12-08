@@ -226,7 +226,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	teamDraft = (actor.getDay()==User.Day.EVAL);
 	basedon=null;
 	mode = DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
-	basedonType =DataFile.Type.TJ_ALGO_2_USER_PROFILE;
+
+
 		
 	if (expert || force) throw new WebException("The 'expert' or 'force' mode cannot be used on the main page");
 
@@ -234,8 +235,15 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// the specified user profile file... 
 	// Any day range ("-1") is accepted, because the user may have changed 
 	// the range recently
-	df = DataFile.getLatestFileBasedOn(em, actorUserName, 
-					   mode, -1, basedonType);
+	//	basedonType =DataFile.Type.TJ_ALGO_2_USER_PROFILE;
+	//	df = DataFile.getLatestFileBasedOn(em, actorUserName, 
+	//				   mode, -1, basedonType);
+
+
+	/** Disregard source type (the initial file, created "on the fly",
+	    has no source at all!) */
+	df = DataFile.getLatestFile(em, actorUserName, mode);
+
 
 	onTheFly = (df==null);
        
@@ -284,19 +292,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    // The on-the-fly mode: simply generate and use cat search results for now
 	    sr = catSearch(searcher, since);    
 
-	    // Save the list
-	    DataFile outputFile= new DataFile(actorUserName, 0, DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
-	    outputFile.setDays(Scheduler.maxRange);
-	    outputFile.setSince(since);
-	    // FIXME: ought to do fillArticleList as well, maybe
-	    // through a TaskMaster job
-	    sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
-	    File f = outputFile.getFile();
-	    ArticleEntry.save(sr.entries, f);
-	    em.persist(outputFile);
-	    // FIXME: READABLE  by EVERYONE, eh?
-	    outputFile.makeReadable();
-
+	    // Save the list? Nah, too much trouble (file permissions ect)
+	    //saveResults(em,searcher, sr, since );
 	} else if (teamDraft) {
 	    // The team-draft mode: merge the list from the file with
 	    // the cat search res
@@ -345,6 +342,23 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    infomsg += msg + "<br>";
 	}
 	return bsr;
+    }
+
+    /** The plan was to call this when a new sugg list is created on the fly.
+	But we don't do it, because of the problem with file permissions etc.
+     */
+    void saveResults(EntityManager em, IndexSearcher searcher, SearchResults sr, Date since) throws IOException {
+	DataFile outputFile= new DataFile(actorUserName, 0, DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
+	outputFile.setDays(Scheduler.maxRange);
+	outputFile.setSince(since);
+	// FIXME: ought to do fillArticleList as well, maybe
+	// through a TaskMaster job
+	sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
+	File f = outputFile.getFile();
+	ArticleEntry.save(sr.entries, f);
+	em.persist(outputFile);
+	// FIXME: READABLE  by EVERYONE, eh?
+	outputFile.makeReadable();
     }
 		    
     public String forceUrl() {

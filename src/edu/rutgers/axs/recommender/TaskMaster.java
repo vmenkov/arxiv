@@ -58,7 +58,8 @@ public class TaskMaster {
     };
 
     /**
-       -DexitAfter=24  - time in hours
+       -DexitAfter=24  : time in hours
+       -Duser=username : only handle tasks for this one user (for testing)
 
        FIXME: this program has just one reader (never re-opened)
        during its operation, and a once-read
@@ -74,6 +75,7 @@ public class TaskMaster {
 	int exitAfter=ht.getOption("exitAfter", 0);
 	Date exitAfterTime = (exitAfter<=0) ? null:
 	    new Date( (new Date()).getTime() + exitAfter * 3600*1000);
+	String onlyUser = ht.getOption("user", null);
 
 	ShutDownThread shutDown = new ShutDownThread(Thread.currentThread(), exitAfterTime);
 	Runtime.getRuntime().addShutdownHook(shutDown);	
@@ -88,8 +90,8 @@ public class TaskMaster {
 	// Use run() instead of start() for single-threading
 	//asr.run();	
 
-	EntityManager em = Main.getEM();
-	Scheduler scheduler = new Scheduler( em );
+	Scheduler scheduler = new Scheduler();
+	scheduler.setOnlyUser(onlyUser);
 	int schedulingIntervalSec=ht.getOption("schedulingIntervalSec", 0);
 	if (schedulingIntervalSec > 0) scheduler.setSchedulingIntervalSec(schedulingIntervalSec);
 	scheduler.setArticlesUpdated( ht.getOption("articlesUpdated", false));
@@ -120,16 +122,17 @@ public class TaskMaster {
 	boolean stopNow=false;
 
 	while(!stopNow && !shutDown.mustExit()) {
+	    // make sure to use a new EM each time, to avoid looking at 
+	    // stale date (esp. in the scheduler)
+	    EntityManager em = Main.getEM(); 
 	    task = grabNextTask(em,pid);
 	    if (task==null) {
 
 		if (scheduler.needsToRunNow()) {
 		    Logging.info("no task: calling scheduler");
-		    int newTaskCnt = scheduler.schedule();
+		    int newTaskCnt = scheduler.schedule(em);
 		    continue;
 		}
-
-		//Logging.info("no task");
 
 		if (noneCnt == 0 || noneCnt*sleepMsec > sleepMsgIntervalMsec) {
 		    Logging.info("no task");
@@ -192,11 +195,12 @@ public class TaskMaster {
 			since = task.getSince();
 			if (since==null) since = SearchResults.daysAgo( days );
 			IndexSearcher searcher = new IndexSearcher(reader);	
-			SearchResults sr = new SubjectSearchResults(searcher, cats, since, 10000);
-			// set scores for use in tie-breaking
-			sr.setCatSearchScores(reader,cats,since);
-
+			// Lucene search + set scores for use in tie-breaking
+			int maxlen = 10000;
+			SearchResults sr = 
+			    SubjectSearchResults.orderedSearch(searcher,u,since, maxlen);
 			sd = ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
+			Logging.info("since="+since+", cat search got " +sd.length+ " results");
 			searcher.close();
 			// rank by TJ Algo 1
 			TjAlgorithm1 algo = new TjAlgorithm1();
@@ -294,6 +298,7 @@ public class TaskMaster {
 		}
 		Logging.info("task=" + task+", recording success="+success);
 		em.persist(task);
+		ResultsBase.ensureClosed(em);
 	    }
 	}
 	reader.close();

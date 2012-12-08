@@ -13,9 +13,8 @@ import edu.cornell.cs.osmot.options.Options;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.indexer.Common;
-import edu.rutgers.axs.web.ResultsBase;
-import edu.rutgers.axs.web.Search;
-import edu.rutgers.axs.web.ArticleEntry;
+import edu.rutgers.axs.web.*;
+
 
 /** A Scheduler object is created by the TaskMaster, and is used to
     automatically create and schedule data-updating tasks.  In particular, it
@@ -61,6 +60,13 @@ public class Scheduler {
 	Logging.info("set articlesUpdated=" + articlesUpdated);
     }
 
+    /** If not null, we'll only schedule tasks for this user. (This is
+	a testing mode). Otherwise, for everyone who may need updates.
+    */
+    private String onlyUser=null;
+    void setOnlyUser(String x) { onlyUser=x; }
+
+
     /** How often do run TJ's Algorithm 2 to update the UP2 user profile?
      */
     final static int updateUP2intervalSec = 24 * 3600;
@@ -69,10 +75,7 @@ public class Scheduler {
 	particular suggestion list predates this run. */
     private final Date startTime = new Date();
 
-    private EntityManager em;
-
-    Scheduler(	EntityManager _em ) {
-	em = _em;	
+    Scheduler() {
     }
 
 
@@ -92,6 +95,7 @@ public class Scheduler {
      */
     private boolean stage2 = false;
 
+
     /** This is the Scheduler's main method. It is called by the
 	TaskMaster's main thread every few minutes. On each call, it
 	decides what type of updates it will be scheduling now
@@ -102,7 +106,7 @@ public class Scheduler {
 	so that consecutive calls to it schedule alternating types
 	of operations.
     */
-    int schedule() {
+    int schedule(    EntityManager em) {
 	int createdCnt=0;
 	//	String qs = "select u.id from User u where " +
 	//	    "(select max(a.id) from Action a where a.user = u) > "+
@@ -123,19 +127,14 @@ public class Scheduler {
 	    // apparently, "refresh" may be needed for us to notice recent changes 
 	    em.refresh(u);
 	    String uname= u.getUser_name();
+	    if (onlyUser !=null && !onlyUser.equals(uname)) continue;
 	    long lai = u.getLastActionId();
 
-
-	    //if (lai <= 0) {
-		//Logging.info("Scheduler: user " + uname + "; skip, due to no activity ever");
-	    //	continue;
-	    //}
 	    if (u.catCnt()==0) {
 		// Main suggestion lists are based on categories now...
 		Logging.info("Scheduler: user " + uname + "; skip (catCnt=0)");
 		continue;
 	    }
-
 
 	    if (!stage2) { // profile generation stage
 		int days=0; // does not matter for UP
@@ -157,7 +156,8 @@ public class Scheduler {
 		latestProfile= DataFile.getLatestFile(em, uname, mode);
 		need = (latestProfile == null) ||
 		    (latestProfile.getLastActionId() < lai &&
-		     latestProfile.getTime().getTime() +  updateUP2intervalSec <
+		     latestProfile.getTime().getTime() +  
+		     updateUP2intervalSec*1000 <
 		     (new Date()).getTime());
 		Logging.info("Scheduler: user " + uname + "; needed UP2 update? " + need);		
 		if (need) {
@@ -180,7 +180,6 @@ public class Scheduler {
 		    int days= u.getDays(); // user-specific search horizon
 		    if (days==0) days = Search.DEFAULT_DAYS;
 
-
 		    DataFile.Type profileType = 
 			(mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
 			DataFile.Type.TJ_ALGO_2_USER_PROFILE :
@@ -194,12 +193,11 @@ public class Scheduler {
 		    }
 		    long plai = latestProfile.getLastActionId();
 		    DataFile sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
-		    boolean need = sugg==null || (sugg.getLastActionId() < plai);
+		    boolean need = sugg==null || (sugg.getLastActionId()<plai);
 
 		    // If the articles have been updated, profiles sugg lists
 		    // must be updated too.
 		    need = need || articlesUpdated && sugg.getTime().before(startTime);
-
 
 		    Logging.info("Scheduler: au="+articlesUpdated+", user " + uname + "; needed "+mode+" ("+days +"d) update? " + need);
 		    
@@ -212,14 +210,13 @@ public class Scheduler {
 			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
 			    latestProfile.getThisFile() : null;
 
-
 			Date lastViewed = dateOfLastSeenSugList( em, uname);
 
 			Date since = null;
 			if (lastViewed==null) {
-			    since = Common.plusDays(new Date(), -maxRange);
+			    since = SearchResults.daysAgo(maxRange);
 			} else {
-			    since = Common.plusDays(new Date(), -days);
+			    since = SearchResults.daysAgo(days);
 			    if (since.after(lastViewed)) since = lastViewed;
 			}
 			Logging.info("For user " + uname + ", last viewed sug list generated at " +  lastViewed + "; set since=" + since);
@@ -279,8 +276,8 @@ public class Scheduler {
 	Main.memory("start");
 	ParseConfig ht = new ParseConfig();
 	EntityManager em = Main.getEM();
-	Scheduler scheduler = new Scheduler( em );
-	scheduler.schedule();
+	Scheduler scheduler = new Scheduler();
+	scheduler.schedule(em);
     }
 
 }

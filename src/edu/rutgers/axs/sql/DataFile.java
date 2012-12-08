@@ -277,7 +277,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	DataFile.inputFile) based on which the file we're retrieving
 	must be based.
      */
-    static public DataFile getLatestFileBasedOn(EntityManager em, String  username, 
+    static public DataFile getLatestFileBasedOn(EntityManager em, String username, 
 						Type t, int days, String inputFile) {
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
 	qs += " and m.inputFile=:i";

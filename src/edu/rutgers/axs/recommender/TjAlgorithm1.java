@@ -65,7 +65,6 @@ class TjAlgorithm1 {
 
 	if (storedCnt==0) return new ArxivScoreDoc[0]; // nothing!
 
-	//Vector<ArticleEntry> results= new Vector<ArticleEntry>();
 	Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
        
 	double[] phi = new double[ upro.terms.length];
@@ -93,29 +92,35 @@ class TjAlgorithm1 {
 	Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=du=" + utility 
 		     + " (tje.ub()="+tje.ub()+", tje.mcMinus="+ tje.mcMinus+")");
 
+
+	if (imax > usedCnt) {		// swap if needed
+	    tjEntries[imax] = tjEntries[usedCnt];
+	    tjEntries[usedCnt] = tje;		
+	}
 	usedCnt++;
 
 	while( results.size() < maxDocs && usedCnt < storedCnt) {
-	    gamma =  upro.getGamma(results.size());
-	    double maxdu = 0;
-	    imax=-1;	    
+	    gamma = upro.getGamma(results.size());
+	    imax=usedCnt;
+	    double maxdu = tjEntries[usedCnt].wouldContributeNow(phi, gamma);
+	    
 	    int i;
-	    for(i=usedCnt; i<storedCnt; i++) {
+	    for(i=usedCnt+1; i<storedCnt && tjEntries[i].ub()>maxdu; i++) {
 		tje = tjEntries[i];
-		if (maxdu >= tje.ub()) break; 
 		double du= tje.wouldContributeNow(phi, gamma);		
 		// includes date-based tie-breaking clause
-		if (imax<0 || du>maxdu ||
+		if ( du>maxdu ||
 		    (du==maxdu && tje.compareTieTo(tjEntries[imax])>0)) {
 		    imax = i;
 		    maxdu=du;
 		}
 	    }
 
-	    if (maxdu<=0) {
-		Logging.info("No further improvement to the utility can be achieved");
+	    if (maxdu<0) {
+		Logging.info("No further improvement to the utility can be achieved (maxdu=" + maxdu+")");
 		return results.toArray(new ArxivScoreDoc[0]);
-	    }
+	    } 
+		
 
 	    int undisturbed = i;
 	    tje = tjEntries[imax];
@@ -123,8 +128,8 @@ class TjAlgorithm1 {
 	    tje.setScore(maxdu);
 	    results.add(tje.getSd());
 	    utility += maxdu;
-
-	    if (imax > usedCnt) {		// swap
+ 
+	    if (imax > usedCnt) {		// swap if needed
 		tjEntries[imax] = tjEntries[usedCnt];
 		tjEntries[usedCnt] = tje;		
 	    }
