@@ -252,14 +252,19 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
 
 	    Date since = SearchResults.daysAgo(Scheduler.maxRange);
-	    initList(null, startat, since, em);
+	    initList(null, startat, since, em, true);
 
 	} else {
 	    days = df.getDays();
-	    initList(df, startat, null, em);
+	    initList(df, startat, null, em, true);
 	}
 	    	    
     }
+
+   private void initList(DataFile df, int startat, 
+			  Date since, EntityManager em) throws Exception {
+       initList(df,startat, since, em, false);
+   }
 
     /**
        @param df The data file to read. We will either display the
@@ -268,10 +273,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
        the onTheFly mode, and create the list right here
        @param since Only used in the onTheFly mode. (Otherwise, the date
        range is picked from the data file).
-       @param em Just so that we could save the list
+       @param em Just so that we could save the presented list
+       @param mainPage Only affects the marker recorded in the new PresentedList  entry
      */
     private void initList(DataFile df, int startat, 
-			  Date since, EntityManager em) throws Exception {
+			  Date since, EntityManager em, boolean mainPage) throws Exception {
 
 	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -326,7 +332,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// Save the presented (section of the) suggestion list in the
 	// database, and set ActionSource appropriately (to be
 	// embedded in the HTML page)
- 	Action.Source srcType = teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL;
+ 	Action.Source srcType = mainPage?
+	    (teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL) :
+	    Action.Source.VIEW_SL;
 	PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName,
 						   df, null);
 	asrc= new ActionSource(srcType, plist.getId());

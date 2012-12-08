@@ -127,6 +127,10 @@ import java.lang.reflect.*;
 		above.
 	    */
 	    MAIN_MIX,
+	    /** The "view suggestion" screen NOT generated in the main page.
+		This will never be presented to regular users in production.
+	     */
+	    VIEW_SL,
 	    /** The search results list produced by My.ArXiv's own
 	     search tool; or a "view abstract" page reached from the
 	     above. */
