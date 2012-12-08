@@ -134,10 +134,14 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     }
 
     /** Find the PresentedList object corresponding to the most recent
-	"set based" suggestion list seen by the specified user. 
+	"set based" suggestion list seen by the specified user. In
+	regard to "recency", what matters for us is not how recently
+	the list was viewed, but how recently the suggestion list
+	involved was *generated*. In production mode the two criteria
+	are identical.
      */
     static public PresentedList findMostRecentPresntedSugList(EntityManager em, String  username) {
-	String qs = "select m from PresentedList m where m.user=:u and (m.type=:t1 or m.type=:t2) order by m.id desc";
+	String qs = "select m from PresentedList m where m.user=:u and (m.type=:t1 or m.type=:t2) order by m.dataFileId desc";
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
