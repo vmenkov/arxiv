@@ -246,7 +246,7 @@ public class Scheduler {
 	DataFile df = (DataFile)em.find(DataFile.class, dfid);
 	if (df==null) return null;
 	Date dfTime = df.getTime();
-	System.out.println("Looks like the last sug list (df="+dfid+") presented to the user " + uname + " was generated at " + dfTime);
+	System.out.println("Looks like the last sug list (df="+dfid+") presented to user " + uname + " (presentation list no. "+plist.getId() +") was generated at " + dfTime);
 	return dfTime;
     }
 
@@ -276,8 +276,13 @@ public class Scheduler {
 	Main.memory("start");
 	ParseConfig ht = new ParseConfig();
 	EntityManager em = Main.getEM();
-	Scheduler scheduler = new Scheduler();
-	scheduler.schedule(em);
+	//	Scheduler scheduler = new Scheduler();
+	//scheduler.schedule(em);
+
+	String uname=(argv.length>0) ? argv[0] : "vmenkov";
+	Date lastViewed = dateOfLastSeenSugList( em, uname);
+	System.out.println("dateOfLastSeenSugList(" + uname+")=" + lastViewed);
+
     }
 
 }

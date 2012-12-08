@@ -133,7 +133,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	}
     }
 
-    /** Find the PresentedList object correcponding to the most recent
+    /** Find the PresentedList object corresponding to the most recent
 	"set based" suggestion list seen by the specified user. 
      */
     static public PresentedList findMostRecentPresntedSugList(EntityManager em, String  username) {
