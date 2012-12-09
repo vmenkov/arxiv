@@ -374,9 +374,16 @@ public class  SearchResults {
 	number of days ago */
     public static Date daysAgo(int days) {
 	if (days <= 0) return null;
-	Date now = new Date();
-	Date since = new Date(now.getTime() - days *24L* 3600L*1000L);
-	return since;
+	Date now = new Date();	
+	now.setTime( now.getTime() - days *24L* 3600L*1000L );
+	return now;
+    }
+
+    public static Date secondsAgo(int sec) {
+	if (sec <= 0) return null;
+	Date now = new Date();	
+	now.setTime( now.getTime() - sec *1000L );
+	return now;
     }
 
     static void usage() {

@@ -138,32 +138,11 @@ public class Scheduler {
 
 	    if (!stage2) { // profile generation stage
 		int days=0; // does not matter for UP
-
-		// update the UP0 profile?
-		DataFile.Type mode = DataFile.Type.USER_PROFILE;
-		DataFile latestProfile= DataFile.getLatestFile(em, uname, mode);
-		long plai = (latestProfile==null)? -1: latestProfile.getLastActionId();
-		boolean need = ( latestProfile == null) || (plai < lai);
-		
-		Logging.info("Scheduler: user " + uname + "; lai="+lai+", plai="+plai+"; needed UP0 update? " + need);		
-		if (need) {
-		    addTask(em, uname, mode, days, null, null);
-		    createdCnt++;
-		}
+		// update the UP0 profile? (not done since 2012-12-08)
+		// createdCnt+= checkUP0( em, uname, lai);
 
 		// update the UP2 profile?
-		mode = DataFile.Type.TJ_ALGO_2_USER_PROFILE;
-		latestProfile= DataFile.getLatestFile(em, uname, mode);
-		need = (latestProfile == null) ||
-		    (latestProfile.getLastActionId() < lai &&
-		     latestProfile.getTime().getTime() +  
-		     updateUP2intervalSec*1000 <
-		     (new Date()).getTime());
-		Logging.info("Scheduler: user " + uname + "; needed UP2 update? " + need);		
-		if (need) {
-		    addTask(em, uname, mode, days, null, null);
-		    createdCnt++;
-		}
+		createdCnt+= checkUP2( em, uname, lai);
 
 	    } else { // suggestion list generation stage
 		//  Different types of suggestion lists to generate
@@ -235,18 +214,55 @@ public class Scheduler {
 	return createdCnt;
     }
 
+    // update the UP0 profile?
+    private int checkUP0(EntityManager em, String  uname, long lai) {
+	final int days=0; // does not matter for UP
+	final DataFile.Type mode = DataFile.Type.USER_PROFILE;
+
+	DataFile latestProfile= DataFile.getLatestFile(em, uname, mode);
+	long plai = (latestProfile==null)? -1: latestProfile.getLastActionId();
+
+	boolean need = ( latestProfile == null) || (plai < lai);
+		
+	Logging.info("Scheduler: user " + uname + "; lai="+lai+", plai="+plai+"; needed UP0 update? " + need);		
+	if (need) {
+	    addTask(em, uname, mode, days, null, null);
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+   // update the UP2 profile?
+    private int checkUP2(EntityManager em, String  uname, long lai) {
+	final int days=0; // does not matter for UP
+	DataFile.Type mode = DataFile.Type.TJ_ALGO_2_USER_PROFILE;
+	DataFile latestProfile= DataFile.getLatestFile(em, uname, mode);
+	boolean need = (latestProfile == null) ||
+	    latestProfile.getLastActionId() < lai &&
+	    latestProfile.getTime().before(SearchResults.secondsAgo(updateUP2intervalSec));
+	Logging.info("Scheduler: user "+uname+"; needed UP2 update? " + need);
+	if (need) {
+	    addTask(em, uname, mode, days, null, null);
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+    /** Find the most recent suggestion list that was actually shown
+	to the user.
+     */
     static private Date dateOfLastSeenSugList(EntityManager em, String  uname) {
 
-	PresentedList  plist = PresentedList.findMostRecentPresntedSugList(em,  uname);
-	if (plist == null) {
-	    return null;
-	}
+	PresentedList plist=PresentedList.findMostRecentPresntedSugList(em,uname);
+	if (plist == null) return null;
 	long dfid = plist.getDataFileId();
 	if (dfid <= 0) return null;
 	DataFile df = (DataFile)em.find(DataFile.class, dfid);
 	if (df==null) return null;
 	Date dfTime = df.getTime();
-	System.out.println("Looks like the last sug list (df="+dfid+") presented to user " + uname + " (presentation list no. "+plist.getId() +") was generated at " + dfTime);
+	System.out.println("Looks like the last sug list (df="+dfid+") presented to user "+uname+" (presentation list no. "+plist.getId()+") was generated at " +dfTime);
 	return dfTime;
     }
 

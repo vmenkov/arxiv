@@ -250,11 +250,7 @@ public class TaskMaster {
 				      DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1, 
 				      DataFile.Type.TJ_ALGO_2_USER_PROFILE,
 				      -1);
-		    
-		    //		    if (inputFile==null) {
-		    //	inputFile = DataFile.getLatestFile(em, user,  DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
-		    //		    }
-		    
+		    	    
 		    UserProfile upro;
 
 		    ArxivScoreDoc[] sd;
@@ -291,14 +287,23 @@ public class TaskMaster {
 		task.setFailed(!success);
 		if (outputFile!=null) {
 		    task.setOutputFile(outputFile.getThisFile());
+		    // Having a transaction here seems to be desirable for
+		    // the "persist" to take
+		    em.getTransaction().begin(); 
 		    em.persist(outputFile);
+		    em.getTransaction().commit();
+		    Logging.info("outputFile persisted, id=" + outputFile.getId());
+		} else {
+		    Logging.info("no outputFile to persist");
 		}
 		if (inputFile!=null) {
 		    task.setInputFile(inputFile.getThisFile());
 		}
 		Logging.info("task=" + task+", recording success="+success);
 		em.persist(task);
+		Logging.info("task persisted");
 		ResultsBase.ensureClosed(em);
+		Logging.info("em closed");
 	    }
 	}
 	reader.close();
