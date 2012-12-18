@@ -1,5 +1,17 @@
 package edu.rutgers.axs.indexer;
 
+import java.util.*;
+import java.text.SimpleDateFormat;
+import java.io.*;
+import java.net.*;
+
+import javax.persistence.*;
+
+// stuff for handling XML
+import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.DateTools;
@@ -15,18 +27,10 @@ import edu.cornell.cs.osmot.options.Options;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.util.*;
-import java.text.SimpleDateFormat;
-import java.io.*;
-import java.net.*;
-
-// stuff for handling XML
-import org.apache.xerces.parsers.DOMParser;
-import org.w3c.dom.*;
-import org.xml.sax.SAXException;
-
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.Logging;
+import edu.rutgers.axs.sql.Article;
+import edu.rutgers.axs.sql.Main;
 
  /** The application for pulling data from the main arxiv server using
      the OAI interface, and importing them into our server's Lucene
@@ -119,9 +123,13 @@ public class ArxivImporter {
 
     int pcnt=0;
 
+    EntityManager em=null;
+
+
     public ArxivImporter() throws IOException{
 	indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	searcher = new IndexSearcher( indexDirectory); 
+	em  = Main.getEM();
     }
 
     /** Pulls in the article body over HTTP from
@@ -374,7 +382,9 @@ public class ArxivImporter {
 	}
 
 	System.out.println("id="+paper+", date=" + doc.get(ArxivFields.DATE));//+", Doc = " + doc);
-
+	
+	// Create a SQL database entry, if it does not exist yet
+	Article.addEntry( em,  paper);
 
 	// write data to Lucene, and cache the doc body
 	String doc_file = whole_doc==null? null:
@@ -638,6 +648,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	Options.init(); // read the legacy config file
 
 	ArxivImporter imp =new  ArxivImporter();
+
 	imp.setBodySrcRoot( "../arXiv-text/");
 
 	if (argv.length==0) return;

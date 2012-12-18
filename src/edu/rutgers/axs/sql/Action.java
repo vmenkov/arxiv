@@ -55,12 +55,16 @@ import java.lang.reflect.*;
     public void setTime(       Date x) { time = x; }
 
     /** Various supported action types. Typically, there is a distinct
-     * action type for every button or link type the user may click on. */
+	action type for every button or link type the user may click on. 
+	<p>
+	NOTE: New types must be added to the ADD of the list, because we store
+	the numeric code, not string, in the SQL database!
+    */
     public static enum Op {
 	/** No operation - this should not normally be recorded */
 	NONE,
 	    /** "Expand details" in a list page */
-	    EXPAND_ABSTRACT,  // +5
+	    EXPAND_ABSTRACT,  // +5   (no. 1)
 	    /** "View" actions */
 	    VIEW_ABSTRACT,  // +10
 	    VIEW_FORMATS,   // +20
@@ -77,7 +81,7 @@ import java.lang.reflect.*;
 	    /** Only counts if not canceled by "remove" */
 	    COPY_TO_MY_FOLDER,          // +1000, if not removed
 	    /** goes with ratings */
-	    DONT_SHOW_AGAIN,            // -50
+	    DONT_SHOW_AGAIN,            // -50   (no. 13)
 	    /** Activated thru the "view folder" screen */
 	    REMOVE_FROM_MY_FOLDER;      // see "copy"	
 

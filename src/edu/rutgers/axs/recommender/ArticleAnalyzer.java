@@ -390,13 +390,7 @@ public class ArticleAnalyzer {
     }
 
 
-    /* ArticleStats getStats(int docno) throws IOException {
-       ArticleStats as = new ArticleStats();
-       getCoef(docno, as);
-       return as;
-       } */
-
-    /** Document fields used in creating the user profile */
+     /** Document fields used in creating the user profile */
     public static final String upFields[] =  {
 	ArxivFields.TITLE, 
 	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
@@ -423,52 +417,7 @@ public class ArticleAnalyzer {
 	return baseBoost;
     }
     
-    /*
-    ArticleStats getStats(int docno) {
-
-	Document doc = reader.document(docno);
-	String aid = doc.get(ArxivFields.PAPER);
-	ArticleStats as = new ArticleStats(aid);
-	
-	int length=0;
-
-	int lengths[] = new int[fields.length];
-
-	for(int j=0; j<fields.length; j++) {	    
-	    String name= fields[j];
-
-	    //Fieldable f = doc.getFieldable(name);
-	    //System.out.println("["+name+"]="+f);
-	    TermFreqVector tfv=reader.getTermFreqVector(docno, name);
-	    if (tfv==null) {
-		//System.out.println("--No terms--");
-		continue;
-	    }
-	    //System.out.println("--Terms--");
-	    int[] freqs=tfv.getTermFrequencies();
-	    String[] terms=tfv.getTerms();	    
-	    for(int i=0; i<terms.length; i++) {
-		int df = totalDF(terms[i]);
-		if (df <= 1) {
-		    continue; // skip nonce-words
-		}
-		if (UserProfile.isUseless(terms[i])) continue;
-		    
-		length += freqs[i];
-		lengths[j] += freqs[i];
-		    
-
-		Integer val = h.get( terms[i]);
-		int z = (val==null? 0: val.intValue()) + freqs[i];
-		h.put( terms[i], new Integer(z));
-		//Term term = new Term(name, terms[i]);		
-		//System.out.println(" " + terms[i] + " : " + freqs[i] + "; df=" +sur.docFreq(term) );
-	    }
-	}
-	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
-   }
-    */
-
+ 
     /** Scans the entire Lucene index, computing norms and related
 	stats for all articles that don't yet have that info stored
 	in the database. Does not try to recompute it when ...
@@ -511,8 +460,12 @@ public class ArticleAnalyzer {
 		    continue;
 		}
 	    } else {
-		as = new ArticleStats();
-		as.setAid(aid);
+		Article a = Article.addEntry(em, aid); // look up or add
+		if (a==null) {
+		    Logging.error("no Article entry for aid=" + aid + ", and one could nort be created");
+		    continue;
+		}
+		as = new ArticleStats(a);
 	    }
 	    computeAndSaveStats(em,docno,as);
 	    Logging.info("Analyzed document " + aid + ", pos="+docno +
@@ -530,8 +483,8 @@ public class ArticleAnalyzer {
     ArticleStats computeAndSaveStats(EntityManager em, int docno) throws  org.apache.lucene.index.CorruptIndexException, IOException {
 	Document doc = reader.document(docno,ArticleStats.fieldSelectorAid);
 	String aid = doc.get(ArxivFields.PAPER);
-	ArticleStats as = new ArticleStats();
-	as.setAid(aid);	
+	Article a = Article.addEntry(em, aid); // look up or add
+	ArticleStats as = new ArticleStats(a);
 	computeAndSaveStats(em,docno,as);
 	return as;
     }

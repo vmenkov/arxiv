@@ -22,15 +22,15 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public class User extends OurTable 
 {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1.1)
-    	private long id;
+    	private int id;
 
-    //    public void setId(long val) {        id = val;    }
+    //    public void setId(int val) {        id = val;    }
     /** This is the internal ID automatically assigned by the database
       to each entry upon creation. It is important within the database
       (e.g., to associate PhoneCall entries with respondent entries,
       but has no meaning outside of it.
      */
-    public long getId() {        return id;    }
+    public int getId() {        return id;    }
 
    
     //@Id 
@@ -152,10 +152,12 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public static enum Program {
 	/** Thorsten Joachims' set-based */
 	SET_BASED, 
-	    /** Peter Frazeer's Exploration Engine: Exploration mode */
+	    /** Peter Frazeer's Exploration Engine v2: Exploration mode */
 	    BERNOULLI_EXPLORATION,
-	    /** Peter Frazeer's Exploration Engine: Exploration mode */
-	    BERNOULLI_EXPLOITATION;
+	    /** Peter Frazeer's Exploration Engine v2: Exploration mode */
+	    BERNOULLI_EXPLOITATION,
+	    /** Peter Frazeer's Exploration Engine v4 */
+	    EE4;
 
 	/** Do we need to use the Bernoulli Exploration Engine with
 	 * this program?	 */

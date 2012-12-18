@@ -362,19 +362,34 @@ the use of audio recording for the telephone interview</strong>
 <%}  %>
 	</table>
 
-<% if (!main.bernoulli) { %>
-<h3>Your interest areas</h3>
-
+<% if (main.program==User.Program.SET_BASED) { %>
+<h3>Recommendation generation preferences</h3>
 	<table>
 	<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Recommend recent articles no older than so many days. The value can be from 1 to 30; default 7
 </label></td>
 			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="days" name="r.days" value="<%=Search.DEFAULT_DAYS%>" style="width:150px" /></td>
 		</tr>
-
-
-	
 	</table>
+<% }
+ if (main.program==User.Program.EE4) { 
+%>
+<h3>Recommendation generation preferences</h3>
+	<table>
+	<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Selectivity
+</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;">
+<%= main.ee4form() %>
+</td>
+		</tr>
+	</table>
+
+<%
+}
+if (!main.bernoulli) { %>
+<h3>Your interest areas</h3>
+	
 
 <p>You need to specify at least one interest area ("subject category")
 in order for My.ArXiv to be able to generate recommendations for

@@ -81,11 +81,12 @@ public class FilterServlet extends  BaseArxivServlet  {
 		 asrc.src != Action.Source.UNKNOWN) &&
 		actionable.isActionable();
 
+	    User u=null;
 	    // FIXME: need to record the viewing act for all other arxiv.org pages as well
 	    if (user!=null &&  actionable.isActionable())  {
 		em = sd.getEM();
 		em.getTransaction().begin();		
-		User u = User.findByName(em, user);
+		u = User.findByName(em, user);
 		if (u!=null) {
 		    Logging.info("FS: pi="+pi+", recording as " + actionable);
 		    Action a = u.addAction(em, actionable.aid, actionable.op, asrc);
@@ -123,7 +124,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		response.sendRedirect(eurl);
 	    } else {
 		// get the page from the arxiv.org server, modify, and serve
-		pullPage(request, response, pi, asrc, skeletonAE);
+		pullPage(request, response, u, pi, asrc, skeletonAE);
 	    }
 
 
@@ -190,17 +191,21 @@ public class FilterServlet extends  BaseArxivServlet  {
     /** Retrieves the page from the arxiv.org server, modifies it as
 	needed, and serves to our user.
 
+	@param The pre-read user object. It may be null if the user has not
+	logged in.
+
 	@param pi PathInfo, extracted from the request, and possibly further
 	modified by the caller.
 
-       @param ae In article-wise pages, when a user is logged in, this
+	@param ae In article-wise pages, when a user is logged in, this
        should be the information about the currently viewed article.
        Otherwise, this must be null.
 
        @throws WebException If we have a unique meaningful message
 	and don't need to print a stack trace etc to the end user.
      */
-    private void pullPage(HttpServletRequest request, HttpServletResponse response, String pi, ActionSource asrc, ArticleEntry ae) 
+    private void pullPage(HttpServletRequest request, HttpServletResponse response, 
+			  User u, String pi, ActionSource asrc, ArticleEntry ae) 
 	throws WebException, IOException, java.net.MalformedURLException {
 
 	String qs=request.getQueryString();
@@ -248,7 +253,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	String gotResponseMsg = lURLConnection.getResponseMessage();
 
 	Logging.info("code = " + code +", msg=" + gotResponseMsg);
-	LineConverter conv = new LineConverter(request, ae, asrc);
+	LineConverter conv = new LineConverter(request, u, ae, asrc);
 
 	boolean willParse=false, willAddNote=false;
 	if (code == HttpURLConnection.HTTP_OK) {
@@ -487,7 +492,7 @@ public class FilterServlet extends  BaseArxivServlet  {
      */
     private class LineConverter {
 	
-	String user;
+	User user=null;
 	final String cp = getContextPath();
 	final String fs = cp +  FS;
 
@@ -500,16 +505,11 @@ public class FilterServlet extends  BaseArxivServlet  {
 	   this should be the information about the currently viewed article.
 	   Otherwise, this must be null.
 	 */
-	LineConverter(HttpServletRequest request, ArticleEntry _ae,
+	LineConverter(HttpServletRequest request, User _user, ArticleEntry _ae,
 		      ActionSource _asrc      )  {
 	    skeletonAE = _ae;
 	    asrc = _asrc;
-
-	    try {
-		SessionData sd =  SessionData.getSessionData(request);
-		user = sd.getRemoteUser(request);
-
-	    } catch(Exception ex) {}
+	    user = _user;
 	}
 
 
@@ -633,7 +633,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    m.appendReplacement(sb, m.group(0));
 		    String msg = "<div style=\"border:1px;color:#00FF00;position:fixed\">" + 
 			"Please note: You are now browsing arxiv.org via My.arXiv, "+
-			(user==null? "anonymously" : "as user <em>" + user + "</em>") +
+			(user==null? "anonymously" : "as user <em>" +  user.getUser_name() + "</em>") +
 			". You can return to the <a href=\""+cp+"\">My.arXiv main page</a>." + 
 			"</div>";
 
@@ -663,8 +663,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 			s += RatingButton.js_script(cp + "/" + x);
 		    }
 		    s += RatingButton.judgmentBarHTML
-			(cp, skeletonAE, 
-			 RatingButton.allRatingButtons,
+			(cp, skeletonAE, user.getProgram(),
+			 //RatingButton.allRatingButtons,
 			 RatingButton.NEED_FOLDER, asrc);
 		    return s;
 		}

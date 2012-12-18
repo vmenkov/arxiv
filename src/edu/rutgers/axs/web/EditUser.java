@@ -37,6 +37,9 @@ public class EditUser extends Participation  {
     /** Boolean parameter in user-creation process */
     public final static String SURVEY="survey";
 
+    final static String EE4_PREFIX="ree4";
+
+
     /** @param selfForm Set this to true when invoking this
 	constructor from the form for editing one's own entry (the
 	only form that can be used by non-admins)
@@ -225,6 +228,18 @@ public class EditUser extends Participation  {
 
 	    em.getTransaction().commit();
 	    
+
+	    if (r.getProgram()==User.Program.EE4) {
+		em.getTransaction().begin();
+		EE4User ee4u = (EE4User)em.find(EE4User.class, r.getId());
+		if (ee4u==null) ee4u = new EE4User();
+		Tools.editEntity(EE4_PREFIX, ee4u, request);
+		em.persist(ee4u);
+		em.getTransaction().commit();
+	    }
+
+
+
 	    // read back
 	    //em = sd.getEM();	    
 	    //r = User.findByName(em, uname);

@@ -378,7 +378,7 @@ public class Reflect {
 	}
 
 	String s;
-	if (val instanceof OurTable) s = "" + ((OurTable)val).getId();
+	if (val instanceof OurTable) s = "" + ((OurTable)val).getLongId();
 	else if (val instanceof Date) {
 	    s =  sqlDf.format((Date)val);
 	} else if (val instanceof String) {
@@ -486,7 +486,7 @@ public class Reflect {
 
 	    if (needQuotes) values.append("'");
 	    String s;
-	    if (val instanceof OurTable) s = "" + ((OurTable)val).getId();
+	    if (val instanceof OurTable) s = "" + ((OurTable)val).getLongId();
 	    else if (val instanceof Number) s = val.toString();
 	    else if (val instanceof Boolean) s = ((Boolean)val).booleanValue()? "1":"0";
 	    else if (val instanceof Enum) {

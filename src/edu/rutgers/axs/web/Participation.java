@@ -14,6 +14,7 @@ public class Participation extends ResultsBase {
 
     Invitation inv = null;
     public String code=null;
+    public User.Program program=User.Program.SET_BASED;
     public boolean bernoulli = false;
 
     public Participation(HttpServletRequest _request, HttpServletResponse _response) {
@@ -54,13 +55,19 @@ public class Participation extends ResultsBase {
 		return;		
 	    }
 
-	    bernoulli = inv.getProgram().needBernoulli();
+	    program = inv.getProgram();
+	    bernoulli = program.needBernoulli();
 
 	}  catch (Exception _e) {
 	    setEx(_e);
 	} finally {
 	    ensureClosed(em);
 	}
+    }
+
+    /** Extra form for EE4 users */
+    public String ee4form() {
+	return  Tools.mkSelector(EditUser.EE4_PREFIX + "cCode", EE4User.CCode.class, EE4User.CCode.ALL);
     }
 
 

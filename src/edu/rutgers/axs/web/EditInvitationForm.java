@@ -75,7 +75,7 @@ public class EditInvitationForm extends ResultsBase {
 		s.append("<tr>");
 		s.append("<td valign=top>Code prefix. This will be concatenated with a random string to form the invitation code, which you then will email to prospective users. If you leave this field blank, the experiment name will be used as the code prefix.</td>\n");
 		s.append("<td>");
-		s.append(Tools.inputText(EditInvitation.CODE_PREFIX, 20));
+		s.append(Tools.inputText(EditInvitation.CODE_PREFIX, null, 20));
 		s.append("</td>\n");
 		s.append("</tr>\n");
 	    }

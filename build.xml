@@ -189,6 +189,7 @@ code. -->
       <include name="Role.class" />
       <include name="Action.class" />
       <include name="EnteredQuery.class" />
+      <include name="Article.class" />
       <include name="ArticleStats.class" />
       <include name="Task.class" />
       <include name="DataFile.class" />
@@ -201,6 +202,9 @@ code. -->
       <include name="BernoulliTrainArticleStats.class" />
       <include name="BernoulliVote.class" />
       <include name="Invitation.class" />
+      <include name="EE4User.class" />
+      <include name="EE4DocClass.class" />
+      <include name="EE4Uci.class" />
     </fileset>
   </openjpac>
 

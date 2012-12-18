@@ -326,15 +326,9 @@ public class ResultsBase {
 	return s;
     }
 
-
-    public String judgmentBarHTML(ArticleEntry entry) {
-	// ... but not RatingButton.FOLD_JB
-	return judgmentBarHTML(entry, defaultFlags);
-    }
-
-    public String judgmentBarHTML(ArticleEntry entry, int flags) {
-	return RatingButton.judgmentBarHTML( cp, entry, 
-					     RatingButton.allRatingButtons,
+    
+    private String judgmentBarHTML(ArticleEntry entry, int flags) {
+	return RatingButton.judgmentBarHTML( cp, entry, getUserProgram(),
 					     flags, asrc);
     } 
 
@@ -393,6 +387,13 @@ public class ResultsBase {
     /** Checks if a parameter value was empty, or equiavalent to empty */
     static boolean isBlank(String code) {
 	return  (code==null || code.equals("") || code.equals("null"));
+    }
+
+    /** This is used to properly configure various controls
+	(such as rating buttons) which are different in different
+	experiments, This method is overidden in PersonalUserBase */
+    User.Program getUserProgram() {
+	return null;
     }
 
 }

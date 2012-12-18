@@ -4,7 +4,6 @@ import java.util.*;
 import java.text.*;
 import java.net.*;
 import javax.persistence.*;
-//import javax.persistence.criteria.CriteriaBuilder;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
@@ -17,16 +16,16 @@ import edu.rutgers.axs.web.WebException;
   @Table( uniqueConstraints=@UniqueConstraint(name="invitation_code_cnstrt", columnNames="code") )
 public class Invitation extends OurTable {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
-    	private long id;
+    	private int id;
 
   /** This is the internal ID automatically assigned by the database
       to each entry upon creation. It is important within the database
       (e.g., to associate PhoneCall entries with respondent entries,
       but has no meaning outside of it.
      */
-    public long getId() {        return id;    }
+    public int getId() {        return id;    }
     /** Don't use it. It's here just for reflection. */
-    //private void setId(long x) {id=x;}
+    //private void setId(int x) {id=x;}
 
     static public final String registrationUrlBase = "../participation.jsp?code=";
     @Display(editable=false, order=2,  link=registrationUrlBase) 	

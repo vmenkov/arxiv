@@ -45,6 +45,7 @@
         <class>edu.rutgers.axs.sql.Role</class>
         <class>edu.rutgers.axs.sql.Action</class>
         <class>edu.rutgers.axs.sql.EnteredQuery</class>
+        <class>edu.rutgers.axs.sql.Article</class>
         <class>edu.rutgers.axs.sql.ArticleStats</class>
         <class>edu.rutgers.axs.sql.Task</class>
         <class>edu.rutgers.axs.sql.DataFile</class>
@@ -57,6 +58,9 @@
         <class>edu.rutgers.axs.sql.BernoulliTrainArticleStats</class>
         <class>edu.rutgers.axs.sql.BernoulliVote</class>
         <class>edu.rutgers.axs.sql.Invitation</class>
+        <class>edu.rutgers.axs.sql.EE4User</class>
+        <class>edu.rutgers.axs.sql.EE4DocClass</class>
+        <class>edu.rutgers.axs.sql.EE4Uci</class>
 
         <properties>
             <!--

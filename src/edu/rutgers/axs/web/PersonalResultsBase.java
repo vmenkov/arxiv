@@ -109,4 +109,16 @@ public class PersonalResultsBase extends ResultsBase {
 	return s;
     }
 
+    /** Returns the user's experimental plan identifier ("program"), if the
+	user acts on his own behalf. Returns null if this page is rendered
+	for a researcher looking at some other's data. 
+
+	This is used to properly configure various controls (such as
+	rating buttons) which are different in different experiments,
+     */
+    User.Program getUserProgram() {	
+	return isSelf? actor.getProgram() : null;
+    }
+
+
 }

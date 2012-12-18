@@ -19,11 +19,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
   /** SQL Object ID */
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
-	private long id;
-    public void setId(long val) {        id = val;    }
-    public long getId() {        return id;    }
+	private int id;
+    public void setId(int val) {        id = val;    }
+    public int getId() {        return id;    }
 
-    /** Link to the user on whose behalf the task is conducted */
+    /** Link to the user on wose behalf the task is conducted */
     //@ManyToOne
     @Column(nullable=false)
     @Display(editable=false, order=2) 

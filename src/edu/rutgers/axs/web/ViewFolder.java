@@ -20,11 +20,8 @@ import edu.rutgers.axs.html.RatingButton;
 
 /** Retrieves the list of artciles in the user's personal folder
  */
-public class ViewFolder extends ResultsBase {
+public class ViewFolder extends PersonalResultsBase {
     
-    public final String actorUserName;
-    public User actor;
-
     public Vector<Action> list = new Vector<Action>();
     public Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 

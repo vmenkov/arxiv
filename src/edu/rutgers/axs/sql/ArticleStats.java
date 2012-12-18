@@ -23,15 +23,14 @@ import edu.rutgers.axs.indexer.ArxivFields;
     public class ArticleStats extends OurTable 
 {
 
-   @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
-       private long id;
+    /** Same key as in the Article table */
+   @Id 
+   //@GeneratedValue(strategy=GenerationType.IDENTITY)
+       @Display(editable=false, order=1)
+       private int id;
 
-    /** This is the internal ID automatically assigned by the database
-      to each entry upon creation. It is important within the database
-      (e.g., to associate ListEntry entries with User entries) but has
-      no meaning outside of it.
-     */
-    public long getId() {        return id;    }
+    public int getId() {        return id;    }
+    void setId(int x) {         id=x;    }
 
     /** ArXiv Article ID.
 
@@ -201,7 +200,9 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	return res;
     }
 
-    public ArticleStats() {
+    public ArticleStats(Article a) {
+	setId(a.getId());
+	setAid(a.getAid());
 	setTime( new Date());
     }
 
@@ -290,18 +291,6 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }    
 
-
-    /*ArticleStats(String _aid) {
-	aid=_aid;
-	}*/
-
-    /*
-    static public class Light {
-	long id; 
-	String aid;
-	Light(long _id, String _aid) { id = _id; aid = _aid; }
-    }
-    */
 
 
 }
