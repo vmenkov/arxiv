@@ -51,7 +51,7 @@ public class Scheduler {
 	return  articlesUpdated;
     }
 
-    /** Set this to true to tell the schedulers that (the local copy
+    /** Set this to true to tell the scheduler that (the local copy
 	of) ArXiv has been updated, and we must update suggestion 
 	lists too.
     */
@@ -118,11 +118,11 @@ public class Scheduler {
 	q.setParameter("p",User.Program.SET_BASED);
 	//	q.setParameter("t",  DataFile.Type.LINEAR_SUGGESTIONS_1);
 
-	List<Long> lu  =  (List<Long>) q.getResultList();
+	List<Integer> lu  =  (List<Integer>) q.getResultList();
 	//Logging.info("Scheduler: Found " + lu.size() + " users whose UP or SL may need updating");
 	Logging.info("Scheduler (stage="+(stage2?"SL":"UP")+"), au="+articlesUpdated+": Found " + lu.size() + " users");
 
-	for(long uid: lu) {
+	for(int uid: lu) {
 	    User u = (User)em.find(User.class, uid);
 	    // apparently, "refresh" may be needed for us to notice recent changes 
 	    em.refresh(u);

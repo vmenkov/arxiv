@@ -22,7 +22,7 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 # -DschedulingIntervalSec=60
 
-set opt="-cp ${cp} ${opt} -DexitAfter=20"
+set opt="-cp ${cp} -Xmx1024m ${opt} -DexitAfter=20 -DarticlesUpdated=true"
 
 echo "opt=$opt"
 
