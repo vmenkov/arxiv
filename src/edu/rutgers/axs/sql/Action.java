@@ -28,15 +28,29 @@ import java.lang.reflect.*;
 	User user;
   
     /** The arXiv article id of the article involved */
-    @Basic @Column(nullable=false)
-    @Display(editable=false, order=5) 
-	String article;
-   
-    public String getArticle() {
+    //    @Basic @Column(nullable=false)
+    //    @Display(editable=false, order=5) 
+    //	String article;
+    @ManyToOne
+	@Column(nullable=false)
+	@Display(editable=false, order=2) 
+	Article article;
+
+    public String getAid() {
+	return article.getAid();
+    }
+
+    /*
+    public void setArticle(String article) {
+	this.article = article;
+    }
+    */
+
+    public Article getArticle() {
 	return article;
     }
 
-    public void setArticle(String article) {
+    public void setArticle(Article article) {
 	this.article = article;
     }
 
@@ -208,6 +222,7 @@ import java.lang.reflect.*;
 
     public Action() {}
 
+    /*
     public Action(User u, String _article, Op _op){
 	setUser(u);
 	setDay(u.getDay());
@@ -216,8 +231,18 @@ import java.lang.reflect.*;
 	Date now = new Date();
 	setTime(now);
     }
+    */
 
-    public String reflectToString() {
+    public Action(User u, Article _article, Op _op){
+	setUser(u);
+	setDay(u.getDay());
+	setArticle(_article);
+	setOp(_op);
+	Date now = new Date();
+	setTime(now);
+    }
+
+   public String reflectToString() {
 	return Reflect.reflectToString(this);
     }
 
@@ -296,7 +321,7 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
     public static String[] getAllPossiblyRatedDocs( EntityManager em, boolean missingSimsOnly)  {
 	//Query q = em.createQuery("select distinct(a.article) from Action a");
 
-	String qtext = "select astat.id, astat.aid from Action a, ArticleStats astat where a.article = astat.aid " +
+	String qtext = "select astat.id, astat.aid from Action a, ArticleStats astat where a.article.id = astat.aid " +
 	    (missingSimsOnly? "and astat.simsTime is null " : "") +
 	    "group by astat.id, astat.aid";
 	Query q = em.createQuery(qtext);
@@ -377,7 +402,7 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
 	    (getOp() != Op.DONT_SHOW_AGAIN);
 	int val1 = positive? 1: -1;
 	int val0 = 0;
-	String aid =  getArticle();
+	String aid =  getAid();
 	BernoulliVote vote =  BernoulliVote.find(em, getUser().getId(), aid);
 	int cluster = getUser().getCluster();
 	if (vote==null) {

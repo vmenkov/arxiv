@@ -114,8 +114,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
      */
     public void fillArticleList(Vector<ArticleEntry> entries) {
 	for(int rank=0; rank<entries.size(); rank++) {
-	    PresentedListEntry le =  
-		new PresentedListEntry(entries.elementAt(rank));
+	    PresentedListEntry le =  new PresentedListEntry(entries.elementAt(rank));
 	    docs.add( le ); // FIXME: should not we use get/set?
 	}
     }

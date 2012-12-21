@@ -98,7 +98,7 @@ public class ViewActions extends ResultsBase {
 		    // skip
 		} else if (cnt < startat + M) {
 		    ArticleEntry e=
-			ArticleEntry.getArticleEntry( s, m.getArticle(), list.size()-cnt);
+			ArticleEntry.getArticleEntry(s, m.getAid(), list.size()-cnt);
 		    // A somewhat cludgy way of presenting the added-to-folder date
 		    e.appendComment( "(Your action: '" + m.getOp() + "' at " + m.getTime() + ")");
 		    entries.add(e); 

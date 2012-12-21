@@ -23,14 +23,31 @@ import java.lang.annotation.*;
     public void setM(int val) {        m = val;    }
     public int getM() {        return m;    }
 
+    public void incM() { setM(getM()+1);}
+
+
     @Basic 	double alpha0;
     public double getAlpha0() { return alpha0; }
-    void setAlpha0(double x) { alpha0=x; }
+    public void setAlpha0(double x) { alpha0=x; }
     
     @Basic 	double beta0;
     public double getBeta0() { return beta0; }
-    void setBeta0(double x) { beta0=x; }
+    public void setBeta0(double x) { beta0=x; }
   
     /** Time horizon in weeks */
-    static final int T=12;
+    public static final int T=12;
+
+    public static List<EE4DocClass> getAll( EntityManager em) {
+	Query q = em.createQuery("select m from EE4DocClass m");
+	List<EE4DocClass> res = (List<EE4DocClass>)q.getResultList();
+	return res;
+    }
+
+    public static int maxId( EntityManager em) {
+	Query q = em.createQuery("select max(m.id) from EE4DocClass m");
+	Integer r = (Integer)q.getSingleResult();
+	return r.intValue();
+    }
+
+
 }

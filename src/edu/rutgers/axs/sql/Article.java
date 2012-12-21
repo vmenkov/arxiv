@@ -66,15 +66,23 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	setAid( aid);
     }
 
-    /** Look up an existing entry, or create a new one */
+    /** Looks up an existing entry, or creates a new one */
     static public Article addEntry(EntityManager em, String aid) {
+	return addEntry(em, aid, true);
+    }   
+
+    /** Looks up an existing entry, or creates a new one.
+	@param commit Use true unless this call is already enclosed inside
+	a transaction begin/commit pair
+     */
+    static public Article addEntry(EntityManager em, String aid, boolean commit) {
 	Article have = findByAid(em,aid);
 	if (have !=null) return have;
 	Article a = new Article();
 	a.setAid(aid);
-	em.getTransaction().begin();
+	if (commit) em.getTransaction().begin();
 	em.persist(a);
-	em.getTransaction().commit();	
+	if (commit) em.getTransaction().commit();	
 	return a;
     }
 

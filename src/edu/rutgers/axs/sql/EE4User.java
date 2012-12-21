@@ -83,7 +83,7 @@ import edu.rutgers.axs.web.WebException;
 
     @ElementCollection
     //@CollectionTable(name="user_address")
-    private Set<EE4Uci> uci  = new HashSet<EE4Uci>();
+	private Set<EE4Uci> uci; //  = new HashSet<EE4Uci>();
 
     public Set<EE4Uci> getUci() { return uci; }
     void setUci( Set<EE4Uci> x) {  uci=x; }

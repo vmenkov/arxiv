@@ -147,7 +147,7 @@ public class  SearchResults {
 	ArxivFields.DATE, but since 2012-11 we're phasing in 
      	ArxivFields.DATE_FIRST_MY
      */
-    static  org.apache.lucene.search.Query mkSinceDateQuery(Date since) {
+    public static  org.apache.lucene.search.Query mkSinceDateQuery(Date since) {
 	String lower = 	DateTools.timeToString(since.getTime(), DateTools.Resolution.MINUTE);
 	//System.out.println("date range: from " + lower);
 	//	return new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);

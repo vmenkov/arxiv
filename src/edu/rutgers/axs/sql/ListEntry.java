@@ -41,14 +41,14 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setRank(int x) {        rank = x;    }
     public int getRank() {        return rank;    }
 
-    /** By referring to an ArticleStats entry, we also have access to the
+    /** By referring to an Article entry, we also have access to the
 	article's ArXiv id */
     @ManyToOne
     @Column(nullable=false)
     @Display(editable=false, order=2) 
-	ArticleStats astat;
-    public void setAstat(ArticleStats x) {        astat = x;    }
-    public ArticleStats getAstat() {        return astat;    }
+	Article article;
+    public void setArticle(Article x) {        article = x;    }
+    public Article getArticle() {        return article;    }
 
     /** This constructor does nothing. It has been added to avoid
 	Enhancer's warning. */
@@ -69,12 +69,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
        @param aa Supplied in case the ArticleStats for the doc is
        missing (which is, generally, unlikely)
      */
-    ListEntry(ArticleAnalyzer aa, EntityManager em, DataFile _df, ArticleEntry e, int _rank) throws  org.apache.lucene.index.CorruptIndexException, IOException {
+    ListEntry( EntityManager em, DataFile _df, ArticleEntry e, int _rank) throws  org.apache.lucene.index.CorruptIndexException, IOException {
 	setRank(_rank);
-	setDf(_df);
-	ArticleStats as = aa.getArticleStatsByAidAlways(  em, e.getAid());
-	if (as == null) throw new IllegalArgumentException("Article " + e.getAid() + " is not locally indexed; can't create ArticleStats");
-	setAstat(as);
+	setDf(_df);	
+	Article a = Article.addEntry(em, e.getAid(), false);
+	setArticle(a);
     }
 
 

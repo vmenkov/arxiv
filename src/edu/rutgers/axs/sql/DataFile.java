@@ -188,11 +188,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     /** Fills this DataFile's list of ListEntries based on the specified list of
 	ArticleEntries.
      */
-    public void fillArticleList(Vector<ArticleEntry> entries, ArticleAnalyzer aa, EntityManager em) {
+    public void fillArticleList(Vector<ArticleEntry> entries, EntityManager em) {
 	for(int rank=0; rank<entries.size(); rank++) {
 	    ListEntry le = null;
 	    try {
-		le = new ListEntry(aa, em, this, entries.elementAt(rank), rank);
+		le = new ListEntry( em, this, entries.elementAt(rank), rank);
 	    } catch(Exception ex) {
 		Logging.error("DataFile.initList: Can't record data for article  " + entries.elementAt(rank).getAid() + " (rank="+rank+"), as it may not be in Lucene yet");
 		continue;

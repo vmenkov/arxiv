@@ -442,7 +442,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public HashMap<String, Action> getActionHashMap(Action.Op[] ops) {
 	HashMap<String, Action> h = new HashMap<String, Action>();
 	for( Action a: actions) {
-	    String aid = a.getArticle();
+	    String aid = a.getAid();
 	    if (a.opInList(ops))  {
 		Action b = h.get(aid);
 		if (b==null || a.after(b)) {
@@ -480,7 +480,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    if (a.getId()<=id0) continue;
 	    inRangeCnt++;
 	    if (!isAllowedType(a.getDay(), allowedDayTypes)) continue;
-	    String aid = a.getArticle();
+	    String aid = a.getAid();
 	    Vector<Action> b = h.get(aid);
 	    if (b==null) {
 		h.put(aid, b = new Vector<Action>());
@@ -536,9 +536,11 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return folder;
     }
 
-    public Action addAction(EntityManager em, String p, Action.Op op, ActionSource a  ) {
-	Action r = new  Action( this, p, op); 
-	r.setActionSource(a);
+    /** @param p ArXiv article id */
+    public Action addAction(EntityManager em, String p, Action.Op op, ActionSource asrc) {
+	Article a = Article.addEntry(em,p,false); // no commit needed here
+	Action r = new  Action(this, a, op); 
+	r.setActionSource(asrc);
         actions.add(r);
 	em.persist(r);
 	r.bernoulliFeedback(em); // only affects Bernoulli users
@@ -692,6 +694,15 @@ throws Exception
 	return h;
     }
 
+    /** Returns the list of users enrolled in a specified research program. 
+     */
+    static public List<Integer> selectByProgram(EntityManager em, User.Program program) {
+	String qs = "select u.id from User u where u.program=:p";
+	Query q = em.createQuery(qs);
+	q.setParameter("p",program);
+	List<Integer> lu  =  (List<Integer>) q.getResultList();
+	return lu;
+    }
 
 
 }

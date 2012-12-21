@@ -52,8 +52,7 @@ public class ViewFolder extends PersonalResultsBase {
 
 	    for (Action m : folder.values()) {
 		list.add(m);
-		ArticleEntry e=
-		    ArticleEntry.getArticleEntry( s, m.getArticle(), cnt+1);
+		ArticleEntry e= ArticleEntry.getArticleEntry( s, m.getAid(), cnt+1);
 		// A somewhat cludgy way of presenting the added-to-folder date
 		e.appendComment( "(Added to my folder on " + m.getTime() + ")");
 		entries.add(e); 
