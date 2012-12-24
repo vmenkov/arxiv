@@ -16,15 +16,13 @@ import edu.rutgers.axs.web.WebException;
 @Entity 
     public class EE4User extends OurTable 
 {
+    /** The numeric id is the same value as for the corresponding User
+	object. (A one-to-one relation).
+     */
     @Id @Display(editable=false, order=1.1)
     	private int id;
 
     public void setId(int val) {        id = val;    }
-    /** This is the internal ID automatically assigned by the database
-      to each entry upon creation. It is important within the database
-      (e.g., to associate PhoneCall entries with respondent entries,
-      but has no meaning outside of it.
-     */
     public int getId() {        return id;    }
 
     //    @Basic 	double c;
@@ -86,10 +84,33 @@ import edu.rutgers.axs.web.WebException;
 	private Set<EE4Uci> uci; //  = new HashSet<EE4Uci>();
 
     public Set<EE4Uci> getUci() { return uci; }
-    void setUci( Set<EE4Uci> x) {  uci=x; }
+    public void setUci( Set<EE4Uci> x) {  uci=x; }
 
 
+    /** Looks up an existing entry, or creates and nitializes a new
+	one.
+	@param commit Use true unless this call is already enclosed inside
+	a transaction begin/commit pair
+    */
+    static public EE4User getAlways(EntityManager em, int id, boolean commit) {
+	EE4User a = (EE4User)em.find(EE4User.class,id);
+	if (a !=null) return a;
+	if (commit) em.getTransaction().begin();
+	a = new EE4User();
+	a.setId(id);
+	a.setCCode(CCode.C32);
+	em.persist(a);
+	if (commit) em.getTransaction().commit();	
+	return a;
+    }
 
+    public HashMap<Integer,EE4Uci> getUciAsHashMap() {
+	HashMap<Integer,EE4Uci> h = new HashMap<Integer,EE4Uci>();
+	for(EE4Uci w: getUci())  {
+	    h.put( w.getClassId(), w);
+	}
+	return h;
+    }
 
 
 }

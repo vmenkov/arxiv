@@ -82,8 +82,10 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    /** Selection based on a sublinear utility function based
 		on a user profile of some kind */
 	    TJ_ALGO_1_SUGGESTIONS_1,
-	    /** Peter Frazier's algorithm - "Bernoulli Rewards" */
-	    BERNOULLI_SUGGESTIONS;
+	    /** Peter Frazier's algorithm v.2 - "Bernoulli Rewards" */
+	    BERNOULLI_SUGGESTIONS,
+	    /** Peter Frazier's Explolration Engine ver 4 */
+	    EE4_SUGGESTIONS;
 
 	/** What task should we run to produce this kind of data? */
 	public Task.Op producerFor() {
@@ -95,8 +97,10 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
 	}
 
-	/**
-	   @return "profile" etc when files are needed; null on errors
+	/** Helps to form data file name for various file types.
+	   
+	   @return "profile", "linsug1", etc when files are needed;
+	   null on errors
 	*/
 	String givePrefix() {
 	    if (this == USER_PROFILE) {
@@ -109,6 +113,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 		return "logsug1";
 	    } else if (this == TJ_ALGO_1_SUGGESTIONS_1) {
 		return "algo1sug1";
+	    } else if (this == EE4_SUGGESTIONS) {
+		return "ee4sug";
 	    } else {
 		return null;
 	    }	 

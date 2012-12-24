@@ -164,8 +164,10 @@ import java.lang.reflect.*;
 		served via My.ArXiv.org/arxiv/FilterServlet
 	     */
 	    FILTER,
-	    /** Peter Frazier's Exploration Engine */
+	    /** Peter Frazier's Exploration Engine ver 2 */
 	    BERNOULLI_EXPLORATION,	    BERNOULLI_EXPLOITATION,
+	    /** Peter Frazier's Exploration Engine ver 4 */
+	    MAIN_EE4;
     };
 
 

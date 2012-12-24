@@ -85,4 +85,8 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 	return s;
     }
 
+    /** Should be properly overriden by all subclasses that do exclusions.
+     */
+    public String excludedPagesMsg() { return ""; }
+
 }

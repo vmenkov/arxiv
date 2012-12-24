@@ -302,7 +302,9 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
      * experimental day
      */
     public String dayMsg() {
-	return ""+ getDay() + " mode since " + getDayStart();
+	return (getProgram()==Program.SET_BASED) ?
+	    ""+ getDay() + " mode since " + getDayStart() :
+	    "<!-- All days are the same for users in program="+getProgram()+"->";
     }
 
     /** The "time horizon" for selecting "recent articles" (for
@@ -538,7 +540,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 
     /** @param p ArXiv article id */
     public Action addAction(EntityManager em, String p, Action.Op op, ActionSource asrc) {
-	Article a = Article.addEntry(em,p,false); // no commit needed here
+	Article a = Article.getArticleAlways(em,p,false); // no commit needed here
 	Action r = new  Action(this, a, op); 
 	r.setActionSource(asrc);
         actions.add(r);

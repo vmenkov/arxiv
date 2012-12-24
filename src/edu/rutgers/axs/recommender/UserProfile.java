@@ -513,20 +513,11 @@ public class UserProfile {
 	return out;
     }
 
-    Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores)  
+    Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores)   
 	throws IOException    {
-	Vector<ArticleEntry> entries = new Vector<ArticleEntry>(scores.length);
-	for(int i=0; i< scores.length; i++) {
-	    ArxivScoreDoc sd = scores[i];
-	    Document doc = dfc.reader.document( sd.doc);
-	    // FIXME: could use  "skeleton" constructor instead to save time   
-	    ArticleEntry ae= new ArticleEntry(i+1, doc, sd.doc);
-	    ae.setScore( sd.score);
-	    entries.add( ae);
-	}	
-	return entries;
+	return ArxivScoreDoc.packageEntries(scores, dfc.reader);
     }
-  
+
     /** This is the "original" version, that relies to a large extent
      * on values (norms) stored in Lucene.
      */

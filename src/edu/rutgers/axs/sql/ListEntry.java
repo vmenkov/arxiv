@@ -72,7 +72,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     ListEntry( EntityManager em, DataFile _df, ArticleEntry e, int _rank) throws  org.apache.lucene.index.CorruptIndexException, IOException {
 	setRank(_rank);
 	setDf(_df);	
-	Article a = Article.addEntry(em, e.getAid(), false);
+	Article a = Article.getArticleAlways(em, e.getAid(), false);
 	setArticle(a);
     }
 

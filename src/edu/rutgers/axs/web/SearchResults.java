@@ -271,7 +271,8 @@ public class  SearchResults {
 	return wc.endsWith("*") && x.startsWith(wc.substring(0,wc.length()-1));
     }
 
-    /** Counts matches in two sorted (ascending) arrays */
+    /** Counts matches in two sorted (ascending) arrays. The result,
+     * naturally, will be 0 if either of the arrays is empty. */
     private static int matchCnt(String [] a1, String[] a2) {
 	int cnt=0;
 	int i1=0, i2=0;
@@ -304,7 +305,11 @@ public class  SearchResults {
     /** Sets scores in each scoreDocs[] element, so that the results
 	of the category search (Treatment A) can be reordered as
 	needed for June 2012 experiments. The number of matching cats
-	is the primary key, the date is the secondary */	
+	is the primary key, the date is the secondary.
+
+	@param _cats List of categories that matter for the ranking.
+	If the array is empty, only dates matter.
+    */	
     public void setCatSearchScores(IndexReader reader,
 				   String[] _cats, Date since) throws IOException, CorruptIndexException{
 	String[] cats = Arrays.copyOf(_cats, _cats.length);
@@ -337,8 +342,12 @@ public class  SearchResults {
 
     /** Reorder the results of the category search (Treatment A) as
 	needed for June 2012 experiments. The number of matching cats is
-	the primary key, the date is the secondary */	
-    void reorderCatSearchResults(IndexReader reader,String[] _cats, Date since) throws IOException, CorruptIndexException{
+	the primary key, the date is the secondary.
+
+	@param _cats List of categories that matter for the ranking.
+	If the array is empty, only dates matter.
+    */	
+    public void reorderCatSearchResults(IndexReader reader,String[] _cats, Date since) throws IOException, CorruptIndexException{
 	setCatSearchScores(reader,  _cats, since);
 	Arrays.sort(scoreDocs, new SDComparator());
     }

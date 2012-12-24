@@ -460,7 +460,7 @@ public class ArticleAnalyzer {
 		    continue;
 		}
 	    } else {
-		Article a = Article.addEntry(em, aid); // look up or add
+		Article a = Article.getArticleAlways(em, aid); // look up or add
 		if (a==null) {
 		    Logging.error("no Article entry for aid=" + aid + ", and one could nort be created");
 		    continue;
@@ -483,7 +483,7 @@ public class ArticleAnalyzer {
     ArticleStats computeAndSaveStats(EntityManager em, int docno) throws  org.apache.lucene.index.CorruptIndexException, IOException {
 	Document doc = reader.document(docno,ArticleStats.fieldSelectorAid);
 	String aid = doc.get(ArxivFields.PAPER);
-	Article a = Article.addEntry(em, aid); // look up or add
+	Article a = Article.getArticleAlways(em, aid); // look up or add
 	ArticleStats as = new ArticleStats(a);
 	computeAndSaveStats(em,docno,as);
 	return as;

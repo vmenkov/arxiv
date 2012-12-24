@@ -384,7 +384,7 @@ public class ArxivImporter {
 	System.out.println("id="+paper+", date=" + doc.get(ArxivFields.DATE));//+", Doc = " + doc);
 	
 	// Create a SQL database entry, if it does not exist yet
-	Article.addEntry( em,  paper);
+	Article.getArticleAlways( em,  paper);
 
 	// write data to Lucene, and cache the doc body
 	String doc_file = whole_doc==null? null:

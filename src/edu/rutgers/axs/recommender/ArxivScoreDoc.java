@@ -1,9 +1,11 @@
 package edu.rutgers.axs.recommender;
 
-import org.apache.lucene.search.*;
-
 import java.util.*;
 import java.io.*;
+
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.web.ArticleEntry;
 
@@ -12,13 +14,19 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
     /** Lucene doc id */
     public int doc;
     public double score;
-    ArxivScoreDoc(ScoreDoc x) {
+    public ArxivScoreDoc(ScoreDoc x) {
 	this(x.doc, x.score);
     }
 
     ArxivScoreDoc(ArticleEntry ae, IndexSearcher s) throws IOException  {
 	this(ae.getCorrectDocno(s), ae.score);
     }
+
+    public ArxivScoreDoc setScore(double x) {
+	score=x;
+	return this;
+    }
+
     // Descending order! 
     public int compareTo(ArxivScoreDoc  other) {
 	double d = other.score - score; 
@@ -44,6 +52,21 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	}
 	return sd;
     }
+
+    static public Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores, IndexReader reader)  
+	throws IOException    {
+	Vector<ArticleEntry> entries = new Vector<ArticleEntry>(scores.length);
+	for(int i=0; i< scores.length; i++) {
+	    ArxivScoreDoc sd = scores[i];
+	    Document doc = reader.document( sd.doc);
+	    // FIXME: could use  "skeleton" constructor instead to save time   
+	    ArticleEntry ae= new ArticleEntry(i+1, doc, sd.doc);
+	    ae.setScore( sd.score);
+	    entries.add( ae);
+	}	
+	return entries;
+    }
+  
 
 
 //    static class OurScoreDoc extends ScoreDoc {

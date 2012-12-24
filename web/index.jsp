@@ -135,27 +135,6 @@ window.onload = StartScripts;
       <a class="button" href="#stat" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Statistics</a>
       <br />
 
-<!--
-      <h2>Personalization tools</h2>
-
-      <% if (main.user==null) { %>
-      <div style="text-align:center"><a href="participation.jsp">Join
-</a> <br />
-</div>		
-      <br /> 
-      <% } else if (main.user!=null) { %>
-
-
-      <div style="text-align:center"><a href="personal/index.jsp">Your account and personalization tools</a><br /> </div>		
-      <br /> 
-      
-      <div style="text-align:center"><a href="personal/viewFolder.jsp">Your personal folder</a><br /> </div>		
-      <br /> 
-      
-      <% }  %>
-
--->
-      
       <div style="text-align: center">My.ArXiv Version <%=Version.getInfo()%></div>
 
        <div style="text-align: center"><strong>This project is supported by the National Science Foundation:<br>
@@ -178,13 +157,10 @@ window.onload = StartScripts;
 <%= (main.noList()) ? main.noListMsg() : main.describeList() %>
 <% for( ArticleEntry e: sr.entries) { %><%= main.resultsDivHTML(e) %><% }%>
 <%= main.prevNextLinks(sr) %> 
+<%= main.excludedPagesMsg() %>
+<%= main.researcherP( main.actor.dayMsg()) %>
 
-<%  if (main instanceof ViewSuggestions) { 
-       ViewSuggestions mainA = (ViewSuggestions)main; %>
-<%= mainA.excludedPagesMsg() %>
-<%= main.researcherP( mainA.actor.dayMsg()) %>
-    <% } else if (main instanceof BernoulliViewSuggestions) {  }
-} %>
+<%  } %>
 <jsp:include page="index-catlist.html" />
 	</div>
 		<!-- Right Frame -->

@@ -10,11 +10,22 @@ import javax.persistence.*;
 public class EE4Uci {
     @Basic
 	private int classId;
+    public int getClassId() {        return classId;    }
+    public void setClassId(int x) {         classId=x;    }
     @Basic
 	private double alpha;
+    public double getAlpha() { return alpha; }
+    public void setAlpha(double x) { alpha=x; }
+
     @Basic
 	private double beta;
+    public double getBeta() { return beta; }
+    public void setBeta(double x) { beta=x; }
+ 
 
-    public EE4Uci(){
+    public EE4Uci(int _classId, double _alpha, double _beta){
+	setClassId(_classId);
+	setAlpha(_alpha);
+	setBeta(_beta);
     }
 }

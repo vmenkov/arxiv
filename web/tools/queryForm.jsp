@@ -48,10 +48,10 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <tr><td>select x from User x <td> select x.* from arxiv_users x
 <tr><td>select x from Action x <td> select x.* from Action x
 <tr><td> -
-    <td> select x.* from Action x where x.user_id=1 
-
+select x from Action x where x.user.id=1 
+<td> select x.* from Action x where x.USER_ID=1 
 <tr>
-<td>select x from Action x, User u where x.user=u and u.user_name='vmenkov'
+<td>select x from Action x where x.user.user_name='vmenkov' 
 <td>select x.* from Action x, arxiv_users u where x.user_id=u.id and u.user_name='vmenkov'
 <tr><td> select x from EnteredQuery x
     <td> select x.* from EnteredQuery x
