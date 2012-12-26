@@ -18,10 +18,10 @@ import edu.rutgers.axs.html.*;
 
 /** Retrieves the action history of a user.
  */
-public class ViewActions extends ResultsBase {
+public class ViewActions extends PersonalResultsBase {
     
-    public final String actorUserName;
-    public User actor;
+    //    public final String actorUserName;
+    //    public User actor;
 
     public Vector<Action> list = new Vector<Action>();
     public Vector<EnteredQuery> qlist = new Vector<EnteredQuery>();

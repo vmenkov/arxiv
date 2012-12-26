@@ -168,10 +168,20 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
     /** The input file based on which (if applicable) this one has
 	been generated */
+    /*
     @Basic      @Column(length=64) @Display(order=8, editable=false)
 	String inputFile;
     public String getInputFile() { return inputFile; }
     public void setInputFile( String x) { inputFile = x; }
+    */
+ 
+    /** Set by the web server, if applicable */
+    @ManyToOne @Display(order=8, editable=false)
+	private DataFile inputFile=null;
+    public DataFile getInputFile() { return inputFile; }
+    public void setInputFile( DataFile x) { inputFile = x; }
+
+
 
     /** This file's path name, relative to $DATAFILE_DIRECTORY/$user_ */
     @Basic      @Column(length=64) @Display(order=9, editable=false)
@@ -286,7 +296,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     static public DataFile getLatestFileBasedOn(EntityManager em, String username, 
 						Type t, int days, String inputFile) {
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
-	qs += " and m.inputFile=:i";
+	qs += " and m.inputFile.thisFile=:i";
 	if (days>=0) qs += " and m.days=:d";
 	qs += " order by  m.lastActionId desc, m.time desc";
 
@@ -315,8 +325,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
      */
     static public DataFile getLatestFileBasedOn(EntityManager em, String  username, 
 						Type t, int days, Type sourceType) {
-	String qs = "select m from DataFile m, DataFile src " +
-	    "where src.thisFile = m.inputFile and src.type=:st " +	    
+	String qs = "select m from DataFile m " +
+	    "where m.inputFile.type=:st " +
 	    "and m.user=:u and m.type=:t and m.deleted=FALSE";
 	if (days>=0) qs += " and m.days=:d";
 	qs += " order by  m.lastActionId desc, m.time desc";

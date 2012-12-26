@@ -166,16 +166,20 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 
 
     /** Set by the web server, if applicable */
+    /*
     @Basic      @Column(length=64) @Display(order=10, editable=false)
 	private String inputFile=null;
     public String getInputFile() { return inputFile; }
     public void setInputFile( String x) { inputFile = x; }
+    */
 
     /** Set by the computational thread, if applicable */
+    /*
     @Basic      @Column(length=64) @Display(order=11, editable=false)
 	private String outputFile=null;
     public String getOutputFile() { return outputFile; }
     public void setOutputFile( String x) { outputFile = x; }
+    */
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	return true; 
@@ -247,6 +251,18 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	}
     }
     */
+
+    /** Set by the web server, if applicable */
+    @ManyToOne @Display(order=10, editable=false)
+	private DataFile inputFile=null;
+    public DataFile getInputFile() { return inputFile; }
+    public void setInputFile( DataFile x) { inputFile = x; }
+
+    /** Set by the computational thread, if applicable */
+    @OneToOne  @Display(order=11, editable=false)
+	private DataFile outputFile=null;
+    public DataFile getOutputFile() { return outputFile; }
+    public void setOutputFile( DataFile x) { outputFile = x; }
 
 
 }

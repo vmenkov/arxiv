@@ -391,7 +391,7 @@ public class ResultsBase {
 
     /** This is used to properly configure various controls
 	(such as rating buttons) which are different in different
-	experiments, This method is overidden in PersonalUserBase */
+	experiments, This method is overidden in PersonalUserBase. */
     User.Program getUserProgram() {
 	return null;
     }

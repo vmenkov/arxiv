@@ -168,7 +168,8 @@ public class TaskMaster {
 
 		    Vector<DataFile> ptr = new Vector<DataFile>(0);
 		    if (task.getInputFile()!=null) {
-			inputFile=DataFile.findFileByName(em, user,task.getInputFile()); 
+			inputFile=task.getInputFile();
+			    //DataFile.findFileByName(em, user,task.getInputFile()); 
 			ptr.add(inputFile);
 		    }
 
@@ -228,7 +229,7 @@ public class TaskMaster {
 		    if (since!=null) outputFile.setSince(since);
 		    outputFile.setLastActionId(upro.getLastActionId());
 		    if (inputFile!=null) {
-			outputFile.setInputFile(inputFile.getThisFile());
+			outputFile.setInputFile(inputFile);
 		    }
 		    ArticleEntry.save(entries, outputFile.getFile());
 		    // Save the sugg list to the SQL database
@@ -260,8 +261,8 @@ public class TaskMaster {
 			upro = new UserProfile(reader);
 			sd = new ArxivScoreDoc[0];
 		    } else {
-			DataFile uproInputFile = 
-			    DataFile.findFileByName(em,user, inputFile.getInputFile());
+			DataFile uproInputFile = inputFile.getInputFile();
+			//DataFile.findFileByName(em,user, inputFile.getInputFile());
 			upro = new UserProfile(uproInputFile, reader);
 			File f = inputFile.getFile();
 			Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
@@ -274,7 +275,7 @@ public class TaskMaster {
 		    algo.updateProfile(user, em, sd);
 		    outputFile=upro.saveToFile(task,op.outputFor());
 		    if (inputFile!=null) {
-			outputFile.setInputFile(inputFile.getThisFile());
+			outputFile.setInputFile(inputFile);
 		    }
 		}
 		success=true;
@@ -286,7 +287,7 @@ public class TaskMaster {
 		task.setCompleteTime(new Date());
 		task.setFailed(!success);
 		if (outputFile!=null) {
-		    task.setOutputFile(outputFile.getThisFile());
+		    task.setOutputFile(outputFile);
 		    // Having a transaction here seems to be desirable for
 		    // the "persist" to take
 		    em.getTransaction().begin(); 
@@ -297,7 +298,7 @@ public class TaskMaster {
 		    Logging.info("no outputFile to persist");
 		}
 		if (inputFile!=null) {
-		    task.setInputFile(inputFile.getThisFile());
+		    task.setInputFile(inputFile);
 		}
 		Logging.info("task=" + task+", recording success="+success);
 		em.persist(task);

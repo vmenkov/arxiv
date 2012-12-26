@@ -127,7 +127,8 @@ public class ViewUserProfile extends PersonalResultsBase {
 		upro = new UserProfile(df, reader);
 
 		if (df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
-		    ancestor = DataFile.findFileByName(em,actorUserName, df.getInputFile());
+		    ancestor =  df.getInputFile();
+		    //	DataFile.findFileByName(em,actorUserName, df.getInputFile());
 		}
 	    }
 

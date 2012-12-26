@@ -179,9 +179,9 @@ public class Scheduler {
 		    }
 
 		    if (need) {
-			String requiredInput =
+			DataFile requiredInput =
 			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
-			    latestProfile.getThisFile() : null;
+			    latestProfile : null;
 
 			Date lastViewed = dateOfLastSeenSugList( em, uname);
 
@@ -268,7 +268,7 @@ public class Scheduler {
 
     /** Creates a new task of with the required parameters.
      */
-    private void addTask(EntityManager em, String uname, DataFile.Type mode, int days, Date since, String basedon) {
+    private void addTask(EntityManager em, String uname, DataFile.Type mode, int days, Date since, DataFile basedon) {
 	Task.Op taskOp = mode.producerFor(); // producer task type
 	em.getTransaction().begin();
 	Task newTask = new Task(uname, taskOp);
