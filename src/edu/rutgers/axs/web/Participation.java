@@ -66,7 +66,7 @@ public class Participation extends ResultsBase {
     }
 
     /** Extra form for EE4 users */
-    public String ee4form() {
+    static public String ee4form() {
 	return  Tools.mkSelector(EditUser.EE4_PREFIX + "cCode", EE4User.CCode.class, EE4User.CCode.ALL);
     }
 

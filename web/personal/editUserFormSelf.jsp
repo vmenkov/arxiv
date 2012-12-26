@@ -13,7 +13,7 @@
 <body>
 
 <% 
-   ResultsBase main=new ResultsBase(request,response);
+   EditUserForm main=new EditUserForm(request,response);
    String id = main.user;
    User u =  main.getUserEntry();
    if (main.error) {   %>  <%@include file="../include/error.jsp" %>
@@ -46,6 +46,21 @@ agreed to participate in the follow-up interview; please see the relevant
 <a href="../interview-information-sheet.html">information sheet</a>.
 
 <p><icd:UserEntryForm user_name="<%=id%>"/>
+
+<% if (u.getProgram()==User.Program.EE4) { 
+%>
+<h3>Recommendation generation preferences</h3>
+	<table>
+	<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Selectivity
+</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;">
+<%= main.ee4form() %>
+</td>
+		</tr>
+	</table>
+
+<%}%>
 
 <h3>Changing password and status</h3>
 

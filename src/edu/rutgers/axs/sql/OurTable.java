@@ -32,7 +32,26 @@ public abstract class OurTable {
 	} catch (Exception ex) {
 	    return 0;
 	}
-
     }
+
+    /** In some classes, certain fields should not be displayed or
+	modified unless certain conditions apply. E.g., some fields of
+	a User object only applies in certain programs. Implementing
+	classes override this method as needed to impose appropriate
+	restrictions.	
+     */
+    public boolean ignores(String fieldName) {
+	return false;
+    }
+
+    public String reflectToString() {
+	String s = Reflect.customizedReflect(this, 
+					     new PairFormatter.CompactPairFormatter());
+	//s += " <strong>Roles: </strong>";
+	//for(Role r: getRoles()) {	    s += " " + r;	}
+	return s;
+    }
+
+
 
 }

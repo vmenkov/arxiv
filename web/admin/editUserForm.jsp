@@ -40,11 +40,26 @@ main page.
 <form method=post action="editUser.jsp">
 <%= Tools.inputHidden(EditUser.USER_NAME, id) %> <br>
 
-
 <h3>Updating user account information</h3>
 
 <p>
 <icd:UserEntryForm user_name="<%=id%>"/>
+
+<% if (main.u.getProgram()==User.Program.EE4) { 
+%>
+<h3>Recommendation generation preferences</h3>
+	<table>
+	<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Selectivity
+</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;">
+<%= main.ee4form() %>
+</td>
+		</tr>
+	</table>
+
+<%}%>
+
 
 <h3>Updating roles</h3>
 

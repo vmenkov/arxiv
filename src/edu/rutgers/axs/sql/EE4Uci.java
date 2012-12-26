@@ -22,7 +22,9 @@ public class EE4Uci {
     public double getBeta() { return beta; }
     public void setBeta(double x) { beta=x; }
  
-
+    /** Dummy constructor, just because OpenJPA requires it */
+    public EE4Uci() {}
+	
     public EE4Uci(int _classId, double _alpha, double _beta){
 	setClassId(_classId);
 	setAlpha(_alpha);

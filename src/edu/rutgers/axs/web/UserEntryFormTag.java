@@ -63,6 +63,8 @@ public class UserEntryFormTag extends TagSupport {
 
 	    for(Reflect.Entry e: Reflect.getReflect(c).entries) {
 		if (!e.editable) continue;
+		if (o!=null && o instanceof OurTable &&((OurTable)o).ignores(e.name)) continue;
+
 		out.println( EntryForms.mkTableRow(EntryFormTag.PREFIX, o,e));
 	    }
 	    out.println("</table>");

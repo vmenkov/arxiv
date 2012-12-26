@@ -28,6 +28,9 @@ public class PersonalResultsBase extends ResultsBase {
      */
     public User actor;
 
+    public EE4User ee4u = null;
+
+
     /** Is the user requesting a list for his own activity (rather
 	than for someone's else, as a researcher)? */
     public boolean isSelf = false;
@@ -57,6 +60,16 @@ public class PersonalResultsBase extends ResultsBase {
 	actorUserName =  getString(USER_NAME, user);
 	isSelf =  (actorUserName==null) || (actorUserName.equals(user));
 	requestedFile =  getString(FILE, null);
+
+	EntityManager em = sd.getEM();
+	try {
+	    actor=User.findByName(em, actorUserName);
+	    if (actor!=null) ee4u=(EE4User)em.find(EE4User.class,actor.getId());
+	} catch (Exception _e) {
+	    setEx(_e);
+	} finally {
+	    ResultsBase.ensureClosed( em, true);
+	}
 
     }
 

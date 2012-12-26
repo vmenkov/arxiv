@@ -318,12 +318,14 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public void setDays( int x) { days = x; }
  
 
-    /** This exclusion only applies to suggestion lists, not to search results */
+    /** This exclusion only applies to suggestion lists, not to search
+     * results */
     @Basic @Display(order=13,  editable=true, alt="Exclude already-viewed articles from the list of recommendations")
         @Column(nullable=false) boolean excludeViewedArticles;
     public  boolean getExcludeViewedArticles() { return excludeViewedArticles; }
     public void setExcludeViewedArticles(boolean x) {excludeViewedArticles= x;}
 
+    /** For Bernoulli Rewards only */
     @Basic   @Display(order=14,editable=false)  @Column(nullable=false)
 	private int cluster;
     public  int getCluster() { return cluster; }
@@ -345,14 +347,6 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	void postLoad() {
 	int n = 0;	for(Role r: getRoles()) {	    n++;	}
 	//	Logging.info("Loaded a user entry with "+n +" roles: " + reflectToString());
-    }
-
-    public String reflectToString() {
-	String s = Reflect.customizedReflect(this, 
-					     new PairFormatter.CompactPairFormatter());
-	//s += " <strong>Roles: </strong>";
-	//for(Role r: getRoles()) {	    s += " " + r;	}
-	return s;
     }
 
     public String listRoles() {
@@ -705,6 +699,31 @@ throws Exception
 	List<Integer> lu  =  (List<Integer>) q.getResultList();
 	return lu;
     }
+
+  /** In some classes, certain fields should not be displayed or
+	modified unless certain conditions apply. E.g., some fields of
+	a User object only applies in certain programs. Implementing
+	classes override this method as needed to impose appropriate
+	restrictions.	
+     */
+    public boolean ignores(String fieldName) {
+	if (fieldName.equals("days") ||
+	    fieldName.equals("day") ||
+	    fieldName.equals("excludeViewedArticles")) {
+	    return getProgram()!=Program.SET_BASED;
+	} else if  (fieldName.equals("cluster")) {
+	    return !getProgram().needBernoulli();
+	}
+	return false;
+    }
+
+    /** Link to the matching EE4User object, when applicable. 
+	@return The matching object, or null.
+     */
+    //    public EE4User findEE4User() {
+    //	return  (EE4User)em.find(EE4User.class, getId());
+    //    }
+
 
 
 }

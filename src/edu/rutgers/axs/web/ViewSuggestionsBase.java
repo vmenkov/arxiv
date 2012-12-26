@@ -41,11 +41,10 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 	EntityManager em = base.sd.getEM();
 	try {
 
-	    User actor=User.findByName(em, base.actorUserName);
-	    User.Program program = actor.getProgram();
+	    User.Program program = base.actor.getProgram();
 	    if (program==null) {
 		base.error = true;
-		base.errmsg = "It is not known what experiment plan user " + actor + " participates in";
+		base.errmsg = "It is not known what experiment plan user " + base.actorUserName + " participates in";
 		return base;
 	    }
 

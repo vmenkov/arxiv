@@ -2,7 +2,7 @@
 <%@ page import="edu.rutgers.axs.web.*" %>
 <%@ page import="edu.rutgers.axs.sql.*" %>
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
-<% ResultsBase main=new ResultsBase(request,response); %>
+<% PersonalResultsBase main=new PersonalResultsBase(request,response); %>
 <html>
 <head>
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
@@ -25,6 +25,13 @@
 <tr><%= u.to4cells()  %> </tr>
 </table>
 </p>
+
+<% if (u.getProgram()==User.Program.EE4 && main.ee4u!=null) { 
+%>
+<p><table border=1>
+	<tr><td> <%= main.ee4u.reflectToString() %></td></tr>
+</table></p>
+<%}%>
 
 <p>
 <ul>

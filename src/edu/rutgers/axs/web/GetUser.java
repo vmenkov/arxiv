@@ -19,6 +19,7 @@ import edu.rutgers.axs.sql.*;
 public class GetUser extends ResultsBase {
 
     public User u;
+    public EE4User ee4u = null;
 
     final public static String CREATE = "create";
 
@@ -61,6 +62,7 @@ public class GetUser extends ResultsBase {
 		    errmsg = "No user exists: " + uname;
 		}
 	    }
+	    if (u!=null) ee4u = (EE4User)em.find(EE4User.class,u.getId());
 
 	    em.close(); 
 	}  catch (Exception _e) {
@@ -85,6 +87,12 @@ public class GetUser extends ResultsBase {
 	return b.toString();
     }
 
+  /** Extra form for EE4 users. This is only used by editFormUserSelf.jsp, and
+     really can be moved there. */
+    public String ee4form() {
+	// Logging.info("EUF: Displaying EE4User object with id=" + ee4u.getId() +", cc=" + ee4u.getCCode());
+       return  Tools.mkSelector(EditUser.EE4_PREFIX + "cCode", EE4User.CCode.class, ee4u.getCCode());
+    }
 
 
 }

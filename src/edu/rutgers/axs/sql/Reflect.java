@@ -212,6 +212,7 @@ public class Reflect {
 	Reflect r = Reflect.getReflect(  o.getClass());
 	//Logging.info("Reflecting on " + o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
 	for(Reflect.Entry e: r.entries) {
+	    if (o instanceof OurTable &&((OurTable)o).ignores(e.name)) continue;
 	    Object val = null;
 	    try {
 		val = e.g.invoke(o);
@@ -236,6 +237,7 @@ public class Reflect {
 
 	// the rest of the fields
 	for(Reflect.Entry e: r.entries) {
+	    if (o instanceof OurTable &&((OurTable)o).ignores(e.name)) continue;
 	    Object val = null;
 	    try {
 		val = e.g.invoke(o);
