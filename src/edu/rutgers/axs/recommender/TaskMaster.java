@@ -90,11 +90,15 @@ public class TaskMaster {
 	// Use run() instead of start() for single-threading
 	//asr.run();	
 
-	Scheduler scheduler = new Scheduler();
-	scheduler.setOnlyUser(onlyUser);
-	int schedulingIntervalSec=ht.getOption("schedulingIntervalSec", 0);
-	if (schedulingIntervalSec > 0) scheduler.setSchedulingIntervalSec(schedulingIntervalSec);
-	scheduler.setArticlesUpdated( ht.getOption("articlesUpdated", false));
+	boolean schedulerOn = ht.getOption("scheduler", true);
+	Scheduler scheduler = null;
+	if (schedulerOn) {
+	    scheduler = new Scheduler();
+	    scheduler.setOnlyUser(onlyUser);
+	    int schedulingIntervalSec=ht.getOption("schedulingIntervalSec", 0);
+	    if (schedulingIntervalSec > 0) scheduler.setSchedulingIntervalSec(schedulingIntervalSec);
+	    scheduler.setArticlesUpdated( ht.getOption("articlesUpdated", false));
+	}
 
 
 	int taskCnt=0;
@@ -128,7 +132,7 @@ public class TaskMaster {
 	    task = grabNextTask(em,pid);
 	    if (task==null) {
 
-		if (scheduler.needsToRunNow()) {
+		if (scheduler!=null && scheduler.needsToRunNow()) {
 		    Logging.info("no task: calling scheduler");
 		    int newTaskCnt = scheduler.schedule(em);
 		    continue;
@@ -246,12 +250,15 @@ public class TaskMaster {
 		    // The day range does not matter, as the user is allowed 
 		    // to change it		   
 
+		    System.out.println("Calling DataFile.getLatestFile(user=" + user + ", ALGO1, ALGO2");
+
 		    inputFile = DataFile.
 			getLatestFile(em, user,
 				      DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1, 
 				      DataFile.Type.TJ_ALGO_2_USER_PROFILE,
 				      -1);
-		    	    
+
+		    System.out.println("Result: " + inputFile.getId());
 		    UserProfile upro;
 
 		    ArxivScoreDoc[] sd;
@@ -301,7 +308,9 @@ public class TaskMaster {
 		    task.setInputFile(inputFile);
 		}
 		Logging.info("task=" + task+", recording success="+success);
+		em.getTransaction().begin();
 		em.persist(task);
+		em.getTransaction().commit();
 		Logging.info("task persisted");
 		ResultsBase.ensureClosed(em);
 		Logging.info("em closed");

@@ -262,8 +262,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
      */
     static public DataFile getLatestFile(EntityManager em, String  username, 
 					 Type t, Type parentType, int days) {
-	String qs = "select m from DataFile m, DataFile parent where m.user=:u and  m.type=:t and m.deleted=FALSE";
-	qs += " and m.inputFile=parent.thisFile and parent.type=:p";
+	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE and m.inputFile.type=:p";
 	if (days>=0) qs += " and m.days=:d";
 	qs += " order by  m.lastActionId desc, m.time desc";
 

@@ -44,7 +44,10 @@ public class Scheduler {
 	schedulingIntervalSec = x;	
     }
 
-    /** This flag is only set via the set method */
+    /** This flag is only set via the set method. It tells the
+	scheduler that the article collection has been recently
+	updated, and therefore everyone's suggestion lists must be
+	re-generated.*/
     private boolean articlesUpdated=false;
 
     boolean getArticlesUpdated() { 
@@ -168,7 +171,7 @@ public class Scheduler {
 		    DataFile sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
 		    boolean need = sugg==null || (sugg.getLastActionId()<plai);
 
-		    // If the articles have been updated, profiles sugg lists
+		    // If the articles have been updated, sugg lists
 		    // must be updated too.
 		    need = need || articlesUpdated && sugg.getTime().before(startTime);
 
