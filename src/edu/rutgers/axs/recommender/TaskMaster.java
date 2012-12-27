@@ -57,6 +57,32 @@ public class TaskMaster {
 	}	
     };
 
+    static int createMissingDataFiles(EntityManager em) {
+	List<DataFile> list = DataFile.listMissingFiles(em);
+	Logging.info("Found " + list.size() + " DataFile objects with missing disk files");
+	int cnt=0;
+	for(DataFile df: list) {
+	    try {
+		Vector<ArticleEntry> entries = ArticleEntry.readStoreList(df.getDocs());
+	    
+		String f = DataFile.mkFileName(df.getType(), new Date());
+		df.setThisFile(f);
+		ArticleEntry.save(entries, df.getFile());
+		Logging.info("For df=" + df.getId() + " created file " + df.getThisFile());
+		em.getTransaction().begin();
+		em.persist(df);
+		em.getTransaction().commit();
+		cnt ++;
+	    } catch(IOException ex) {
+		Logging.error("Could not create file for DataFile=" + df.getId() + ": " + ex);
+	    }
+
+	}
+	return cnt;
+    }
+
+
+
     /**
        -DexitAfter=24  : time in hours
        -Duser=username : only handle tasks for this one user (for testing)
@@ -127,10 +153,12 @@ public class TaskMaster {
 
 	while(!stopNow && !shutDown.mustExit()) {
 	    // make sure to use a new EM each time, to avoid looking at 
-	    // stale date (esp. in the scheduler)
+	    // stale data (esp. in the scheduler)
 	    EntityManager em = Main.getEM(); 
 	    task = grabNextTask(em,pid);
 	    if (task==null) {
+
+		createMissingDataFiles(em);
 
 		if (scheduler!=null && scheduler.needsToRunNow()) {
 		    Logging.info("no task: calling scheduler");

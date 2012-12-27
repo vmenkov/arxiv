@@ -222,6 +222,21 @@ public class ArticleEntry {
 	return entries;
     }
 
+    static public Vector<ArticleEntry> readStoreList(Vector<ListEntry> v) throws IOException {
+	Vector<ArticleEntry> entries = new Vector<ArticleEntry>(v.size());
+	int pos=0;
+	for(ListEntry le: v) {
+	    pos++;
+	    Article a = le.getArticle();
+	    ArticleEntry e = new ArticleEntry(pos, a.getAid());
+	    e.setScore( le.getScore());
+	    entries.add(e);
+	}
+	return entries;
+    }
+
+
+
      /** @return the Lucene doc no, or -1 (if we have not queried Lucene yet) 
      */
     public int getStoredDocno() {

@@ -75,10 +75,13 @@ public class  SearchResults {
      */
     SearchResults(DataFile df, IndexSearcher searcher) throws IOException {
 
-	// read the artcile IDs and scores from the file
-	File f = df.getFile();
-	entries = ArticleEntry.readFile(f);
-	
+	// read the artcile IDs and scores from the file, or from the doc array
+	if (df.getThisFile()==null) {
+	    entries = ArticleEntry.readStoreList(df.getDocs());
+	} else {
+	    File f = df.getFile();
+	    entries = ArticleEntry.readFile(f);
+	}
 	scoreDocs = new ScoreDoc[entries.size()];
 
 	// In docs to be displayed, populate other fields from Lucene

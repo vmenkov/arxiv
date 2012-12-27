@@ -377,9 +377,9 @@ the use of audio recording for the telephone interview</strong>
 <h3>Recommendation generation preferences</h3>
 	<table>
 	<tr>
-			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Selectivity
+		<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Selectivity
 </label></td>
-			<td style="width:50%; text-align:left; vertical-align:middle;">
+		<td style="width:50%; text-align:left; vertical-align:middle;">
 <%= main.ee4form() %>
 </td>
 		</tr>

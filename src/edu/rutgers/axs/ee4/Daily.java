@@ -51,10 +51,9 @@ public class Daily {
 	for(int uid: lu) {
 	    try {
 		User user = (User)em.find(User.class, uid);
-		//	    EE4User ee4u = EE4User.getAlways( em, uid, true);
-		//	    int lai = updateUserVote(em, id2dc, user, ee4u);
-		makeEE4Sug(em, searcher, since, id2dc, user); //, ee4u, lai);
+		makeEE4Sug(em, searcher, since, id2dc, user);
 	    } catch(Exception ex) {
+		Logging.error(ex.toString());
 		System.out.println(ex);
 		ex.printStackTrace(System.out);
 	    }
@@ -62,18 +61,36 @@ public class Daily {
 	em.close();
     }
 
+
     /** Prepares a suggestion list for one user and saves it. This
      method does not conduct any document classification itself; it
      relies only on already-classified documents. Therefore, one
      either should use it either in the daily update script *after*
      all judged docs have been classified, or in a new-user scenario,
      when there is no judgment history anyway. */
-    static void makeEE4Sug(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User user) throws IOException {
+    private static DataFile makeEE4Sug(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User user) throws IOException {
 	int uid = user.getId();
 	EE4User ee4u = EE4User.getAlways( em, uid, true);
 	int lai = updateUserVote(em, id2dc, user, ee4u);
-	updateSugLists(em, searcher, since, id2dc, user, ee4u, lai);
+	boolean nofile = false;
+	return updateSugList(em, searcher, since, id2dc, user, ee4u, lai, nofile);
     }
+
+    /** This version is invoked from the web server, for newly created users
+     */
+   public static DataFile makeEE4SugForNewUser(EntityManager em,  IndexSearcher searcher,  User user) throws IOException {
+	final int days = EE4DocClass.T * 7; 
+	Date since = SearchResults.daysAgo( days );
+	// list classes
+	HashMap<Integer,EE4DocClass> id2dc = readDocClasses(em);
+
+	int uid = user.getId();
+	EE4User ee4u = EE4User.getAlways( em, uid, true);
+	int lai = updateUserVote(em, id2dc, user, ee4u);
+	boolean nofile = true;
+	return updateSugList(em, searcher, since, id2dc, user, ee4u, lai, nofile);
+    }
+
 
    
     /** Classifies those documents that we may need (because they have
@@ -207,7 +224,7 @@ public class Daily {
 	return lai;
     }
 
-    static void updateSugLists(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User u, EE4User ee4u, int lai)
+    private static DataFile updateSugList(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User u, EE4User ee4u, int lai, boolean nofile)
 	throws IOException
      {
 	 HashMap<Integer,EE4Uci> h = ee4u.getUciAsHashMap();
@@ -216,6 +233,7 @@ public class Daily {
 	 SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
 	 // order by date only
 	 sr.reorderCatSearchResults(searcher.getIndexReader(), new String[0], since);
+	 //	 Logging.info("Daily.USL: |sr|=" + sr.scoreDocs.length);
 
 	 Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
      
@@ -232,18 +250,29 @@ public class Daily {
 	     double score = alpha/(alpha + beta);
 	     if (score >= mu) { // add to list
 		 results.add(new ArxivScoreDoc(sd).setScore(score));
-	     } 
+		 //		 Logging.info("Daily.USL: added, score=" + score);
+	     } else {
+		 //		 Logging.info("Daily.USL: not added, score=" + score);
+	     }
 	 }
 	 em.getTransaction().begin();	
 	 DataFile outputFile=new DataFile(u.getUser_name(), 0, DataFile.Type.EE4_SUGGESTIONS);
 	 outputFile.setSince(since);
 	 outputFile.setLastActionId(lai);
 	 Vector<ArticleEntry> entries = ArxivScoreDoc.packageEntries(results.toArray(new ArxivScoreDoc[0]), searcher.getIndexReader());
-	 ArticleEntry.save(entries, outputFile.getFile());
+	 Logging.info("Daily.USL: |entries|=" + entries.size());
+
+	 if (nofile) { 
+	     // we can't write a file now, due to file permissions reasons
+	     outputFile.setThisFile(null);
+	 } else {
+	     ArticleEntry.save(entries, outputFile.getFile());
+	 }
 	 outputFile.fillArticleList(entries,  em);
+
 	 em.persist(outputFile);
 	 em.getTransaction().commit();	
-
+	 return outputFile;
      }
 
     /** A dummy classifier.

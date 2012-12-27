@@ -17,6 +17,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.recommender.Scheduler;
+import edu.rutgers.axs.ee4.Daily;
 
 /** This class is responsible for the retrieval, formatting, and
     displaying of a "suggestion list": a list of articles which some kind
@@ -306,11 +307,17 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		       actor.getFolder());
 
 	if (df==null) {
-	    // FIXME: do it now!
-	    if (mode!= DataFile.Type.LINEAR_SUGGESTIONS_1) throw new WebException("Sorry, your EE4 suggestion list has not been computed yet!");
 
-	    // The on-the-fly mode: simply generate and use cat search results for now
-	    sr = catSearch(searcher, since);    
+	    if (mode== DataFile.Type.LINEAR_SUGGESTIONS_1) {
+
+		// The on-the-fly mode: simply generate and use cat search results for now
+		sr = catSearch(searcher, since);    
+	    } else if (mode== DataFile.Type.EE4_SUGGESTIONS) {
+		df = Daily.makeEE4SugForNewUser(em,  searcher,  actor);
+		sr = new SearchResults(df, searcher);
+	    } else {
+		throw new WebException("Sorry, your suggestion list has not been computed yet! (mode="+mode+")");
+	    }
 
 	    // Save the list? Nah, too much trouble (file permissions etc)
 	    //saveResults(em,searcher, sr, since );
@@ -402,10 +409,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     public String describeList() {
 	String s = "";
 	if (onTheFly) {
-	    s += "<p>This is the initial suggestion list generated in run time.</p>\n";
+	    s += "<p>This is the initial suggestion list generated right now.</p>\n";
 	} else {
-	    s += "<p>Suggestion list " + 
-		researcherSpan(df.getThisFile()) + 
+	    String f = df.getThisFile();
+	    String x = "no. " + df.getId() + (f==null? "(no file)" : "("+f+")");
+	    s += "<p>Suggestion list " + researcherSpan(x) + 
 		" was generated for user " + df.getUser() + " at: " + 
 		Util.ago(df.getTime()) + ".";
 	    //"; served at "+new Date()+".\n"; 

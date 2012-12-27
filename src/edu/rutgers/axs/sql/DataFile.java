@@ -165,6 +165,13 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public boolean getDeleted() { return deleted; }
     public void setDeleted( boolean x) {  deleted = x; }
 
+   /** Has the physical file not been created yet? In this case, we read the
+       data from the ListEntry array. */
+    /*
+    @Basic  @Display(editable=false, order=6.4)    boolean nofile = false;
+    public boolean getNofile() { return nofile; }
+    public void setNofile( boolean x) {  nofile = x; }
+    */
 
     /** The input file based on which (if applicable) this one has
 	been generated */
@@ -197,7 +204,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
         private Vector<ListEntry> docs = new Vector<ListEntry>();
 
     //    public  Set<ListEntry> getDocs() {
-    private Vector<ListEntry> getDocs() {
+    public Vector<ListEntry> getDocs() {
         return docs;
     }
 
@@ -464,19 +471,21 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	this(task.getUser(), task.getId(), type);	    
     }
     
-    public DataFile(String user, long taskId, Type type) {
-	this();
+    public static String mkFileName(Type type, Date now) {
 	String prefix = type.givePrefix();
-	String f = null;
-	Date now = new Date();
 	if ( prefix==null ||  prefix.equals(""))  {
 	    throw new IllegalArgumentException("File type " + type + " not supported for file creation!");
 	} else {
 	    int pid = Main.getMyPid();
-	    f = prefix + File.separator + dayFmt.format(now) + "." +
+	    return prefix + File.separator + dayFmt.format(now) + "." +
 		fmt1.format(pid) + "." + fmt2.format(fileCnt++) + ".txt";
 	}
+   }
 
+    public DataFile(String user, long taskId, Type type) {
+	this();
+	Date now = new Date();
+	String f = mkFileName(type, now);
 	setType(type);
 	setUser(user);
 	setTask(taskId);	    
@@ -485,6 +494,27 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
    }
 
 
+    /** List DataFile objects that should have disk files but don't.
+	(They probably were created from a servlet, when writing
+	files was not allowed due to the file permissions situation)
+     */
+    static public List<DataFile> listMissingFiles(EntityManager em) {
+	String qs = "select m from DataFile m where m.thisFile IS NULL and  m.type in (:t0, :t1, :t2) and m.deleted=FALSE";
+	//	if (days>=0) qs += " and m.days=:d";
+	Query q = em.createQuery(qs);
+	
+	Type[] types = { Type.TJ_ALGO_1_SUGGESTIONS_1, 
+		       Type.BERNOULLI_SUGGESTIONS,
+		       Type.EE4_SUGGESTIONS};
+	for(int i=0; i<types.length; i++) {
+	    q.setParameter("t" + i, types[i]);
+	}
+
+	//if (days>=0) 	q.setParameter("d", days);
+
+	List<DataFile> res = (List<DataFile>)q.getResultList();
+	return res;
+    }
 
 
 }
