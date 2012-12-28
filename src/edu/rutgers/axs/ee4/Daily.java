@@ -23,29 +23,33 @@ public class Daily {
 
     static private final int maxlen = 100000;
 
+    private static HashMap<Integer,EE4DocClass> updateClassStats(EntityManager em, IndexSearcher searcher, Date since)  throws IOException {
+	org.apache.lucene.search.Query q = SearchResults.mkSinceDateQuery(since);
+	TopDocs    top = searcher.search(q, maxlen);
+	System.out.println("Looking back to " + since + "; found " + 
+			   top.scoreDocs.length +  " papers");
+
+	// list classes
+	HashMap<Integer,EE4DocClass> id2dc = readDocClasses(em);
+	// classify all recent docs
+	updateClassInfo(em,searcher,top.scoreDocs, id2dc);
+	// ... and not-yet-classified but viewed old docs
+	classifyUnclassified( em, searcher);
+	return  id2dc;
+    }
+
     /** The main "daily updates" method. Calls all other methods.
      */
     static void updates() throws IOException {
 
+	EntityManager em  = Main.getEM();
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 	    
 	final int days = EE4DocClass.T * 7; 
 	Date since = SearchResults.daysAgo( days );
-	org.apache.lucene.search.Query q = SearchResults.mkSinceDateQuery(since);
-	TopDocs    top = searcher.search(q, maxlen);
-	ScoreDoc[] scoreDocs = top.scoreDocs;
-	System.out.println("Looking back to " + since + "; found " + 
-			   scoreDocs.length +  " papers");
 
-	EntityManager em  = Main.getEM();
-	// list classes
-	HashMap<Integer,EE4DocClass> id2dc = readDocClasses(em);
-	// classify all recent docs
-	updateClassInfo(em,searcher,scoreDocs, id2dc);
-	// ... and not-yet-classified but viewed old docs
-	classifyUnclassified( em, searcher);
-
+	HashMap<Integer,EE4DocClass> id2dc= updateClassStats(em,searcher,since);
 	List<Integer> lu = User.selectByProgram( em, User.Program.EE4);
 
 	for(int uid: lu) {
@@ -299,6 +303,14 @@ public class Daily {
 	em.getTransaction().commit();		
     }
 
+    /** When the system is first set up, run
+	init
+	updateClassStats
+
+	After that, run
+	updates
+	evvery night
+     */
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();
 	
@@ -311,6 +323,16 @@ public class Daily {
 	String cmd = argv[0];
 	if (cmd.equals("init")) {
 	    initClasses();
+	} else if (cmd.equals("updateClassStats")) {
+
+	    EntityManager em  = Main.getEM();
+	    IndexSearcher searcher = new IndexSearcher(Common.newReader()  );
+	    
+	    final int days = EE4DocClass.T * 7; 
+	    Date since = SearchResults.daysAgo( days );
+
+	    HashMap<Integer,EE4DocClass> id2dc= updateClassStats(em,searcher,since);
+
 	} else if (cmd.equals("update")) {
 	    updates();
 	} else {
