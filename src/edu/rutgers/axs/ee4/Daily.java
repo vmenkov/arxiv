@@ -17,7 +17,8 @@ import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.recommender.ArxivScoreDoc;
 
 
-/** Daily data update.
+/** Daily updates for the underlying data structure, and
+    recommendation generation, for Peter Frazier's Exploration Engine ver. 4.
  */
 public class Daily {
 
@@ -304,12 +305,16 @@ public class Daily {
     }
 
     /** When the system is first set up, run
-	init
-	updateClassStats
+	<pre>
+	Daily init
+	Daily updateClassStats
+	</pre>
 
 	After that, run
-	updates
-	evvery night
+	<pre>
+	Daily updates
+	</pre>
+	every night
      */
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();

@@ -47,6 +47,9 @@ time java $opt $1 $2 $3 edu.rutgers.axs.recommender.ArticleAnalyzer >& allnorms-
 #-- Taking care of new articles for Exploration Engine ver. 3
 time java $opt   edu.rutgers.axs.bernoulli.Bernoulli recent >& bernoulli-${d}.log 
 
+#-- Updating class stats and recommendations for Exploration Engine ver. 4
+time java $opt   edu.rutgers.axs.ee4.Daily update >& ee4-${d}.log 
+
 set  opt="-Xmx1024m ${baseopt} -DexitAfter=22 -DarticlesUpdated=true"
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.TaskMaster >& taskmaster-${d}.log

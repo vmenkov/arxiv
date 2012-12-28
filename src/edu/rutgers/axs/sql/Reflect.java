@@ -392,6 +392,26 @@ public class Reflect {
 		if (x==(char)0) s = "false";
 		else if (x==(char)1) s = "true";
 	    }
+	} else if (val instanceof Collection) {
+	    Collection col  = (Collection)val;
+	    if (col.size()==0) s="[empty]";
+	    else {
+		int nullCnt = 0, objCnt=0;
+		Class oc=null;
+		for(Object o: col) {
+		    if (o==null) nullCnt++;
+		    else {
+			objCnt++;
+			if (oc==null) oc = o.getClass();
+			else oc = commonParent(oc, o.getClass());
+		    }
+		}
+		s = "[";
+		if (objCnt>0)  s += "" + objCnt + " " + 
+				   (oc.equals(Object.class)? "objects" : "x " + oc.getName());
+		if (nullCnt>0)  s += " " + nullCnt + " x null";
+		s += "]";
+	    }
 	} else {
 	    // FIXME: there should be a better way to escape double quotes
 	    s = // "OTHER["+val.getClass()+"]:" + 
@@ -401,6 +421,27 @@ public class Reflect {
 	if (needQuotes) s = quote + s + quote;
 	return s;
     }
+
+    private static Class commonParent(Class a, Class b) {
+	Vector<Class> vb= new 	Vector<Class>();
+	for(Class z=b; z!=null; z=z.getSuperclass()) {
+	    if (a.equals(z)) return a;
+	    vb.add(z);
+	}
+	Vector<Class> va= new 	Vector<Class>();
+	for(Class z=a; z!=null; z=z.getSuperclass()) {
+	    va.add(z);
+	}
+	int jb = vb.size(), ja=va.size();
+	Class common = null;
+	while(jb>0 && ja>0) {
+	    if (vb.elementAt(--jb).equals(va.elementAt(--ja))) 
+		common=vb.elementAt(jb);
+	    else break;
+	}
+	return common;
+    }
+
 
     /** Saves the class description as the header line of a comma-separated file
      */
