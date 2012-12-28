@@ -253,13 +253,13 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
     */
 
     /** Set by the web server, if applicable */
-    @ManyToOne @Display(order=10, editable=false)
+    @ManyToOne @Display(order=10, editable=false, link="viewObject.jsp?class=DataFile&id=")
 	private DataFile inputFile=null;
     public DataFile getInputFile() { return inputFile; }
     public void setInputFile( DataFile x) { inputFile = x; }
 
     /** Set by the computational thread, if applicable */
-    @OneToOne  @Display(order=11, editable=false)
+    @OneToOne  @Display(order=11, editable=false, link="viewObject.jsp?class=DataFile&id=")
 	private DataFile outputFile=null;
     public DataFile getOutputFile() { return outputFile; }
     public void setOutputFile( DataFile x) { outputFile = x; }

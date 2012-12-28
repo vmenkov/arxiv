@@ -14,39 +14,43 @@ import edu.rutgers.axs.sql.*;
 /** Retrieves an object such as a historical presented list
  */
 public class ViewObject extends ResultsBase {
-    
-    //public final String actorUserName;
-    //public User actor;
+     
     public OurTable li=null;
 
-    //final public static String USER_NAME = "user_name";
+    public ViewObject(HttpServletRequest _request, HttpServletResponse _response) {
+	this(_request,  _response, null);
+    }
+
 
     public ViewObject(HttpServletRequest _request, HttpServletResponse _response, Class c) {
 	super(_request,_response);
-
+	
 	//	actorUserName = self ? user :  getString(USER_NAME, null);
 	long listId = getLong("id", -1);
-	if (listId<0) {
-	    errmsg="PresentedList ID not specified";
-	    error=true;
-	    return;
-	}
 
 	EntityManager em = sd.getEM();
 	try {
-	    //main.request.getParameter(name) 
-	    //if (actorUserName==null) throw new WebException("No user name specified!");
-	    //	    actor = User.findByName(em, actorUserName);
-  
-	    //	    if (actor == null) {
-	    //		error = true;
-	    //		errmsg = "No user with user_name="+ actorUserName+" has been registered";
-	    //		return;
-	    //	    }
+	    if (c==null) {
+		String cName = getString("class", null);
+		if (cName==null) throw new WebException("No class specified");
+		if (cName.indexOf(".")<0) {
+		    cName = "edu.rutgers.axs.sql." + cName;
+		}
+		c = Class.forName(cName);
+	    }
 
-	    li = (OurTable)em.find(c, listId);
-	    if (li==null)  throw new WebException("No object of the type "+c+
+	    if (listId > 0) {
+		li = (OurTable)em.find(c, listId);
+		if (li==null)  throw new WebException("No object of the type "+c+
 						  " with id=" + listId + " has been found");
+	    } else if (c.equals(User.class)) {
+		String name = getString("name", null);
+		if (name != null) {
+		    li = User.findByName(em, name);
+		} else throw new WebException("Object id (or name) not specified");
+	    } else {
+		throw new WebException("Object id (or name) not specified");
+	    }
 
 	    li.fetchVecs();
 	}  catch (Exception _e) {

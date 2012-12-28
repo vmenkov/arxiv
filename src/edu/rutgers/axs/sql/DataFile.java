@@ -26,7 +26,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     /** Link to the user on wose behalf the task is conducted */
     //@ManyToOne
     @Column(nullable=false)
-    @Display(editable=false, order=2) 
+	@Display(editable=false, order=2, link="viewUser.jsp?name=") 
     //User user;
 	@Basic String user;
  
@@ -58,7 +58,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     /** The task id of the Task pursuant to which the file was created,
 	If the file was not created via the TaskManager, -1 (or 0) will be stored here.
      */
-    @Basic @Display(editable=false, order=4) @Column(nullable=false)
+    @Basic @Display(editable=false, order=4, link="viewObject.jsp?class=Task&id=") @Column(nullable=false)
 	long task;
     public  long getTask() { return task; }
     public void setTask(long x) { task = x; }
@@ -183,7 +183,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     */
  
     /** Set by the web server, if applicable */
-    @ManyToOne @Display(order=8, editable=false)
+    @ManyToOne @Display(order=8, editable=false, link="viewObject.jsp?class=DataFile&id=")
 	private DataFile inputFile=null;
     public DataFile getInputFile() { return inputFile; }
     public void setInputFile( DataFile x) { inputFile = x; }

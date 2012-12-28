@@ -371,6 +371,8 @@ public class Reflect {
 	This is because in MySQL booleans are "synonyms for TINYINT(1)".
 	http://dev.mysql.com/doc/refman/5.0/en/numeric-type-overview.html
 
+	<P> Arrays and other collections are printed elementwise if it
+	can be done consicely enough; otherwise, just element count
      */
     public static String formatAsString(Object val, String quote) {
 	boolean needQuotes = 
@@ -398,19 +400,32 @@ public class Reflect {
 	    else {
 		int nullCnt = 0, objCnt=0;
 		Class oc=null;
+		boolean printable = true;
+
+		String q = "";
 		for(Object o: col) {
 		    if (o==null) nullCnt++;
 		    else {
 			objCnt++;
-			if (oc==null) oc = o.getClass();
-			else oc = commonParent(oc, o.getClass());
+			oc = (oc==null) ? o.getClass() : 
+			    commonParent(oc, o.getClass());
+			printable = printable &&
+			    (o instanceof Enum || o instanceof Number || o instanceof Boolean || o instanceof String ||
+			     o instanceof Role);
+		    }
+		    if (printable) {
+			q += (q.length()>0? " ":"") + formatAsString(o,  quote);
 		    }
 		}
-		s = "[";
-		if (objCnt>0)  s += "" + objCnt + " " + 
+		if (printable) {
+		    s= "[" + q + "]";
+		} else {
+		    s = "[";
+		    if (objCnt>0)  s += "" + objCnt + " " + 
 				   (oc.equals(Object.class)? "objects" : "x " + oc.getName());
-		if (nullCnt>0)  s += " " + nullCnt + " x null";
-		s += "]";
+		    if (nullCnt>0)  s += " " + nullCnt + " x null";
+		    s += "]";
+		}
 	    }
 	} else {
 	    // FIXME: there should be a better way to escape double quotes
