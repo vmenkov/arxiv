@@ -244,7 +244,7 @@ public class Daily {
 	     final int cid = a.getEe4classId();
 	     EE4DocClass c = id2dc.get(new Integer(cid));
 	     EE4Uci ee4uci = h.get(new Integer(cid));
-	     double alpha=ee4uci.getAlpha(),  beta=ee4uci.getBeta();
+	     double alpha=ee4uci.getAlpha(),  beta=ee4uci.getBeta(); //!
 	     double gamma = 1 - 1.0 /(c.getM()*c.T +1.0);
 	     double mu = computeMu(alpha+beta, ee4u.getC(), gamma);
 	     double score = alpha/(alpha + beta);
@@ -287,7 +287,8 @@ public class Daily {
 	return d+1;
     }
 
-    /** A one-off method, to create the 26 dummy classes. */
+    /** A one-off method, to create the 26 dummy document classes
+	in the EE4DocClass table. */
     static void initClasses() {
 	EntityManager em  = Main.getEM();
 	em.getTransaction().begin();
@@ -300,8 +301,22 @@ public class Daily {
 
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();
-	//initClasses();
-	updates();
+	
+	if (argv.length == 0) {
+	    System.out.println("Usage: Daily [init|update]");
+	    return;
+	}
+
+
+	String cmd = argv[0];
+	if (cmd.equals("init")) {
+	    initClasses();
+	} else if (cmd.equals("update")) {
+	    updates();
+	} else {
+	    System.out.println("Unknown command: " + cmd);
+	}
+
     }
 
 }
