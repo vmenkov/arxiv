@@ -23,7 +23,7 @@
 <p>
 <h1>Object view</h1>
 
-<p>Class<%= li.getClass() %> , id = <em><%= li.getLongId() %></em></p>
+<p>Class <%= li.getClass().getName() %>, id = <em><%= li.getLongId() %></em></p>
 
 <h2>Summary</h2>
 <p>
@@ -32,8 +32,14 @@
 <%= Reflect.htmlRow(li, true) %>
 </table></p>
 
+<p>
+<% if (li instanceof Invitation) { %>
+<a href="../admin/editInvitationForm.jsp?id=<%=li.getLongId()%>">
+Edit this invitation</p></a>
+<% } %>
 
-<hr> <p>System message: <%= main.infomsg%> </p> <% } %>
+<hr> <p><small>System message: <%= main.infomsg%> </small></p> 
+<% } %>
 
 <icd:RU/>
 

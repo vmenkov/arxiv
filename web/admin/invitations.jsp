@@ -54,12 +54,18 @@ email.  </p>
 </tr>
 <% for(int i=0; i<main.list.size(); i++) {
    Invitation inv = main.list.elementAt(i);
+   int uCnt= main.userCnt(inv.getId());
    String bgColor = inv.getOpen()? "#E0FFE0" :  "#FFE0E0";
 %>
 <tr style="background:<%=bgColor%>;">
 <%= Reflect.htmlRow(inv, false, true) %>
 <td>
-<%= main.userCnt(inv.getId()) %>
+<% if (uCnt==0) { %> 0 <%  } else { %>
+<form action="../tools/QueryServlet" method=post>
+<input type=hidden name="header" value="true">
+<input type=hidden name="query" value="select u from User u where u.invitation=<%=inv.getId()%>">
+<input type=submit value="<%=uCnt%>"></form>
+<%}%>
 </td>
 <td>
 <a href="editInvitationForm.jsp?id=<%=inv.getId()%>">Edit</a>

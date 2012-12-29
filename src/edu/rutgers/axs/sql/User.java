@@ -176,7 +176,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 
     /** The ID of the invitation (if any) pursuant to which the user
 	entry was created. */
-    @Basic  @Display(order=11.2,editable=false) @Column(nullable=true)
+    @Basic  @Display(order=11.2,editable=false, link="viewObject.jsp?class=Invitation&id=") @Column(nullable=true)
 	private long invitation;
     public  long getInvitation() { return invitation; }
     public void setInvitation( long x) { invitation = x; }

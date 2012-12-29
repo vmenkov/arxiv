@@ -81,8 +81,7 @@ public class QueryServlet extends HttpServlet {
     }
 
 
-
-    public void	doPost(HttpServletRequest request,HttpServletResponse response) {
+    public void	service(HttpServletRequest request,HttpServletResponse response) {
 	EntityManager em = null;
 
 	try {

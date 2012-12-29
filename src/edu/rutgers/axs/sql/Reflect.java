@@ -396,7 +396,7 @@ public class Reflect {
 	    }
 	} else if (val instanceof Collection) {
 	    Collection col  = (Collection)val;
-	    if (col.size()==0) s="[empty]";
+	    if (col.size()==0) s="[]";
 	    else {
 		int nullCnt = 0, objCnt=0;
 		Class oc=null;
