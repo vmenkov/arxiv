@@ -29,13 +29,17 @@ import edu.rutgers.axs.web.WebException;
     //    public double getC() { return c; }
     //    void setC(double x) { c=x; }
 
+    private static String ccMsg(int x) {
+	return "at least 1 in "+x+" papers shown should be interesting";
+    }
+
     public static enum CCode  {
-	@EA("Selective: 1/2")  C2, 
-	@EA("1/4")  C4, 
-	@EA("Balanced: 1/8") C8, 
-	@EA("1/16")  C16, 
-	@EA("Inclusive: 1/32")  C32, 
-	@EA("Show all")  ALL;
+	@EA("Selective: at least 1 in 2 papers shown should be interesting")  C2, 
+	    @EA("at least 1 in 4 papers shown should be interesting")  C4, 
+	    @EA("Balanced: at least 1 in 8 papers shown should be interesting") C8, 
+	    @EA("at least 1 in 16 papers shown should be interesting")  C16, 
+	    @EA("Inclusive: at least 1 in 32 papers shown should be interesting")  C32, 
+	    @EA("Show all: show all papers in my selected categories")  ALL;
 	public double doubleValue() {
 	    if (this==ALL) return 0;
 	    else if (this==C32) return 1.0/32;
