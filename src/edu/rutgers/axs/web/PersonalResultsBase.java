@@ -133,5 +133,9 @@ public class PersonalResultsBase extends ResultsBase {
 	return isSelf? actor.getProgram() : null;
     }
 
+    /** Testing only */
+    PersonalResultsBase() {}
+
+
 
 }

@@ -88,4 +88,7 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
      */
     public String excludedPagesMsg() { return ""; }
 
+    /** Testing only */
+    ViewSuggestionsBase() {}
+
 }

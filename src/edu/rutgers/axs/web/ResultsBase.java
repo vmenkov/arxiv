@@ -396,5 +396,9 @@ public class ResultsBase {
 	return null;
     }
 
+   /** Testing only */
+    ResultsBase() { cp = ""; }
+
+
 }
 

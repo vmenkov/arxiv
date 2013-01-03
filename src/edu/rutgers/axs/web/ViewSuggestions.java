@@ -94,12 +94,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    }
 
 	    if (actorUserName==null) {
-		error = true;
-		errmsg = "No user name specified!";
-		return;
+		throw new WebException("No user name specified!");
 	    }
-
 	    actor=User.findByName(em, actorUserName);
+	    if (actor==null) {
+		throw new WebException("There is no user named '"+ actorUserName+"'");
+	    }
 	    User.Program program = actor.getProgram();
 	    if (program==null) {
 		throw new WebException("Not known what experiment plan user "+actor+" is enrolled into");
@@ -233,7 +233,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
      than the general view suggestion page, which has lots of special
      modes and options. */
     private void initMainPage(EntityManager em, User actor) throws Exception {
-	if (error || user==null) return; // no list needed
+	if (error || actor==null) return; // no list needed
 	// disregard most of params
 	User.Program program = actor.getProgram();
 	teamDraft = (program==User.Program.SET_BASED && actor.getDay()==User.Day.EVAL);
@@ -264,10 +264,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
 
 	    Date since = SearchResults.daysAgo(Scheduler.maxRange);
+	    System.out.println("calling initList OTF");
 	    initList(null, startat, since, em, true);
 
 	} else {
 	    days = df.getDays();
+	    System.out.println("calling initList(df=" + df.getId() + ")");
 	    initList(df, startat, null, em, true);
 	}
 	    	    
@@ -503,6 +505,56 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	}
 	return s;
     }
+
+    /** testing only */
+    private ViewSuggestions(String uname) throws Exception {
+
+	actorUserName=uname;
+	isSelf=false;
+
+	EntityManager em =  Main.getEM();
+	try {
+	    actor=User.findByName(em, actorUserName);
+	    if (actor==null) {
+		throw new WebException("There is no user named '"+ actorUserName+"'");
+	    }
+	    User.Program program = actor.getProgram();
+	    if (program==null) {
+		throw new WebException("Not known what experiment plan user "+actor+" is enrolled into");
+	    } else if (program==User.Program.SET_BASED) { // fine!
+	    } else if (program.needBernoulli()) {
+		throw new WebException("User "+actor+" is enrolled into Bernoulli plan, not set-based!");
+	    } else if (program==User.Program.EE4) {
+	    } else {
+		throw new WebException("This tool does not support suggestion list view for program=" + program);
+	    }
+
+	    System.out.println("error=" + error+"; calling iMP(" + actor.getUser_name() +")");
+	    initMainPage(em,  actor);
+
+	    System.out.println("sr=" + sr);
+
+	}  catch (Exception _e) {
+	    throw _e;
+	} finally {
+	    ResultsBase.ensureClosed( em, true);
+	}
+
+
+    }
+
+    /** testing */
+    static public void main(String argv[]) throws Exception {
+	if (argv.length!=1) {
+	    System.out.println("Usage: ViewSuggestions uname");
+	    return;
+	}
+	ViewSuggestions vs = new ViewSuggestions(argv[0]);
+    }
+
+
+	  
+
 
 }
 
