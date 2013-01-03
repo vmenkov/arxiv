@@ -41,7 +41,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
     /** The type of the requested suggestion list, as specified by the
      * HTTP query string*/
-    public DataFile.Type mode= DataFile.Type.LINEAR_SUGGESTIONS_1;
+    public DataFile.Type mode= 	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
     /** Date range on which is the list should be based. (0=all time). */
     public int days= 0;
     /** Max length to display. (Note that the suggestion list
@@ -153,16 +153,20 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    em.getTransaction().begin();
 	    
 	    if (requestedFile!=null) {
+		infomsg += "vs: call DataFile.getLatestFile(em, actorUserName="+actorUserName+", mode="+mode+", days="+days+",requestedFile ="+requestedFile+")<br>\n";
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else if (basedon!=null) {
 		// look for the most recent sugestion list based on
 		// the specified user profile file...
+		infomsg += "vs: call DataFile.getLatestFile(em, actorUserName="+actorUserName+", mode="+mode+", days="+days+", basedon="+basedon+")<br>\n";
 		df = DataFile.getLatestFileBasedOn(em, actorUserName, 
 						   mode, days, basedon);
 	    } else if (basedonType!=null) {
+		infomsg += "vs: call DataFile.getLatestFile(em, actorUserName="+actorUserName+", mode="+mode+", days="+days+", basedonType="+basedonType+")<br>\n";
 		df = DataFile.getLatestFileBasedOn(em, actorUserName, 
 						   mode, days, basedonType);
 	    } else {
+		infomsg += "vs: call DataFile.getLatestFile(em, actorUserName="+actorUserName+", mode="+mode+", days="+days+")<br>\n";
 		df = DataFile.getLatestFile(em, actorUserName, mode, days);
 	    }
 
@@ -318,7 +322,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	if (df==null) {
 
-	    if (mode== DataFile.Type.LINEAR_SUGGESTIONS_1) {
+	    if (mode==	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) {
 
 		// The on-the-fly mode: simply generate and use cat search results for now
 		sr = catSearch(searcher, since);    
@@ -445,7 +449,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		s += researcherSpan(q);
 	    }
 
-	    if (mode==DataFile.Type.LINEAR_SUGGESTIONS_1) {
+	    if (mode==	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) {
 		String q = "Merge=" + teamDraft;
 		s += researcherP(q);
 	    }
