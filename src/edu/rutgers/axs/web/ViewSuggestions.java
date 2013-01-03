@@ -77,6 +77,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
      */
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
+
+	mainPage =getBoolean("main", mainPage);
+
 	if (error) return; // authentication error?
 
 	EntityManager em = sd.getEM();
@@ -118,6 +121,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		initList(df, startat, null, em);
 		return;
 	    } else if (mainPage) {
+		infomsg += "initMainPage<br>\n";
 		initMainPage(em, actor);
 		return;
 	    } 
@@ -243,6 +247,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
 	
 	if (expert || force) throw new WebException("The 'expert' or 'force' mode cannot be used on the main page");
+	
+	infomsg += "main: mode=" + mode+"<br>\n";
+	infomsg += "main: call DataFile.getLatestFile(em, actorUserName="+actorUserName+", mode="+mode+")<br>\n";
 
 	// Look for the most recent sugestion list based on
 	// the specified user profile file... 
@@ -256,6 +263,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	/** Disregard source type (the initial file, created "on the fly",
 	    has no source at all!) */
 	df = DataFile.getLatestFile(em, actorUserName, mode);
+	infomsg += "main: df=" + df+"<br>\n";
 
 	onTheFly = (df==null);
        
