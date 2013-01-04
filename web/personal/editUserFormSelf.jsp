@@ -49,7 +49,20 @@ agreed to participate in the follow-up interview; please see the relevant
 
 <% if (u.getProgram()==User.Program.EE4) { 
 %>
-<h3>Recommendation generation preferences</h3>
+<h3>Recommendation preferences</h3>
+
+<p> Here you can adjust the selectivity of the recommendation
+system. Setting the selectivity higher, e.g., to <tt>Selective (at least 1
+in 2 papers shown should be interesting)</tt>, causes the system to more
+selective, eliminating potentially uninteresting papers more
+aggressively at the risk of missing some interesting ones.  Setting
+the selectivity lower, e.g., to <tt>Inclusive (at least 1 in 32 papers
+shown should be interesting)</tt>, causes the system to be less selective,
+and to show more papers, potentially uncovering more interesting
+papers but also showing more uninteresting ones.  We suggest a default
+of <tt>1 in 8</tt>.  </p>
+
+
 	<table>
 	<tr>
 			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="days">Selectivity

@@ -378,15 +378,15 @@ the use of audio recording for the telephone interview</strong>
 <h3>Recommendation preferences</h3>
 <p>
 The selectivity of the recommendation system may be set here, or also
-altered later.  Setting the selectivity higher, e.g., to Selective (at
-least 1 in 2 papers shown should be interesting), causes the system to
+altered later.  Setting the selectivity higher, e.g., to <tt>Selective (at
+least 1 in 2 papers shown should be interesting),</tt> causes the system to
 more selective, eliminating potentially uninteresting papers more
 aggressively at the risk of missing some interesting ones.  Setting
-the selectivity lower, e.g., to Inclusive (at least 1 in 32 papers
-shown should be interesting), causes the system to be less selective,
+the selectivity lower, e.g., to <tt>Inclusive (at least 1 in 32 papers
+shown should be interesting),</tt> causes the system to be less selective,
 and to show more papers, potentially uncovering more interesting
 papers but also showing more uninteresting ones.  We suggest a default
-of 1 in 8.
+of <tt>1 in 8</tt>.
 </p>
 <p>
 	<table>

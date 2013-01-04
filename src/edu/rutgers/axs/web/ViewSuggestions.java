@@ -271,6 +271,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	onTheFly = (df==null);
        
+	String q= "otf " + onTheFly ;
+
 	if (onTheFly) {
 	    //	    days =actor.getDays();
 	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
@@ -315,6 +317,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// "cancel" a "Don't show again" request
 	HashMap<String, Action> exclusions = 
 	    (actor==null) ? new HashMap<String, Action>() :
+	    (actor.getProgram()==User.Program.EE4) ?
+	    User.union(actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN, Action.Op.INTERESTING_AND_NEW}),
+		       actor.getFolder()):
+	    
 	    actor.getExcludeViewedArticles()?
 	    actor.getActionHashMap() :
 	    User.union(actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN}),
@@ -469,7 +475,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		" articles from the list ";
 	    s += sr.needPrev? "(including previous pages)": "";
 	    
-	    if (excludeViewed) { 
+	    if (excludeViewed) { // only in SET_BASED
 		s += " because you have earlier asked not to show them anymore, or because you have already viewed them. To see the complete list of the pages you've viewed or rated, please refer to your " +
 		    Html.a( "personal/viewActionsSelfDetailed.jsp",
 			    "activity history") +
@@ -484,10 +490,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		    Html.a("personal/viewFolder.jsp", "personal folder") +
 		    ".</p>\n";
 
+		if (actor.getProgram()==User.Program.SET_BASED) {
 		s += "<p>Note: You can choose to have already-viewed pages removed from your recommendation lists. To do this, go to your " +
 		    Html.a( "personal/editUserFormSelf.jsp", "settings") +
 		    " and toggle the \"exclude already-viewed articles\" flag.</p>\n";
-		
+		}		
+
 	    } 
 	    s += "</small></div>\n";
 	}
