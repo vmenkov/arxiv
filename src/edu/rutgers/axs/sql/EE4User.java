@@ -34,22 +34,20 @@ import edu.rutgers.axs.web.WebException;
     }
 
     public static enum CCode  {
-	@EA("Selective: at least 1 in 2 papers shown should be interesting")  C2, 
+	@EA("Selective: at least 1 in 2 papers shown should be interesting") C2,
 	    @EA("at least 1 in 4 papers shown should be interesting")  C4, 
 	    @EA("Balanced: at least 1 in 8 papers shown should be interesting") C8, 
 	    @EA("at least 1 in 16 papers shown should be interesting")  C16, 
 	    @EA("Inclusive: at least 1 in 32 papers shown should be interesting")  C32, 
 	    @EA("Show all: show all papers in my selected categories")  ALL;
+	static final public double[] allValues={0.5, 0.25, 0.125, 1.0/16, 1.0/32, 0};
+
 	public double doubleValue() {
-	    if (this==ALL) return 0;
-	    else if (this==C32) return 1.0/32;
-	    else if (this==C16) return 1.0/16;
-	    else if (this==C8) return 1.0/8;
-	    else if (this==C4) return 1.0/4;
-	    else if (this==C2) return 0.5;
-	    return 0;
+	    return allValues[ this.ordinal()];
 	}
+
     }
+
 
 
     @Display(editable=true, order=11, alt="Selectivity")

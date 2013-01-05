@@ -172,9 +172,9 @@ public class Daily {
     /** The mu-function.
 	FIMXE: need the actual formula, or the table!
      */
-    static private double computeMu(double ab, double c, double gamma) {
-	return c;
-    }
+    //    static private double computeMu(double ab, double c, double gamma) {
+    //	return c;
+    //    }
 
 
 
@@ -249,9 +249,13 @@ public class Daily {
 	     final int cid = a.getEe4classId();
 	     EE4DocClass c = id2dc.get(new Integer(cid));
 	     EE4Uci ee4uci = h.get(new Integer(cid));
-	     double alpha=ee4uci.getAlpha(),  beta=ee4uci.getBeta(); //!
-	     double gamma = 1 - 1.0 /(c.getM()*c.T +1.0);
-	     double mu = computeMu(alpha+beta, ee4u.getC(), gamma);
+	     double alpha=ee4uci.getAlpha(),  beta=ee4uci.getBeta(); 
+
+	     //double gamma = EE4Mu.gamma(c.getM());
+	     //double mu = computeMu(alpha+beta, ee4u.getC(), gamma);
+
+	     double mu =EE4Mu.getMu(alpha+beta,  ee4u.getCCode(), c.getM());
+
 	     double score = alpha/(alpha + beta);
 	     if (score >= mu) { // add to list
 		 results.add(new ArxivScoreDoc(sd).setScore(score));
