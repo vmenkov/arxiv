@@ -301,7 +301,7 @@ public class ResultsBase {
 	    //			  att("class", "add") +
 	    RatingButton.att("title", title) +
 	    RatingButton.att( "onclick", jsOn) + ">" +
-	    "Expand" +	    "</a>";
+	    "Expand" +	    "</a>&nbsp;&nbsp;";
 
 	String jsOff = "flipCheckedOff('#"+id+"')";
 

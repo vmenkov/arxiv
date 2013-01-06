@@ -306,7 +306,11 @@ public class RatingButton //implements Cloneable //extends HTML
     static private String judgmentBarHTML_EE4(String cp, ArticleEntry e, User.Program program, 
 					 int flags, ActionSource asrc) {
   
-	RatingButton [] buttons = ee4RatingButtons;
+	// Rating buttons: normally present, but absent in some situations
+	// (folder view in EE4)
+	RatingButton [] buttons = ((flags & NEED_RM_FOLDER)!=0)?
+	    new RatingButton [0]: ee4RatingButtons;
+
 	String aid = e.id;
 	boolean willRate=false;
 	String s= "<div class=\"bar_instructions\">\n";

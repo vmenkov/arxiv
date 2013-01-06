@@ -532,6 +532,20 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return folder;
     }
 
+    public int getFolderSize() {
+	Action.Op[] ops =  {Action.Op.COPY_TO_MY_FOLDER,
+			    Action.Op.REMOVE_FROM_MY_FOLDER};   
+	HashMap<String, Action> folder = getActionHashMap(ops);
+	Set<String> keys = folder.keySet();
+	int cnt=0;
+	for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
+	    String aid = it.next();
+	    if (folder.get(aid).getOp()==Action.Op.COPY_TO_MY_FOLDER) cnt++;
+	}
+	return cnt;
+    }
+
+
     /** @param p ArXiv article id */
     public Action addAction(EntityManager em, String p, Action.Op op, ActionSource asrc) {
 	Article a = Article.getArticleAlways(em,p,false); // no commit needed here
