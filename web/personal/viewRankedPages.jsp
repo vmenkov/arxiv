@@ -26,8 +26,11 @@
 
 <script type="text/javascript" src="../_technical/scripts/jquery.js"></script>
 <script type="text/javascript" src="../_technical/scripts/jquery-transitions.js"></script>
+<script type="text/javascript">
+<%= main.headJS() %>
+</script>
 </head>
-<body>
+<body onload="<%=main.onLoadJsCode()%>" >
 
 <h1>Personal ranked list of viewed articles for user <em><%= main.actorUserName %></em>
 </h1>

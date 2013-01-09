@@ -74,6 +74,12 @@ public class ArticleEntry {
 	populateOtherFields( doc);
     }
 
+    public void populateOtherFields(IndexSearcher searcher) throws IOException {
+	docno = getCorrectDocno(searcher);
+	Document doc = searcher.getIndexReader().document(docno);
+	populateOtherFields(doc);
+    }
+
     public ArticleEntry(int _i, Document doc, int _docno) {
 	this(_i, doc, _docno, 0);
     }
@@ -90,8 +96,10 @@ public class ArticleEntry {
     }
     
 
-    /** Dummy constructor, leaves most fields (included docno) blank */
-    private ArticleEntry(int _i, String aid) {
+    /** Dummy constructor, leaves most fields (included docno) blank. Typically
+     should be followed by looking up the Document in Lucene, and calling
+     populateOtherFields(doc) */
+    public ArticleEntry(int _i, String aid) {
  	i = _i;
 	id=aid;
 	idline="arXiv:" + id;

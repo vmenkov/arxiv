@@ -13,8 +13,13 @@
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <title>Interaction history for user <%= main.actorUserName %>
 </title>
+
+<script type="text/javascript">
+<%= main.headJS() %>
+</script>
 </head>
-<body>
+
+<body onload="<%=main.onLoadJsCode()%>" >
 
 <h1>Interaction history for user <em><%= main.actorUserName %></em>
 </h1>

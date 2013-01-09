@@ -5,6 +5,9 @@ import java.util.*;
 import java.text.*;
 import javax.persistence.*;
 
+import org.apache.lucene.document.*;
+import org.apache.lucene.search.IndexSearcher;
+
 import edu.cornell.cs.osmot.options.Options;
 import edu.rutgers.axs.web.ArticleEntry;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
@@ -113,10 +116,25 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	ArticleEntries.
      */
     public void fillArticleList(Vector<ArticleEntry> entries) {
+	docs.setSize(0);
 	for(int rank=0; rank<entries.size(); rank++) {
 	    PresentedListEntry le =  new PresentedListEntry(entries.elementAt(rank));
 	    docs.add( le ); // FIXME: should not we use get/set?
 	}
+    }
+
+    /**
+       @param entries to be filled
+    */
+    public Vector<ArticleEntry> toArticleList( Vector<ArticleEntry> entries, IndexSearcher searcher) throws IOException {
+	if (entries==null) entries=new  Vector<ArticleEntry>();
+	entries.setSize(0);
+	for(PresentedListEntry le: docs) {	    
+	    ArticleEntry e = le.toArticleEntry();
+	    e.populateOtherFields(searcher);
+	    entries.add(e);
+	}
+	return entries;
     }
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 

@@ -62,6 +62,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
     private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
 
+   
+
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
     }
@@ -69,6 +71,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     private static enum Mode {
 	SUG2, CAT_SEARCH, TEAM_DRAFT;
     };
+
 
 
     /**
@@ -103,6 +106,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    if (actor==null) {
 		throw new WebException("There is no user named '"+ actorUserName+"'");
 	    }
+	    folderSize=actor.getFolderSize();
+
 	    User.Program program = actor.getProgram();
 	    if (program==null) {
 		throw new WebException("Not known what experiment plan user "+actor+" is enrolled into");

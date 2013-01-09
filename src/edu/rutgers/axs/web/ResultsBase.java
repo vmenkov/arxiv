@@ -263,7 +263,7 @@ public class ResultsBase {
 	return  "<a href=\"" + url+ "\">"+body+"</a>";	
     }
 
-    /** Ass  RatingButton.NEED_COME_BACK_TEXT to this to provide for a 
+    /** Add  RatingButton.NEED_COME_BACK_TEXT to this to provide for a 
 	"come back here to judge" text. */
     private static int defaultFlags = RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER;
 
@@ -396,9 +396,16 @@ public class ResultsBase {
 	return null;
     }
 
+    /** JS to be inserted into the HTML doc's head. The method is overridden
+	by derived classes as needed. */
+    public String headJS() {
+	return "";
+    }
+
    /** Testing only */
     ResultsBase() { cp = ""; }
 
+    
 
 }
 

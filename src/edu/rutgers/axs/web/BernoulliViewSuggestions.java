@@ -48,6 +48,9 @@ public class BernoulliViewSuggestions extends ViewSuggestionsBase {
 	    startat = (int)Tools.getLong(request, STARTAT,0);
 	    actor=User.findByName(em, actorUserName);
 
+
+	    folderSize=actor.getFolderSize();
+
 	    mode = (User.Program)getEnum(User.Program.class, MODE, actor.getProgram());
 	    if (!mode.needBernoulli()) mode= User.Program.BERNOULLI_EXPLORATION;
 

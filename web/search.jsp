@@ -40,18 +40,17 @@
 <script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>
 <script type="text/javascript" src="scripts/blur.js"></script>
 <script type="text/javascript" src="scripts/buttons_control.js"></script>
-<script type="text/javascript">
-function StartScripts() { 
-BlurLinks();
-}
-window.onload = StartScripts;
-</script>
 
 <!-- #EndEditable -->
 
+<script type="text/javascript">
+<%= main.headJS() %>
+</script>
+
 </head>
 
-<body>
+<body onload="<%=main.onLoadJsCode()%>" >
+
 <!--
 <script type="text/javascript">function Gomenu(){return}</script>
 <script type="text/javascript" src="../menu/menu_var.js"></script>

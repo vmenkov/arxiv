@@ -1,7 +1,7 @@
 package edu.rutgers.axs.sql;
 
 import java.io.*;
-//import java.util.*;
+import java.util.*;
 import java.util.regex.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -76,14 +76,23 @@ public class ActionSource {
     /** Produces a component to be added to the query string, containing
 	action source information. This is passed to JudgmentServlet etc. */
     public String toQueryString() {
-	String s="";	       
-	if (src==null || src==Action.Source.UNKNOWN) return s;
-	s += "&"+SRC +"=" + src;
-	if (presentedListId >0) {
-	    s += "&"+PL +"=" + presentedListId;
+	String s="";
+	for(String[] p:  toQueryPairs()) {
+	    s += "&"+p[0] +"=" + p[1];
 	}
 	return s;
     }
+
+    public Vector<String[]> toQueryPairs() {
+	Vector<String[]> v= new Vector<String[]>(2);
+	if (src==null || src==Action.Source.UNKNOWN) return v;
+	v.add( new String[] {SRC, ""+src});
+	if (presentedListId >0) {
+	    v.add( new String[]{PL, ""+presentedListId});
+	}
+	return v;
+    }
+
 
     /** This is set and used by FilterServlet only. */
     public boolean filterServletMustInheritSrc=false;

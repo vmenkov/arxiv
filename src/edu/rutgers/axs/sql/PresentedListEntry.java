@@ -74,6 +74,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	setAid(e.id);
     }
 
+    /** Returns a "dummy" ArticleEntry based on this PresentedListEntry
+     */
+    ArticleEntry toArticleEntry() {
+	return new ArticleEntry(getRank(), getAid());
+    }
     
 
 }

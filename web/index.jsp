@@ -40,19 +40,19 @@
 <!-- ***  [if IE]>
 <link rel="stylesheet" type="text/css" href="styles/index-ie.css" />
 <[endif] ***  -->
-<script type="text/javascript">
-
-function StartScripts() { 
-BlurLinks();
-}
-
+<!-- script type="text/javascript">
+function StartScripts() { BlurLinks();}
 window.onload = StartScripts;
+</script -->
+
+<script type="text/javascript">
+<%= main.headJS() %>
 </script>
 
 <!-- #EndEditable -->
 </head>
 
-<body> <!-- onload="alert('Hi there!')" -->
+<body onload="<%=main.onLoadJsCode()%>" >
 
 <div id="upper_frame">
 
@@ -111,7 +111,7 @@ window.onload = StartScripts;
     
       <a class="button" href="#sug" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Recommended for you</a>
 
-      <a class="button" href="personal/viewFolder.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your personal folder</a>
+      <a class="button" href="personal/viewFolder.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your personal folder&nbsp;<span id="folderSize">(<%=main.folderSize%>)</span></a>
 
      <a class="button" href="personal/viewActionsSelfDetailed.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Past activity</a>
 

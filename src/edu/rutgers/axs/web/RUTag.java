@@ -29,7 +29,7 @@ public class RUTag extends TagSupport {
 			(user==null? "Not logged in" : 
 			 (user.equals(SessionData.defaultUser))? "Working as user <em>" + user + "</em>" :
 			 "Logged in as user <em>" + user +
-			 "</em> (<a href=\""+cp+"/personal/index.jsp\">My account</a>) (<a href=\""+cp+"/LogoutServlet\">Log out</a>)"
+			 "</em> (<a href=\""+cp+"/personal/editUserFormSelf.jsp\">My account</a>) (<a href=\""+cp+"/LogoutServlet\">Log out</a>)"
 ) +
 			"</div>");
 	    out.println("<hr><div align=center>Rutgers University <a href=\""+cp+"\">My.arXiv</a>. Application ver. "+Version.getVersion()+", "+Version.date+"</div>");

@@ -75,7 +75,8 @@ import java.lang.reflect.*;
 	the numeric code, not string, in the SQL database!
     */
     public static enum Op {
-	/** No operation - this should not normally be recorded */
+	/** No operation - this is just used to get a response, and
+	 * should not be recorded */
 	NONE,
 	    /** "Expand details" in a list page */
 	    EXPAND_ABSTRACT,  // +5   (no. 1)

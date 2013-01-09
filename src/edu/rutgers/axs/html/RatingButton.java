@@ -19,32 +19,35 @@ import edu.rutgers.axs.sql.*;
 public class RatingButton //implements Cloneable //extends HTML
 {
    
-    static final Action.Op[] ops = {
-	/** Types for SetBased recommender (
-	Action.Op.INTERESTING_AND_NEW,
-				    //Action.Op.INTERESTING_BUT_SEEN_TODAY,
-		       Action.Op.INTERESTING_BUT_KNOWN,
-		       Action.Op.USELESS;
-		       /** For Exploration Engine v4 */
-	//	Action.Op.EE4.INTERESTING;
-};
 
+    //List<String> stooges = Arrays.asList("Larry", "Moe", "Curly");
+
+    //    static HashSet<Action.Op> causeHiding = new HashSet<Action.Op>
+    //	(Arrays.asList(
+								   
+
+   
     Action.Op op;
     String text, descr, imgSrc;
     String checkedText;
+
+    /** All buttons which have this flag on form a "group"; if one of them
+	is flipped on, other's will go off. */
+    boolean inGroup=true;
 
     /** Clicking on the button will cause the article entry removed from the display */
     boolean willRemove=false;
     
     private RatingButton(Action.Op _op, String _text, String _descr, String _imgSrc) {
-	this(_op,_text,  _descr, _imgSrc, false);
+	this(_op,_text,  _descr, _imgSrc, true, false);
     }
     private RatingButton(Action.Op _op, String _text, String _descr, String _imgSrc,
-			 boolean _willRemove) {
+			 boolean _inGroup, boolean _willRemove) {
 	op = _op;
 	checkedText = text= _text;
 	descr= _descr;
 	imgSrc= _imgSrc;
+	inGroup = _inGroup;
 	willRemove = _willRemove;
     }
 
@@ -52,8 +55,18 @@ public class RatingButton //implements Cloneable //extends HTML
 
     /** The full panel of rating buttons, used under each article entry
      with the SetBased recommender. */
-    private
-	static final RatingButton[] allRatingButtons = {
+    private static final RatingButton[] allRatingButtons = {
+	(new RatingButton( Action.Op.COPY_TO_MY_FOLDER,
+			  "Move to my folder",
+			  "Move this document to your personal folder. It will not show in recommendations in the future.",
+			   "folder_page.png",  false, true)).
+	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)"),
+
+	(new RatingButton(  Action.Op.REMOVE_FROM_MY_FOLDER,
+			   "Remove from my folder",
+			   "Remove this document from your personal folder",
+			    "bin.png", false, true)).setCheckedText("(Removed from your folder)"),
+
 	new RatingButton(Action.Op.INTERESTING_AND_NEW,
 			 "Interesting and new",
 			 "Mark this document as interesting, relevant, and new.",
@@ -69,20 +82,43 @@ public class RatingButton //implements Cloneable //extends HTML
 	new RatingButton(Action.Op.USELESS,
 			 "Not useful for me",
 			 "Mark this document as useles or irrelevant for you.",
-			 "page_down.png")
+			 "page_down.png"),
+
+	new RatingButton( Action.Op.DONT_SHOW_AGAIN,
+			  "Not useful, remove",
+			  "Permanently remove this document from recommendations and search results",
+			  "bin.png" ,  false, true)
     };
 
 
     static final RatingButton[] ee4RatingButtons = {
+	(new RatingButton( Action.Op.COPY_TO_MY_FOLDER,
+			  "Interesting: move to my folder, remove from list",
+			  "This document is interesting. Move this document to your personal folder. It will not show in recommendations in the future.",
+			   "folder_page.png", false, true)).
+	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)"),
+
+	(new RatingButton(  Action.Op.REMOVE_FROM_MY_FOLDER,
+			   "Remove from my folder",
+			   "Remove this document from your personal folder",
+			    "bin.png", false, true)).setCheckedText("(Removed from your folder)"),
+
        	(new RatingButton(Action.Op.INTERESTING_AND_NEW,
 			 "Interesting; remove from list",
 			 "This document is interesting. It will not show in recommendations in the future.",
-			  "page_up.png", true)).
-	setCheckedText("(Interesting. Won't show in future recommendations)")
+			  "page_up.png", false, true)).
+	setCheckedText("(Interesting. Won't show in future recommendations)"),
+
+	new RatingButton( Action.Op.DONT_SHOW_AGAIN,
+			  "Not interesting; remove from list",
+			  "Permanently remove this document from recommendations and search results",
+			  "bin.png" ,  false, true).
+	setCheckedText("(Not interesting. Won't show in future recommendations)")
+
     };
 
     static private RatingButton[] chooseRatingButtonSet(User.Program program) {
-	return program==User.Program.EE4?  allRatingButtons: ee4RatingButtons;
+	return program==User.Program.EE4?   ee4RatingButtons: allRatingButtons;
     }
 
     static public String att(String name, String val) {
@@ -141,13 +177,17 @@ public class RatingButton //implements Cloneable //extends HTML
 	return text.replaceAll(" ", "&nbsp;");
     }
 
+    public static String judgeNoSrc(String cp, String aid, Action.Op op) {
+	return cp + "/JudgmentServlet?"+BaseArxivServlet.ID +"=" + aid;
+    }
+
+
     /** The URL (relative to the CP) for recording a judgment (or
 	performing another user action) on this doc */
     public static String judge(String cp, String aid, Action.Op op,
 			       ActionSource asrc) {
-	return cp + "/JudgmentServlet?"+BaseArxivServlet.ID +"=" + aid +
-	    "&" +BaseArxivServlet.ACTION+ "=" + op + 
-	    asrc.toQueryString();
+	return judgeNoSrc(cp,aid,op) +
+	    "&" +BaseArxivServlet.ACTION+ "=" + op + asrc.toQueryString();
     }
 
     /** The following are bit flags from which the "flags" parameter of
@@ -169,45 +209,20 @@ public class RatingButton //implements Cloneable //extends HTML
 	return cp +  "/_technical/images/" + file;
     }
 
-    static private final RatingButton toFolderButton = 
-	(new RatingButton( Action.Op.COPY_TO_MY_FOLDER,
-			  "Move to my folder",
-			  "Move this document to your personal folder. It will not show in recommendations in the future.",
-			   "folder_page.png",  true)).
-	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)");
-
-    static private final RatingButton toFolderButtonEE4 = 
-	(new RatingButton( Action.Op.COPY_TO_MY_FOLDER,
-			  "Interesting: move to my folder, remove from list",
-			  "This document is interesting. Move this document to your personal folder. It will not show in recommendations in the future.",
-			   "folder_page.png", true)).
-	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)");
-
-    static private RatingButton chooseToFolderButton(User.Program program) {
-	return program==User.Program.EE4?  toFolderButtonEE4 :  toFolderButton;
+ 
+    /** The name of a span for this button. (This is relied upon in 
+     buttons_control.js!) */
+    private String sn( ArticleEntry e) {
+	return "ratings"+e.i+"_"+op.ordinal();
     }
 
+    private boolean trueCondition( ArticleEntry e) {
+	if (op==Action.Op.COPY_TO_MY_FOLDER) return e.isInFolder;
+	else if (op==Action.Op.REMOVE_FROM_MY_FOLDER) return !e.isInFolder;
+	else return  (e.latestRating==op);
+    }
 
-    static private final RatingButton
-	rmFromFolderButton =
-	(new RatingButton(  Action.Op.REMOVE_FROM_MY_FOLDER,
-			   "Remove from my folder",
-			   "Remove this document from your personal folder",
-			    "bin.png" )).setCheckedText("(Removed from your folder)"),
-	hideButton = 
-	new RatingButton( Action.Op.DONT_SHOW_AGAIN,
-			  "Not useful, remove",
-			  "Permanently remove this document from recommendations and search results",
-			  "bin.png" ,  true),
-
-	hideButtonEE4 =
-	new RatingButton( Action.Op.DONT_SHOW_AGAIN,
-			  "Not interesting; remove from list",
-			  "Permanently remove this document from recommendations and search results",
-			  "bin.png" ,  true);
-
-
-    /** Generates the HTML inserted into various pages where articles
+      /** Generates the HTML inserted into various pages where articles
 	are listed. (E.g. the search results list in search.jsp, or
 	the suggestion list in index.jsp) This HTML code includes the
 	enclosing DIV element (DIV ...  /DIV), with various rating buttons
@@ -224,70 +239,46 @@ public class RatingButton //implements Cloneable //extends HTML
     static public String judgmentBarHTML(String cp, ArticleEntry e,  User.Program program,
 					 int flags, ActionSource asrc) {
 
+	//	if (program==User.Program.EE4) return judgmentBarHTML_EE4(cp, e, program, flags, asrc);
 
-	if (program==User.Program.EE4) return judgmentBarHTML_EE4(cp, e, program, flags, asrc);
-
-	RatingButton [] buttons = allRatingButtons;
+	RatingButton [] buttons =chooseRatingButtonSet(program);
 
 	String aid = e.id;
 	boolean willRate=false;
 	String s= "<div class=\"bar_instructions\">\n";
 
-	if ((flags & NEED_FOLDER)!=0) {
-	    RatingButton b = chooseToFolderButton(program);
-	    String sn = "folder" + e.i;
-	    String js = "$.get('" + judge(cp,aid, b.op,asrc)+ "', " +
-		"function(data) { flipCheckedOn('#"+sn+"')})";
-	    s += twoSpans(sn, e.isInFolder,
-			  b.renderCkText(cp),  b.aText(cp,js)) + "\n";		
-	}
-
-	if ((flags & NEED_RM_FOLDER)!=0) {
-	    RatingButton b = rmFromFolderButton;
-	    String sn = "remove" + e.i;
-	    String js = "$.get('" + judge(cp,aid, b.op,asrc)+ "', " +
-		"function(data) { flipCheckedOn('#"+sn+"')})";
-	    s += twoSpans(sn, !e.isInFolder,
-			  b.renderCkText(cp),  b.aText(cp,js)) + "\n";			 
-	}
-
 	boolean someChecked = false;
 
-	if (buttons!=null && buttons.length>0) {
-	    willRate=true;
-	    if ((flags & FOLD_JB)!=0) {
-		String imgPath =  mkImgPath(cp, "page_question.png" );
+	for(int j=0; j<buttons.length; j++) {
+	    RatingButton b = buttons[j];
+	    
+	    // Some buttons are skipped unless requested by specific flags
+	    if ((flags & NEED_FOLDER)==0 && b.op==Action.Op.COPY_TO_MY_FOLDER ||
+		(flags & NEED_RM_FOLDER)==0 && b.op==Action.Op.REMOVE_FROM_MY_FOLDER ||
+		(flags & NEED_HIDE)==0  && b.op==Action.Op.DONT_SHOW_AGAIN)
+		continue;
 
-		s+= "<a" + 
-		    att("id", "rate"+e.i) +
-		    att("title", "Rate this document.") +
-		    att("onclick",
-			"$(this).hide(100); $('#ratings"+e.i+"').show(500);") + ">";
-		s += img(imgPath, "Rate this document.");
-		s += "&nbsp;Rate</a>\n";		
-	    }
-
-	    String spanBody="";
-	    for(int j=0; j<buttons.length; j++) {
-		RatingButton b = buttons[j];
-		boolean checked= (e.latestRating==b.op);
+	    boolean checked= b.trueCondition(e);
+	    if (b.inGroup) {
+		willRate=true;
 		someChecked = (someChecked || checked);
-			
-		String js = "$.get('" + judge(cp,aid,b.op,asrc) + "', ratingEntered("+e.i + "," + j + ","+buttons.length+"))";
-		
-		spanBody +=twoSpans("ratings" +e.i + "_" + j,   checked,
-				    b.renderCkText(cp), b.aText(cp, js)) + nbsp("  ");
 	    }
-	    boolean showJB = (flags & FOLD_JB)==0;
-	    s += span("ratings" + e.i, showJB, spanBody) + "\n";
-	}
+	    String sn = b.sn(e);
+	    
+	    String afterJS = b.inGroup? "ratingEntered(" +e.i+ ", '" +sn +"');" :
+		"flipCheckedOn('#"+sn+"');";
+	    if (b.willRemove) afterJS += "$('#result"+e.i+"').hide();";
 
-       	if ((flags & NEED_HIDE)!=0) {
-	    RatingButton b=hideButton;
-	    String js=b.hideArticleJs(cp,  e,  asrc);
-	    s += b.aText(cp,  js);
-	}
+	    afterJS += " eval(data);";
 
+	    String js = "$.get('" + judge(cp,aid,b.op,asrc) + "',  " +
+		"function(data) { " + afterJS + "})";
+	    
+	    s +=twoSpans(sn, checked,
+			 b.renderCkText(cp), b.aText(cp, js));
+	    s += nbsp("  ");
+	}
+     
 	// we probably don't need this text inside a ViewFolder screen
 	if (willRate && !someChecked && (flags&NEED_COME_BACK_TEXT)!=0) s+=comeBackMsg(e);
 
@@ -303,67 +294,7 @@ public class RatingButton //implements Cloneable //extends HTML
 	    ">If you cannot judge until you have seen the document, please come back to this page to provide your valuation.</p>\n";
     }
 
-    static private String judgmentBarHTML_EE4(String cp, ArticleEntry e, User.Program program, 
-					 int flags, ActionSource asrc) {
-  
-	// Rating buttons: normally present, but absent in some situations
-	// (folder view in EE4)
-	RatingButton [] buttons = ((flags & NEED_RM_FOLDER)!=0)?
-	    new RatingButton [0]: ee4RatingButtons;
-
-	String aid = e.id;
-	boolean willRate=false;
-	String s= "<div class=\"bar_instructions\">\n";
-
-	if ((flags & NEED_FOLDER)!=0) {
-	    RatingButton b = chooseToFolderButton(program);
-	    String sn = "folder" + e.i;
-	    String js = "$.get('" + judge(cp,aid, b.op,asrc)+ "', " +
-		"function(data) { flipCheckedOn('#"+sn+"')})";
-	    s += twoSpans(sn, e.isInFolder,
-			  b.renderCkText(cp),  b.aText(cp,js)) + "\n";		
-	}
-
-	if ((flags & NEED_RM_FOLDER)!=0) {
-	    RatingButton b = rmFromFolderButton;
-	    String sn = "remove" + e.i;
-	    String js = "$.get('" + judge(cp,aid, b.op,asrc)+ "', " +
-		"function(data) { flipCheckedOn('#"+sn+"')})";
-	    s += twoSpans(sn, !e.isInFolder,
-			  b.renderCkText(cp), b.aText(cp,js)) + "\n";	 
-	}
-
-	
-	String spanBody="";
-	for(int j=0; j<buttons.length; j++) {
-	    RatingButton b = buttons[j];
-	    boolean checked= (e.latestRating==b.op);
-	    String js = "$.get('" + judge(cp,aid,b.op,asrc) + "', ratingEntered("+e.i + "," + j + ","+buttons.length+"))";
-
-	    spanBody += twoSpans("ratings" +e.i + "_" + j, checked,
-				 b.renderCkText(cp), b.aText(cp, js)) + nbsp("  ");
-
-	}
-	boolean showJB = (flags & FOLD_JB)==0;
-	s += span("ratings" + e.i, showJB, spanBody) + "\n";
-
-       	if ((flags & NEED_HIDE)!=0) {
-	    RatingButton b=	hideButtonEE4;
-	    String js=b.hideArticleJs(cp,  e,  asrc);
-	    s += b.aText(cp,  js);
-	}
-
-	s += "</div>";
-	return s;
-    }
-
-    private String hideArticleJs(String cp, ArticleEntry e,  ActionSource  asrc) {
-	String js="$.get('"+
-	    judge(cp,e.id, op ,asrc)+"', " + 
-	    "function(data) { $('#result"+e.i+"').hide();})";
-	return js;
-    }
-
+   
     /** The HTML snippet (probably, an A element) that renders the button in its
 	original (unchecked) state
      */
@@ -384,32 +315,30 @@ public class RatingButton //implements Cloneable //extends HTML
     }
 
 
-    private String buttonCode(String cp, ArticleEntry e,  ActionSource asrc, int j, int setSize) {
-	boolean checked= (e.latestRating==op);
-	//	someChecked = (someChecked || checked);
-	String img= mkImgPath(cp, imgSrc);
-
-	String aid = e.id;
-
-	String js = "$.get('" + judge(cp,aid,op,asrc) + "', ratingEntered("+e.i + "," + j + ","+setSize+"))";
-		
-	String q=twoSpans("ratings" +e.i + "_" + j, 
-			  checked,
-			  img( imgSrc ) + strong(text),
-			  "<a " + att("title", descr) +
-			  att("onclick", js) + ">" +
-			  img(imgSrc, descr) + 	"&nbsp;" + nbsp(text) + "</a>");
-	q += "&nbsp;&nbsp;";
-	return q;
-    }
-
-
-
     static public String js_script(String scriptLocation) {
 	return "<script" +
 	    att("type", "text/javascript") +
 	    att("src", scriptLocation)  +
 	    "></script>\n";
     }
+
+    /** Generates JS code to be inserted into each HTML page's HEAD
+	element. In this case, it is an array of ordinals for actions
+	whose buttons/texts may need to be "flipped" sometimes.
+     */
+    static public String headJS(User.Program program) {
+	RatingButton[] buttons = chooseRatingButtonSet(program);
+	String s= "";
+	int cnt=0;
+	
+	for(RatingButton b: buttons) {
+	    if (!b.inGroup) continue;
+	    if (s.length()>0)  s += ", ";
+	    s += b.op.ordinal();
+	}
+	s ="hideables=["+s+ "];\n";
+	return s;	
+    }
+
 
 }

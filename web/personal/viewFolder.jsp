@@ -35,9 +35,11 @@
 <script type="text/javascript" src="../scripts/buttons_control.js"></script>
 
 
-
+<script type="text/javascript">
+<%= main.headJS() %>
+</script>
 </head>
-<body>
+<body onload="<%=main.onLoadJsCode()%>" >
 
 <h1>Personal folder for user <em><%= main.actorUserName %></em>
 </h1>

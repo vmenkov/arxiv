@@ -41,17 +41,14 @@
 <script type="text/javascript" src="scripts/blur.js"></script>
 <script type="text/javascript" src="scripts/buttons_control.js"></script>
 <script type="text/javascript">
-function StartScripts() { 
-BlurLinks();
-}
-window.onload = StartScripts;
+<%= main.headJS() %>
 </script>
-
 <!-- #EndEditable -->
 
 </head>
 
-<body>
+<body onload="<%=main.onLoadJsCode()%>" >
+
 <!--
 <script type="text/javascript">function Gomenu(){return}</script>
 <script type="text/javascript" src="../menu/menu_var.js"></script>

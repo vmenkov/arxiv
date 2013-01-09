@@ -16,6 +16,7 @@ import org.apache.lucene.search.IndexSearcher;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.bernoulli.*;
 import edu.rutgers.axs.indexer.Common;
+import edu.rutgers.axs.html.RatingButton;
 
 /** Retrieves and displays a "suggestion list": a list of articles which some
     kind of automatic process has marked as potentially interesting to the user.
@@ -26,6 +27,9 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
     public int startat = 0;
     /** the actual suggestion list to be displayed is stored here */
     public SearchResults sr;
+
+    public int folderSize=0;
+
  
     public ViewSuggestionsBase(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
@@ -42,11 +46,13 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 	try {
 
 	    User.Program program = base.actor.getProgram();
+
 	    if (program==null) {
 		base.error = true;
 		base.errmsg = "It is not known what experiment plan user " + base.actorUserName + " participates in";
 		return base;
 	    }
+
 
 	    if (program.needBernoulli()) {
 		return new BernoulliViewSuggestions(_request, _response);
@@ -90,5 +96,48 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 
     /** Testing only */
     ViewSuggestionsBase() {}
+
+    /** URL for calling JudgmentServlet not to record a judgment, but
+	simply to update certain elements of the main page 
+    */
+    /*
+    private String onLoadJudge() {
+	return RatingButton.judgeNoSrc(cp, null, Action.Op.NONE);
+    }
+
+    public String onLoadJsCode() {
+	String js = "alert('Hi from onload!'); $.get('" + onLoadJudge()+ "', " +
+	    "function(data) { alert('got response: ' + data); eval(data);});";
+	return js;
+    }
+    */
+
+    // $.post("test.php", { name: "John", time: "2pm" } );
+
+    /** Formatting arg list for a POST call
+     */
+    private void addToArgs(StringBuffer args, String p0, String p1) {
+	if (args.length()>0) args.append( ", ");
+	args.append( p0 + " : '"+ p1 +"'");
+    }
+
+    /** This is inserted into BODY ONLOAD="..." */
+    public String onLoadJsCode() {
+	String url = cp + "/JudgmentServlet";
+	StringBuffer args = new StringBuffer();
+	addToArgs(args, BaseArxivServlet.ACTION, ""+Action.Op.NONE);
+	for(String[] p: asrc.toQueryPairs()) {
+	    addToArgs(args, p[0], p[1]);
+	}
+
+	String js = //"alert('Hi from onload!');" +
+	    super.onLoadJsCode() +
+	    " $.post('"+url+"', { "+ args +" }, " +
+	    "function(data) { "+
+	    //"alert('got response: ' + data); "+
+	    "eval(data);});";
+	return js;
+    }
+  
 
 }

@@ -30,7 +30,7 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 #set opt="-cp ${cp} ${opt} -Drewrite=false"
 set baseopt="-cp ${cp} ${baseopt}"
 
-set opt="${baseopt} -Drewrite=false -Ddays=7"
+set opt="${baseopt} -Drewrite=false -Doptimize=true -Ddays=7"
 # -Dfrom=2012-01-16
 
 echo "Options for ArxivImporter: $opt"

@@ -16,13 +16,8 @@ import edu.rutgers.axs.sql.*;
  */
 public class ViewPresentedList extends ResultsBase {
     
-    //public final String actorUserName;
-    //public User actor;
     public PresentedList li=null;
-    //public Vector<PresentedListEntry> docs = new  Vector<PresentedListEntry>();
-
-    //final public static String USER_NAME = "user_name";
-
+ 
     public ViewPresentedList(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 

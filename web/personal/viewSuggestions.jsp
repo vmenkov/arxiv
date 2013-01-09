@@ -40,10 +40,12 @@
 
 <!-- #EndEditable -->
 
+<script type="text/javascript">
+<%= main.headJS() %>
+</script>
 </head>
 
-<body>
-
+<body onload="<%=main.onLoadJsCode()%>" >
 
 <div id="big_middle_frame">
 		<div id="wrapping"> 
