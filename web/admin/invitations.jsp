@@ -4,7 +4,7 @@
 <%@ page import="edu.rutgers.axs.sql.*" %>
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% 
-   ListInvitations main=new ListInvitations(request,response);
+    ListInvitations main=new ListInvitations(request,response);
 %>
 <html>
 <head>

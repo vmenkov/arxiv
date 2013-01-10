@@ -230,7 +230,10 @@ public class Scheduler {
 	}
     }
 
-   // update the UP2 profile?
+    /** Checks if we need to updtae the Algo 2 user profile for the
+	specified user, and if so, schedules an appropriate task.
+	@param The id for the last recorded action for the user
+     */
     private int checkUP2(EntityManager em, String  uname, long lai) {
 	final int days=0; // does not matter for UP
 	DataFile.Type mode = DataFile.Type.TJ_ALGO_2_USER_PROFILE;
