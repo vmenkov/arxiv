@@ -99,8 +99,8 @@ public class RatingButton //implements Cloneable //extends HTML
 	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)"),
 
 	(new RatingButton(  Action.Op.REMOVE_FROM_MY_FOLDER,
-			   "Remove from my folder",
-			   "Remove this document from your personal folder",
+			   "Not interesting; remove",
+			   "This document is not interesting. Remove it from your personal folder. It will not show in recommendations in the future.",
 			    "bin.png", false, true)).setCheckedText("(Removed from your folder)"),
 
        	(new RatingButton(Action.Op.INTERESTING_AND_NEW,
@@ -216,6 +216,23 @@ public class RatingButton //implements Cloneable //extends HTML
 	return "ratings"+e.i+"_"+op.ordinal();
     }
 
+    /** Should this button be displayed in this particular case? Some
+	buttons are skipped unless requested by specific flags.
+     */
+    private boolean isAllowed(User.Program program, int flags) {
+	// Special case: in EE4's "View Folder", we only have 1 button
+	if (program==User.Program.EE4 && (flags & NEED_RM_FOLDER)!=0) {
+	    return op==Action.Op.REMOVE_FROM_MY_FOLDER;
+	}
+	if ((flags & NEED_FOLDER)==0 && op==Action.Op.COPY_TO_MY_FOLDER||
+	    (flags & NEED_RM_FOLDER)==0 && op==Action.Op.REMOVE_FROM_MY_FOLDER||
+	    (flags & NEED_HIDE)==0  && op==Action.Op.DONT_SHOW_AGAIN)
+	    return false;
+	return true;
+    }
+
+
+
     private boolean trueCondition( ArticleEntry e) {
 	if (op==Action.Op.COPY_TO_MY_FOLDER) return e.isInFolder;
 	else if (op==Action.Op.REMOVE_FROM_MY_FOLDER) return !e.isInFolder;
@@ -251,12 +268,7 @@ public class RatingButton //implements Cloneable //extends HTML
 
 	for(int j=0; j<buttons.length; j++) {
 	    RatingButton b = buttons[j];
-	    
-	    // Some buttons are skipped unless requested by specific flags
-	    if ((flags & NEED_FOLDER)==0 && b.op==Action.Op.COPY_TO_MY_FOLDER ||
-		(flags & NEED_RM_FOLDER)==0 && b.op==Action.Op.REMOVE_FROM_MY_FOLDER ||
-		(flags & NEED_HIDE)==0  && b.op==Action.Op.DONT_SHOW_AGAIN)
-		continue;
+	    if (!b.isAllowed(program,flags)) continue;
 
 	    boolean checked= b.trueCondition(e);
 	    if (b.inGroup) {
@@ -265,7 +277,7 @@ public class RatingButton //implements Cloneable //extends HTML
 	    }
 	    String sn = b.sn(e);
 	    
-	    String afterJS = b.inGroup? "ratingEntered(" +e.i+ ", '" +sn +"');" :
+	    String afterJS = b.inGroup? "ratingEntered("+e.i+ ", '" +sn +"');":
 		"flipCheckedOn('#"+sn+"');";
 	    if (b.willRemove) afterJS += "$('#result"+e.i+"').hide();";
 

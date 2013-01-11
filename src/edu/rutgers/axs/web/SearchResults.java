@@ -381,21 +381,27 @@ public class  SearchResults {
 	return saveAsPresentedList(em,  type, username, null, null); 
     }
 
-    
+
     /** Creates a Date object for a time point that is a specified
 	number of days ago */
     public static Date daysAgo(int days) {
-	if (days <= 0) return null;
-	Date now = new Date();	
-	now.setTime( now.getTime() - days *24L* 3600L*1000L );
-	return now;
+	return secondsAgo(  days *24L* 3600L);
     }
 
-    public static Date secondsAgo(int sec) {
+    public static Date daysBefore(Date d, int days) {
+	return secondsBefore(d,  days *24L* 3600L);
+    }
+
+
+    /** Creates a Date object for a time point that is a specified
+	number of seconds ago */
+    public static Date secondsAgo(long sec) {
+	return secondsBefore(new Date(), sec);	
+    }
+
+    public static Date secondsBefore(Date d, long sec) {
 	if (sec <= 0) return null;
-	Date now = new Date();	
-	now.setTime( now.getTime() - sec *1000L );
-	return now;
+	return new Date(d.getTime() - sec *1000L );
     }
 
     static void usage() {

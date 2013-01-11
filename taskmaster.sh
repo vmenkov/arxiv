@@ -20,7 +20,7 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 # set cp="${cp}:/usr/local/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
-# -DschedulingIntervalSec=60
+# -Dscheduler=60s
 
 set opt="-cp ${cp} -Xmx1024m ${opt} -DexitAfter=20 -DarticlesUpdated=true"
 

@@ -10,9 +10,7 @@ import javax.servlet.http.Cookie;
 
 import org.apache.catalina.realm.RealmBase;
 
-import edu.rutgers.axs.web.EditUser;
-import edu.rutgers.axs.web.Tools;
-import edu.rutgers.axs.web.WebException;
+import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.bernoulli.Bernoulli;
 
 
@@ -274,18 +272,38 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	one should call persist(). False if the current day continues.
     */
     public boolean changeDayIfNeeded(){
-	Date now = new Date();
 	if (getDay()==null || getDayStart()==null ||
-	    getDayStart().getTime() <= now.getTime() - 24 * 3600L * 1000L) {
+	    getDayStart().before(  SearchResults.daysAgo( 1 ))) {
 	    forceNewDay();
 	    return true;
 	}
 	else return false;
     }
 
-    /** This should be called once a profile has been updated */
+    /** This should be called once a profile has been updated.
+
+	<p> As per TJ: 
+
+	<ol> <li>"I recommend we reduce the frequency of evaluation
+	days from ½ to 1/3", 2013-01-09The rationale is that we want
+	users to see that their actions change the system, which only
+	happens on learning days. Some of our current users always
+	happened to draw evaluation days so far, so they think our
+	system does no learning at all.
+
+	<li> For the same reason, I suggest that the first two days of
+        a new user are always learning days, never evaluation days.
+        </ol>
+    */
     public Day forceNewDay() {
-	return  forceNewDay( Math.random() < 0.5 ? Day.LEARN : Day.EVAL);
+	Date[] x = getActionTimeRange();
+	Day d;
+	if (x==null || x[0].after( SearchResults.daysBefore(x[1], 1))) {
+	    d = Day.LEARN;
+	} else {
+	    d = 3*Math.random() < 1 ? Day.EVAL: Day.LEARN;
+	}
+	return  forceNewDay( d );
     }
     /** Sets the new day type to the specified value, and the day start time
 	to "now". This can be called e.g. for a new user.
@@ -421,6 +439,21 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return lai;
     }
     
+    /** @return [firstDate, lastDate] or null
+     */
+    private Date[] getActionTimeRange() {
+	if (getActions()==null || getActions().size()==0) return null;
+       Date x[] = new Date[2];
+       for(Action a: getActions()) {
+	   Date q = a.getTime();
+	   if (x[0]==null || q.before(x[0])) x[0] = q;
+	   if (x[1]==null || q.after(x[1])) x[1] = q;
+       }
+       return x;
+    }
+    
+
+
     /** Returns the list of actions, as a HashMap with the article ID
      * being a key */
     public HashMap<String, Action> getActionHashMap() {

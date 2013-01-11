@@ -4,8 +4,9 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-import java.util.*;
 import java.io.*;
+import java.util.*;
+import java.util.regex.*;
 
 import javax.persistence.*;
 
@@ -59,7 +60,9 @@ public class TaskMaster {
 
     static int createMissingDataFiles(EntityManager em) {
 	List<DataFile> list = DataFile.listMissingFiles(em);
-	Logging.info("Found " + list.size() + " DataFile objects with missing disk files");
+	if (list.size()>0) {
+	    Logging.info("Found " + list.size() + " DataFile objects with missing disk files");
+	}
 	int cnt=0;
 	for(DataFile df: list) {
 	    try {
@@ -81,7 +84,45 @@ public class TaskMaster {
 	return cnt;
     }
 
+    /** Creates and configures a scheduler, as per command line options.
+	<pre>
+	-Dscheduler=false
+	-Dscheduler=30s
+	-Dscheduler=10m
+	-Dscheduler=1h
+	-Dscheduler=24h  -- default
+	</pre>
+     */
+    static private Scheduler configScheduler(ParseConfig ht ) {
+	final String SCHEDULER="scheduler";
+	String s = ht.getOption(SCHEDULER,null);
 
+	if (s!=null && s.toLowerCase().equals("false")) return null;
+	int sec=0;
+	if (s==null) {
+	    sec = 24 * 3600; // 24 hours = default
+	} else if (s.equals("0")) {
+	    sec=0;
+	} else {
+	    Pattern pat = Pattern.compile("(\\d+)([hms])");
+	    Matcher m = pat.matcher(s);
+	    if (!m.matches()) {
+		String msg= "Option -D"+SCHEDULER + "=" + s + " formatted incorrectly";
+		throw new  IllegalArgumentException(msg);
+	    }
+	    String un = m.group(2);
+	    int unit = (un.equals("h") ? 3600:	un.equals("m") ? 60: 1);
+	    sec = unit * Integer.parseInt(m.group(1));
+	}
+
+	String onlyUser = ht.getOption("user", null);
+
+	Scheduler scheduler = new Scheduler();
+	
+	if (sec > 0) scheduler.setSchedulingIntervalSec(sec);
+	scheduler.setArticlesUpdated( ht.getOption("articlesUpdated", false));
+	return scheduler;
+    }
 
     /**
        -DexitAfter=24  : time in hours
@@ -101,7 +142,6 @@ public class TaskMaster {
 	int exitAfter=ht.getOption("exitAfter", 0);
 	Date exitAfterTime = (exitAfter<=0) ? null:
 	    new Date( (new Date()).getTime() + exitAfter * 3600*1000);
-	String onlyUser = ht.getOption("user", null);
 
 	ShutDownThread shutDown = new ShutDownThread(Thread.currentThread(), exitAfterTime);
 	Runtime.getRuntime().addShutdownHook(shutDown);	
@@ -116,16 +156,7 @@ public class TaskMaster {
 	// Use run() instead of start() for single-threading
 	//asr.run();	
 
-	boolean schedulerOn = ht.getOption("scheduler", true);
-	Scheduler scheduler = null;
-	if (schedulerOn) {
-	    scheduler = new Scheduler();
-	    scheduler.setOnlyUser(onlyUser);
-	    int schedulingIntervalSec=ht.getOption("schedulingIntervalSec", 0);
-	    if (schedulingIntervalSec > 0) scheduler.setSchedulingIntervalSec(schedulingIntervalSec);
-	    scheduler.setArticlesUpdated( ht.getOption("articlesUpdated", false));
-	}
-
+	Scheduler  scheduler =configScheduler(ht);
 
 	int taskCnt=0;
 	int noneCnt=0; // how many "no task" loops w/o a message
