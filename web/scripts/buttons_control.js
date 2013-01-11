@@ -1,5 +1,7 @@
 function flipCheckedOn(prefix) {
+   // alert('hide ' + prefix);
       $(prefix ).hide();
+  //  alert('show ' + prefix+ '_checked');
       $(prefix + '_checked').show();
 }
 function flipCheckedOff(prefix) {

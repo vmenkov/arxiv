@@ -267,8 +267,7 @@ public class ResultsBase {
 	"come back here to judge" text. */
     private static int defaultFlags = RatingButton.NEED_HIDE | RatingButton.NEED_FOLDER;
 
-
-    /** Generates a "div" HTML element with everything pertaining to
+   /** Generates a "div" HTML element with everything pertaining to
 	a single article in a list of articles (e.g., a single search
 	result or a single element of a suggestion list).
      */
@@ -278,7 +277,7 @@ public class ResultsBase {
     
     public String resultsDivHTML(ArticleEntry e, boolean isSelf, int flags) {
 	String s = 
-	    "<div class=\"result\" id=\"result" + e.i + "\">\n" +
+	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
 	    e.i + ". " + 
 	    researcherSpan("[score="+e.score+ "] ")+ 
@@ -322,7 +321,7 @@ public class ResultsBase {
 	    (!e.ourCommline.equals("") ? "<strong>"  + e.ourCommline + "</strong><br>" : "") +
 	    "</div>\n" +
 	    (isSelf? judgmentBarHTML(e, flags): "") +
-	    "</div>";
+	    "</div>\n";
 	return s;
     }
 

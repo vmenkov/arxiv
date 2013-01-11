@@ -130,18 +130,21 @@ public class PersonalResultsBase extends ResultsBase {
 	rating buttons) which are different in different experiments,
      */
     User.Program getUserProgram() {	
-	return isSelf? actor.getProgram() : null;
+	return (isSelf && actor!=null)? actor.getProgram() : null;
     }
 
    /** JS to be inserted into the HTML doc's head. The method is overridden
 	by derived classes as needed. */
     public String headJS() {
+	if (actor==null) return "";
 	String s = super.headJS() + "\n" +
 	    RatingButton.headJS( getUserProgram());
 	return s;
     }
 
-    /** This is inserted into BODY ONLOAD="...". Subclasses override as needed. */
+    /** This is inserted into BODY ONLOAD="...". Subclasses override
+      as needed. 
+    */
     public String onLoadJsCode() { return ""; }
 
 

@@ -207,6 +207,8 @@ public class  SearchResults {
 	    // check if it's been "removed" by the user.
 	    String aid = doc.get(ArxivFields.PAPER);
 	    if ( exclusions.containsKey(aid)) {
+		//	Logging.info("ES Exclusion: " +aid+ " --> " + exclusions.get(aid).getOp());
+
 		int epos = excludedEntries.size()+1;
 		excludedEntries.add( new ArticleEntry(epos, doc, docno, scoreDocs[i].score));
 	    } else {

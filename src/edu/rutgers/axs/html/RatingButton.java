@@ -16,18 +16,14 @@ import edu.rutgers.axs.sql.*;
     Button list, labels, and functionality updated on 2012-10-17, as per
     an email exchange with Paul Kantor and Thorsten Joachims.
  */
-public class RatingButton //implements Cloneable //extends HTML
-{
+public class RatingButton {
    
-
     //List<String> stooges = Arrays.asList("Larry", "Moe", "Curly");
 
     //    static HashSet<Action.Op> causeHiding = new HashSet<Action.Op>
     //	(Arrays.asList(
-								   
-
-   
-    Action.Op op;
+					      
+    final public Action.Op op;
     String text, descr, imgSrc;
     String checkedText;
 
@@ -117,7 +113,7 @@ public class RatingButton //implements Cloneable //extends HTML
 
     };
 
-    static private RatingButton[] chooseRatingButtonSet(User.Program program) {
+    static public RatingButton[] chooseRatingButtonSet(User.Program program) {
 	return program==User.Program.EE4?   ee4RatingButtons: allRatingButtons;
     }
 
@@ -210,9 +206,9 @@ public class RatingButton //implements Cloneable //extends HTML
     }
 
  
-    /** The name of a span for this button. (This is relied upon in 
-     buttons_control.js!) */
-    private String sn( ArticleEntry e) {
+    /** The ID of the HTML SPAN element for this button. (This is
+     relied upon in buttons_control.js!) */
+    public String sn( ArticleEntry e) {
 	return "ratings"+e.i+"_"+op.ordinal();
     }
 
@@ -231,14 +227,7 @@ public class RatingButton //implements Cloneable //extends HTML
 	return true;
     }
 
-
-
-    private boolean trueCondition( ArticleEntry e) {
-	if (op==Action.Op.COPY_TO_MY_FOLDER) return e.isInFolder;
-	else if (op==Action.Op.REMOVE_FROM_MY_FOLDER) return !e.isInFolder;
-	else return  (e.latestRating==op);
-    }
-
+   
       /** Generates the HTML inserted into various pages where articles
 	are listed. (E.g. the search results list in search.jsp, or
 	the suggestion list in index.jsp) This HTML code includes the
@@ -270,7 +259,7 @@ public class RatingButton //implements Cloneable //extends HTML
 	    RatingButton b = buttons[j];
 	    if (!b.isAllowed(program,flags)) continue;
 
-	    boolean checked= b.trueCondition(e);
+	    boolean checked= e.buttonShouldBeChecked(b.op);
 	    if (b.inGroup) {
 		willRate=true;
 		someChecked = (someChecked || checked);
@@ -279,7 +268,7 @@ public class RatingButton //implements Cloneable //extends HTML
 	    
 	    String afterJS = b.inGroup? "ratingEntered("+e.i+ ", '" +sn +"');":
 		"flipCheckedOn('#"+sn+"');";
-	    if (b.willRemove) afterJS += "$('#result"+e.i+"').hide();";
+	    if (b.willRemove) afterJS += e.hideJS();
 
 	    afterJS += " eval(data);";
 
@@ -288,7 +277,7 @@ public class RatingButton //implements Cloneable //extends HTML
 	    
 	    s +=twoSpans(sn, checked,
 			 b.renderCkText(cp), b.aText(cp, js));
-	    s += nbsp("  ");
+	    s += nbsp("  \n");
 	}
      
 	// we probably don't need this text inside a ViewFolder screen
@@ -351,6 +340,5 @@ public class RatingButton //implements Cloneable //extends HTML
 	s ="hideables=["+s+ "];\n";
 	return s;	
     }
-
 
 }

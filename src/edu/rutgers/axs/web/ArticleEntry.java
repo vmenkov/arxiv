@@ -272,7 +272,9 @@ public class ArticleEntry {
 	// FIXME: elsewhere, this can be used as a strong negative
 	// auto-feedback (e.g., Thorsten's two-pager's Algo 2)
 	for(int i=0; i<entries.size(); i++) {
-	    if (exclusions.containsKey(entries.elementAt(i).id)) {
+	    String aid=entries.elementAt(i).id;
+	    if (exclusions.containsKey(aid)) {
+		//Logging.info("AUS Exclusion: " +aid+ " --> " + exclusions.get(aid));
 		entries.removeElementAt(i); 
 		i--;
 	    }
@@ -294,7 +296,27 @@ public class ArticleEntry {
 	ourCommline += (ourCommline.length()==0? "" : " ") + s;
     }
 
- 
+    /** The ID of a DIV element pertianing to this article in search results
+	or a recommendation list
+     */
+    public String resultsDivId() {
+	return "result" + i;
+    }
+
+    /** Javascript snippet that hides an article's entry. 
+     */
+    public String hideJS() { 
+	return "$('#" + resultsDivId() +"').hide();"; 
+    }
+
+    /** Should a particular rating button for this article
+	be shown as already checked?
+     */
+    public boolean buttonShouldBeChecked( Action.Op op) {
+	if (op==Action.Op.COPY_TO_MY_FOLDER) return isInFolder;
+	else if (op==Action.Op.REMOVE_FROM_MY_FOLDER) return !isInFolder;
+	else return (latestRating==op);
+    }
 
 }
 

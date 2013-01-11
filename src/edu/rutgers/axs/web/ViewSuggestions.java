@@ -294,10 +294,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    	    
     }
 
-   private void initList(DataFile df, int startat, 
+    private void initList(DataFile df, int startat, 
 			  Date since, EntityManager em) throws Exception {
        initList(df,startat, since, em, false);
-   }
+    }
 
     /**
        @param df The data file to read. We will either display the
@@ -320,17 +320,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// not want ever shown.
 	// FIXME: strictly speaking, a positive rating should perhaps
 	// "cancel" a "Don't show again" request
-	HashMap<String, Action> exclusions = 
-	    (actor==null) ? new HashMap<String, Action>() :
-	    (actor.getProgram()==User.Program.EE4) ?
-	    User.union(actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN, Action.Op.INTERESTING_AND_NEW}),
-		       actor.getFolder()):
-	    
-	    actor.getExcludeViewedArticles()?
-	    actor.getActionHashMap() :
-	    User.union(actor.getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN}),
-		       actor.getFolder());
-
+	HashMap<String, Action> exclusions = actor.listExclusions();
+	
 	if (df==null) {
 
 	    if (mode==	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) {

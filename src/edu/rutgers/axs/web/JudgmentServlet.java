@@ -14,6 +14,7 @@ import org.apache.lucene.search.IndexSearcher;
 
 import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.html.*;
 
 
 /** This servlet the user's "judgment" (explicit feedback) about an
@@ -99,24 +100,54 @@ public class JudgmentServlet extends BaseArxivServlet {
      */
     private String responseJS(EntityManager em, User u, Action.Op op, long presentedListId ) {
 	String js="";
+	RatingButton [] buttons = RatingButton.chooseRatingButtonSet(u.getProgram());
+      
 	try {
 	    int fs = u.getFolderSize();
 	    String q = "("+fs+")";
-	    js += //"alert('Hi +"+q+"'); "+
+	    js += //"alert(' +"+q+"'); "+
 		"setFolderSize('" +q+ "');\n";
 	    if (op != Action.Op.NONE || presentedListId==0) return js;
+
+	    HashMap<String, Action> exclusions = u.listExclusions();
+
+
 	    PresentedList plist = (PresentedList)em.find( PresentedList.class, presentedListId);
 	    IndexSearcher searcher=  new IndexSearcher( Common.newReader() );
 	    Vector<ArticleEntry> entries = plist.toArticleList(null, searcher);
+	    //  ArticleEntry.applyUserSpecifics(entries, u); // don't do this - it will actually remove some entries!
+
+	    // Mark pages currently in the user's folder, or rated by the user
+	    ArticleEntry.markFolder(entries, u.getFolder());
+	    ArticleEntry.markRatings(entries, u.getActionHashMap(Action.ratingOps));
+ 
+
 	    User.Program program = u.getProgram();
-
+	    
+	    int cnt=0;
 	    for(ArticleEntry e: entries) {
-		//		boolean hidden = (program==User.Program.EE4)? 		 e.isInFolder,
-
+		boolean hidden = exclusions.containsKey(e.id);
+		if (hidden) {
+		    js += e.hideJS() +"\n";
+		    cnt++;
+		    continue;
+		}
+		for(RatingButton b: buttons) {
+		    boolean checked= e.buttonShouldBeChecked(b.op);
+		    String sn = b.sn(e);	 	
+		    if (checked) {
+			js += "flipCheckedOn('#"+sn+"');\n";
+			cnt++;
+		    } else {
+			js += "flipCheckedOff('#"+sn+"');\n";
+			cnt++;
+		    }
+		}
 	    }
+	    //js += "alert('Cnt = " + cnt + "')";
 	} catch(Exception ex) {
 	    Logging.error("JS.responseJS: " + ex);
-	}
+	}	
 	return js;
     }
     

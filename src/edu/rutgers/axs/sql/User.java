@@ -764,6 +764,21 @@ throws Exception
 	return false;
     }
 
+    /** Creates a list of articles that are to be excluded from the suggestion
+     list display */
+    public HashMap<String, Action> listExclusions() {
+	if (getProgram()==User.Program.EE4) 
+	    return union(getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN, Action.Op.INTERESTING_AND_NEW}),
+			 getFolder());
+	    
+	// SET_BASED
+	return getExcludeViewedArticles()?    getActionHashMap() :
+	    union(getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN}),
+		  getFolder());
+
+    }
+
+
     /** Link to the matching EE4User object, when applicable. 
 	@return The matching object, or null.
      */

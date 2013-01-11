@@ -121,7 +121,10 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 	args.append( p0 + " : '"+ p1 +"'");
     }
 
-    /** This is inserted into BODY ONLOAD="..." */
+    /** This is inserted into BODY ONLOAD="..." 
+
+      FIXME: Unless the browser is Chrome, we should insert nothing!
+    */
     public String onLoadJsCode() {
 	String url = cp + "/JudgmentServlet";
 	StringBuffer args = new StringBuffer();
@@ -134,7 +137,7 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 	    super.onLoadJsCode() +
 	    " $.post('"+url+"', { "+ args +" }, " +
 	    "function(data) { "+
-	    //"alert('got response: ' + data); "+
+	    "alert('onload got response: ' + data); "+
 	    "eval(data);});";
 	return js;
     }
