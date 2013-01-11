@@ -145,12 +145,11 @@ public class PersonalResultsBase extends ResultsBase {
     /** This is inserted into BODY ONLOAD="...". Subclasses override
       as needed. 
     */
-    public String onLoadJsCode() { return ""; }
+    //public String onLoadJsCode() { return ""; }
 
 
     /** Testing only */
     PersonalResultsBase() {}
-
 
 
 }

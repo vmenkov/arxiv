@@ -97,50 +97,10 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
     /** Testing only */
     ViewSuggestionsBase() {}
 
-    /** URL for calling JudgmentServlet not to record a judgment, but
-	simply to update certain elements of the main page 
-    */
-    /*
-    private String onLoadJudge() {
-	return RatingButton.judgeNoSrc(cp, null, Action.Op.NONE);
-    }
 
     public String onLoadJsCode() {
-	String js = "alert('Hi from onload!'); $.get('" + onLoadJudge()+ "', " +
-	    "function(data) { alert('got response: ' + data); eval(data);});";
-	return js;
-    }
-    */
-
-    // $.post("test.php", { name: "John", time: "2pm" } );
-
-    /** Formatting arg list for a POST call
-     */
-    private void addToArgs(StringBuffer args, String p0, String p1) {
-	if (args.length()>0) args.append( ", ");
-	args.append( p0 + " : '"+ p1 +"'");
+	return refreshEverythingJsCode();
     }
 
-    /** This is inserted into BODY ONLOAD="..." 
-
-      FIXME: Unless the browser is Chrome, we should insert nothing!
-    */
-    public String onLoadJsCode() {
-	String url = cp + "/JudgmentServlet";
-	StringBuffer args = new StringBuffer();
-	addToArgs(args, BaseArxivServlet.ACTION, ""+Action.Op.NONE);
-	for(String[] p: asrc.toQueryPairs()) {
-	    addToArgs(args, p[0], p[1]);
-	}
-
-	String js = //"alert('Hi from onload!');" +
-	    super.onLoadJsCode() +
-	    " $.post('"+url+"', { "+ args +" }, " +
-	    "function(data) { "+
-	    "alert('onload got response: ' + data); "+
-	    "eval(data);});";
-	return js;
-    }
-  
 
 }

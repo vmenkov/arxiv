@@ -96,6 +96,7 @@ public class ResultsBase {
 	return isRunByResearcher;
     }
 
+    public String userAgent=null;
 
     /**
        @param response If null, don't bother with checking.
@@ -104,7 +105,9 @@ public class ResultsBase {
 	request = _request;
 	cp = request.getContextPath(); 
 	try {
-	    infomsg+= "<br>Plain params:<br>";
+	    userAgent = request.getHeader("User-Agent");
+	    infomsg+= "User-Agent: " + userAgent + "<br>\n";
+	    infomsg+= "<br>Plain params:<br>\n";
 	    for(Enumeration en=request.getParameterNames(); en.hasMoreElements();){
 		String name = (String)en.nextElement();
 		infomsg += name + "=" + request.getParameter(name) + "<br>";
@@ -399,6 +402,34 @@ public class ResultsBase {
 	by derived classes as needed. */
     public String headJS() {
 	return "";
+    }
+
+    /** Used by ViewSuggestions and Search
+     */
+    String refreshEverythingJsCode() {
+	if (user==null) return "";
+	if (userAgent.toLowerCase().indexOf("firefox") >= 0) {
+	    // Firefox does not need a silly "onload"
+	    return "";
+	}
+	String url = cp + "/JudgmentServlet";
+	StringBuffer args = new StringBuffer();
+	addToArgs(args, BaseArxivServlet.ACTION, ""+Action.Op.NONE);
+	for(String[] p: asrc.toQueryPairs()) {
+	    addToArgs(args, p[0], p[1]);
+	}
+	String js =   " $.post('"+url+"', { "+ args +" }, " +
+	    "function(data) { "+
+	    //	    "alert('onload got response: ' + data); "+
+	    "eval(data);});";
+	return js;
+    }
+  
+    /** Formatting arg list for a POST call
+     */
+    private static void addToArgs(StringBuffer args, String p0, String p1) {
+	if (args.length()>0) args.append( ", ");
+	args.append( p0 + " : '"+ p1 +"'");
     }
 
    /** Testing only */

@@ -167,6 +167,10 @@ public class Search extends ResultsBase {
     /** Overrides the method in ResultsBase */
     //    void customizeSrc() {    }
 
-
+    public String onLoadJsCode() {
+	return refreshEverythingJsCode();
+    }
 
 }
+
+
