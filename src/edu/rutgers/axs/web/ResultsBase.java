@@ -435,6 +435,11 @@ public class ResultsBase {
    /** Testing only */
     ResultsBase() { cp = ""; }
 
+    /** This is inserted into BODY ONLOAD="...". Subclasses override
+      as needed. 
+    */
+    public String onLoadJsCode() { return ""; }
+
     
 
 }
