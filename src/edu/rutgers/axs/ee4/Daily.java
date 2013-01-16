@@ -177,6 +177,30 @@ public class Daily {
     //    }
 
 
+    /** 0 - ignore, +-1 - med, +-2 - high */
+    private static int actionPriority(Action.Op op) {
+	if (op==Action.Op.INTERESTING_AND_NEW ||
+	    op==Action.Op.COPY_TO_MY_FOLDER) return 2;
+	else if (op==Action.Op.DONT_SHOW_AGAIN ||
+		 op==Action.Op.REMOVE_FROM_MY_FOLDER) return -2;
+	else if (op==Action.Op.EXPAND_ABSTRACT||
+		 op==Action.Op.VIEW_ABSTRACT||
+		 op==Action.Op.VIEW_FORMATS||
+		 op==Action.Op.VIEW_PDF||
+		 op==Action.Op.VIEW_PS||
+		 op==Action.Op.VIEW_HTML||
+		 op==Action.Op.VIEW_OTHER) return 1;
+	else return 0;
+    }
+
+    /** Does action a override action b? Return the most "relevant" one 
+     (higher-priority, or more recent) */
+    private static Action mostRelevant(Action a, Action b) {	
+	int aval = actionPriority(a.getOp()), bval=actionPriority(b.getOp());
+	if (Math.abs(aval) > Math.abs(bval)) return a;
+	else if (Math.abs(bval) > Math.abs(aval)) return b;
+	else return a.getTime().after(b.getTime()) ? a : b;
+    }
 
     /** Recomputes alpha[z] and beta[z] for each class z for a
 	specified user.  For each (user,page) pair, only the most
@@ -185,34 +209,41 @@ public class Daily {
 	@return the last (most recent) action id used in the update
     */
     static int updateUserVote(EntityManager em, HashMap<Integer,EE4DocClass> id2dc, User u, 	EE4User ee4u) throws IOException {
-	String qtext = "select max(ac.id) from Action ac where ac.user=:u and ac.op in (:o1, :o2, :o3) group by ac.article";
-	javax.persistence.Query q = em.createQuery(qtext);
-	q.setParameter("u", u);
-	q.setParameter("o1",Action.Op.INTERESTING_AND_NEW);
-	q.setParameter("o2",Action.Op.COPY_TO_MY_FOLDER);
-	q.setParameter("o3",Action.Op.DONT_SHOW_AGAIN);
-	//	List<Integer> z  =  (List<Integer>) q.getResultList();
-	List z  =   q.getResultList(); // in fact, a List<Long> !
-	
+
+	Set<Action> sa = u.getActions();
+	long lai=0;
+	// maps our Article.id to the latest Action
+	HashMap<Integer,Action> lastActions = new HashMap<Integer,Action>();
+	for( Action a: sa) {
+	    if (actionPriority(a.getOp())==0) continue;
+	    Integer key = new Integer( a.getArticle().getId());
+	    Action z  = lastActions.get(key);
+	    if (z==null || mostRelevant(z,a)==a) {
+		lastActions.put(key,a);
+		if (a.getId()>lai) lai=a.getId();
+	    }
+	}
+
+
 	int maxCid = 0;
 	for(int k: id2dc.keySet()) { if (k>maxCid) maxCid=k; }
-	int lai=0;
 	
 	double[] alpha = new double[maxCid+1], beta= new double[maxCid+1];
 	
 	em.getTransaction().begin();
-	for(Object  oj: z) {  // each oj is in fact Long, not Integer!
-	    //   System.out.println("oj=" + oj +", class=" + oj.getClass());
-	    int j = ((Number)oj).intValue();
-	    if (j>lai) lai=j;
-	    Action a = (Action)em.find(Action.class, j);
-	    boolean plus= (a.getOp()!=Action.Op.DONT_SHOW_AGAIN);
-	    int cid = a.getArticle().getEe4classId(); 
+
+	System.out.println("--- Currently relevany actions for user " + u.getUser_name());
+	for(Action a: lastActions.values()) {
+	    boolean plus= actionPriority(a.getOp())>0;
+	    int cid = a.getArticle().getEe4classId(); 	    
 	    if (plus) {
 		alpha[ cid] ++;
 	    } else {
 		beta[ cid] ++;
 	    }
+	    System.out.println((plus? "PLUS " : "MINUS ") +" page=" + 
+			       a.getAid() + ", " + a.getOp() +  ", class=" +
+			       cid);
 	}
 	
 	HashSet<EE4Uci> uci=new HashSet<EE4Uci>();
@@ -226,7 +257,7 @@ public class Daily {
 	ee4u.setUci(uci);
 	em.persist(ee4u);
 	em.getTransaction().commit();	
-	return lai;
+	return (int)lai;
     }
 
     private static DataFile updateSugList(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User u, EE4User ee4u, int lai, boolean nofile)
