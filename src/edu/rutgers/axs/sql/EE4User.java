@@ -45,10 +45,7 @@ import edu.rutgers.axs.web.WebException;
 	public double doubleValue() {
 	    return allValues[ this.ordinal()];
 	}
-
     }
-
-
 
     @Display(editable=true, order=11, alt="Selectivity")
 	@Column(nullable=false,length=4)

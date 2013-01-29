@@ -296,7 +296,7 @@ public class TaskMaster {
 		    }
 		    ArticleEntry.save(entries, outputFile.getFile());
 		    // Save the sugg list to the SQL database
-		    ArticleAnalyzer aa=new ArticleAnalyzer();
+		    //ArticleAnalyzer aa=new ArticleAnalyzer();
 		    outputFile.fillArticleList(entries,  em);
 	    
 		}  else if (op == Task.Op.TJ_ALGO_2_USER_PROFILE) {

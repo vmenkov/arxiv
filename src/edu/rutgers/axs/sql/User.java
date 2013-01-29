@@ -105,11 +105,12 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     /** Encrypted temporary password, used for extended (persistent)
 	sessions of this user (those started using the "Remember me"
 	checkbox). */
+    /*
     @Basic  @Column(length=64) @Display(editable=false, order=7)
 	String encEsPass="";
     public  String getEncEsPass() { return encEsPass; }
     public void setEncEsPass(       String x) { encEsPass = x; }
-
+    */
 
     @Basic @Display(order=9.1,  editable=true, alt="Agreed to participate in follow-up telephone survey")
         @Column(nullable=false) boolean survey;
@@ -140,11 +141,20 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     /** End time for the current extended (persistent) sessions. If
 	null, or in the past, then there is such session in effect for
 	this user now. */
+    /*
     @Display(editable=false, order=10) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
        Date esEnd;
     public  Date getEsEnd() { return esEnd; }
     public void setEsEnd(       Date x) { esEnd = x; }
+    */
+
+    @ElementCollection
+	private Set<ExtendedSession> es; //  = new HashSet<EE4Uci>();
+
+    public Set<ExtendedSession> getEs() { return es; }
+    public void setEs( Set<ExtendedSession> x) {  es=x; }
+
 
     /** Describes what kind of research program the user is currently enrolled in */
     public static enum Program {

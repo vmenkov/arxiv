@@ -123,7 +123,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	    // Special modes
 	    if (id>0) {  // displaying specific file
-		initList(df, startat, null, em);
+		initList(df, null, em);
 		return;
 	    } else if (mainPage) {
 		infomsg += "initMainPage<br>\n";
@@ -231,7 +231,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    actorLastActionId= actor.getLastActionId();
 
 	    if (df!=null) {
-		initList(df, startat, null, em);
+		initList(df,  null, em);
 	    }
 
 	}  catch (Exception _e) {
@@ -284,19 +284,19 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	    Date since = SearchResults.daysAgo(Scheduler.maxRange);
 	    System.out.println("calling initList OTF");
-	    initList(null, startat, since, em, true);
+	    initList(null, since, em, true);
 
 	} else {
 	    days = df.getDays();
 	    System.out.println("calling initList(df=" + df.getId() + ")");
-	    initList(df, startat, null, em, true);
+	    initList(df, null, em, true);
 	}
 	    	    
     }
 
-    private void initList(DataFile df, int startat, 
+    private void initList(DataFile df, 
 			  Date since, EntityManager em) throws Exception {
-       initList(df,startat, since, em, false);
+       initList(df, since, em, false);
     }
 
     /**
@@ -309,7 +309,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
        @param em Just so that we could save the presented list
        @param mainPage Only affects the marker recorded in the new PresentedList  entry
      */
-    private void initList(DataFile df, int startat, 
+    private void initList(DataFile df, 
 			  Date since, EntityManager em, boolean mainPage) throws Exception {
 
 	IndexReader reader=Common.newReader();
@@ -324,7 +324,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	
 	if (df==null) {
 
-	    if (mode==	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) {
+	    if (mode == DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) {
 
 		// The on-the-fly mode: simply generate and use cat search results for now
 		sr = catSearch(searcher, since);    
@@ -335,8 +335,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		throw new WebException("Sorry, your suggestion list has not been computed yet! (mode="+mode+")");
 	    }
 
-	    // Save the list? Nah, too much trouble (file permissions etc)
-	    //saveResults(em,searcher, sr, since );
+	    // Create a DataFile entry, and SQL record of the list,
+	    // without the actual disk file 
+	    df = saveResults(em,searcher, since );
 	} else if (teamDraft) {
 	    // The team-draft mode: merge the list from the file with
 	    // the cat search res
@@ -353,7 +354,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    // simply read the artcile IDs and scores from the file
 	    sr = new SearchResults(df, searcher);
 	}
+	adjustStartat(em, mainPage);
 	sr.setWindow( searcher, startat, M, exclusions);
+	if (startat>0 && sr.entries.size()==0) {
+	    startat=0;
+	    sr.setWindow( searcher, startat, M, exclusions);	    
+	}
 	ArticleEntry.applyUserSpecifics(sr.entries, actor);
 	
 	// In docs to be displayed, populate other fields from Lucene
@@ -366,7 +372,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	searcher.close();
 	reader.close();
 
-	// Save the presented (section of the) suggestion list in the
+	// Save the presented section of the suggestion list in the
 	// database, and set ActionSource appropriately (to be
 	// embedded in the HTML page)
  	Action.Source srcType = mainPage?
@@ -390,21 +396,49 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	return bsr;
     }
 
-    /** The plan was to call this when a new sugg list is created on the fly.
-	But we don't do it, because of the problem with file permissions etc.
+    /** Check if paging makes sense, or we're viewing a different list
+	now. If he latter, we reset to the 1st page (as per TJ, 2013-01-22
+	meeting)
      */
-    void saveResults(EntityManager em, IndexSearcher searcher, SearchResults sr, Date since) throws IOException {
+    private void adjustStartat(EntityManager em, boolean mainPage) {
+	if (mainPage && startat>0) {
+	    // not the most suitable method, but it will do
+	    PresentedList lastPl = PresentedList.findMostRecentPresntedSugList(em,  actor.getUser_name()); 
+	    if (lastPl.getDataFileId()!= df.getId()) {
+		Logging.info("Reset startat from " + startat + " to 0, because there have been no views of DF=" + df.getId() + " yet");
+		startat = 0;
+	    }
+	}
+    }
+
+
+
+    /** This method is used to create a new DataFile entry when a new
+	suggestion list is created on the fly.  (Typically, soon upon
+	the creation of a new user).  
+
+	<p> This method presently does *not* create a disk file, 
+	because of problem with file permissions etc. Instead, the data
+	will be copied from the SQL table to a disk file later, by 
+	TaskMastet.createMissingDataFiles()
+     */
+    private DataFile saveResults(EntityManager em, IndexSearcher searcher, 
+			     //SearchResults sr, 
+			     Date since) throws IOException {
 	DataFile outputFile= new DataFile(actorUserName, 0, DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
 	outputFile.setDays(Scheduler.maxRange);
 	outputFile.setSince(since);
+
+
 	// FIXME: ought to do fillArticleList as well, maybe
 	// through a TaskMaster job
-	sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
-	File f = outputFile.getFile();
-	ArticleEntry.save(sr.entries, f);
+	//sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
+	//File f = outputFile.getFile();
+	//ArticleEntry.save(sr.entries, f);
 	em.persist(outputFile);
 	// FIXME: READABLE  by EVERYONE, eh?
-	outputFile.makeReadable();
+	//outputFile.makeReadable();
+	return outputFile;
     }
 		    
     public String forceUrl() {
@@ -474,32 +508,31 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    if (excludeViewed) { // only in SET_BASED
 		s += " because you have earlier asked not to show them anymore, or because you have already viewed them. To see the complete list of the pages you've viewed or rated, please refer to your " +
 		    Html.a( "personal/viewActionsSelfDetailed.jsp",
-			    "activity history") +
-		    ".</p>\n";
+			    "activity history") +    ".";
 
 		s += "<p>Note: Presently, already-viewed pages are excluded from the  the recommendation list. You can choose to have them shown. To do this, go to your " +
 		    Html.a( "personal/editUserFormSelf.jsp", "settings") +
-		    " and toggle the \"exclude already-viewed articles\" flag.</p>\n";
+		    " and toggle the \"exclude already-viewed articles\" flag.";
 
 	    } else { 
 		s += " because you have earlier asked not to show them anymore, or because you have moved them to your " +
-		    Html.a("personal/viewFolder.jsp", "personal folder") +
-		    ".</p>\n";
+		    Html.a("personal/viewFolder.jsp", "personal folder") + ".";
 
 		if (actor.getProgram()==User.Program.SET_BASED) {
 		s += "<p>Note: You can choose to have already-viewed pages removed from your recommendation lists. To do this, go to your " +
 		    Html.a( "personal/editUserFormSelf.jsp", "settings") +
-		    " and toggle the \"exclude already-viewed articles\" flag.</p>\n";
+		    " and toggle the \"exclude already-viewed articles\" flag.";
 		}		
 
 	    } 
-	    s += "</small></div>\n";
+	    s += "</p>\n</small></div>\n";
 	}
 	return s;
     }	
 
 
-    /** Generates a message explaining that no sugg list is available, and why */
+    /** Generates a message explaining that no suggestion list is
+	available, and why */
     public String noListMsg() {
 	String s= super.noListMsg();
 	
@@ -522,7 +555,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	return s;
     }
 
-    /** testing only */
+    /** Only for use in command-line testing */
     private ViewSuggestions(String uname) throws Exception {
 
 	actorUserName=uname;
@@ -550,8 +583,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	    System.out.println("sr=" + sr);
 
-	}  catch (Exception _e) {
-	    throw _e;
+	}  catch (Exception ex) {
+	    throw ex;
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
 	}
@@ -567,10 +600,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	}
 	ViewSuggestions vs = new ViewSuggestions(argv[0]);
     }
-
-
-	  
-
 
 }
 

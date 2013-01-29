@@ -23,7 +23,9 @@ import edu.rutgers.axs.html.RatingButton;
  */
 public  class ViewSuggestionsBase extends PersonalResultsBase {
 
-    /** List scrolling */
+    /** Contols suggestion list paging. Typically supplied via the URL
+	(0 by default), but may be adjusted by application if it does
+	not have much sense otherwise. */
     public int startat = 0;
     /** the actual suggestion list to be displayed is stored here */
     public SearchResults sr;

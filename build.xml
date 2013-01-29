@@ -188,6 +188,7 @@ code. -->
       <!-- include name="**/*.class"/ -->
       <include name="User.class" />
       <include name="Role.class" />
+      <include name="ExtendedSession.class" />
       <include name="Action.class" />
       <include name="EnteredQuery.class" />
       <include name="Article.class" />

@@ -7,6 +7,15 @@ import java.io.*;
 
 /** Based on  EE4_DocRevVal_simp.m. Uses 0-based array indexes (Java style)
     instead of 1-based indexes (Matlab style).
+
+    Xiaoting's explanation (2013-01-15):
+    The output of the code will split out mu*. You will run
+    EE4_DocRevVal_simp(alpha0, beta0, N=1000, gamma, c) for each
+    needed (gamma,c) pair, and interpret the returned array as [
+    mu*(alpha0+beta0+0), mu*(alpha0+beta0+1), mu*(alpha0+beta0+2),
+    ....mu*(alpha0+beta0+N] for this (gamma,c) pair.
+
+
  */
 public class Mu {
 
@@ -39,9 +48,14 @@ public class Mu {
     static double[] EE4_DocRevVal_simp(double alpha0, double beta0, int N, 
 			      double gamma, double c) {
 
+
+	if (alpha0<=0 || beta0<=0 || c<0 || c>1 || N<0 || gamma>1 || gamma<0){
+	    throw new IllegalArgumentException("EE4_DocRevVal_simp: invalid argument. Inputs must satisty the following condition: alpha0>0, beta0>0, N>=0, 0<=gamma<=1, and 0<=c<=1.");
+	}
+
 	double[][]  V=matrix(N+1, N+1);
 
-	double []   mu_star=new double[N];
+	double []   mu_star=new double[N+1]; // 2012-01-15
 	MuBounds muBounds = new MuBounds();
 
 	for(int i=0; i<=N; i++) { //  the total number of samples taken is n=N
@@ -55,13 +69,14 @@ public class Mu {
 	    muBounds.adjust(m, q>0);
 	    V[N-i][i] = Math.max(q,0);
 	}
-	mu_star[N-1] = muBounds.star();
+	mu_star[N] = muBounds.star(); // 2012-01-15
     
 	//for n=N-1:-1:0   % n is the total number of samples taken
 	//for i=0:1:n  % i is the number of sucesses, so n-i is the number of failures
 
 	//%mu_star_u gives the upper bound for mu_star
 	//%mu_star_l gives the lower bound for mu_star
+
 
 	for(int n=N-1; n>=0; n--) {
 	    muBounds = new MuBounds();
@@ -74,7 +89,10 @@ public class Mu {
 		V[n-i][i] = Math.max(q,0); 
 		muBounds.adjust(m, q>0);
   	    }
-	    if (n>0) mu_star[n-1] = muBounds.star();
+	    mu_star[n] = muBounds.star();
+	    if (n==0) {
+		System.out.print("mu=(" + muBounds.l + " : " + muBounds.u+") ;");
+	    }
    	}
     
 	return mu_star;

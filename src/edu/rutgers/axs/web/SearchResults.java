@@ -194,7 +194,10 @@ public class  SearchResults {
     }
     
 
-    /** Removes specified "excluded" entries from the list stored in this SearchResults object */
+    /** Removes specified "excluded" entries from the list stored in
+	this SearchResults object.  This method physically rearranges
+	this.scoreDocs.
+    */
     void excludeSome(IndexSearcher searcher, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
 	if (exclusions==null) return;
 	//public ScoreDoc[] 	scoreDocs = new ScoreDoc[0];
@@ -239,7 +242,6 @@ public class  SearchResults {
 	nextstart = startat + M;
 	needPrev = (prevstart < startat);
 	
-	needNext=(scoreDocs.length > nextstart);
 	reportedLength =scoreDocs.length;
 	if (mayHaveBeenTruncated) {
 	    atleast = "at least";
@@ -257,7 +259,8 @@ public class  SearchResults {
 	int pos = startat+1;
 
 	int prevSkipped = 0;
-	for(int i=0; i< scoreDocs.length && (prevSkipped < startat || entries.size() < M); i++) {
+	int i=0;
+	for(; i< scoreDocs.length && (prevSkipped < startat || entries.size() < M); i++) {
 
 	    int docno=scoreDocs[i].doc;
 	    Document doc = searcher.doc(docno);
@@ -269,6 +272,10 @@ public class  SearchResults {
 		pos++;
 	    }			
 	}
+	needNext=(i < scoreDocs.length);
+	//needNext=(scoreDocs.length > nextstart);
+
+
     }
 
     /** "foo" matches "foo*" */

@@ -14,7 +14,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 
 /** Each PresentedList instance contains information about one list of
-    arfticles that was presented to the user within a single web page.   
+    articles that was presented to the user within a single web page.   
     This is typically a section (10-25 articles) of the search results
     list produced for a particular query (or for the user's categories
     of interest), or a suggestion list produced by one algorithm or another.

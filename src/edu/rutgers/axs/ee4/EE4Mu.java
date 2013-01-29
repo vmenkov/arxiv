@@ -24,61 +24,91 @@ import edu.rutgers.axs.recommender.ArxivScoreDoc;
  */
 public class EE4Mu {
 
-    static final int N=1000;
+    static int N=1000;
     
-    double [] muValues;
+    //    double [] muValues;
+    double muValue;
 
-    EE4Mu(int m, EE4User.CCode ccode) {
+    EE4Mu(double alpha, double beta, int m, EE4User.CCode ccode) {
 	double gamma = gamma(m);
 	double c = ccode.doubleValue();
-	final double alpha0=1, beta0=0;
-	muValues = Mu.EE4_DocRevVal_simp( alpha0, beta0, N, gamma, c);
+	//final double alpha0=1, beta0=0;
+	//muValues = Mu.EE4_DocRevVal_simp( alpha0, beta0, N, gamma, c);
+	double [] muValues = Mu.EE4_DocRevVal_simp( alpha, beta, N, gamma, c);
+	muValue = muValues[0];
+    }
+    
+    static class Key {
+	final int m;
+	final double alpha, beta;
+	Key(double a, double b, int _m) {
+	    alpha=a;
+	    beta=b;
+	    m=_m;
+	}
+	public int hashCode() {
+	    return (int)(m * (long)alpha * (long)beta);
+	}
     }
 
     /** Maps m to an array (index based on CCode) of EE4Mu objects. */
-    static HashMap<Integer, EE4Mu[]> mToCMu= new  HashMap<Integer, EE4Mu[]>();
+    static HashMap<Key, EE4Mu[]> mToCMu= new  HashMap<Key, EE4Mu[]>();
 	
     static double gamma(double m) { 
 	return  1 - 1.0 /(m*EE4DocClass.T +1.0);
     }
 
     
-    static double getMu(double ab, EE4User.CCode ccode, int m) {
-	Integer key = new Integer(m);
+    static double getMu(double a, double b, EE4User.CCode ccode, int m) {
+	Key key = new Key(a,b,m);
 	EE4Mu[] w =  mToCMu.get(key);
 	if (w==null) {
 	    mToCMu.put(key, w = new EE4Mu[EE4User.CCode.allValues.length]);
 	}
 	EE4Mu q = w[ccode.ordinal()];
 	if (q==null) {
-	    q = w[ccode.ordinal()] = new EE4Mu(m, ccode);
+	    q = w[ccode.ordinal()] = new EE4Mu(a, b, m, ccode);
 	}
-	int iab = (int)Math.round(ab);
-	return (iab-1< q.muValues.length)? q.muValues[iab-1] : ccode.doubleValue();
+	return q.muValue;
     }
 
-    /*
-    stats(HashMap<Integer,EE4DocClass> id2dc)     {
-	int maxM = 0;
-	for(EE4DocClass c: id2dc.values()) {
-	    (c.getM()>maxM) maxM=c.getM();
-	}
+ /** Testing 
 
-    }
-    */
-
- /** Testing */
+   Xiaoting's explanation (2013-01-15):
+    The output of the code will split out mu*. You will run
+    EE4_DocRevVal_simp(alpha0, beta0, N=1000, gamma, c) for each
+    needed (gamma,c) pair, and interpret the returned array as [
+    mu*(alpha0+beta0+0), mu*(alpha0+beta0+1), mu*(alpha0+beta0+2),
+    ....mu*(alpha0+beta0+N] for this (gamma,c) pair.
+ */
     static public void main(String[] argv) {
-	if (argv.length != 3) {
-	    System.out.println("Usage: java edu.rutgers.axs.ee4.Mu alpha+beta ccode m");
+	ParseConfig ht = new ParseConfig();
+	N = ht.getOption("N", N);
+
+	if (argv.length < 2 || argv.length>4) {
+	    System.out.println("Usage: java edu.rutgers.axs.ee4.Mu alpha beta [ccode [m]]");
+	    System.out.println("Star ('*') can be used instead of cc or m");
+	    //System.out.println("Usage: java edu.rutgers.axs.ee4.Mu alpha beta m");
 	    return;
 	}
-	double alpha = Double.parseDouble(argv[0]);
-	EE4User.CCode ccode = EE4User.CCode.valueOf( EE4User.CCode.class, argv[1]);
-	int m = Integer.parseInt(argv[2]);
-	double mu = getMu( alpha, ccode, m);
-	System.out.println("mu(a+b="+alpha+",c="+ccode+",gamma(m="+m+")="+
-			   gamma(m)+ ") = " + mu);
+	int k=0;
+	double alpha = Double.parseDouble(argv[k++]);
+	double beta = Double.parseDouble(argv[k++]);
+	String 	q = (k<argv.length? argv[k++] : "*");
+	EE4User.CCode[] ccodes = q.equals("*") ?
+	    EE4User.CCode.class.getEnumConstants() :
+	    new EE4User.CCode[]{ EE4User.CCode.valueOf(EE4User.CCode.class,q)};
+	q = (k<argv.length? argv[k++] : "*");
+	int ms[] =  q.equals("*") ? 
+	    new int[] {1, 2, 5, 10, 20, 100} : new int[] {Integer.parseInt(q)};
+	for(int m: ms) {
+	    for(EE4User.CCode ccode: ccodes ) {
+		double mu = getMu( alpha, beta, ccode, m);
+		System.out.println("mu(a="+alpha+",b="+beta+", c("+ccode+")="+ccode.doubleValue()+",gamma(m="+m+")="+
+				   gamma(m)+ ") = " + mu);
+	    }
+	    System.out.println();
+	}
 
     }
 

@@ -285,7 +285,7 @@ public class Daily {
 	     //double gamma = EE4Mu.gamma(c.getM());
 	     //double mu = computeMu(alpha+beta, ee4u.getC(), gamma);
 
-	     double mu =EE4Mu.getMu(alpha+beta,  ee4u.getCCode(), c.getM());
+	     double mu =EE4Mu.getMu(alpha, beta,  ee4u.getCCode(), c.getM());
 
 	     double score = alpha/(alpha + beta);
 	     if (score >= mu) { // add to list

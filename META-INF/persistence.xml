@@ -43,6 +43,7 @@
 
         <class>edu.rutgers.axs.sql.User</class>
         <class>edu.rutgers.axs.sql.Role</class>
+        <class>edu.rutgers.axs.sql.ExtendedSession</class>
         <class>edu.rutgers.axs.sql.Action</class>
         <class>edu.rutgers.axs.sql.EnteredQuery</class>
         <class>edu.rutgers.axs.sql.Article</class>

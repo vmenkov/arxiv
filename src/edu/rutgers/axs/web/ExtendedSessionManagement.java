@@ -12,7 +12,7 @@ import javax.servlet.http.*;
 import org.apache.catalina.realm.RealmBase;
 import edu.rutgers.axs.sql.*;
 
-/** This is used to manage extended sessions, which survive over the
+/** This class is used to manage extended sessions, which survive over the
     web server restart. This feature is used when the user checks the
     "remember me" button on login. The information is stored
     persistently in a User structure in the database,
@@ -51,11 +51,17 @@ public class ExtendedSessionManagement {
 		
 	String tmpPass = "" + random.nextLong();
 	String x = org.apache.catalina.realm.RealmBase.Digest(tmpPass, "MD5", "utf-8" );
-	u.setEncEsPass( x);
 
 	Date now = new Date();	
 	Date expiration = new Date( now.getTime() + 1000L * (long)maxSec ); // msec
-	u.setEsEnd( expiration );
+
+	//	u.setEncEsPass( x);
+	//u.setEsEnd( expiration );
+	ExtendedSession es = new	ExtendedSession(x, expiration ); 
+
+	Set<ExtendedSession> eset = u.getEs();
+	sizeControl(eset);
+	eset.add(es);
 
 	String val = unameEncoded + ":" + tmpPass;
 	Cookie cookie=new Cookie(COOKIE_NAME, val);
@@ -68,10 +74,44 @@ public class ExtendedSessionManagement {
 	return cookie; 
     }
 
-    /** Should be called upon logout, followed by a persist() call. */
+    /** Scans the set of sessions, removing some, to keep its size
+	under control.
+     */
+    private static void sizeControl(Set<ExtendedSession> eset) {
+	final int N=3; // max set size
+
+	HashSet<ExtendedSession>  expired = new HashSet<ExtendedSession>();
+
+	ExtendedSession oldest = null;
+	for(ExtendedSession es: eset) {
+	    Date expiration = es.getEsEnd();
+	    if (expiration==null || expiration.compareTo( new Date())<0) {
+		expired.add(es);
+	    }
+	    if (oldest==null|| expiration.before(oldest.getEsEnd())) {
+		oldest=es;
+	    }
+	}
+	for(ExtendedSession z: expired) {
+	    eset.remove(z);
+	}
+	if (eset.size()<N) return;
+	eset.remove(oldest);
+    }
+
+    /** Should be called upon logout, followed by a persist()
+        call. This terminates all extended session for this user (on
+        all machines). */
     static void invalidateEs(User u) {
-	u.setEsEnd(null);
-	u.setEncEsPass("");
+	Set<ExtendedSession> s = u.getEs();
+	if (s==null) {
+	    s=new HashSet<ExtendedSession>();
+	} else {
+	    s.clear();
+	}
+	u.setEs(s);
+	//	u.setEsEnd(null);
+	//      u.setEncEsPass("");
     }
 
 
@@ -96,6 +136,19 @@ public class ExtendedSessionManagement {
 	String encPass= org.apache.catalina.realm.RealmBase.Digest(z[1], "MD5", "utf-8" );
 
 	User u = User.findByName(em, uname);
+	Set<ExtendedSession> s = u.getEs();
+
+	if (s==null) return null;
+	for(ExtendedSession es: s) {
+	    String storedEncPass = es.getEncEsPass();
+	    if (storedEncPass == null || !encPass.equals(storedEncPass)) continue;
+	    Date expiration = es.getEsEnd();
+	    if (expiration==null || expiration.compareTo( new Date())<0)  continue;
+	    return u; // match!	    
+	}
+	return null;
+
+	/*
 	String storedEncPass = u.getEncEsPass();
 	if (storedEncPass == null || !encPass.equals(storedEncPass)) {
 	    Logging.info("Extended session password mismatch (stored="+storedEncPass+", cookie has="+z[1]+", which encrypts to "+encPass+"); ignoring cookie");
@@ -108,6 +161,8 @@ public class ExtendedSessionManagement {
 	}
 	//Logging.info("Identified user " +uname + " from a valid extended session cookie");
 	return u;
+	*/
+
     }
 
     static Cookie findCookie( HttpServletRequest request) {
