@@ -34,6 +34,11 @@ public class  SearchResults {
 	FIXME: very little reason to make this public!
     */
     public ScoreDoc[] 	scoreDocs = new ScoreDoc[0];
+    /** This array, when it exists at all, is "parallel" to scoreDocs.
+	It is only created in teamDraft(), and used to store tracing
+	info, as per TJ, 2013-01
+     */
+    ArticleEntry.Provenance[] prov=null;
     /** This is set to true when the results are obtained from Lucene
 	search, and the search returned exactly as many results as
 	the specified upper limit. This indicates that there may be more
@@ -60,8 +65,10 @@ public class  SearchResults {
     /** Does nothing */
     protected SearchResults() {} 
 
-    private SearchResults(Vector<ScoreDoc> v) {
+    private SearchResults(Vector<ScoreDoc> v, 
+			  Vector<ArticleEntry.Provenance> vp) {
 	scoreDocs =  v.toArray(new ScoreDoc[0]);
+	prov =  vp.toArray(new ArticleEntry.Provenance[0]);
     }
 
     /** Fill a SearchResults object from a DataFile. To achieve a
@@ -116,6 +123,7 @@ public class  SearchResults {
     public static SearchResults teamDraft(ScoreDoc[] a,  ScoreDoc[] b, long seed) {
 	HashSet<Integer> saved = new 	HashSet<Integer> ();
 	Vector<ScoreDoc> v = new Vector<ScoreDoc>();
+	Vector<ArticleEntry.Provenance> vp = new Vector<ArticleEntry.Provenance>();
 	int acnt = 0, bcnt=0;
 	int nexta=0, nextb=0;
 
@@ -124,19 +132,23 @@ public class  SearchResults {
 
 	while(nexta < a.length && nextb < b.length) {
 	    boolean useA = (acnt < bcnt ||  acnt==bcnt && ran.nextBoolean());
+
+	    vp.add( new ArticleEntry.Provenance(useA, a, b, nexta, nextb));
+
 	    ScoreDoc x = useA? a[nexta++] : b[nextb++];
 	    saved.add(new Integer(x.doc));
 	    v.add(x);
+
 	    if (useA) {
 		acnt ++;
 	    } else {
-		bcnt ++;		
+		bcnt ++;			
 	    }
 	    nexta = adjustPos( a, nexta, saved);
 	    nextb = adjustPos( b, nextb, saved);
 	}
 
-	return new SearchResults(v);
+	return new SearchResults(v,vp);
     }
 
     static org.apache.lucene.search.Query mkTermOrPrefixQuery(String field, String t) {
@@ -197,12 +209,11 @@ public class  SearchResults {
     
 
     /** Removes specified "excluded" entries from the list stored in
-	this SearchResults object.  This method physically rearranges
+	this SearchResults object.  This method physically replaces
 	this.scoreDocs.
     */
     void excludeSome(IndexSearcher searcher, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
 	if (exclusions==null) return;
-	//public ScoreDoc[] 	scoreDocs = new ScoreDoc[0];
 	Vector<ScoreDoc> kept = new 	Vector<ScoreDoc>();
 
 	for(int i=0; i< scoreDocs.length ; i++) {
@@ -270,14 +281,15 @@ public class  SearchResults {
 	    if ( prevSkipped < startat ) {	
 		prevSkipped ++;
 	    } else {
-		entries.add( new ArticleEntry(pos, doc, docno, scoreDocs[i].score));
+		ArticleEntry e=new ArticleEntry(pos, doc, docno, scoreDocs[i].score);
+		// provenance is only marked in lists created by team-draft
+		if (prov != null) e.prov = prov[i];
+		entries.add( e);
 		pos++;
 	    }			
 	}
 	needNext=(i < scoreDocs.length);
 	//needNext=(scoreDocs.length > nextstart);
-
-
     }
 
     /** "foo" matches "foo*" */
@@ -366,9 +378,10 @@ public class  SearchResults {
 	Arrays.sort(scoreDocs, new SDComparator());
     }
 
-    /** Saves this SearchResults list in the SQL database as a PresentedList
-	object. Creates that object, and then persists it via an OpenJPA
-	transaction. 
+    /** Saves the viewed part of this SearchResults list (i.e., the
+	entries[] array) in the SQL database as a PresentedList
+	object. Creates that object, and then persists it via an
+	OpenJPA transaction.
 
 	@param df The DataFile object from which this list has come,
 	if applicable (e.g., on ViewSuggestion lists). It is only used

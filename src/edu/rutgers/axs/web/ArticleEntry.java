@@ -318,6 +318,35 @@ public class ArticleEntry {
 	else return (latestRating==op);
     }
 
+    /** Tracing iformation for team-draft merging */
+    static public class Provenance {
+	public int arank=0, brank=0;
+	public boolean fromA=false;
+
+	/** Returns 0-based index of the matching element, or -1
+	 */
+	static private int find(ScoreDoc[] a, ScoreDoc x, int i0) {
+	    for(int i=i0; i<a.length; i++) {
+		if (a[i].doc == x.doc) return i;
+	    }
+	    return -1;
+	}
+    
+	public Provenance(boolean useA, ScoreDoc[] a,  ScoreDoc[] b, 
+			  int nexta, int nextb) {
+	    ScoreDoc x = useA? a[nexta] : b[nextb];
+	 
+	    fromA=useA;
+	    arank=find(a,x,nexta)+1;
+	    brank=find(b,x,nextb)+1;
+	}
+    }
+   
+
+
+    /** For team-draft merging */
+    public Provenance prov=null;
+
 }
 
 

@@ -52,6 +52,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setAid(String x) { aid=x;}
 
 
+
+
     /** This constructor does nothing. It has been added to avoid
 	Enhancer's warning. */
     public PresentedListEntry() {};
@@ -65,13 +67,14 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
        @param aa Supplied in case the ArticleStats for the doc is
        missing (which is, generally, unlikely)
      */
-    PresentedListEntry(
-		       //ArticleAnalyzer aa, EntityManager em, 
-		       ArticleEntry e)
-    //throws  org.apache.lucene.index.CorruptIndexException, IOException 
-    {
+    PresentedListEntry(ArticleEntry e)    {
 	setRank(e.i);
 	setAid(e.id);
+	if (e.prov!=null) {
+	    setArank(e.prov.arank);
+	    setBrank(e.prov.brank);
+	    setFromA(e.prov.fromA);
+	}
     }
 
     /** Returns a "dummy" ArticleEntry based on this PresentedListEntry
@@ -79,6 +82,26 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     ArticleEntry toArticleEntry() {
 	return new ArticleEntry(getRank(), getAid());
     }
-    
+ 
+    /** Applies in case of team-draft interleaving. Represents the
+      rank of the article in the A-list. Rank is 1-based; 0 means the
+      page was not present in the A-list */
+    @Basic  @Column(nullable=false)
+	int arank;
+    public void setArank(int x) {        arank = x;    }
+    public int getArank() {        return arank;    }
+   
+    @Basic  @Column(nullable=false)
+	int brank;
+    public void setBrank(int x) {        brank = x;    }
+    public int getBrank() {        return brank;    }
+
+    /** Was this page brought in from list A during the team-draft merging?
+     */
+    @Basic  @Column(nullable=false)
+	boolean fromA;
+    public void setFromA(boolean x) {        fromA = x;    }
+    public boolean getFromA() {        return fromA;    }
+  
 
 }

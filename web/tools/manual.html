@@ -152,11 +152,12 @@ Link user actions with presented lists. This shows for each user action (a) the 
 <td>select x.type, x.thisFile, x.inputFile, y.type, y.inputFile from DataFile x, DataFile y where  y.thisFile=x.inputFile
 
 <tr>
-<td> -
+<td> 
+select le.df.id, le.rank, le.article.aid from ListEntry le order by le.df.id, le.rank 
 <td> 
 select le.DF_ID, le.rank, a.aid from ListEntry le, Article a where le.ARTICLE_ID = a.id order by DF_ID, rank 
-<td>Viewing suggestion list (as stored in the SQL database).
-You may want restrict by <tt>le.id</tt>
+<td>Viewing suggestion lists (as stored in the SQL database).
+You may want restrict by <tt>le.id</tt>, to view just one list
 
 <tr>
 <td>select a.user, count(a) from Action a group by a.user order by count(a) desc 
