@@ -499,16 +499,19 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	files was not allowed due to the file permissions situation)
      */
     static public List<DataFile> listMissingFiles(EntityManager em) {
-	String qs = "select m from DataFile m where m.thisFile IS NULL and  m.type in (:t0, :t1, :t2) and m.deleted=FALSE";
+	//	String qs = "select m from DataFile m where m.thisFile IS NULL and  m.type in (:t0, :t1, :t2) and m.deleted=FALSE";
+	String qs = "select m from DataFile m where m.thisFile IS NULL and  m.type in (:tlist) and m.deleted=FALSE";
+
 	//	if (days>=0) qs += " and m.days=:d";
 	Query q = em.createQuery(qs);
 	
 	Type[] types = { Type.TJ_ALGO_1_SUGGESTIONS_1, 
 		       Type.BERNOULLI_SUGGESTIONS,
 		       Type.EE4_SUGGESTIONS};
-	for(int i=0; i<types.length; i++) {
-	    q.setParameter("t" + i, types[i]);
-	}
+	//	for(int i=0; i<types.length; i++) {
+	//	    q.setParameter("t" + i, types[i]);
+	//	}
+	q.setParameter("tlist", Arrays.asList(types));
 
 	//if (days>=0) 	q.setParameter("d", days);
 

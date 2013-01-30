@@ -80,13 +80,19 @@ select x.article, count(distinct x.user) cnt from Action x group by x.article or
 <td>select x from PresentedList x 
 <td>select x.* from PresentedList x 
 <td>List all such lists.
+
 <tr>
 <td>
 select li.id, d from PresentedList li join li.docs d where li.id=5 
+<br>
 <br><em>Also, there is alternative syntax:</em><br>
-select li.id, foo  from PresentedList li, in(li.docs) foo where li.id=5
+select x, y from PresentedListEntry x, PresentedList y where y.id = 5 and x member of y.docs 
+<br><em>and yet another  alternative   syntax:</em><br>
+select li.id, le  from PresentedList li, in(li.docs) le where li.id=5
+
 <td>select li.id, e.* from PresentedList li, PresentedList_PresentedListEntry r, PresentedListEntry e where r.PRESENTEDLIST_ID = li.id and r.DOCS_ID =e.id and li.id=5
 <td>Show the content of presented list no. 5
+
 <tr>
 <td>
 select li.id, count(d) from PresentedList li, in(li.docs) d group by li.id -
@@ -103,6 +109,7 @@ select li.*, (select count(*) from PresentedList_PresentedListEntry where PRESEN
 
 <tr>
 <td>
+select a, li.time, li.dataFileId, li.queryId from Action a, PresentedList li where a.presentedListId = li.id
 <td>
 select a.*, li.time, li.dataFileId, li.queryId from Action a, PresentedList li where a.presentedListId = li.id
 <td>
@@ -125,12 +132,16 @@ Link user actions with presented lists. This shows for each user action (a) the 
 <td>select x from ArticleStats x
 <td>select x.* from ArticleStats x
 <tr>
-<td> -
+<td>select m.failed, count(m) from Task m group by m.failed 
 <td>select m.failed, count(*) from Task m group by m.failed 
-
+<td>How many tasks have there been? How many failed?
 <tr>
 <td>select x from Task x
 <td>select x.* from Task x
+
+<tr>
+<td>select x from Task x where x.failed=true
+<td>select x.* from Task x where x.failed=1
 
 <tr>
 <td> -
@@ -142,8 +153,10 @@ Link user actions with presented lists. This shows for each user action (a) the 
 
 <tr>
 <td> -
-<td> select le.DF_ID, le.rank, a.aid from ListEntry le, ArticleStats a where le.ASTAT_ID = a.id order by DF_ID, rank;
-<td>Viewing suggestion list (as stored in the SQL database)
+<td> 
+select le.DF_ID, le.rank, a.aid from ListEntry le, Article a where le.ARTICLE_ID = a.id order by DF_ID, rank 
+<td>Viewing suggestion list (as stored in the SQL database).
+You may want restrict by <tt>le.id</tt>
 
 <tr>
 <td>select a.user, count(a) from Action a group by a.user order by count(a) desc 

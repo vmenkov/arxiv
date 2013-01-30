@@ -317,16 +317,16 @@ public class TaskMaster {
 				      DataFile.Type.TJ_ALGO_2_USER_PROFILE,
 				      -1);
 
-		    System.out.println("Result: " + inputFile.getId());
 		    UserProfile upro;
 
 		    ArxivScoreDoc[] sd;
 		    if (inputFile==null) {
-			// we should default to an empty profile
+			System.out.println("Found no inputFile");
 			// and empty sugg list!
 			upro = new UserProfile(reader);
 			sd = new ArxivScoreDoc[0];
 		    } else {
+			System.out.println("Found inputFile: " + inputFile.getId());
 			DataFile uproInputFile = inputFile.getInputFile();
 			//DataFile.findFileByName(em,user, inputFile.getInputFile());
 			upro = new UserProfile(uproInputFile, reader);
