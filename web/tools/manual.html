@@ -116,6 +116,19 @@ select a.*, li.time, li.dataFileId, li.queryId from Action a, PresentedList li w
 Link user actions with presented lists. This shows for each user action (a) the context ("presented list") in which it was effected. This selection does <em>not</em> user actions that did not originate in the "suggestion list" or "search" constants, as those other context (e.g., FOLDER or FILTER) don't have "presented lists" as such.
 
 <tr>
+<td>select a, le from Action a, PresentedList li, in(li.docs) le where    li.id=460  and li.id=a.presentedListId
+<td> -
+<td>View user actions that occurred upon viewing a particular presented list (list no. 460)
+
+<tr>
+<td>
+select a, le from Action a, PresentedList li, in(li.docs) le where   li.user='vmenkov'  and li.id=a.presentedListId and a.article.aid=le.aid
+and a.src = edu.rutgers.axs.sql.Action$Source.MAIN_MIX
+<td>
+<td>View all actions of a particular user that were effected from a MAIN_MIX
+evironment
+
+<tr>
 <th colspan=3>The <tt>EnteredQuery</tt> table
 <tr>
 <td>select x from Action x, User u where x.user=u and u.user_name='vmenkov'

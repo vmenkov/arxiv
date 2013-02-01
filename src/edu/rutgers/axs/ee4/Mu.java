@@ -19,6 +19,8 @@ import java.io.*;
  */
 public class Mu {
 
+    static boolean debug=false;
+
     static double [][] matrix(int n1, int n2) {
 	return matrix(n1,n2,0.0);
     }
@@ -88,10 +90,11 @@ public class Mu {
 		double q =m-c+efReward;
 		V[n-i][i] = Math.max(q,0); 
 		muBounds.adjust(m, q>0);
+		if (debug && n==0) System.out.print(" efr=" +  efReward);
   	    }
 	    mu_star[n] = muBounds.star();
-	    if (n==0) {
-		System.out.print("mu=(" + muBounds.l + " : " + muBounds.u+") ;");
+	    if (debug && n==0) {
+		System.out.print(" mu=(" + muBounds.l + ":" + muBounds.u+");");
 	    }
    	}
     

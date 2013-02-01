@@ -7,6 +7,7 @@ import org.apache.lucene.search.*;
 
 import java.util.*;
 import java.io.*;
+import java.text.*;
 
 import javax.persistence.*;
 
@@ -72,6 +73,14 @@ public class EE4Mu {
 	return q.muValue;
     }
 
+    private static double[] getMuTest(double a, double b, EE4User.CCode ccode, int m) {
+	double gamma = gamma(m);
+	double c = ccode.doubleValue();
+	double [] muValues = Mu.EE4_DocRevVal_simp(a, b, N, gamma, c);
+	return muValues;
+    }
+
+
  /** Testing 
 
    Xiaoting's explanation (2013-01-15):
@@ -82,8 +91,12 @@ public class EE4Mu {
     ....mu*(alpha0+beta0+N] for this (gamma,c) pair.
  */
     static public void main(String[] argv) {
+
+	Mu.debug=true;
+
 	ParseConfig ht = new ParseConfig();
 	N = ht.getOption("N", N);
+	int top = ht.getOption("top", 1);
 
 	if (argv.length < 2 || argv.length>4) {
 	    System.out.println("Usage: java edu.rutgers.axs.ee4.Mu alpha beta [ccode [m]]");
@@ -93,23 +106,44 @@ public class EE4Mu {
 	}
 	int k=0;
 	double alpha = Double.parseDouble(argv[k++]);
-	double beta = Double.parseDouble(argv[k++]);
 	String 	q = (k<argv.length? argv[k++] : "*");
+	double betas[] = q.equals("*") ? 
+	    new double[] {1, 2, 3, 4, 5, 7, 10, 20, 30, 50, 100} :
+	new double[] {Double.parseDouble(q)};
+
+	q = (k<argv.length? argv[k++] : "*");
 	EE4User.CCode[] ccodes = q.equals("*") ?
 	    EE4User.CCode.class.getEnumConstants() :
 	    new EE4User.CCode[]{ EE4User.CCode.valueOf(EE4User.CCode.class,q)};
 	q = (k<argv.length? argv[k++] : "*");
 	int ms[] =  q.equals("*") ? 
 	    new int[] {1, 2, 5, 10, 20, 100} : new int[] {Integer.parseInt(q)};
-	for(int m: ms) {
-	    for(EE4User.CCode ccode: ccodes ) {
-		double mu = getMu( alpha, beta, ccode, m);
-		System.out.println("mu(a="+alpha+",b="+beta+", c("+ccode+")="+ccode.doubleValue()+",gamma(m="+m+")="+
-				   gamma(m)+ ") = " + mu);
-	    }
-	    System.out.println();
-	}
 
+	DecimalFormat df = new DecimalFormat("0.000");
+
+	for(double beta: betas) {
+
+	    double t = alpha/(alpha+beta);
+	    
+	    for(int m: ms) {
+		for(EE4User.CCode ccode: ccodes ) {
+		    /*
+		      double mu = getMu( alpha, beta, ccode, m);
+		      System.out.println("mu(a="+alpha+",b="+beta+", c("+ccode+")="+ccode.doubleValue()+",gamma(m="+m+")="+
+		      gamma(m)+ ") = " + mu);
+		    */
+		    double muValues[] = getMuTest( alpha, beta, ccode, m);
+		    System.out.print("mu(a="+alpha+",b="+beta+", c("+ccode+")="+ccode.doubleValue()+",gamma(m="+m+")="+ gamma(m)+ ")=");
+		    for(int i=0; i<top; i++) {		    
+			System.out.print(" "+df.format(muValues[i]));
+		    }
+		    boolean accept = t > muValues[0];
+		    System.out.println(accept? " Y" : " N");
+		}
+		System.out.println();
+	    }
+	    System.out.println("a/(a+b) = " + t);
+	}
     }
 
 }
