@@ -69,6 +69,8 @@ public class Categories {
 
     static public Vector<Cat> majors = new Vector<Cat>();
     static HashMap<String,Cat> majorMap=new HashMap<String,Cat>();
+    /** Maps "major.minor" to the Cat object */
+    private static HashMap<String,Cat> minorMap=new HashMap<String,Cat>();
 
     private static void addMajor(String name, String desc) throws CategoryException{
 	if (majorMap.containsKey(name)) {
@@ -87,8 +89,9 @@ public class Categories {
 	if (major.hasSub(name)) {
 	    throw new CategoryException("Major category '"+parent+"' already has subcat '"+name+"'");
 	}
-	major.subcats.add(new Cat(name, desc));
-
+	Cat newcat = new Cat(name, desc);
+	major.subcats.add(newcat);
+	minorMap.put(parent + "." + name, newcat);
     }
 
     private static void init()  throws CategoryException{
@@ -292,6 +295,21 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	return v;
     }
 
+    /** Looks up the active category for the specified full name, if
+	one exists.  (An active cat is a cat to which new articles may
+	be assigned).  We assume that all minor cats are active, while
+	only major cats without subcats are active.
+
+	@param fullname = "major.minor", or just "major" (if "major" has no 
+     subcats) */
+    public static Cat findActiveCat(String fullname) {
+	Cat c = minorMap.get(fullname);
+	if (c!=null) return c;
+	c = majorMap.get(fullname);
+	if (c!=null && !c.hasSubs()) return c;
+	return null;
+    }
+
     /** Creates set of radio buttons reflecting the ArXiv categories
     the specified user is interested in. 
 
@@ -328,6 +346,7 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	b.append("</table>\n");
 	return b.toString();
     }
+
 
 
 }

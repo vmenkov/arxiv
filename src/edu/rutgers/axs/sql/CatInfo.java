@@ -42,7 +42,10 @@ public class CatInfo {
 	return false;
     }
 
-    private static 	String[] split(String cats) {
+    /** Splits a single, space-separated category string (as it comes from
+	Lucene) into individual cat names.
+     */
+    static public	String[] split(String cats) {
 	return (cats==null)  ? new String[0] : cats.split("\\s+");
     }
 

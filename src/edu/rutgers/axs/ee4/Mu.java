@@ -55,10 +55,14 @@ public class Mu {
 	    throw new IllegalArgumentException("EE4_DocRevVal_simp: invalid argument. Inputs must satisty the following condition: alpha0>0, beta0>0, N>=0, 0<=gamma<=1, and 0<=c<=1.");
 	}
 
-	double[][]  V=matrix(N+1, N+1);
+	//double[][]  V=matrix(N+1, N+1);
 
 	double []   mu_star=new double[N+1]; // 2012-01-15
 	MuBounds muBounds = new MuBounds();
+
+	// w[i] == V[N-i][i]
+
+	double[] w=new double[N+1];
 
 	for(int i=0; i<=N; i++) { //  the total number of samples taken is n=N
 	    double m =(alpha0+i)/(alpha0+beta0+N);
@@ -69,7 +73,8 @@ public class Mu {
 	    // [V(N-i+1,i+1),idx(N-i+1,i+1)]=max([0,M(N-i+1,i+1)-c]/(1-gamma)); 
 	    double q = (m-c)/(1-gamma);
 	    muBounds.adjust(m, q>0);
-	    V[N-i][i] = Math.max(q,0);
+	    //V[N-i][i] = Math.max(q,0);
+	    w[i] = Math.max(q,0);
 	}
 	mu_star[N] = muBounds.star(); // 2012-01-15
     
@@ -79,16 +84,21 @@ public class Mu {
 	//%mu_star_u gives the upper bound for mu_star
 	//%mu_star_l gives the lower bound for mu_star
 
-
+	
 	for(int n=N-1; n>=0; n--) {
+	    double[] wold = w;
+	    w = new double[N+1];
+
 	    muBounds = new MuBounds();
 	    for(int i=0; i<=n; i++) {
 		double m=(alpha0+i)/(alpha0+beta0+n);
 		//EfReward(n-i+1,i+1)=gamma*(M(n-i+1,i+1)*V(n-i+1,i+2)+(1-M(n-i+1,i+1))*V(n-i+2,i+1));
-		double efReward=gamma*   (m*V[n-i][i+1]+  (1-m)*V[n-i+1][i]);
+		//double efReward=gamma*   (m*V[n-i][i+1]+  (1-m)*V[n-i+1][i]);
+		double efReward=gamma*   (m*wold[i+1]+  (1-m)*wold[i]);
 		//  [V(n-i+1,i+1),idx(n-i+1,i+1)]=max([0,M(n-i+1,i+1)-c+EfReward(n-i+1,i+1)]);
 		double q =m-c+efReward;
-		V[n-i][i] = Math.max(q,0); 
+		//V[n-i][i] = Math.max(q,0); 
+		w[i] = Math.max(q,0); 
 		muBounds.adjust(m, q>0);
 		if (debug && n==0) System.out.print(" efr=" +  efReward);
   	    }

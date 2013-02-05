@@ -30,7 +30,7 @@ public class ArticleAnalyzer {
     final String [] fields;
     /** Collection size */
     private int numdocs, maxdoc;
-    ArticleAnalyzer() throws IOException {
+    public ArticleAnalyzer() throws IOException {
 	this(   Common.newReader(), upFields);
     }
     public ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
@@ -505,7 +505,9 @@ public class ArticleAnalyzer {
 
 
    
-    /** Finds a document by ID in the Lucene index */
+    /** Finds a document in the Lucene index by its ArXiv ID.
+	@param aid ArXiv ID
+     */
     int find(String aid) throws IOException{
 	IndexSearcher s = new IndexSearcher( reader );
 	return Common.find(s, aid);
