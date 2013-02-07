@@ -29,11 +29,9 @@ import edu.rutgers.axs.indexer.ArxivFields;
     public void setId(int x) {        id=x;    }
 
     @Basic  @Display(editable=true, order=2)
-    private int ee4classId;
-
+        private int ee4classId;    
     public int getEe4classId() {        return ee4classId;    }
     public void settEe4classId(int x) {        ee4classId=x;    }
-
 
    /** ArXiv Article ID.
 
@@ -130,5 +128,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     static public void main(String[] argv) throws IOException {
 	initFromArticleStats();
     }
+
+    //   @Display(editable=false, order=20)   @Lob private short[] classIds;
 
 }
