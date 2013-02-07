@@ -536,8 +536,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    }
 
 	    if (optimize) {
-		System.out.println("At "+new Date()+", optimizing index... ");
+		System.out.println("At "+new Date()+", optimizing index...");
 		writer.optimize();
+		System.out.println("At "+new Date()+", done optimizing index.");
 	    }
 	} finally {
 	    reader.close();

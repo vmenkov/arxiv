@@ -11,7 +11,7 @@ import java.text.*;
 
 import javax.persistence.*;
 
-import edu.rutgers.axs.ParseConfig;
+import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
@@ -21,6 +21,12 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 /** Document clustering (KMeans), for Peter Frazier's Exploration
     Engine ver. 4. 
+
+    <P> NOTE: For good performance of this tool, in particularly, the
+    ArticleAnalyzer.getCoef() call, it is highly important for the
+    Lucene index to have been optimized during the last ArxivImporter
+    run.  We are talking the loading rate difference between 20
+    doc/sec and 100 doc/sec here!
     
  */
 public class KMeans {
@@ -32,6 +38,10 @@ public class KMeans {
 	int numdocs = reader.numDocs();
 	int maxdoc = reader.maxDoc();
 	int cnt=0;
+	
+	int NS = 100;
+
+	int multiplicityCnt[] = new int[NS];
 
 	HashMap<String, Vector<Integer>> catMembers = new 	HashMap<String, Vector<Integer>>();
 
@@ -43,6 +53,9 @@ public class KMeans {
 	    // System.out.println("" + docno + " : " + aid + " : " + cats);
 
 	    String[] catlist = CatInfo.split(cats);
+
+	    multiplicityCnt[ Math.min(NS-1, catlist.length)]++;
+
 
 	    Integer o = new Integer(docno);
 
@@ -59,6 +72,15 @@ public class KMeans {
 	    if (cnt>=maxn) break;
 	}	
 	System.out.println("Analyzed " + cnt + " articles; identified " +catMembers.size() + " categories");
+
+	System.out.println("Category affiliation count for articles:");
+	for(int i=0; i<multiplicityCnt.length; i++) {
+	    if (multiplicityCnt[i]>0) {
+		System.out.println("" + i + (i+1==multiplicityCnt.length? " (or more)": "") + " categories: " + multiplicityCnt[i]+" articles");
+	    }
+	}
+	System.exit(0);
+
 	/*
 	System.out.println("Cat sizes:");
 	for(String c: catMembers.keySet()) {
@@ -129,7 +151,9 @@ public class KMeans {
 	    System.out.print("Assignment diff =");
 	    while(true) {
 		int[] asg0=asg;
+		Profiler.profiler.push(Profiler.Code.CLU_Voronoi);
 		voronoiAssignment();  //   asg <-- centers
+		Profiler.profiler.pop(Profiler.Code.CLU_Voronoi);
 		if (asg0!=null) {
 		    int d = asgDiff(asg0,asg);
 		    System.out.print(" " + d);
@@ -138,7 +162,11 @@ public class KMeans {
 			return;
 		    }
 		}
+
+
+		Profiler.profiler.push(Profiler.Code.CLU_fc);
 		findCenters(nterms, centers.length); // centers <-- asg
+		Profiler.profiler.pop(Profiler.Code.CLU_fc);
 	    }
 	}
 
@@ -220,10 +248,13 @@ public class KMeans {
 	return b.toString();
     }
 
+    /** Runs several KMeans clustering attempts on the specified set, and
+	returns the best result */
+    static private Clustering cluster(ArticleAnalyzer z,Vector<Integer> vdocno)
+	throws IOException {
 
-    static private void cluster(ArticleAnalyzer z,
-				// ArticleStats[] as, 
-				Vector<Integer> vdocno) throws IOException {
+	try {
+	    Profiler.profiler.push(Profiler.Code.OTHER);
 	
 	DocSet dic = new DocSet();
 	Vector<SparseDataPoint> vdoc = new Vector<SparseDataPoint>();
@@ -238,20 +269,40 @@ public class KMeans {
 	System.out.println(" " + cnt);
 
 	final int J = 5;
-	final int nstarts = 10;
-	final int nc = Math.min(J, vdocno.size());
+	int nstarts = 10;
+	final int nc = Math.min(J, vdoc.size());
+	if (vdoc.size() == nc) nstarts=1;
+
+	double minD = 0;
+	Clustering bestClustering = null;
+
 	for(int istart =0; istart<nstarts; istart++) {
 	    System.out.println("Start no. " + istart);
 	    int ci[] = randomSample( vdocno.size(), nc);
 	    System.out.print("Random centers at: ");
 	    for(int q: ci) 	    System.out.print(" " + q);
 	    System.out.println();
+	    Profiler.profiler.push(Profiler.Code.CLUSTERING);
+
 	    Clustering clu = new Clustering(dic.size(), vdoc, ci);
+	    Profiler.profiler.replace(Profiler.Code.CLUSTERING,Profiler.Code.CLU_sumDif);
 	    double d = clu.sumDist2();
-	    System.out.print("D=" + d);
-	    System.out.println("; asg=" + arrToString(clu.asg));
-	    
+	    System.out.println("D=" + d);
+	    //System.out.println("; asg=" + arrToString(clu.asg));
+	    if (bestClustering==null || d<minD) {
+		bestClustering = clu;
+		minD = d;
+	    }
+
+	    Profiler.profiler.pop(Profiler.Code.CLU_sumDif);
 	}
+
+	return bestClustering;
+
+	} finally {
+	    Profiler.profiler.pop(Profiler.Code.OTHER);
+	}
+ 
 	
     }
 
@@ -266,6 +317,11 @@ public class KMeans {
 
 	//	IndexReader reader =  Common.newReader();
 	clusterAll(z,em); //z.reader);
+
+	System.out.println("===Profiler report (wall clock time)===");
+	System.out.println(	Profiler.profiler.report());
+
     }
 
+    
 }

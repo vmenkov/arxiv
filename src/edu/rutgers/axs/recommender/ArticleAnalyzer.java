@@ -14,7 +14,8 @@ import javax.persistence.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
-import edu.rutgers.axs.ParseConfig;
+
+import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
@@ -58,7 +59,10 @@ public class ArticleAnalyzer {
 	if (val!=null) return val.intValue();
 	
 	if (h.size()> 1000000) {
-	    // FIXME
+	    // FIXME: this could be done in a more intelligent way,
+	    // maybe removing smallest values (least likely to be used
+	    // again)...
+	    Logging.info("Clearing totalDF hash table");
 	    h.clear(); // trying to prevent OutOfMemoryError
 	}
 
@@ -131,6 +135,9 @@ public class ArticleAnalyzer {
     */
     public HashMap<String, Double> getCoef(int docno, ArticleStats as) 
 	throws IOException {
+	try {
+	    Profiler.profiler.push(Profiler.Code.AA_getCoef);
+
 	boolean mustUpdate = (as!=null);
 
 	//long utc = sur.getUniqueTermCount();
@@ -144,16 +151,20 @@ public class ArticleAnalyzer {
 	int length=0;
 	int lengths[] = new int[nf];
 
+
 	for(int j=0; j<nf;  j++) {	    
 	    String name= fields[j];
-	    TermFreqVector tfv=reader.getTermFreqVector(docno, name);
-	    tfvs[j]=tfv;
+	    Profiler.profiler.push(Profiler.Code.AA_getTVF);
+	    TermFreqVector tfv= tfvs[j]=reader.getTermFreqVector(docno, name);
+	    Profiler.profiler.pop(Profiler.Code.AA_getTVF);
 	    if (tfv==null) continue;
 
 	    int[] freqs=tfv.getTermFrequencies();
 	    String[] terms=tfv.getTerms();	    
-	    for(int i=0; i<terms.length; i++) {
+	    for(int i=0; i<terms.length; i++) {	
+		Profiler.profiler.push(Profiler.Code.AA_df);
 		int df = totalDF(terms[i]);
+		Profiler.profiler.pop(Profiler.Code.AA_df);
 		if (df <= 1 || UserProfile.isUseless(terms[i])) {
 		    continue; // skip nonce-words and stop words
 		}
@@ -189,7 +200,9 @@ public class ArticleAnalyzer {
 	    int[] freqs=tfv.getTermFrequencies();
 	    String[] terms=tfv.getTerms();	    
 	    for(int i=0; i<terms.length; i++) {
+		Profiler.profiler.push(Profiler.Code.AA_df);
 		int df = totalDF(terms[i]);
+		Profiler.profiler.pop(Profiler.Code.AA_df);
 		
 		Double val = h.get( terms[i]);
 		// Non-words don't have table entries
@@ -212,6 +225,9 @@ public class ArticleAnalyzer {
 
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
 	return h;
+	} finally {
+	    Profiler.profiler.pop(Profiler.Code.AA_getCoef);
+	}
     }
 
 
