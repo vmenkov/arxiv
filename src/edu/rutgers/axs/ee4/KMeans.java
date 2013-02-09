@@ -30,29 +30,16 @@ import edu.cornell.cs.osmot.options.Options;
     
  */
 public class KMeans {
-    /** @param maxn 
-     */
-    static void clusterAll(ArticleAnalyzer z, EntityManager em, int maxn) throws IOException {
-	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
-	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+    static final boolean primaryOnly=true;
 
-	final boolean primaryOnly=true;
-
-	IndexReader reader = z.reader;
-
-	int numdocs = reader.numDocs();
-	int maxdoc = reader.maxDoc();
-	int cnt=0, unassignedCnt=0;	
-	int NS = 100;
-
-	int multiplicityCnt[] = new int[NS];
-
-	HashMap<String, Vector<Integer>> catMembers = new 	HashMap<String, Vector<Integer>>();
+    static class Categorizer {
+ 	HashMap<String, Vector<Integer>> catMembers = new 	HashMap<String, Vector<Integer>>();
 	Vector<Integer> nocatMembers= new Vector<Integer>();
+	int multiplicityCnt[] = new int[NS];
+	int cnt=0, unassignedCnt=0;	
 
-	for(int docno=0; docno<maxdoc; docno++) {
-	    if (reader.isDeleted(docno)) continue;
-	    Document doc = reader.document(docno);
+	void categorize(Document doc) {
+
 	    String aid = doc.get(ArxivFields.PAPER);
 	    String cats = doc.get(ArxivFields.CATEGORY);
 	    // System.out.println("" + docno + " : " + aid + " : " + cats);
@@ -60,7 +47,6 @@ public class KMeans {
 	    String[] catlist = CatInfo.split(cats);
 
 	    multiplicityCnt[ Math.min(NS-1, catlist.length)]++;
-
 
 	    Integer o = new Integer(docno);
 
@@ -78,32 +64,88 @@ public class KMeans {
 		unassignedCnt++;
 		nocatMembers.add(o);
 	    }
-	   
 	    cnt++;
-	    if (cnt>=maxn) break;
-	}	
-	System.out.println("Analyzed " + cnt + " articles; identified " +catMembers.size() + " categories. There are " + unassignedCnt + " articles that do not belong to any currently active category.");
-
-	System.out.println("Category affiliation count for articles:");
-	for(int i=0; i<multiplicityCnt.length; i++) {
-	    if (multiplicityCnt[i]>0) {
-		System.out.println("" + i + (i+1==multiplicityCnt.length? " (or more)": "") + " categories: " + multiplicityCnt[i]+" articles");
-	    }
 	}
-	//	System.exit(0);
 
+	String stats() {
+	    return "Analyzed " + cnt + " articles; identified " +catMembers.size() + " categories. There are " + unassignedCnt + " articles that do not belong to any currently active category.";
+	}
+
+	String affiStats() {
+	    String s= "Category affiliation count for articles:\n";
+	    for(int i=0; i<multiplicityCnt.length; i++) {
+	    if (multiplicityCnt[i]>0) {
+		s += "" + i + (i+1==multiplicityCnt.length? " (or more)": "") + " categories: " + multiplicityCnt[i]+" articles\n";
+	    }
+	    return s;
+	}
+
+	String catSizesStats() {
+	    String s= "Cat sizes:\n";
+	    for(String c: catMembers.keySet()) {
+		s += c + ": " + catMembers.get(c).size() + "\n";
+	    }
+	    return s;
+	}
+   }
+
+    /** Classify new docs */
+    void classifyNewDocs(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs, HashMap<Integer,EE4DocClass> id2dc) {
+
+	Categorizer catz = new Categorizer();
+
+	for(ScoreDoc sd: scoreDocs) {
+	    int docno = sd.doc;
+	    Document doc = reader.doc(docno);
+	    catz.categorize(doc);
+	}
+	
+	for(String c: catz.catMembers.keySet()) {
+	}
 	/*
-	System.out.println("Cat sizes:");
-	for(String c: catMembers.keySet()) {
-	    System.out.println(c + ": " + catMembers.get(c).size());
+	{
+	    int cid = classify(doc);
+	    String aid = doc.get(ArxivFields.PAPER);
+	    Article a = Article.getArticleAlways(em,aid);
+	    a.settEe4classId(cid);
+
+	    em.getTransaction().begin();
+	    em.persist(a);
+	    em.getTransaction().commit();	
+	    id2dc.get(new Integer(cid)).incM();
 	}
 	*/
+    }
+   
 
-	//	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, reader); 
+    /** @param maxn 
+     */
+    static void clusterAll(ArticleAnalyzer z, EntityManager em, int maxn) throws IOException {
+	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	IndexReader reader = z.reader;
+
+	int numdocs = reader.numDocs();
+	int maxdoc = reader.maxDoc();
+	int NS = 100;
+	Categorizer catz = new Categorizer();
+
+	for(int docno=0; docno<maxdoc; docno++) {
+	    if (reader.isDeleted(docno)) continue;
+	    Document doc = reader.document(docno);
+	    catz.categorize(doc);
+	    if (catz.cnt>=maxn) break;
+	}	
+	System.out.println(catz.stats());
+
+	System.out.println(catz.affiStats());
+	//	System.exit(0);
+
+	//	System.out.println(catz.catSizesStats());
 	int caCnt=0;
 
 	int id0 = 1;
-	for(String c: catMembers.keySet()) {
+	for(String c: catz.catMembers.keySet()) {
 	    System.out.println("Running clustering on category " + c + ", size=" + catMembers.get(c).size());
 
 	    DocSet dic = new DocSet();
@@ -138,7 +180,7 @@ public class KMeans {
 	}
 	em.getTransaction().commit();
 
-	System.out.println("Clustering completed on all "+ catMembers.size()+" categories; " + id0 + " clusters created; " + caCnt + " articles classified, and " + nocatMembers.size() + " more are unclassifiable");
+	System.out.println("Clustering completed on all "+ catz.catMembers.size()+" categories; " + id0 + " clusters created; " + caCnt + " articles classified, and " + catz.nocatMembers.size() + " more are unclassifiable");
 
     }
 
@@ -402,6 +444,8 @@ public class KMeans {
 	System.out.println(	Profiler.profiler.report());
 
     }
+
+
 
    
 }
