@@ -33,12 +33,14 @@ public class KMeans {
     static final boolean primaryOnly=true;
 
     static class Categorizer {
+	private static final int NS = 100;
+
  	HashMap<String, Vector<Integer>> catMembers = new 	HashMap<String, Vector<Integer>>();
 	Vector<Integer> nocatMembers= new Vector<Integer>();
 	int multiplicityCnt[] = new int[NS];
 	int cnt=0, unassignedCnt=0;	
 
-	void categorize(Document doc) {
+	void categorize(int docno, Document doc) {
 
 	    String aid = doc.get(ArxivFields.PAPER);
 	    String cats = doc.get(ArxivFields.CATEGORY);
@@ -74,8 +76,11 @@ public class KMeans {
 	String affiStats() {
 	    String s= "Category affiliation count for articles:\n";
 	    for(int i=0; i<multiplicityCnt.length; i++) {
-	    if (multiplicityCnt[i]>0) {
-		s += "" + i + (i+1==multiplicityCnt.length? " (or more)": "") + " categories: " + multiplicityCnt[i]+" articles\n";
+		if (multiplicityCnt[i]>0) {
+		    s += "" + i;
+		    s += (i+1==multiplicityCnt.length? " (or more)": "");
+		    s += " categories: " + multiplicityCnt[i]+" articles\n";
+		}
 	    }
 	    return s;
 	}
@@ -90,14 +95,14 @@ public class KMeans {
    }
 
     /** Classify new docs */
-    void classifyNewDocs(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs, HashMap<Integer,EE4DocClass> id2dc) {
+    void classifyNewDocs(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs, HashMap<Integer,EE4DocClass> id2dc) throws IOException {
 
 	Categorizer catz = new Categorizer();
 
 	for(ScoreDoc sd: scoreDocs) {
 	    int docno = sd.doc;
-	    Document doc = reader.doc(docno);
-	    catz.categorize(doc);
+	    Document doc = reader.document(docno);
+	    catz.categorize(docno, doc);
 	}
 	
 	for(String c: catz.catMembers.keySet()) {
@@ -127,13 +132,12 @@ public class KMeans {
 
 	int numdocs = reader.numDocs();
 	int maxdoc = reader.maxDoc();
-	int NS = 100;
 	Categorizer catz = new Categorizer();
 
 	for(int docno=0; docno<maxdoc; docno++) {
 	    if (reader.isDeleted(docno)) continue;
 	    Document doc = reader.document(docno);
-	    catz.categorize(doc);
+	    catz.categorize(docno, doc);
 	    if (catz.cnt>=maxn) break;
 	}	
 	System.out.println(catz.stats());
@@ -146,10 +150,10 @@ public class KMeans {
 
 	int id0 = 1;
 	for(String c: catz.catMembers.keySet()) {
-	    System.out.println("Running clustering on category " + c + ", size=" + catMembers.get(c).size());
+	    System.out.println("Running clustering on category " + c + ", size=" + catz.catMembers.get(c).size());
 
 	    DocSet dic = new DocSet();
-	    Vector<Integer> vdocno = catMembers.get(c);
+	    Vector<Integer> vdocno = catz.catMembers.get(c);
 	    Clustering clu = cluster(dic, z, vdocno);
 	    clu.saveCenters(dic,  c, id0);
 
@@ -170,7 +174,7 @@ public class KMeans {
 	}	
 
 	em.getTransaction().begin();
-	for(int docno: nocatMembers) {
+	for(int docno: catz.nocatMembers) {
 	    Document doc = reader.document(docno);
 	    String aid = doc.get(ArxivFields.PAPER);
 	    Article a = Article.findByAid(  em, aid);
