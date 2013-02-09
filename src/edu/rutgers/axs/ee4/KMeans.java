@@ -15,9 +15,9 @@ import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
-//import edu.rutgers.axs.recommender.ArxivScoreDoc;
-import edu.rutgers.axs.recommender.ArticleAnalyzer;
+import edu.rutgers.axs.recommender.*;
 
+import edu.cornell.cs.osmot.options.Options;
 
 /** Document clustering (KMeans), for Peter Frazier's Exploration
     Engine ver. 4. 
@@ -30,20 +30,25 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     
  */
 public class KMeans {
-    static int maxn= 1000;
+    /** @param maxn 
+     */
+    static void clusterAll(ArticleAnalyzer z, EntityManager em, int maxn) throws IOException {
+	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 
-    static void clusterAll(ArticleAnalyzer z, EntityManager em) throws IOException {
+	final boolean primaryOnly=true;
+
 	IndexReader reader = z.reader;
 
 	int numdocs = reader.numDocs();
 	int maxdoc = reader.maxDoc();
-	int cnt=0;
-	
+	int cnt=0, unassignedCnt=0;	
 	int NS = 100;
 
 	int multiplicityCnt[] = new int[NS];
 
 	HashMap<String, Vector<Integer>> catMembers = new 	HashMap<String, Vector<Integer>>();
+	Vector<Integer> nocatMembers= new Vector<Integer>();
 
 	for(int docno=0; docno<maxdoc; docno++) {
 	    if (reader.isDeleted(docno)) continue;
@@ -59,19 +64,25 @@ public class KMeans {
 
 	    Integer o = new Integer(docno);
 
+	    boolean assigned=false;
 	    for(String cat: catlist) {
 		Categories.Cat c = Categories.findActiveCat(cat);
 		if (c==null) continue;
 		Vector<Integer> v = catMembers.get(cat);
 		if (v==null) catMembers.put(cat, v=new Vector<Integer>());
 		v.add(o);
+		assigned=true;
+		if (primaryOnly) break; // one cat per doc only
 	    }
-
+	    if (!assigned) {
+		unassignedCnt++;
+		nocatMembers.add(o);
+	    }
 	   
 	    cnt++;
 	    if (cnt>=maxn) break;
 	}	
-	System.out.println("Analyzed " + cnt + " articles; identified " +catMembers.size() + " categories");
+	System.out.println("Analyzed " + cnt + " articles; identified " +catMembers.size() + " categories. There are " + unassignedCnt + " articles that do not belong to any currently active category.");
 
 	System.out.println("Category affiliation count for articles:");
 	for(int i=0; i<multiplicityCnt.length; i++) {
@@ -79,7 +90,7 @@ public class KMeans {
 		System.out.println("" + i + (i+1==multiplicityCnt.length? " (or more)": "") + " categories: " + multiplicityCnt[i]+" articles");
 	    }
 	}
-	System.exit(0);
+	//	System.exit(0);
 
 	/*
 	System.out.println("Cat sizes:");
@@ -89,12 +100,46 @@ public class KMeans {
 	*/
 
 	//	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, reader); 
+	int caCnt=0;
+
+	int id0 = 1;
 	for(String c: catMembers.keySet()) {
 	    System.out.println("Running clustering on category " + c + ", size=" + catMembers.get(c).size());
 
-	    cluster(z, catMembers.get(c));
+	    DocSet dic = new DocSet();
+	    Vector<Integer> vdocno = catMembers.get(c);
+	    Clustering clu = cluster(dic, z, vdocno);
+	    clu.saveCenters(dic,  c, id0);
 
+	    em.getTransaction().begin();
+	    int pos=0;
+	    for(int docno: vdocno) {
+		Document doc = reader.document(docno);
+		String aid = doc.get(ArxivFields.PAPER);
+		Article a = Article.findByAid(  em, aid);
+		int cid = id0 + clu.asg[pos];
+		a.settEe4classId(cid);
+		em.persist(a);
+		pos ++;
+		caCnt++;
+	    }
+	    em.getTransaction().commit();
+	    id0 += clu.centers.length;
 	}	
+
+	em.getTransaction().begin();
+	for(int docno: nocatMembers) {
+	    Document doc = reader.document(docno);
+	    String aid = doc.get(ArxivFields.PAPER);
+	    Article a = Article.findByAid(  em, aid);
+	    int cid = 0;
+	    a.settEe4classId(cid);
+	    em.persist(a);
+	}
+	em.getTransaction().commit();
+
+	System.out.println("Clustering completed on all "+ catMembers.size()+" categories; " + id0 + " clusters created; " + caCnt + " articles classified, and " + nocatMembers.size() + " more are unclassifiable");
+
     }
 
     /** Is ci[pos] different from all preceding array elements?
@@ -231,7 +276,41 @@ public class KMeans {
 		centers[i].multiply(1.0/(double) clusterSize[i]);
 	    }
 	}
+
+	/** Saves cluster centers in disk files. The files can be read
+	    back later, to be used for classifying new documents
+	    during nightly updates.
+	    @param cat Category name (which becomes the directory name)
+	    @param id0 the cluster id of the first cluster */
+	void saveCenters(DocSet dic, String cat, int id0) throws IOException {
+	    File catdir = new File( getCatDirPath(cat));
+	    catdir.mkdirs();
+	    for(int i=0; i<centers.length; i++) {
+		int id = id0 + i;
+		File f= new File(catdir, "" +id + ".dat");
+		PrintWriter w= new PrintWriter(new FileWriter(f));
+		centers[i].save( dic,  w);
+		w.close();
+	    }
+	}
+
+
     }
+
+    /** Generates full path for the directory where cluster center
+	files are stored for a particular category.
+     */
+    static String  getCatDirPath(String cat)  {
+	String s = "";
+	try {
+	    s = Options.get("DATAFILE_DIRECTORY") +	File.separator;
+	} catch(IOException ex) {
+	    Logging.error("Don't know where DATAFILE_DIRECTORY is");
+	}
+	s += "kmeans"  +	File.separator + cat;
+	return s;
+    }
+
 
 
     static String arrToString(double a[]) {
@@ -250,28 +329,32 @@ public class KMeans {
 
     /** Runs several KMeans clustering attempts on the specified set, and
 	returns the best result */
-    static private Clustering cluster(ArticleAnalyzer z,Vector<Integer> vdocno)
+    static private Clustering cluster(DocSet dic, ArticleAnalyzer z,Vector<Integer> vdocno)
 	throws IOException {
 
-	try {
-	    Profiler.profiler.push(Profiler.Code.OTHER);
+	Profiler.profiler.push(Profiler.Code.OTHER);
 	
-	DocSet dic = new DocSet();
 	Vector<SparseDataPoint> vdoc = new Vector<SparseDataPoint>();
-	System.out.println("Reading vectors...");
+	//System.out.println("Reading vectors...");
 	int cnt=0;
 	for(int docno: vdocno) {
 	    SparseDataPoint q = new SparseDataPoint(z.getCoef( docno,null), dic, z);
 	    q.normalize();
 	    vdoc.add(q);
-	    if (cnt++  % 100 == 0) 	System.out.print(" " + cnt);
+	    cnt++;
+	    //if (cnt  % 100 == 0) 	System.out.print(" " + cnt);
 	}
-	System.out.println(" " + cnt);
+	//	System.out.println(" " + cnt);
 
-	final int J = 5;
+	//	final int J = 5;
+	//	final int nc = Math.min(J, vdoc.size());
+	int nc = (int)Math.sqrt(  (double)vdoc.size()/200.0);
+	if (nc <=1) nc = 1;
+
+	System.out.println("Chose to create " + nc + " clusters");
+
 	int nstarts = 10;
-	final int nc = Math.min(J, vdoc.size());
-	if (vdoc.size() == nc) nstarts=1;
+	if (vdoc.size() == nc||nc==1) nstarts=1;
 
 	double minD = 0;
 	Clustering bestClustering = null;
@@ -296,32 +379,29 @@ public class KMeans {
 
 	    Profiler.profiler.pop(Profiler.Code.CLU_sumDif);
 	}
-
+	Profiler.profiler.pop(Profiler.Code.OTHER);
 	return bestClustering;
-
-	} finally {
-	    Profiler.profiler.pop(Profiler.Code.OTHER);
-	}
- 
-	
     }
 
     /** Out random number generator */
     static private Random gen = new  Random();
 
+    /**
+       -Dn=1000 - how many docs to process
+     */
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();
-	maxn = ht.getOption("n", maxn);
+	int maxn = ht.getOption("n", 10000);
 	ArticleAnalyzer z = new ArticleAnalyzer();
 	EntityManager em  = Main.getEM();
 
 	//	IndexReader reader =  Common.newReader();
-	clusterAll(z,em); //z.reader);
+	clusterAll(z,em, maxn); //z.reader);
 
 	System.out.println("===Profiler report (wall clock time)===");
 	System.out.println(	Profiler.profiler.report());
 
     }
 
-    
+   
 }

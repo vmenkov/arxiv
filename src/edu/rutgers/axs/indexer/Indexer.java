@@ -553,9 +553,6 @@ public class Indexer {
 	}	
     }
 
-    //    private void fromXML(String f, String bodySrcRoot) throws Exception {
-    //}
-
     private void fromXML(String f, String bodySrcRoot) throws Exception {
 	System.out.println("Processing XML file " + f);
 	org.w3c.dom.Element e = XMLUtil.readFileToElement(f);
@@ -669,15 +666,8 @@ public class Indexer {
 	    for(int j=1; j<args.length; j++) {
 		String v = args[j];
 		// is it numeric?
-		int docno=-1;
-		try {
-		    docno = Integer.parseInt(v);
-		} catch(Exception ex) {}
-		if (docno >= 0 && v.equals("" + docno)) {
-		    show.show(docno);  // numeric id requested
-		} else {
-		    show.show(v);	
-		}
+		int docno=show.figureDocno(v);
+		show.show(docno);  
 	    }
 	} else if (args[0].equals("showcoef")) {
 	    System.out.println("Note: the following stop words are not stored in the Lucene index:");
@@ -694,7 +684,10 @@ public class Indexer {
 	    System.out.println();
 	    Show show = new Show();
 	    for(int j=1; j<args.length; j++) {
-		show.showCoef(args[j]);
+		String v = args[j];
+		// is it numeric?
+		int docno=show.figureDocno(v);
+		show.showCoef(docno); 
 	    }
 	} else if (args[0].equals("list")) {
 	    int max=-1;

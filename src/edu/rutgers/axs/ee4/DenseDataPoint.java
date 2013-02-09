@@ -53,4 +53,15 @@ class DenseDataPoint extends DataPoint {
        return sum;
     }
 
+    /** Is used to save a data point to file */
+    void save(DocSet dic, PrintWriter w) {
+	//w.println("#--- Entries are ordered by w(t)*idf(t)");
+	//w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
+	for(int i=0; i<values.length; i++) {
+	    w.println(dic.getWord(i) + "\t" + values[i]);
+	}
+    }
+
+
+
 }

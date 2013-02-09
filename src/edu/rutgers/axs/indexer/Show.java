@@ -38,12 +38,25 @@ class Show {
 	System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
     }
 
-    /** Finds Lucene document (its internal integer id) by Arxiv id */
-    private int find(String id) throws IOException{
+    /** Interpret a given string (a command line argument) as an
+	integer Lucene doc number or as a string ArXiv doc id.
+     */
+    int figureDocno(String v) throws IOException  {
+	// is it numeric?
+	try {
+	    int docno = Integer.parseInt(v);
+	    if  (v.equals("" + docno)) return docno;  // numeric id requested
+	} catch(Exception ex) {}
+	return find(v);
+    }
 
-	//IndexSearcher s = new IndexSearcher( indexDirectory);
+
+
+    /** Finds Lucene document (its internal integer id) by Arxiv id */
+    int find(String id) throws IOException{
+
 	IndexSearcher s = new IndexSearcher( reader );
-	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
+   	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
 	System.out.println("query=("+tq+")");
 	TopDocs 	 top = s.search(tq, 1);
 	ScoreDoc[] 	scoreDocs = top.scoreDocs;
@@ -87,7 +100,13 @@ class Show {
 	"this reader does not implement getUniqueTermCount()".
 	This is why we use subreaders.
     */
-    void showCoef(String id) throws IOException {
+   void showCoef(String id) throws IOException {
+	int docno = find(id);
+	System.out.println("Document info for id=" + id +", doc no.=" + docno);
+	showCoef(docno);
+    }
+
+    void showCoef(int docno) throws IOException {
 
 	//long utc = reader.getUniqueTermCount();
 	//System.out.println("Index has "+utc +" unique terms");
@@ -98,9 +117,7 @@ class Show {
 	    System.out.println("Subindex has "+utc +" unique terms");
 	}
 
-	int docno = find(id);
 	Document doc = reader.document(docno);
-	System.out.println("Document info for id=" + id +", doc no.=" + docno);
  	for(String name: SearchResults.searchFields) {
 	    showField(docno, doc, name);
 	}

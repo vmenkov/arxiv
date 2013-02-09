@@ -124,6 +124,14 @@ public class ArticleAnalyzer {
      */
     static final boolean useSqrt = false;
 
+    /** Minimum DF needed for a term not to be ignored. My original
+     default was to only ignore nonce words (df&lt;2), but Paul
+     Ginsparg suggests ignoring terms with DF&lt;10 (2013-02-06). */
+    static private int minDf = 2;
+
+    static public void setMinDf(int x) { minDf = x; }
+    static public int getMinDf() { return minDf; }
+
     /** Computes a (weighted) term frequency vector for a specified document.
 
 	@param docno Lucene's internal integer ID for the document,
@@ -135,8 +143,8 @@ public class ArticleAnalyzer {
     */
     public HashMap<String, Double> getCoef(int docno, ArticleStats as) 
 	throws IOException {
-	try {
-	    Profiler.profiler.push(Profiler.Code.AA_getCoef);
+
+	Profiler.profiler.push(Profiler.Code.AA_getCoef);
 
 	boolean mustUpdate = (as!=null);
 
@@ -165,7 +173,7 @@ public class ArticleAnalyzer {
 		Profiler.profiler.push(Profiler.Code.AA_df);
 		int df = totalDF(terms[i]);
 		Profiler.profiler.pop(Profiler.Code.AA_df);
-		if (df <= 1 || UserProfile.isUseless(terms[i])) {
+		if (df < minDf || UserProfile.isUseless(terms[i])) {
 		    continue; // skip nonce-words and stop words
 		}
 		// create a dummy entry for each real word
@@ -183,7 +191,10 @@ public class ArticleAnalyzer {
 	    as.setTime( new Date());
 	}
 
-	if (length==0) return h;
+	if (length==0) {
+	    Profiler.profiler.pop(Profiler.Code.AA_getCoef);
+	    return h;
+	}
 
 	// individual fields' boost factors
 	double boost[] = new double[nf];
@@ -224,10 +235,8 @@ public class ArticleAnalyzer {
 	}
 
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
+	Profiler.profiler.pop(Profiler.Code.AA_getCoef);
 	return h;
-	} finally {
-	    Profiler.profiler.pop(Profiler.Code.AA_getCoef);
-	}
     }
 
 

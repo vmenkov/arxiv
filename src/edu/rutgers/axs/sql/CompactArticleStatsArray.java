@@ -34,6 +34,9 @@ public class CompactArticleStatsArray  {
 
     /** Raw boost factor for the field */
     public float getRawBoost(int docno, int i) {
+	if (boost[i]==null || boost[i][docno]==0) {
+	    Logging.error("CASA.getRawBoost("+docno+","+i+") is not available. You may need to rerun allnorms.sh");
+	}
 	return boost[i][docno];
     }
 
@@ -42,6 +45,7 @@ public class CompactArticleStatsArray  {
 	@param docno Lucene's internal document id.
     */
     public float getNormalizedBoost(int docno, int i) {
+	if (norm[docno]==0) throw new IllegalArgumentException("CASA.getNormalizedBoost("+docno+","+i+"): no norm is stored. You may need to rerun allnorms.sh");
 	return boost[i][docno]/norm[docno];
     }
 

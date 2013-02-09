@@ -388,6 +388,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	} catch(IOException ex) {
 	    Logging.error("Don't know where DATAFILE_DIRECTORY is");
 	}
+	s += "user"  +	File.separator;
 	return s + getUser() + File.separator + 	    getThisFile();
     }
 

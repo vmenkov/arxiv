@@ -22,8 +22,8 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 # -DschedulingIntervalSec=60
 
-#set opt="-cp ${cp} -Xmx1024m ${opt} -Dn=10000"
-set opt="-cp ${cp} -Xmx1024m ${opt} -Dn=1000000"
+set opt="-cp ${cp} -Xmx1024m ${opt} -Dn=10000"
+#set opt="-cp ${cp} -Xmx1024m ${opt} -Dn=1000000"
 
 echo "opt=$opt"
 
