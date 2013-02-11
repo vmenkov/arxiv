@@ -279,11 +279,18 @@ public class ResultsBase {
     }
     
     public String resultsDivHTML(ArticleEntry e, boolean isSelf, int flags) {
+
+	String rt = "[score="+e.score+ "]";
+	if (e.researcherCommline!=null && e.researcherCommline.length()>0) {
+	    rt += "["+e.researcherCommline+"]";
+	}
+	rt += " ";
+
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
 	    e.i + ". " + 
-	    researcherSpan("[score="+e.score+ "] ")+ 
+	    researcherSpan(rt)+ 
 	    e.idline + "; "+e.formatDate()+"\n" +
 	    "[" + a( urlAbstract(e.id), "Details") + "]\n" +
 	    "[" + a( urlPDF(e.id), "PDF/PS/etc") + "]\n" +

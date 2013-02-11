@@ -49,6 +49,10 @@ public class  SearchResults {
     /** Empty string or "at least", as appropriate. */
     public String atleast = "";
     
+
+    /** "Original" entries (e.g., read from a DataFile) are stored here */
+    HashMap<String,ArticleEntry> entriesOrig = new HashMap<String,ArticleEntry>();
+
     /** Entries to be displayed */
     public Vector<ArticleEntry> entries= new Vector<ArticleEntry> ();
     /** Entries not to be displayed */	
@@ -96,6 +100,11 @@ public class  SearchResults {
 	    ArticleEntry e = entries.elementAt(i);
 	    int docno = e.getCorrectDocno(searcher);		    
 	    scoreDocs[i] = new ScoreDoc( docno, (float)e.score);
+	}
+
+	// store comments etc. for later use
+	for(ArticleEntry e: entries) {
+	    entriesOrig.put(e.id, e);
 	}
     }
 
@@ -267,8 +276,8 @@ public class  SearchResults {
 	if (exclusions!=null) excludeSome(searcher, exclusions);
 
 	System.out.println("SearchResults: " + len0 + " results; after exclusions, " + scoreDocs.length + " remains");
-	
-	entries.setSize(0);  // just in case something's in already
+
+	entries.setSize(0); // clear old stuff
 	int pos = startat+1;
 
 	int prevSkipped = 0;
@@ -282,6 +291,10 @@ public class  SearchResults {
 		prevSkipped ++;
 	    } else {
 		ArticleEntry e=new ArticleEntry(pos, doc, docno, scoreDocs[i].score);
+		ArticleEntry e0 =  entriesOrig.get(e.id);
+		if (e0 != null) {
+		    e.researcherCommline = e0.researcherCommline;
+		}
 		// provenance is only marked in lists created by team-draft
 		if (prov != null) e.prov = prov[i];
 		entries.add( e);

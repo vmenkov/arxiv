@@ -2,6 +2,7 @@ package edu.rutgers.axs.web;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 import java.text.*;
 
 import org.apache.lucene.document.*;
@@ -26,6 +27,9 @@ public class ArticleEntry {
     public String abst;
     /** A line that our own server may add in some circumstances (for rendering with additional info) */
     public String ourCommline="";
+    /** Additional information (e.g., score minutiae) that we way generate to
+	show to recsearchers only. */
+    public String researcherCommline="";
     /** True if this article is in the user's personal folder */
     public boolean isInFolder=false;
     /** The most recent rating, if any, given by the user to this article. */
@@ -197,7 +201,12 @@ public class ArticleEntry {
 	//	w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
 	for(int i=0; i<entries.size(); i++) {
 	    ArticleEntry e=entries.elementAt(i);
-	    w.println(e.id + "\t" + e.score);
+	    w.print(e.id + "\t" + e.score);
+	    if (e.researcherCommline !=null && e.researcherCommline.length()>0){
+		String s=e.researcherCommline.replaceAll("\"", "'");
+		w.print("\t\"" + e.researcherCommline + "\"");
+	    }
+	    w.println();
 	}
     }
 
@@ -212,18 +221,28 @@ public class ArticleEntry {
 	LineNumberReader r = new LineNumberReader(fr);
 	String s;
 	int linecnt = 0, pos=0;
+
+	final Pattern p = Pattern.compile("(\\S+)\\s+(\\S+)\\s*");
+
 	while((s=r.readLine())!=null) {
 	    linecnt++;
 	    s = s.trim();
 	    if (s.equals("") || s.startsWith("#")) continue;
-	    String q[] = s.split("\\s+");
-	    if (q==null || q.length != 2) {
-		throw new IOException("Cannot parse line " + linecnt + " in file " + f);
+	    Matcher m = p.matcher(s);
+	    if (!m.lookingAt())  {
+		throw new IOException("Cannot parse line "+linecnt+" in file "+f);
 	    }
+	   
 	    pos++;
-	    String aid = q[0];
+	    String aid = m.group(1);
 	    ArticleEntry e = new ArticleEntry(pos, aid);
-	    e.setScore( Double.parseDouble(q[1]));
+	    e.setScore( Double.parseDouble(m.group(2)));
+	    String tail = s.substring(m.end());
+	    //System.out.println("readFile: s=["+s+"], tail=["+tail+"]");
+	    if (tail.length()>0) {
+		tail=tail.replaceAll("\"", ""); // FIXME: ...
+		e.researcherCommline = tail;
+	    }
 	    entries.add(e);
 	}
 	r.close();

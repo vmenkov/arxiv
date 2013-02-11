@@ -55,6 +55,14 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 
     static public Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores, IndexReader reader)  
 	throws IOException    {
+	return  packageEntries( scores, null, reader);
+    }
+
+    /**
+       @param comments Optional comments (to be shown to researchers)
+     */
+    static public Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores, String comments[], IndexReader reader)  
+	throws IOException    {
 	Vector<ArticleEntry> entries = new Vector<ArticleEntry>(scores.length);
 	for(int i=0; i< scores.length; i++) {
 	    ArxivScoreDoc sd = scores[i];
@@ -62,6 +70,9 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	    // FIXME: could use  "skeleton" constructor instead to save time   
 	    ArticleEntry ae= new ArticleEntry(i+1, doc, sd.doc);
 	    ae.setScore( sd.score);
+	    if (comments!=null && comments[i]!=null) {
+		ae.researcherCommline = comments[i];
+	    }
 	    entries.add( ae);
 	}	
 	return entries;

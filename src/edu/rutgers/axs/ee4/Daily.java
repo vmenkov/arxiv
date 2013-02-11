@@ -229,6 +229,7 @@ public class Daily {
 	return (int)lai;
     }
 
+    /** Generates a current suggestion list for a specified user. */
     private static DataFile updateSugList(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User u, EE4User ee4u, int lai, boolean nofile)
 	throws IOException
      {
@@ -241,7 +242,8 @@ public class Daily {
 	 //	 Logging.info("Daily.USL: |sr|=" + sr.scoreDocs.length);
 
 	 Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
-     
+	 Vector<String> comments = new  Vector<String>();
+
 	 for(ScoreDoc sd: sr.scoreDocs) {
 	     Document doc = searcher.doc(sd.doc);
 	     String aid = doc.get(ArxivFields.PAPER);
@@ -259,6 +261,7 @@ public class Daily {
 	     double score = alpha/(alpha + beta);
 	     if (score >= mu) { // add to list
 		 results.add(new ArxivScoreDoc(sd).setScore(score));
+		 comments.add("Cluster "+cid+", " + alpha+"/("+alpha+"+"+beta+")>mu=" +mu);
 		 //		 Logging.info("Daily.USL: added, score=" + score);
 	     } else {
 		 //		 Logging.info("Daily.USL: not added, score=" + score);
@@ -268,7 +271,7 @@ public class Daily {
 	 DataFile outputFile=new DataFile(u.getUser_name(), 0, DataFile.Type.EE4_SUGGESTIONS);
 	 outputFile.setSince(since);
 	 outputFile.setLastActionId(lai);
-	 Vector<ArticleEntry> entries = ArxivScoreDoc.packageEntries(results.toArray(new ArxivScoreDoc[0]), searcher.getIndexReader());
+	 Vector<ArticleEntry> entries = ArxivScoreDoc.packageEntries(results.toArray(new ArxivScoreDoc[0]), comments.toArray(new String[0]), searcher.getIndexReader());
 	 Logging.info("Daily.USL: |entries|=" + entries.size());
 
 	 if (nofile) { 
