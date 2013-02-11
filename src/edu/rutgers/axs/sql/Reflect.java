@@ -349,7 +349,9 @@ public class Reflect {
 		    !anDisplay.link().equals("")) {
 		    // FIXME: must encode id if it's not just a number...
 		    String url = anDisplay.link();
-		    if (!url.endsWith("=")) { url += "?id="; }
+		    if (!(url.endsWith("=")||url.endsWith("/"))) { 
+			url += "?id="; 
+		    }
 		    url += q;
 		    q = "<a href=\"" + url + "\">" + q + "</a>"; 
 		}

@@ -27,8 +27,10 @@ set opt="-cp ${cp} -Xmx1024m ${opt} -Dn=1000000"
 
 echo "opt=$opt"
 
+#--- clustering.sh all
+#--- clustering.sh classes -Dclasses=476
 
-time java $opt $1 $2 $3 edu.rutgers.axs.ee4.KMeans
+time java $opt  $2 $3 edu.rutgers.axs.ee4.KMeans $1
 
 
 

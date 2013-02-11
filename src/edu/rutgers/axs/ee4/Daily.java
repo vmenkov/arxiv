@@ -14,7 +14,8 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
-import edu.rutgers.axs.recommender.ArxivScoreDoc;
+//import edu.rutgers.axs.recommender.ArxivScoreDoc;
+import edu.rutgers.axs.recommender.*;
 
 
 /** Daily updates for the underlying data structure, and
@@ -24,35 +25,24 @@ public class Daily {
 
     static private final int maxlen = 100000;
 
-    private static HashMap<Integer,EE4DocClass> updateClassStats(EntityManager em, IndexSearcher searcher, Date since)  throws IOException {
-	org.apache.lucene.search.Query q = SearchResults.mkSinceDateQuery(since);
-	TopDocs    top = searcher.search(q, maxlen);
-	System.out.println("Looking back to " + since + "; found " + 
-			   top.scoreDocs.length +  " papers");
-
-	// list classes
-	HashMap<Integer,EE4DocClass> id2dc = readDocClasses(em);
-	// classify all recent docs
-	updateClassInfo(em,searcher,top.scoreDocs, id2dc);
-	// ... and not-yet-classified but viewed old docs
-	classifyUnclassified( em, searcher);
-	return  id2dc;
-    }
-
     /** The main "daily updates" method. Calls all other methods.
      */
     static void updates() throws IOException {
 
+	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	ArticleAnalyzer z = new ArticleAnalyzer();
+	IndexReader reader = z.reader;
+
 	EntityManager em  = Main.getEM();
-	IndexReader reader = Common.newReader();
-	IndexSearcher searcher = new IndexSearcher( reader );
 	    
 	final int days = EE4DocClass.T * 7; 
 	Date since = SearchResults.daysAgo( days );
 
-	HashMap<Integer,EE4DocClass> id2dc= updateClassStats(em,searcher,since);
+	HashMap<Integer,EE4DocClass> id2dc= updateClassStats(em,z,since);
 	List<Integer> lu = User.selectByProgram( em, User.Program.EE4);
 
+	IndexSearcher searcher = new IndexSearcher( reader );
 	for(int uid: lu) {
 	    try {
 		User user = (User)em.find(User.class, uid);
@@ -64,6 +54,23 @@ public class Daily {
 	    }
 	}
 	em.close();
+    }
+
+    private static HashMap<Integer,EE4DocClass> updateClassStats(EntityManager em, ArticleAnalyzer z, Date since)  throws IOException {
+	org.apache.lucene.search.Query q= SearchResults.mkSinceDateQuery(since);
+
+	IndexSearcher searcher = new IndexSearcher( z.reader );
+	TopDocs    top = searcher.search(q, maxlen);
+	System.out.println("Looking back to " + since + "; found " + 
+			   top.scoreDocs.length +  " papers");
+
+	// list classes
+	HashMap<Integer,EE4DocClass> id2dc = readDocClasses(em);
+	// classify all recent docs
+	updateClassInfo(em,z,top.scoreDocs, id2dc);
+	// ... and not-yet-classified but viewed old docs
+	//classifyUnclassified( em, searcher);
+	return  id2dc;
     }
 
 
@@ -96,32 +103,6 @@ public class Daily {
 	return updateSugList(em, searcher, since, id2dc, user, ee4u, lai, nofile);
     }
 
-
-   
-    /** Classifies those documents that we may need (because they have
-	been viewed or judged by EE4 users), but that have not been
-	previously classified.	(Strictly speaking, viewed-but-not-judged
-	docs could be ignored, but it's easier to pull in them all).
-     */
-    private static void classifyUnclassified(EntityManager em, IndexSearcher searcher)  throws IOException {
-	String qtext = "select distinct(ac.article) from Action ac where ac.user.program= :p and ac.article.ee4classId=0"; 
-	javax.persistence.Query q = em.createQuery(qtext);
-	q.setParameter("p", User.Program.EE4);
-	List<Article> articles  =  (List<Article>) q.getResultList();
-	em.getTransaction().begin();
-	int cnt=0;
-	for(Article a: articles) {
-	    int docno = Common.find(searcher, a.getAid()); 
-	    Document doc = searcher.doc(docno);
-	    int cid = classify(doc);
-	    a.settEe4classId(cid);
-	    em.persist(a);
-	    cnt++;
-	}
-	em.getTransaction().commit();	
-	System.out.println("Classified " + cnt + " viewed, but not previously classified documents");
-    }
-
     static private HashMap<Integer,EE4DocClass> readDocClasses(EntityManager em) {
 	List<EE4DocClass> docClasses = EE4DocClass.getAll(em);
 	HashMap<Integer,EE4DocClass> id2dc = new HashMap<Integer,EE4DocClass>();
@@ -131,51 +112,42 @@ public class Daily {
 	return id2dc;
     }
 
-    /** Sets stat values in document class entries ( EE4DocClass table in the SQL server)
+    /** Sets stat values in document class entries ( EE4DocClass table in the SQL server). 
+	@param scoreDocs The list of all recent docs for the last T
+	weeks. (The correct range is important, so that we can update
+	m correctly)
+	@param  scoreDocs recent docs
      */
-    static void updateClassInfo(EntityManager em, IndexSearcher searcher, ScoreDoc[] scoreDocs, HashMap<Integer,EE4DocClass> id2dc)
+    static void updateClassInfo(EntityManager em, ArticleAnalyzer z, ScoreDoc[] scoreDocs, HashMap<Integer,EE4DocClass> id2dc)
 	throws IOException
     {
 	// Update m[z]
 	//	int maxC = EE4DocClass.maxId(em);
-    
+	
+	int maxCid = 0;
 
 	for(EE4DocClass c: id2dc.values()) {
-	    c.setM(0);
+	    maxCid = Math.max(maxCid, c.getId());
 	    // FIXME: this should come from ZXT's code
 	    c.setAlpha0(0.5);
 	    c.setBeta0(0.5);
 	}
+	
+	int mT[] = new int[ maxCid + 1];
 
-	for(ScoreDoc sd: scoreDocs) {
-	    int docno = sd.doc;
-	    Document doc = searcher.doc(docno);
-	    int cid = classify(doc);
-	    String aid = doc.get(ArxivFields.PAPER);
-	    Article a = Article.getArticleAlways(em,aid);
-	    a.settEe4classId(cid);
+	KMeans.classifyNewDocs(em, z, scoreDocs, mT);
 
-	    em.getTransaction().begin();
-	    em.persist(a);
-	    em.getTransaction().commit();	
-	    id2dc.get(new Integer(cid)).incM();
-	}
+	System.out.println("mT = " +  KMeans.arrToString(mT));
 
 	em.getTransaction().begin();
 	for(EE4DocClass c: id2dc.values()) {
-	    c.setM( c.getM()/EE4DocClass.T ); // average *weekly* number, as per the specs
+	    int cid = c.getId();
+	    int m = (int)Math.round( (double)mT[cid]/(double)EE4DocClass.T);
+	    c.setM( m ); // average *weekly* number, as per the specs
 	    em.persist(c);
 	}
 	em.getTransaction().commit();	
     }
-
-    /** The mu-function.
-	FIMXE: need the actual formula, or the table!
-     */
-    //    static private double computeMu(double ab, double c, double gamma) {
-    //	return c;
-    //    }
-
 
     /** 0 - ignore, +-1 - med, +-2 - high */
     private static int actionPriority(Action.Op op) {
@@ -315,30 +287,7 @@ public class Daily {
 	 return outputFile;
      }
 
-    /** A dummy classifier.
-	@return A number in the range [1:26]
-	FIXME: need the real thing!
-     */
-    static int classify(Document doc) {
-	String authors = doc.get(ArxivFields.AUTHORS);
-	if (authors==null || authors.equals("")) return 1;
-	int d = authors.toLowerCase().charAt(0) - 'a';
-	if (d<0 || d>=26) d=0;
-	return d+1;
-    }
-
-    /** A one-off method, to create the 26 dummy document classes
-	in the EE4DocClass table. */
-    static void initClasses() {
-	EntityManager em  = Main.getEM();
-	em.getTransaction().begin();
-	for(int i=0; i<26; i++) {
-	    EE4DocClass c = new EE4DocClass();
-	    em.persist(c);
-	}
-	em.getTransaction().commit();		
-    }
-
+  
     /** When the system is first set up, run
 	<pre>
 	Daily init
@@ -362,17 +311,7 @@ public class Daily {
 
 	String cmd = argv[0];
 	if (cmd.equals("init")) {
-	    initClasses();
-	} else if (cmd.equals("updateClassStats")) {
-
-	    EntityManager em  = Main.getEM();
-	    IndexSearcher searcher = new IndexSearcher(Common.newReader()  );
-	    
-	    final int days = EE4DocClass.T * 7; 
-	    Date since = SearchResults.daysAgo( days );
-
-	    HashMap<Integer,EE4DocClass> id2dc= updateClassStats(em,searcher,since);
-
+	    throw new IllegalArgumentException("Please run KMeans instead!");
 	} else if (cmd.equals("update")) {
 	    updates();
 	} else {

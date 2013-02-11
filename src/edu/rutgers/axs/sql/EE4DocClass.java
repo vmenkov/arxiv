@@ -12,10 +12,12 @@ import java.lang.annotation.*;
 @Entity 
     public class EE4DocClass extends OurTable 
 {
-  @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1.1)
+  @Id 
+  //@GeneratedValue(strategy=GenerationType.IDENTITY)
+   @Display(editable=false, order=1.1)
       private int id;
 
-    //   public void setId(int val) {        id = val;    }
+    public void setId(int val) {        id = val;    }
     public int getId() {        return id;    }
 
     /** Average number of article submissions, in this cluster, per week */

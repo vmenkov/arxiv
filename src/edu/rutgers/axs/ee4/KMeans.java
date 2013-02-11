@@ -2,11 +2,11 @@ package edu.rutgers.axs.ee4;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.ScoreDoc;
 
-
-import java.util.*;
 import java.io.*;
+import java.util.*;
+import java.util.regex.*;
 import java.text.*;
 
 import javax.persistence.*;
@@ -32,6 +32,10 @@ import edu.cornell.cs.osmot.options.Options;
 public class KMeans {
     static final boolean primaryOnly=true;
 
+    /** This class is responsible for looking up the "category" field
+	in the Lucene data store for multiple articles, and keeping
+	track of them all.
+     */
     static class Categorizer {
 	private static final int NS = 100;
 
@@ -94,9 +98,16 @@ public class KMeans {
 	}
    }
 
-    /** Classify new docs */
-    void classifyNewDocs(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs, HashMap<Integer,EE4DocClass> id2dc) throws IOException {
+    /** Classifies new docs, using the stored datapoint files for
+	cluster center points. 
+	@param mT output parameter; number of docs per class
+    */
+    static void classifyNewDocs(EntityManager em, ArticleAnalyzer z, ScoreDoc[] scoreDocs,
+				//, HashMap<Integer,EE4DocClass> id2dc
+				int mT[]
+				) throws IOException {
 
+	IndexReader reader = z.reader;
 	Categorizer catz = new Categorizer();
 
 	for(ScoreDoc sd: scoreDocs) {
@@ -105,27 +116,84 @@ public class KMeans {
 	    catz.categorize(docno, doc);
 	}
 	
-	for(String c: catz.catMembers.keySet()) {
-	}
-	/*
-	{
-	    int cid = classify(doc);
-	    String aid = doc.get(ArxivFields.PAPER);
-	    Article a = Article.getArticleAlways(em,aid);
-	    a.settEe4classId(cid);
+	final Pattern p = Pattern.compile("([0-9]+)\\.dat");
+	int caCnt=0;
+
+	for(String cat: catz.catMembers.keySet()) {
+	    // init empty dictionary
+	    DocSet dic = new DocSet();
+
+	    // read stored cluster center point files, filling the dictionary
+	    // in the process.
+	    File catdir = new File( getCatDirPath(cat));
+	    if (!catdir.exists()) throw new IOException("Category directory " + catdir + " does not exist. Has a new category been added?");
+	    File[] cfiles = catdir.listFiles();
+	    int cids [] = new int[cfiles.length];
+	    int nc=0;
+	    for(File cf: cfiles) {
+		String fname = cf.getName();
+		Matcher m = p.matcher(fname);
+		if (!m.matches()) {
+		    System.out.println("Ignore file " + cf + ", because it is not named like a center file");
+		    continue;
+		}
+		cids[nc++] = Integer.parseInt( m.group(1));
+	    }
+
+	    Arrays.sort(cids, 0, nc);
+	    System.out.println("Found " + nc + " center files in " + catdir);
+	    DenseDataPoint centers[] = new DenseDataPoint[nc];
+	    for(int i=0; i<nc; i++) {
+		File f= new File(catdir, "" +cids[i] + ".dat");
+		centers[i] =new DenseDataPoint(dic, f);
+	    }
+
+	    // Read the new data points to be classified, using the same
+	    // dictionary (expanding it in the process)
+	    Vector<Integer> vdocno = catz.catMembers.get(cat);
+	    Vector<SparseDataPoint> vdoc = new Vector<SparseDataPoint>();
+	    //System.out.println("Reading vectors...");
+	    int cnt=0;
+	    for(int docno: vdocno) {
+		SparseDataPoint q = new SparseDataPoint(z.getCoef( docno,null), dic, z);
+		q.normalize();
+		vdoc.add(q);
+		cnt++;
+	    }
+	    // "classify" each point based on which existing cluster center
+	    // is closest to it
+	    Clustering clu = new Clustering(dic.size(), vdoc, centers);
+	    clu.voronoiAssignment();  //   asg <-- centers
 
 	    em.getTransaction().begin();
-	    em.persist(a);
-	    em.getTransaction().commit();	
-	    id2dc.get(new Integer(cid)).incM();
+	    int pos=0;
+	    for(int docno: vdocno) {
+		int cid = cids[clu.asg[pos]];		
+		mT[cid] ++;
+		recordClass(docno, reader, em, cid);
+		pos ++;
+		caCnt++;
+	    }
+	    em.getTransaction().commit();
 	}
-	*/
-    }
+
+	em.getTransaction().begin();
+	for(int docno: catz.nocatMembers) {
+	    int cid = 0;
+	    recordClass(docno, reader, em, cid);
+	}
+	em.getTransaction().commit();
+
+	System.out.println("Clustering applied to new docs in all "+ catz.catMembers.size()+" categories; " + 
+			   //id0 + " clusters created; " + 
+			   caCnt + " articles classified, and " + catz.nocatMembers.size() + " more are unclassifiable");
+
+  }
    
 
     /** @param maxn 
      */
-    static void clusterAll(ArticleAnalyzer z, EntityManager em, int maxn) throws IOException {
+    static int clusterAll(ArticleAnalyzer z, EntityManager em, int maxn) throws IOException {
 	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 	IndexReader reader = z.reader;
@@ -160,12 +228,8 @@ public class KMeans {
 	    em.getTransaction().begin();
 	    int pos=0;
 	    for(int docno: vdocno) {
-		Document doc = reader.document(docno);
-		String aid = doc.get(ArxivFields.PAPER);
-		Article a = Article.findByAid(  em, aid);
 		int cid = id0 + clu.asg[pos];
-		a.settEe4classId(cid);
-		em.persist(a);
+		recordClass(docno, reader, em, cid);
 		pos ++;
 		caCnt++;
 	    }
@@ -175,17 +239,25 @@ public class KMeans {
 
 	em.getTransaction().begin();
 	for(int docno: catz.nocatMembers) {
-	    Document doc = reader.document(docno);
-	    String aid = doc.get(ArxivFields.PAPER);
-	    Article a = Article.findByAid(  em, aid);
 	    int cid = 0;
-	    a.settEe4classId(cid);
-	    em.persist(a);
+	    recordClass(docno, reader, em, cid);
 	}
 	em.getTransaction().commit();
 
 	System.out.println("Clustering completed on all "+ catz.catMembers.size()+" categories; " + id0 + " clusters created; " + caCnt + " articles classified, and " + catz.nocatMembers.size() + " more are unclassifiable");
+	return id0;
 
+    }
+
+    /** Sets the class field on the specified article's Article object
+	in the database, and persists it. This method should be called
+	from inside a transaction. */
+    static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid) throws IOException {
+	Document doc = reader.document(docno);
+	String aid = doc.get(ArxivFields.PAPER);
+	Article a = Article.findByAid(  em, aid);
+	a.settEe4classId(cid);
+	em.persist(a);
     }
 
     /** Is ci[pos] different from all preceding array elements?
@@ -200,7 +272,7 @@ public class KMeans {
     /** Returns an array of nc distinct numbers randomly selected from
      * the range [0..n)
      */
-    private static int[] randomSample(int n, int nc) {
+   private static int[] randomSample(int n, int nc) {
 	int ci[] = new int[nc]; 
 	for(int i=0; i<ci.length; i++) {
 	    do {
@@ -224,21 +296,38 @@ public class KMeans {
 
     static class Clustering {
 	/** input */
-	Vector<SparseDataPoint> vdoc;
+	final Vector<SparseDataPoint> vdoc;
 
 	/** Output */
 	int asg[];
 	DenseDataPoint[] centers;
+	final int nterms;
 	
-	/** Runs KMeans algorithm starting with an arrangemnt where a specified
-	    set of points serve as cluster centers.
+	/** Initializes the clustering object using a specified
+	    list of pre-computed center points.
 	*/
-	Clustering(int nterms, Vector<SparseDataPoint> _vdoc, int[] ci) {
+	Clustering(int _nterms, Vector<SparseDataPoint> _vdoc, DenseDataPoint[] _centers) {
+	    nterms =  _nterms;
+	    vdoc = _vdoc;
+	    centers=_centers;
+	}
+
+	/** Initializes the clustering object using a specified
+	    set of data points to serve as cluster centers.
+	*/
+	Clustering(int _nterms, Vector<SparseDataPoint> _vdoc, int[] ci) {
+	    nterms =  _nterms;
 	    vdoc = _vdoc;
 	    centers=new DenseDataPoint[ci.length];
 	    for(int i=0;i<ci.length; i++) {
 		centers[i] =new DenseDataPoint(nterms, vdoc.elementAt(ci[i]));
 	    }	   
+	}
+
+	/** Runs KMeans algorithm starting with an arrangement where a specified
+	    set of points serve as cluster centers.
+	*/
+	void optimize() {
 	    System.out.print("Assignment diff =");
 	    while(true) {
 		int[] asg0=asg;
@@ -414,6 +503,7 @@ public class KMeans {
 	    Profiler.profiler.push(Profiler.Code.CLUSTERING);
 
 	    Clustering clu = new Clustering(dic.size(), vdoc, ci);
+	    clu.optimize();
 	    Profiler.profiler.replace(Profiler.Code.CLUSTERING,Profiler.Code.CLU_sumDif);
 	    double d = clu.sumDist2();
 	    System.out.println("D=" + d);
@@ -429,8 +519,34 @@ public class KMeans {
 	return bestClustering;
     }
 
+    /** A one-off method, to create all document classes
+	in the EE4DocClass table. */
+    static void initClasses(int nc) {
+	System.out.println("Checking or creating classes 1 through " + nc);
+	EntityManager em  = Main.getEM();
+	em.getTransaction().begin();
+	int crtCnt=0;
+	for(int cid=1; cid<=nc; cid++) {
+	    EE4DocClass c = (EE4DocClass)em.find(EE4DocClass.class, cid);
+	    if (c!=null) continue;
+	    c = new EE4DocClass();
+	    c.setId(cid);
+	    em.persist(c);
+	    crtCnt++;
+	}
+	em.getTransaction().commit();		
+	System.out.println("Created "+crtCnt+" classes");
+    }
+
+
+
     /** Out random number generator */
     static private Random gen = new  Random();
+
+    static void usage() {
+	System.out.println("Usage: [-Dn=...] [-Dclasses=...] KMeans [all|classes]");
+	System.exit(0);
+    }
 
     /**
        -Dn=1000 - how many docs to process
@@ -438,11 +554,31 @@ public class KMeans {
     static public void main(String[] argv) throws IOException {
 	ParseConfig ht = new ParseConfig();
 	int maxn = ht.getOption("n", 10000);
-	ArticleAnalyzer z = new ArticleAnalyzer();
-	EntityManager em  = Main.getEM();
 
-	//	IndexReader reader =  Common.newReader();
-	clusterAll(z,em, maxn); //z.reader);
+	boolean all = false;
+	if (argv.length != 1) {
+	    usage();
+	} else if (argv[0].equals("all")) {
+	    all = true;
+	} else  if (argv[0].equals("classes")) {
+	} else {
+	    usage();
+	}
+
+	int nClu =0;
+	if (all) {
+	    ArticleAnalyzer z = new ArticleAnalyzer();
+	    EntityManager em  = Main.getEM();
+	    
+	    //	IndexReader reader =  Common.newReader();
+	    nClu = clusterAll(z,em, maxn); //z.reader);
+	} else {
+	    nClu = ht.getOption("classes", 0);
+	    if (nClu<0) usage();
+	}
+
+	// creating class entries
+	initClasses(nClu);
 
 	System.out.println("===Profiler report (wall clock time)===");
 	System.out.println(	Profiler.profiler.report());

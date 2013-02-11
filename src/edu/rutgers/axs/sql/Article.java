@@ -39,7 +39,8 @@ import edu.rutgers.axs.indexer.ArxivFields;
 http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guide_mapping_jpa.html#ref_guide_mapping_jpa_unique about the '@Index' and '@Unique' annotation.
 */
     @Basic      @Column(length=16) @Index(unique=true)
-	@Display(editable=false, order=2)
+	@Display(editable=false, order=2,
+		 link="../FilterServlet/my.src:MAIN_SL/my.pl:589/abs/")
 	String aid=null;
     public String getAid() { return aid; }
     public void setAid(String x) { aid=x;}
