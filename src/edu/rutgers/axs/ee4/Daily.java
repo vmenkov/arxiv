@@ -121,9 +121,6 @@ public class Daily {
     static void updateClassInfo(EntityManager em, ArticleAnalyzer z, ScoreDoc[] scoreDocs, HashMap<Integer,EE4DocClass> id2dc)
 	throws IOException
     {
-	// Update m[z]
-	//	int maxC = EE4DocClass.maxId(em);
-	
 	int maxCid = 0;
 
 	for(EE4DocClass c: id2dc.values()) {

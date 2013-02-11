@@ -396,15 +396,15 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	return bsr;
     }
 
-    /** Check if paging makes sense, or we're viewing a different list
+    /** Checks if paging makes sense, or we're viewing a different list
 	now. If he latter, we reset to the 1st page (as per TJ, 2013-01-22
-	meeting)
+	meeting). This only applies to the main page.
      */
     private void adjustStartat(EntityManager em, boolean mainPage) {
 	if (mainPage && startat>0) {
 	    // not the most suitable method, but it will do
 	    PresentedList lastPl = PresentedList.findMostRecentPresntedSugList(em,  actor.getUser_name()); 
-	    if (lastPl.getDataFileId()!= df.getId()) {
+	    if (lastPl!=null && lastPl.getDataFileId()!= df.getId()) {
 		Logging.info("Reset startat from " + startat + " to 0, because there have been no views of DF=" + df.getId() + " yet");
 		startat = 0;
 	    }
