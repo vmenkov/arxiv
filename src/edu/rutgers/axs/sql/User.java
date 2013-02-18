@@ -434,6 +434,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
         return actions;
     }
 
+
     /** Scans the list of the user's action, finding the most recent
 	(according to the action ID). Note that this may perhaps be done more
 	efficiently with a SQL query instead.
@@ -441,14 +442,37 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	@return The highest recorded action id, or 0 (if none is recorded)
      */
     public long getLastActionId() {
-	long lai = 0;
-	if (getActions()==null) return 0;
-	for(Action a: getActions()) {
-	    if (a.getId() > lai) lai = a.getId();
-	}
-	return lai;
+	Action la=getLastAction();
+	return la==null? 0 : la.getId();
     }
-    
+
+    public Action getLastAction() {
+	Action la = null;
+	if (getActions()==null) return null;
+	for(Action a: getActions()) {
+	    if (la==null || a.getId() > la.getId()) la = a;
+	}
+	return la;
+    }
+  
+  /** Scans the list of the user's action, taking only "main page"
+	actions into consideration, and finding the most recent (according
+	to the action ID). Note that this may perhaps be done more
+	efficiently with a SQL query instead.
+	
+	@return The highest recorded action id, or 0 (if none is recorded)
+     */
+     public Action getLastMainPageAction() {
+	Action la = null;
+	if (getActions()==null) return null;
+	for(Action a: getActions()) {
+	    if (a.getSrc().isMainPage()) continue;
+	    if (la==null || a.getId() > la.getId()) la = a;
+	}
+	return la;
+    }
+   
+  
     /** @return [firstDate, lastDate] or null
      */
     private Date[] getActionTimeRange() {
@@ -482,6 +506,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	HashMap<String, Action> h = new HashMap<String, Action>();
 	for( Action a: actions) {
 	    String aid = a.getAid();
+	    if (aid==null) continue;
 	    if (a.opInList(ops))  {
 		Action b = h.get(aid);
 		if (b==null || a.after(b)) {
@@ -520,6 +545,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    inRangeCnt++;
 	    if (!isAllowedType(a.getDay(), allowedDayTypes)) continue;
 	    String aid = a.getAid();
+	    if (aid==null) continue; // skip PREV_PAGE etc
 	    Vector<Action> b = h.get(aid);
 	    if (b==null) {
 		h.put(aid, b = new Vector<Action>());
@@ -589,10 +615,19 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     }
 
 
-    /** @param p ArXiv article id */
+    /** Adds an Action object to the record of this user's activity.
+	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
+    */
     public Action addAction(EntityManager em, String p, Action.Op op, ActionSource asrc) {
-	Article a = Article.getArticleAlways(em,p,false); // no commit needed here
-	Action r = new  Action(this, a, op); 
+	Article a=null;
+	if (p==null) {
+	    if (op!=Action.Op.NEXT_PAGE && op!=Action.Op.PREV_PAGE) {
+		throw new IllegalArgumentException("Cannot create an article with op code " + op + " without an article ID!");
+	    }
+	} else {
+	    a = Article.getArticleAlways(em,p,false); // no commit needed here
+	}
+	Action r = new Action(this, a, op); 
 	r.setActionSource(asrc);
         actions.add(r);
 	em.persist(r);

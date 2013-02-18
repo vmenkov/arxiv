@@ -127,6 +127,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		return;
 	    } else if (mainPage) {
 		infomsg += "initMainPage<br>\n";
+		recordAction(em, actor);
 		initMainPage(em, actor);
 		return;
 	    } 
@@ -240,6 +241,33 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    ResultsBase.ensureClosed( em, true);
 	    //em.close(); 
 	}
+    }
+
+    /** Records a NEXT_PAGE or PREV_PAGE action if this page has
+	resulted from a request of this kind. This method should only
+	be called in mainPage requests. 
+
+	<p>Introduced due to TJ's request that involves recording NEXT_PAGE/
+	PREV_PAGE operations. 2013-02.
+    */
+    private void recordAction(EntityManager em, User actor) {
+	Action.Op op = (Action.Op)Tools.getEnum(request, Action.Op.class,
+						BaseArxivServlet.ACTION, Action.Op.NONE);	 
+
+	Logging.info("recordAction: op=" + op);
+	if (op==Action.Op.NONE) return;
+	if (op!=Action.Op.NEXT_PAGE && op!=Action.Op.PREV_PAGE) {
+	    Logging.error("Main page Request with op code " + op + " will not be recorded");
+	    return;
+	} else {
+	    Logging.info("Recording page Request with op code " + op + ", asrc="+asrc);
+	    infomsg += "Recording page Request with op code " + op + ", asrc="+asrc + "<br>";
+	}
+
+	em.getTransaction().begin();
+	Action a = actor.addAction(em, null, op, asrc);
+	//em.persist(u);	       
+	em.getTransaction().commit(); 
     }
 
     /** Generates the list for the main page. This has simpler logic
@@ -402,10 +430,19 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
      */
     private void adjustStartat(EntityManager em, boolean mainPage) {
 	if (mainPage && startat>0) {
+
+	    /*
+	    Action la = actor.getLastMainPageAction();
+	    if (la == null) return;
+
+	    PresentedList lastPl = (PresentedList)
+		em.find(PresentedList.class, la.getPresentedListId());
+	    */
 	    // not the most suitable method, but it will do
-	    PresentedList lastPl = PresentedList.findMostRecentPresntedSugList(em,  actor.getUser_name()); 
-	    if (lastPl!=null && lastPl.getDataFileId()!= df.getId()) {
-		Logging.info("Reset startat from " + startat + " to 0, because there have been no views of DF=" + df.getId() + " yet");
+	      PresentedList lastPl = PresentedList.findMostRecentPresntedSugList(em,  actor.getUser_name()); 
+	    if (lastPl==null) return;
+	    if (lastPl.getDataFileId()!= df.getId()) {
+		Logging.info("Reset startat from " + startat + " to 0, because there have been no views of DF=" + df.getId() + " yet."); //"Last main page action was " + la.getId());
 		startat = 0;
 	    }
 	}
@@ -462,7 +499,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    s += "<p>This is the initial suggestion list generated right now.</p>\n";
 	} else {
 	    String f = df.getThisFile();
-	    String x = "no. " + df.getId() + (f==null? "(no file)" : "("+f+")");
+	    String x = "no. " +df.getId()+ (f==null? " (no file)" : " ("+f+")");
 	    s += "<p>Suggestion list " + researcherSpan(x) + 
 		" was generated for user " + df.getUser() + " at: " + 
 		Util.ago(df.getTime()) + ".";

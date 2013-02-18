@@ -160,17 +160,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     static public PresentedList findMostRecentPresntedSugList(EntityManager em, String  username) {
 	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc";
 	Query q = em.createQuery(qs);
-
 	q.setParameter("u", username);
-	
-	Action.Source[] srcTypes = { 	
-	    Action.Source.MAIN_SL,
-	    Action.Source.MAIN_MIX,
-	    Action.Source.BERNOULLI_EXPLORATION,	    
-	    Action.Source.BERNOULLI_EXPLOITATION,
-	    Action.Source.MAIN_EE4 };
-
-	q.setParameter("tlist", Arrays.asList(srcTypes));
+	q.setParameter("tlist", Arrays.asList(Action.Source.mainPageSources));
 
 	q.setMaxResults(1);
 	List<PresentedList> res = (List<PresentedList>)q.getResultList();

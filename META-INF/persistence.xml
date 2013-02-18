@@ -85,12 +85,13 @@
             <property name="openjpa.jdbc.SynchronizeMappings" 
                 value="buildSchema"/>
 	    <!-- One can use value="DefaultLevel=WARN,SQL=TRACE" below
-		 for detailed logging, as per
-		 http://openjpa.apache.org/builds/1.0.1/apache-openjpa-1.0.1/docs/manual/ref_guide_logging_openjpa.html
+		 for detailed logging, a
+		 http://openjpa.apache.org/builds/1.0.3/apache-openjpa-1.0.3/docs/manual/ref_guide_logging_openjpa.html
+		
 		 --> 
 
 	    <property name="openjpa.Log"
-		 value="DefaultLevel=WARN"/>
+		 value="File=/home/vmenkov/arxiv/arxiv/openjpa.log, DefaultLevel=WARN"/>
 
 	    <!-- property name="openjpa.Log"
 		 value="DefaultLevel=WARN,SQL=TRACE"/ -->

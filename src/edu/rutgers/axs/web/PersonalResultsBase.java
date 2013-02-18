@@ -114,10 +114,10 @@ public class PersonalResultsBase extends ResultsBase {
     public String prevNextLinks(SearchResults sr) {
 	String s="";
 	if (sr.needPrev) {     
-	    s += Html.a( repageUrl(sr.prevstart), "[PREV PAGE]");
+	    s += Html.a( repageUrl(sr.prevstart, Action.Op.PREV_PAGE), "[PREV PAGE]");
 	}	
 	if (sr.needNext) { 
-	    s += Html.a( repageUrl(sr.nextstart), "[NEXT PAGE]");
+	    s += Html.a( repageUrl(sr.nextstart,  Action.Op.NEXT_PAGE), "[NEXT PAGE]");
 	}
 	return s;
     }

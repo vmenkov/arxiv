@@ -145,13 +145,14 @@ public class SessionData {
 			if (user!=null) {
 			    u = user.getUser_name();
 			    boolean newDay = user.changeDayIfNeeded();
-			    Logging.info("getRemoteUser("+u+"); change day=" + newDay +"; now day=" + user.getDay());
+			    // Logging.info("getRemoteUser("+u+"); change day=" + newDay +"; now day=" + user.getDay());
 			    if (newDay)  {
+				Logging.info("getRemoteUser("+u+"); changed day to "+user.getDay());
 				em.getTransaction().begin(); 
 				em.persist(user);
 				em.getTransaction().commit(); 
 			    }
-			    Logging.info("getRemoteUser("+u+"); committed");
+			    //			    Logging.info("getRemoteUser("+u+"); committed");
 			}
 		    } finally {
 			em.close();
@@ -204,13 +205,13 @@ public class SessionData {
     */
     boolean isAuthorized(HttpServletRequest request, String user) {
 	String sp = request.getServletPath();
-	Logging.info("isAuthorized("+user+", " + sp + ")?");
+	//	Logging.info("isAuthorized("+user+", " + sp + ")?");
 	Role.Name[] ar = authorizedRoles(sp);
 	if (ar==null) return true; // no restrictions
 	if (user==null) return false; // no user 
 	User u = getUserEntry(user);
 	boolean b = u!=null && u.hasAnyRole(ar);
-	Logging.info("isAuthorized("+user+", " + sp + ")=" + b);
+	//	Logging.info("isAuthorized("+user+", " + sp + ")=" + b);
 	return b;
     }
 

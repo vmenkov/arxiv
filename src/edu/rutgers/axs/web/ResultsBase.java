@@ -12,6 +12,7 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
+import edu.rutgers.axs.html.QS;
 
 
 public class ResultsBase {
@@ -113,15 +114,13 @@ public class ResultsBase {
 		infomsg += name + "=" + request.getParameter(name) + "<br>";
 	    }	    
 	    sd = SessionData.getSessionData(request);	  
-	    Logging.info("obtained sd=" + sd);
+	    //Logging.info("obtained sd=" + sd);
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 	    user = sd.getRemoteUser(request);
 
-	    //	    Logging.info("calling sd.isAuthorized("+user+")");
 	    if(!sd.isAuthorized(request,user)) {
 		Logging.info("user " + user + " is not authorized to access servlet at " + request.getServletPath());
-		
-
+	
 		if (response!=null) {
 		
 		    String redirect = cp + "/login2.jsp?sp=" +
@@ -350,15 +349,26 @@ public class ResultsBase {
 	URL.
      */
     public String repageUrl(int startat) {
-	String sp = request.getServletPath();
-	String qs0=request.getQueryString();
-	if (qs0==null) qs0="";
+	return repageUrl( startat, null);
+    }
 
-	Pattern p = Pattern.compile("\\b"+ STARTAT + "=\\d+");
-	Matcher m = p.matcher(qs0);
+    public String repageUrl(int startat, Action.Op op) {
+	String sp = request.getServletPath();
+	QS qs = new QS( request.getQueryString());
+
+	ActionSource.stripActionSource(qs);
+	if (asrc!=null) qs.append( asrc.toQueryPairs());
+	/*
 	String rep = STARTAT + "=" + startat;
-	String qs = m.find()?  m.replaceAll( rep ) :
-	    qs0 + (qs0.length()>0 ?  "&" : "") + rep;
+	Pattern p = Pattern.compile("\\b"+ STARTAT + "=\\d+");
+	Matcher m = p.matcher(qs);
+	qs = m.find()?  m.replaceAll( rep ) :
+	    qs + (qs.length()>0 ?  "&" : "") + rep;
+	*/
+	qs.strip(STARTAT);
+	qs.append( STARTAT, ""+startat);
+	if (op!=null) 	qs.append(BaseArxivServlet.ACTION, op.toString());
+
 	String x = cp + sp + "?" + qs;
 	return x;
     }

@@ -8,8 +8,10 @@ import javax.persistence.*;
 import java.lang.reflect.*;
 
 /** An Action instance records such an event as a user's viewing an
- * article's abstract, or making a judgment about the article's
- * usefulness for him. 
+    article's abstract, or making a judgment about the article's
+    usefulness for him. Most actions are article-specific, but the user's
+    following the "next page" or "prev page" links, which is not page specific,
+    is recorded as an "action" as well.
  */
 @Entity
     public class Action extends OurTable 
@@ -27,17 +29,21 @@ import java.lang.reflect.*;
     @Display(editable=false, order=1) 
 	User user;
   
-    /** The arXiv article id of the article involved */
+    /** The arXiv article id of the article involved. This must be
+	present in all Action entries, except for those of the
+	NEXT_PAGE and PREV_PAGE types, which are not article-specific.
+     */
     //    @Basic @Column(nullable=false)
     //    @Display(editable=false, order=5) 
     //	String article;
     @ManyToOne
 	@Column(nullable=false)
-	@Display(editable=false, order=2) 
+	@Display(editable=false, order=2, link="viewObject.jsp?class=Article&id=") 
 	Article article;
 
     public String getAid() {
-	return article.getAid();
+	Article a =  getArticle();
+	return a==null? null: a.getAid();
     }
 
     /*
@@ -98,7 +104,11 @@ import java.lang.reflect.*;
 	    /** goes with ratings */
 	    DONT_SHOW_AGAIN,            // -50   (no. 13)
 	    /** Activated thru the "view folder" screen */
-	    REMOVE_FROM_MY_FOLDER;      // see "copy"	
+	    REMOVE_FROM_MY_FOLDER,      // see "copy"	
+
+	    /** Navigation links in the main page. */
+	    PREV_PAGE, 
+	    NEXT_PAGE;
 
 	/** Data types for which FilterServlet does not "filter", but
 	 * redirects to the source, as per Simeon Warner, 2012-01-04 */
@@ -169,6 +179,22 @@ import java.lang.reflect.*;
 	    BERNOULLI_EXPLORATION,	    BERNOULLI_EXPLOITATION,
 	    /** Peter Frazier's Exploration Engine ver 4 */
 	    MAIN_EE4;
+
+	/** List of sources that are considered "main page" */
+	static Source[] mainPageSources = { 	
+	    MAIN_SL,
+	    MAIN_MIX,
+	    BERNOULLI_EXPLORATION,	    
+	    BERNOULLI_EXPLOITATION,
+	    MAIN_EE4 };
+
+	boolean isMainPage() {
+	    for(Source x: mainPageSources) {
+		if (this==x) return true;
+	    } 
+	    return false;
+	}
+
     };
 
 
@@ -186,7 +212,7 @@ import java.lang.reflect.*;
 	whose source is Source.MAIN_SL or Source.MAIN_MIX. Even then,
 	it may not be set if it is the very first suggestion list
 	presentation done by the system for this user, and the SL is
-	generated on the fly (because it is know to be identical to the 
+	generated on the fly (because it is known to be identical to the 
 	user cat search results).
      */
 

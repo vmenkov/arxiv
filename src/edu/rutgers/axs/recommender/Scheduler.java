@@ -167,7 +167,7 @@ public class Scheduler {
 			Logging.warning("Scheduler: user " + uname + "; cannot do "+mode +" update because there is no " + profileType + " profile available");
 			continue;
 		    }
-		    long plai = latestProfile.getLastActionId();
+ 		    long plai = latestProfile.getLastActionId();
 		    DataFile sugg = DataFile.getLatestFileBasedOn(em, uname, mode, days, profileType);
 		    boolean need = sugg==null || (sugg.getLastActionId()<plai);
 
@@ -251,7 +251,7 @@ public class Scheduler {
     }
 
     /** Find the most recent suggestion list that was actually shown
-	to the user.
+	to the user.   
      */
     static private Date dateOfLastSeenSugList(EntityManager em, String  uname) {
 

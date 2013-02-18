@@ -46,7 +46,7 @@ public class XMLtoHash   {
     HashMap<String, Action> map = new HashMap<String, Action>();
 
     Action add(String xmlName, String hashName, int flags) {
-	Action e = new  Action( xmlName,hashName,flags);
+	Action e = new Action( xmlName,hashName,flags);
 	map.put( xmlName, e);
 	return e;
     } 

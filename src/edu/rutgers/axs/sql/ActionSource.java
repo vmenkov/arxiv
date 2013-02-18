@@ -6,10 +6,9 @@ import java.util.regex.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-//import javax.persistence.*;
-
 import edu.rutgers.axs.web.Tools;
 import edu.rutgers.axs.web.ResultsBase;
+import edu.rutgers.axs.html.QS;
 
 public class ActionSource {
 
@@ -67,14 +66,25 @@ public class ActionSource {
 	return pi.substring(m.end());
     }
 
+    /** Extracting ActionSource info from an HTTP request, e.g. for a
+	judgment button click. */
     public ActionSource( HttpServletRequest request) {
 	src = (Action.Source)Tools.getEnum(request, Action.Source.class,
 					  SRC, Action.Source.UNKNOWN);	 
 	presentedListId =  Tools.getLong(request, PL, 0);
     }
 
+    /** Removes the ActionSource information from a query string. This
+	is used in URL rewriting (repaging).	
+     */
+    public static void stripActionSource(QS qs) {
+	qs.strip( SRC);
+	qs.strip( PL);
+    } 
+    
     /** Produces a component to be added to the query string, containing
-	action source information. This is passed to JudgmentServlet etc. */
+	action source information. This is passed to JudgmentServlet etc. 
+	@return A query string component (including the leading '&amp;') */
     public String toQueryString() {
 	String s="";
 	for(String[] p:  toQueryPairs()) {

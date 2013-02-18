@@ -22,7 +22,7 @@ public class YouAreTag extends TagSupport {
 	    //	    ServletContext context=  pageContext.getServletContext();
 	    String cp = req.getContextPath(); // Could be "/arxiv" or "";
 
-	    Logging.info("YouAreTag: contextPath=" + cp);
+	    //Logging.info("YouAreTag: contextPath=" + cp);
 
 	    SessionData sd = SessionData.getSessionData(req);	  
 	    String user = sd.getRemoteUser(req);

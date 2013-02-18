@@ -70,7 +70,6 @@ public class ExtendedSessionManagement {
 
 	Logging.info("Created cookie for user " + u.getUser_name() + " ["+val+"]; tmp pass encoded as " + x);
 
-
 	return cookie; 
     }
 
@@ -126,7 +125,7 @@ public class ExtendedSessionManagement {
 	String[] z = val.split(":");
 	if (z.length!=2) return null;
 
-	Logging.info("received cookie: ["+val+"]");
+	//	Logging.info("received cookie: ["+val+"]");
 
 	String uname = z[0];
 	try {

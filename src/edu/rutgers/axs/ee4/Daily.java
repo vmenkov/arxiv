@@ -182,10 +182,12 @@ public class Daily {
 	Set<Action> sa = u.getActions();
 	long lai=0;
 	// maps our Article.id to the latest Action
-	HashMap<Integer,Action> lastActions = new HashMap<Integer,Action>();
+	HashMap<Integer, Action> lastActions = new HashMap<Integer,Action>();
 	for( Action a: sa) {
 	    if (actionPriority(a.getOp())==0) continue;
-	    Integer key = new Integer( a.getArticle().getId());
+	    Article article = a.getArticle();
+	    if (article==null) continue;
+	    Integer key = new Integer( article.getId());
 	    Action z  = lastActions.get(key);
 	    if (z==null || mostRelevant(z,a)==a) {
 		lastActions.put(key,a);
@@ -229,6 +231,10 @@ public class Daily {
 	return (int)lai;
     }
 
+
+    /** Max length of the sugg list, as per Peter Frazier, 2013-02-13 */
+    static final int MAX_SUG = 100; 
+
     /** Generates a current suggestion list for a specified user. */
     private static DataFile updateSugList(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User u, EE4User ee4u, int lai, boolean nofile)
 	throws IOException
@@ -253,9 +259,6 @@ public class Daily {
 	     EE4Uci ee4uci = h.get(new Integer(cid));
 	     double alpha=ee4uci.getAlpha(),  beta=ee4uci.getBeta(); 
 
-	     //double gamma = EE4Mu.gamma(c.getM());
-	     //double mu = computeMu(alpha+beta, ee4u.getC(), gamma);
-
 	     double mu =EE4Mu.getMu(alpha, beta,  ee4u.getCCode(), c.getM());
 
 	     double score = alpha/(alpha + beta);
@@ -265,6 +268,10 @@ public class Daily {
 		 //		 Logging.info("Daily.USL: added, score=" + score);
 	     } else {
 		 //		 Logging.info("Daily.USL: not added, score=" + score);
+	     }
+	     if (results.size() >=  MAX_SUG) {
+		 Logging.info("Daily.USL: truncating sug list at " + MAX_SUG);
+		 break;
 	     }
 	 }
 	 em.getTransaction().begin();	
