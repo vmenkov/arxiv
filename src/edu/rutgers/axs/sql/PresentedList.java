@@ -28,7 +28,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public class PresentedList extends OurTable implements Serializable  {
 
   /** SQL Object ID */
-    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
+	@Display(editable=false, order=1, link="viewPresentedList.jsp")  
 	private long id;
     public void setId(long val) {        id = val;    }
     public long getId() {        return id;    }

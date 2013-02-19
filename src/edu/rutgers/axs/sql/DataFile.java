@@ -18,7 +18,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public class DataFile extends OurTable implements Serializable  {
 
   /** SQL Object ID */
-    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Display(editable=false, order=1)
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) 
+	@Display(editable=false, order=1, link="../personal/viewSuggestions.jsp")  
 	private int id;
     public void setId(int val) {        id = val;    }
     public int getId() {        return id;    }

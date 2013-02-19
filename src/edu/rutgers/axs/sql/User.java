@@ -465,8 +465,18 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
      public Action getLastMainPageAction() {
 	Action la = null;
 	if (getActions()==null) return null;
+	//int noSrcCnt=0, noMainCnt=0, mainCnt=0;
 	for(Action a: getActions()) {
-	    if (a.getSrc().isMainPage()) continue;
+	    if (a.getSrc()==null) {
+		// This is an old record, from before the Action.src field was added
+		//System.out.println("No src in Action=" + a);
+		//noSrcCnt++;
+		continue;
+	    }
+	    if (!a.getSrc().isMainPage()) {
+		//System.out.println("Not an MP Action=" + a);
+		continue;
+	    }
 	    if (la==null || a.getId() > la.getId()) la = a;
 	}
 	return la;

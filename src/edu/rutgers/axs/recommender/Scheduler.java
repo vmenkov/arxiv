@@ -186,7 +186,8 @@ public class Scheduler {
 			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
 			    latestProfile : null;
 
-			Date lastViewed = dateOfLastSeenSugList( em, uname);
+			//  Date lastViewed = dateOfLastSeenSugList( em, uname);
+			Date lastViewed = dateOfLastPerusedSugList( em, uname);
 
 			Date since = null;
 			if (lastViewed==null) {
@@ -250,21 +251,42 @@ public class Scheduler {
 	}
     }
 
-    /** Find the most recent suggestion list that was actually shown
-	to the user.   
+    /** Finds the creation date of the most recent suggestion list that was actually shown
+	to the user.   (As of 2013-02, TJ says this is no good: he wants
+	to know what was the last sug list that not only was shown, but actually
+	received some kind of feedback!)	
      */
     static private Date dateOfLastSeenSugList(EntityManager em, String  uname) {
-
 	PresentedList plist=PresentedList.findMostRecentPresntedSugList(em,uname);
+	return  getSugListDate(em,plist);
+    }
+
+    /** Finds the creation date of the most recent suggestion list
+	that shown to the user AND with respect to which some feedback
+	(button clicks etc) was received.
+     */
+    static private Date dateOfLastPerusedSugList(EntityManager em, String  uname) {
+	User u = User.findByName( em, uname);
+	if (u==null) throw new IllegalArgumentException("No user named " + uname);
+	Action a = u.getLastMainPageAction();
+	System.out.println("Last MP Action = " + a);
+	if (a==null) return null;
+	long plid = a.getPresentedListId();
+	PresentedList plist=(PresentedList)em.find(PresentedList.class, plid);
+	return  getSugListDate(em,plist);
+    }
+
+    static private Date getSugListDate(EntityManager em, PresentedList plist) {
 	if (plist == null) return null;
 	long dfid = plist.getDataFileId();
 	if (dfid <= 0) return null;
 	DataFile df = (DataFile)em.find(DataFile.class, dfid);
 	if (df==null) return null;
 	Date dfTime = df.getTime();
-	System.out.println("Looks like the last sug list (df="+dfid+") presented to user "+uname+" (presentation list no. "+plist.getId()+") was generated at " +dfTime);
+	System.out.println("Looks like the last sug list (df="+dfid+") viewed by user "+plist.getUser()+" (presentation list no. "+plist.getId()+") was generated at " +dfTime);
 	return dfTime;
     }
+
 
 
 
@@ -296,8 +318,17 @@ public class Scheduler {
 	//scheduler.schedule(em);
 
 	String uname=(argv.length>0) ? argv[0] : "vmenkov";
-	Date lastViewed = dateOfLastSeenSugList( em, uname);
-	System.out.println("dateOfLastSeenSugList(" + uname+")=" + lastViewed);
+
+	boolean v = ht.getOption("v", false);
+
+	if (v) {
+
+	    Date lastViewed = dateOfLastSeenSugList( em, uname);
+	    System.out.println("dateOfLastSeenSugList(" + uname+")=" + lastViewed);
+	} else {
+	    Date lastViewed = dateOfLastPerusedSugList( em, uname);
+	    System.out.println("dateOfLastPerusedSugList(" + uname+")=" + lastViewed);
+	}
 
     }
 

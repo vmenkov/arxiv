@@ -275,6 +275,11 @@ import java.lang.reflect.*;
 	return Reflect.reflectToString(this);
     }
 
+   public String toString() {
+       return "(id="+getId()+", u="+getUser().getId()+", op="+getOp()+", src="+getSrc()+
+	   ", pl=" +  getPresentedListId()+")";
+   }
+
  
     /** @return "(hh:mm:ss)", or an empty string */
     private String formatRelTime(long sec) {

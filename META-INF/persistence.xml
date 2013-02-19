@@ -91,7 +91,7 @@
 		 --> 
 
 	    <property name="openjpa.Log"
-		 value="File=/home/vmenkov/arxiv/arxiv/openjpa.log, DefaultLevel=WARN"/>
+		 value="DefaultLevel=WARN"/>
 
 	    <!-- property name="openjpa.Log"
 		 value="DefaultLevel=WARN,SQL=TRACE"/ -->
