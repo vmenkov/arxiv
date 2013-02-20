@@ -63,20 +63,23 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
 
    
+    //    private static enum Mode {
+    //	SUG2, CAT_SEARCH, TEAM_DRAFT;
+    //    };
+
+
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
     }
 
-    private static enum Mode {
-	SUG2, CAT_SEARCH, TEAM_DRAFT;
-    };
-
-
-
-    /**
+    /** The main constructor, invoked from the My.ArXiv's main page
+	(index.jsp), as well as from the "view suggestions" page
+	(viewSuggestions.jsp).
+      
        @param mainPage If true, we're preparing a list to appear on
-       the main page.
+       the main page. This involves much simpler logic than the
+       general-purpose page viewSuggestion.jsp
      */
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
@@ -270,9 +273,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	em.getTransaction().commit(); 
     }
 
-    /** Generates the list for the main page. This has simpler logic
-     than the general view suggestion page, which has lots of special
-     modes and options. */
+    /** Generates the suggestion list to be shown in the main page. This method has
+     simpler logic than the general view suggestion page, which has
+     lots of special modes and options.     */
     private void initMainPage(EntityManager em, User actor) throws Exception {
 	if (error || actor==null) return; // no list needed
 	// disregard most of params
@@ -327,15 +330,23 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
        initList(df, since, em, false);
     }
 
-    /**
-       @param df The data file to read. We will either display the
-       suggestion list from this file, or (if in the teamDraft mode)
-       mix it with the catSearch results.  If null is given, we are in
-       the onTheFly mode, and create the list right here
-       @param since Only used in the onTheFly mode. (Otherwise, the date
-       range is picked from the data file).
-       @param em Just so that we could save the presented list
-       @param mainPage Only affects the marker recorded in the new PresentedList  entry
+    /** Puts together the list of suggestions (recommendations) to
+	display. A variety of modes are supported, depending on
+	circumstances: reading a saved list from a file, generating a
+	list on the fly, or merging the two with the team-draft
+	algorithm. Whatever list is eventually produced, is both
+	displayed to the user and is saved into a PresentedList
+	structure in the database, to be available for researchers
+	later on.
+
+        @param df The data file to read. We will either display the
+	suggestion list from this file, or (if in the teamDraft mode)
+	mix it with the catSearch results.  If null is given, we are in
+	the onTheFly mode, and create the list right here
+	@param since Only used in the onTheFly mode. (Otherwise, the date
+	range is picked from the data file).
+	@param em Just so that we could save the presented list
+	@param mainPage Only affects the marker recorded in the new PresentedList  entry
      */
     private void initList(DataFile df, 
 			  Date since, EntityManager em, boolean mainPage) throws Exception {
@@ -424,9 +435,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	return bsr;
     }
 
-    /** Checks if paging makes sense, or we're viewing a different list
-	now. If he latter, we reset to the 1st page (as per TJ, 2013-01-22
-	meeting). This only applies to the main page.
+    /** Checks if paging makes sense, or we're viewing a different
+	list now. If the latter, we reset to the 1st page of the
+	results (as per TJ, 2013-01-22 meeting). This only applies to
+	the main page.
      */
     private void adjustStartat(EntityManager em, boolean mainPage) {
 	if (mainPage && startat>0) {
@@ -457,7 +469,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	<p> This method presently does *not* create a disk file, 
 	because of problem with file permissions etc. Instead, the data
 	will be copied from the SQL table to a disk file later, by 
-	TaskMastet.createMissingDataFiles()
+	TaskMastet.createMissingDataFiles(), from the TaskMaster process.
      */
     private DataFile saveResults(EntityManager em, IndexSearcher searcher, 
 			     //SearchResults sr, 
@@ -477,7 +489,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	//outputFile.makeReadable();
 	return outputFile;
     }
-		    
+
+    /** Creates a URL string with a "force" option (to trigger
+     * re-creation of a suggestion list etc.)
+     */
     public String forceUrl() {
 	String s = cp + "/viewSuggestions.jsp?" + USER_NAME + "=" + actorUserName;
 	s += "&" + FORCE + "=true";
@@ -492,7 +507,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     //				df != null ? df.getId() : 0);
     //}
 
-    /** Generates the explanation text that's inserted before the suggestion list. */
+    /** Generates the explanation text that's inserted into the web
+	page before the suggestion list. */
     public String describeList() {
 	String s = "";
 	if (onTheFly) {
@@ -532,6 +548,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	return s;
     }
 
+    /** Generates a message that may be inserted into the web page
+	after the list of suggestions.
+     */
     public String excludedPagesMsg() {
 	String s="";
 	boolean excludeViewed = (actor!=null) && actor.getExcludeViewedArticles();
@@ -592,7 +611,14 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	return s;
     }
 
-    /** Only for use in command-line testing */
+    /** This constructor is used only to allow one to view a
+	suggestion list by running a command-line application, without
+	having the web application involved. It produces a similar
+	suggestion list to what would be shown to the specified user
+	in the main page. It is only used for command-line testing.
+
+	@param uname The user for whom we want to view suggestions
+    */
     private ViewSuggestions(String uname) throws Exception {
 
 	actorUserName=uname;
@@ -615,7 +641,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		throw new WebException("This tool does not support suggestion list view for program=" + program);
 	    }
 
-	    System.out.println("error=" + error+"; calling iMP(" + actor.getUser_name() +")");
+	    System.out.println("error=" + error+"; calling initMainPage(" + actor.getUser_name() +")");
 	    initMainPage(em,  actor);
 
 	    System.out.println("sr=" + sr);
@@ -635,7 +661,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    System.out.println("Usage: ViewSuggestions uname");
 	    return;
 	}
-	ViewSuggestions vs = new ViewSuggestions(argv[0]);
+	String uname = argv[0];
+	ViewSuggestions vs = new ViewSuggestions(uname);
+	SearchResults sr = vs.sr; 
+	for( ArticleEntry e: sr.entries) {
+	    System.out.println(e);
+	}
     }
 
 }
