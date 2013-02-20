@@ -21,7 +21,7 @@ import edu.rutgers.axs.ParseConfig;
 /** Resets the user's password and lets him know the new password.
 
   @author Vladimir Menkov
-  @date Nov-14-2001 */
+*/
 
 
 public class ResetPassword extends ResultsBase {

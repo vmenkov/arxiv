@@ -196,7 +196,7 @@ public class Scheduler {
 			    since = SearchResults.daysAgo(days);
 			    if (since.after(lastViewed)) since = lastViewed;
 			}
-			Logging.info("For user " + uname + ", last viewed sug list generated at " +  lastViewed + "; set since=" + since);
+			Logging.info("For user " + uname + ", last sug list on which we had feedback was generated at " +  lastViewed + "; set since=" + since);
 
 			addTask(em, uname, mode, days, since, requiredInput );
 			createdCnt++;

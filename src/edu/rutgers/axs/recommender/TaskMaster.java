@@ -15,6 +15,8 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.Common;
 
+/** The main command-line application responsible for generating SET_BASED suggestion lists.
+ */
 public class TaskMaster {
   
     static final int maxDocs=200;
@@ -124,10 +126,14 @@ public class TaskMaster {
 	return scheduler;
     }
 
-    /**
+    /**The main command-line application for generating SET_BASED recommendation lists.
+
+       <p><pre>
        -DexitAfter=24  : time in hours
        -Duser=username : only handle tasks for this one user (for testing)
+       </pre>
 
+       <p>
        FIXME: this program has just one reader (never re-opened)
        during its operation, and a once-read
        CompactArticleStatsArray. This means that it should NOT ever

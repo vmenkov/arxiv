@@ -232,7 +232,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 
    /** Does this user have any of the roles in the specifed list? 
 
-       @names An array of roles. It must be non-null, but may be empty
+       @param names An array of roles. It must be non-null, but may be empty
        (in which case, of course, false will be returned). 
 
        @return True if the user has any of the listed roles. 

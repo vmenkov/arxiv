@@ -27,8 +27,8 @@
       cactuar and scils
    -->
  <property name="tomcat.lib.copy2" location="../tomcat-lib-to-copy"/>
- <!-- property name="boxer.doc" location="../doc"/ -->
- <!-- property name="boxer.api" location="${boxer.doc}/html/api"/ -->
+ <property name="arxiv.doc" location="../doc"/>
+ <property name="arxiv.api" location="${arxiv.doc}/html/api"/>
 
  <property name="build.tmp" location="/tmp"/>
 
@@ -66,8 +66,8 @@
 <property name="dist.home"      value="${deploy.home}"/>
 <property name="dist.src"       value="${app.name}.jar"/>
 <property name="dist.war"       value="${app.name}.war"/>
-<!-- property name="javadoc.home"   value="${deploy.home}/javadoc"/ -->
-<property name="javadoc.home"   value="webroot/javadoc"/>
+<property name="javadoc.home"   value="${deploy.home}/javadoc"/>
+<!-- property name="javadoc.home"   value="webroot/javadoc"/ -->
 
 <!-- Tomcat libraries; for Tomcat 6.* -->
 <property name="tomcat.lib.rutgers"     value="/usr/local/tomcat55/common/lib"/>
@@ -142,7 +142,7 @@
     <mkdir  dir="${deploy.home}/META-INF"/>
     <mkdir  dir="${deploy.home}/WEB-INF"/>
     <mkdir  dir="${deploy.lib}"/>
-    <!-- mkdir  dir="${javadoc.home}"/ -->
+    <mkdir  dir="${javadoc.home}"/>
 </target>
 
 
@@ -287,7 +287,6 @@ Building a JAR file
 
 
 <!-- Reports the current version of the source code (as per Version.java) -->
-<!--
 <target name="version">
   <exec executable="grep" outputproperty="arxiv.ver">
     <arg line="String.version ${src}/edu/rutgers/axs/Version.java"/>
@@ -299,38 +298,38 @@ Building a JAR file
   </exec>
   <echo message="Assuming the My.Arxiv version is ${arxiv.ver}"/>
 </target>
--->
+
 
 <!-- Build the HTML documentation directory by running Javadoc -->
-<!--
+
 <target name="javadoc" depends="compile,version">
   <echo message="Javadoc: Assuming the My.Arxiv version is ${arxiv.ver}"/>
 
-  <copy todir="${boxer.doc}">
+  <copy todir="${arxiv.doc}">
     <fileset dir="doc/"/>
   </copy>
 
-  <copy todir="${boxer.doc}/html">
+  <!-- copy todir="${arxiv.doc}/html">
     <fileset dir="sample-data/" includes="sample.xml,sample-suite-out.xml,eg-learner-param-1.xml"/>
-  </copy>
+  </copy -->
 
-  <javadoc packagenames="edu.dimacs.mms.*"
+  <javadoc packagenames="edu.rutgers.axs,edu.rutgers.axs.*"
 	   sourcepath="${src}"
-           destdir="${boxer.api}"
+           destdir="${arxiv.api}"
 	   author="true"
            version="true"
            use="true"
 	   link="http://java.sun.com/j2se/1.5.0/docs/api/"
-	   header="&lt;em&gt;BOXER ${arxiv.ver}&lt;/em&gt;"   
-	   windowtitle="BOXER ${arxiv.ver} API" 
+	   header="&lt;em&gt;My.ArXiv ${arxiv.ver}&lt;/em&gt;"   
+	   windowtitle="My.ArXiv ${arxiv.ver} API" 
 	   overview="doc/html/api/overview.html">
     <classpath refid="classpath"/>
   </javadoc>
 
-  <echo message="Documentation has been assembled in ${boxer.doc}"/>
+  <echo message="Documentation has been assembled in ${arxiv.doc}"/>
 
 </target>
--->
+
 
 <!-- Deletes the class directory -->
 <target name="clean">
