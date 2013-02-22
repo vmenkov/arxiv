@@ -115,10 +115,12 @@ public class Scheduler {
 	//	    "(select max(a.id) from Action a where a.user = u) > "+
 	//	    "(select max(df.lastActionId) from DataFile df where df.type=:t and df.days=0 and df.user = u.user_name)";
 
+	// Get the list of users who are enrolled in the SET_BASED experiment plan
 	List<Integer> lu = User.selectByProgram( em, User.Program.SET_BASED);
 
 	Logging.info("Scheduler (stage="+(stage2?"SL":"UP")+"), au="+articlesUpdated+": Found " + lu.size() + " users");
 
+	// Loop over all users
 	for(int uid: lu) {
 	    User u = (User)em.find(User.class, uid);
 	    // apparently, "refresh" may be needed for us to notice recent changes 
@@ -257,7 +259,7 @@ public class Scheduler {
 	received some kind of feedback!)	
      */
     static private Date dateOfLastSeenSugList(EntityManager em, String  uname) {
-	PresentedList plist=PresentedList.findMostRecentPresntedSugList(em,uname);
+	PresentedList plist=PresentedList.findLatestPresentedSugList(em,uname);
 	return  getSugListDate(em,plist);
     }
 

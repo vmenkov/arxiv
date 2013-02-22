@@ -345,7 +345,15 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public  int getDays() { return days; }
     public void setDays( int x) { days = x; }
  
+    /** How frequently (= once in how many days) does this user want to receive email?
+     */
+    @Basic  @Display(order=12.2,editable=true, alt=
+		     "How frequently (once in how many days) do you want to be notified, by email, about new articles? Enter 0 if you don't want to receive email")
 
+    private int emailDays;
+    public  int getEmailDays() { return  emailDays; }
+    public void setEmaiDays( int x) { emailDays = x; }
+ 
     /** This exclusion only applies to suggestion lists, not to search
      * results */
     @Basic @Display(order=13,  editable=true, alt="Exclude already-viewed articles from the list of recommendations")

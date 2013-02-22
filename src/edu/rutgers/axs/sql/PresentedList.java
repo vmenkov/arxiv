@@ -158,7 +158,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	involved was *generated*. In production mode the two criteria
 	are identical.
      */
-    static public PresentedList findMostRecentPresntedSugList(EntityManager em, String  username) {
+    static public PresentedList findLatestPresentedSugList(EntityManager em, String  username) {
 	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc";
 	Query q = em.createQuery(qs);
 	q.setParameter("u", username);
@@ -172,6 +172,22 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    return null;
 	}
     }
+
+    static public PresentedList findLatestEmailSugList(EntityManager em, String  username) {
+	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc";
+	Query q = em.createQuery(qs);
+	q.setParameter("u", username);
+	q.setParameter("tlist", Arrays.asList(Action.Source.emailPageSources));
+
+	q.setMaxResults(1);
+	List<PresentedList> res = (List<PresentedList>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }
+
 
 
 }

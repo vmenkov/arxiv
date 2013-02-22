@@ -145,7 +145,7 @@ import java.lang.reflect.*;
     */
     public static enum Source {
 	UNKNOWN,
-	/** Main page: suggestion list produced by Thorsten's Algorithm 2;
+	/** Main page: suggestion list produced by Thorsten's Algorithm 1;
 	    or a "view abstract" page reached from the above.	    
 	 */
 	MAIN_SL,
@@ -178,7 +178,11 @@ import java.lang.reflect.*;
 	    /** Peter Frazier's Exploration Engine ver 2 */
 	    BERNOULLI_EXPLORATION,	    BERNOULLI_EXPLOITATION,
 	    /** Peter Frazier's Exploration Engine ver 4 */
-	    MAIN_EE4;
+	    MAIN_EE4,
+
+	    /** Body of the email messages */
+	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4;
+
 
 	/** List of sources that are considered "main page" */
 	static Source[] mainPageSources = { 	
@@ -188,12 +192,32 @@ import java.lang.reflect.*;
 	    BERNOULLI_EXPLOITATION,
 	    MAIN_EE4 };
 
+	static Source[] emailPageSources = { 
+	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4	
+	};
+
+
 	boolean isMainPage() {
 	    for(Source x: mainPageSources) {
 		if (this==x) return true;
 	    } 
 	    return false;
 	}
+
+	boolean isEmailPage() {
+	    for(Source x: emailPageSources) {
+		if (this==x) return true;
+	    } 
+	    return false;
+	}
+
+	public Source mainToEmail() {
+	    if (this==MAIN_SL) return EMAIL_SL;
+	    else if (this==MAIN_MIX) return EMAIL_MIX;
+	    else if (this==MAIN_EE4) return EMAIL_EE4;
+	    else return this;
+	}
+
 
     };
 

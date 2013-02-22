@@ -204,7 +204,7 @@ public class ResetPassword extends ResultsBase {
 
     static void usage(String m) {
 	System.out.println("Reset Password Utility");
-	System.out.println("Usage: java [options] ResetPassword username email");
+	System.out.println("Usage: java [options] ResetPassword username email [new_password]");
 	/*
 	System.out.println("Optons:");
 	System.out.println(" [-Dtoken=xxx]");

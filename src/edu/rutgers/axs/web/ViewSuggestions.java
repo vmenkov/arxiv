@@ -62,6 +62,17 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
     private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
 
+    /** If true, we want to generate a list to be put into an email
+     message, rather than into the web page. The list of articles will
+     be the same, but a different source code will be saved in the asrc
+     variable and in the PresentedList entry. 
+
+     This variable is set in the special (no-web) constructor.
+    */
+    private boolean isMail = false;
+
+    /** Set this flag to true if we do not want to record a PresentedList */
+    private boolean dryRun = false;
    
     //    private static enum Mode {
     //	SUG2, CAT_SEARCH, TEAM_DRAFT;
@@ -126,11 +137,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	    // Special modes
 	    if (id>0) {  // displaying specific file
-		initList(df, null, em);
+		initList(df, null, em, false);
 		return;
 	    } else if (mainPage) {
 		infomsg += "initMainPage<br>\n";
-		recordAction(em, actor);
+		recordAction(em, actor);  // records user's request, if it was NEXT/PREV page
 		initMainPage(em, actor);
 		return;
 	    } 
@@ -235,7 +246,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    actorLastActionId= actor.getLastActionId();
 
 	    if (df!=null) {
-		initList(df,  null, em);
+		initList(df,  null, em, false);
 	    }
 
 	}  catch (Exception _e) {
@@ -273,9 +284,13 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	em.getTransaction().commit(); 
     }
 
-    /** Generates the suggestion list to be shown in the main page. This method has
-     simpler logic than the general view suggestion page, which has
-     lots of special modes and options.     */
+    /** Generates the suggestion list to be shown in the main page, or
+     in an email message. This method has simpler logic than the
+     general view suggestion page, which has lots of special modes and
+     options.  
+
+     @param actor The user for whom we need the sugg list
+    */
     private void initMainPage(EntityManager em, User actor) throws Exception {
 	if (error || actor==null) return; // no list needed
 	// disregard most of params
@@ -325,11 +340,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    	    
     }
 
-    private void initList(DataFile df, 
-			  Date since, EntityManager em) throws Exception {
-       initList(df, since, em, false);
-    }
-
     /** Puts together the list of suggestions (recommendations) to
 	display. A variety of modes are supported, depending on
 	circumstances: reading a saved list from a file, generating a
@@ -346,7 +356,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	@param since Only used in the onTheFly mode. (Otherwise, the date
 	range is picked from the data file).
 	@param em Just so that we could save the presented list
-	@param mainPage Only affects the marker recorded in the new PresentedList  entry
+	@param mainPage It is true if we want to generate a main-page
+	list (either for the web site, or for an email message).
      */
     private void initList(DataFile df, 
 			  Date since, EntityManager em, boolean mainPage) throws Exception {
@@ -414,13 +425,19 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// Save the presented section of the suggestion list in the
 	// database, and set ActionSource appropriately (to be
 	// embedded in the HTML page)
- 	Action.Source srcType = mainPage?
-	    (mode ==  DataFile.Type.EE4_SUGGESTIONS?  Action.Source.MAIN_EE4:
-	     teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL) :
+	Action.Source mpType = (mode==DataFile.Type.EE4_SUGGESTIONS?  Action.Source.MAIN_EE4:
+				teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL);
+
+ 	Action.Source srcType =
+	    mainPage? 	    ( isMail ? mpType.mainToEmail() : mpType) :	   
 	    Action.Source.VIEW_SL;
-	PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName,
-						   df, null);
-	asrc= new ActionSource(srcType, plist.getId());
+	long plid = 0;
+	if (!dryRun) {
+	    PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName,
+						       df, null);
+	    plid =  plist.getId();
+	}
+	asrc= new ActionSource(srcType, plid);
     }
     
     private SearchResults catSearch(IndexSearcher searcher, Date since) throws Exception {
@@ -451,7 +468,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		em.find(PresentedList.class, la.getPresentedListId());
 	    */
 	    // not the most suitable method, but it will do
-	      PresentedList lastPl = PresentedList.findMostRecentPresntedSugList(em,  actor.getUser_name()); 
+	      PresentedList lastPl = PresentedList.findLatestPresentedSugList(em,  actor.getUser_name()); 
 	    if (lastPl==null) return;
 	    if (lastPl.getDataFileId()!= df.getId()) {
 		Logging.info("Reset startat from " + startat + " to 0, because there have been no views of DF=" + df.getId() + " yet."); //"Last main page action was " + la.getId());
@@ -615,15 +632,23 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	suggestion list by running a command-line application, without
 	having the web application involved. It produces a similar
 	suggestion list to what would be shown to the specified user
-	in the main page. It is only used for command-line testing.
+	in the main page. It is only used for use in command-line
+	applications (for sending email, or for testing), rather than
+	inside the web application.
 
 	@param uname The user for whom we want to view suggestions
+
+	@param _dryRun  If the flag is true, this method will not create
+	a PresentedList entry in the database. This is suitable for testing
+	purposes.
     */
-    private ViewSuggestions(String uname) throws Exception {
+    ViewSuggestions(String uname, boolean _dryRun) throws Exception {
 
 	actorUserName=uname;
+	dryRun = _dryRun;
 	isSelf=false;
-
+	isMail = true;  // the PresentedList will have a code 
+	
 	EntityManager em =  Main.getEM();
 	try {
 	    actor=User.findByName(em, actorUserName);
@@ -655,14 +680,16 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
     }
 
-    /** testing */
+    /** testing 
+     */
     static public void main(String argv[]) throws Exception {
 	if (argv.length!=1) {
 	    System.out.println("Usage: ViewSuggestions uname");
 	    return;
 	}
 	String uname = argv[0];
-	ViewSuggestions vs = new ViewSuggestions(uname);
+	boolean dryRun = true;
+	ViewSuggestions vs = new ViewSuggestions(uname, dryRun);
 	SearchResults sr = vs.sr; 
 	for( ArticleEntry e: sr.entries) {
 	    System.out.println(e);
