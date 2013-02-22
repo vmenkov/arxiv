@@ -113,6 +113,9 @@ public class Daily {
     }
 
     /** Sets stat values in document class entries ( EE4DocClass table in the SQL server). 
+
+	<p>We set the initial alpha=1, beta=19, as per ZXT, 2013-02-21
+
 	@param scoreDocs The list of all recent docs for the last T
 	weeks. (The correct range is important, so that we can update
 	m correctly)
@@ -125,9 +128,8 @@ public class Daily {
 
 	for(EE4DocClass c: id2dc.values()) {
 	    maxCid = Math.max(maxCid, c.getId());
-	    // FIXME: this should come from ZXT's code
-	    c.setAlpha0(0.5);
-	    c.setBeta0(0.5);
+	    c.setAlpha0(1.0);
+	    c.setBeta0(19.0);
 	}
 	
 	int mT[] = new int[ maxCid + 1];

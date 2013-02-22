@@ -40,7 +40,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 */
     @Basic      @Column(length=16) @Index(unique=true)
 	@Display(editable=false, order=2,
-		 link="../FilterServlet/my.src:MAIN_SL/my.pl:589/abs/")
+		 link="../FilterServlet/my.src:RESEARCH/abs/")
 	String aid=null;
     public String getAid() { return aid; }
     public void setAid(String x) { aid=x;}

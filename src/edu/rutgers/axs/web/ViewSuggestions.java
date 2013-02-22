@@ -96,6 +96,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	super(_request,_response);
 
 	mainPage =getBoolean("main", mainPage);
+	infomsg += "mainPage=" + mainPage +", isSelf=" + isSelf + "<br>\n";
 
 	if (error) return; // authentication error?
 
@@ -109,8 +110,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    long id = Tools.getLong(request, "id", 0);
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
-		if (df==null) throw new WebException("No suggestion list with id=" + id + " exists");
+		if (df==null) throw new WebException("No suggestion list with id=" +id+ " exists");
 		actorUserName = df.getUser();
+		isSelf = (actorUserName!=null && actorUserName.equals(user));
 	    }
 
 	    if (actorUserName==null) {
@@ -432,7 +434,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    mainPage? 	    ( isMail ? mpType.mainToEmail() : mpType) :	   
 	    Action.Source.VIEW_SL;
 	long plid = 0;
-	if (!dryRun) {
+	// Presented list is to be recorded if this is a web page shown to the user himself
+	// (rather than to a researcher), or if it's a mail page. There is also a way
+	// to explicitly prevent the recording of a PL (the dryRun option)
+	if ((isSelf || isMail) && !dryRun) {
 	    PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName,
 						       df, null);
 	    plid =  plist.getId();

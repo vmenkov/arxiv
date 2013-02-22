@@ -181,7 +181,9 @@ import java.lang.reflect.*;
 	    MAIN_EE4,
 
 	    /** Body of the email messages */
-	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4;
+	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4,
+	    /** An action from a "research page". Regular users won't have it. */
+	    RESEARCH;
 
 
 	/** List of sources that are considered "main page" */
