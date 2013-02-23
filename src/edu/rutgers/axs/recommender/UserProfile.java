@@ -13,8 +13,7 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.ArxivFields;
 import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.web.Search;
-import edu.rutgers.axs.web.ArticleEntry;
+import edu.rutgers.axs.web.*;
 
 public class UserProfile {
     /** 0 means "all" */
@@ -441,27 +440,23 @@ public class UserProfile {
 	return tops;
     }
 
-    /** This method first gets an article list by date range, and then
+    /** This method first gets an article list by category and date range, and then
 	orders them.
+	@param u User object whose category list we use
      */
     ArxivScoreDoc[] 
-	luceneRawSearchDateRange(int maxDocs, 
-				 //ArticleStats[] allStats, 
-				 CompactArticleStatsArray   allStats, 
-				 EntityManager em, int days,
-				 boolean useLog) throws IOException {
-	long msec = (new Date()).getTime() - 24*3600*1000 * days;
-	TermRangeQuery q = 
-	    new TermRangeQuery(ArxivFields.DATE_INDEXED,
-			       DateTools.timeToString(msec, DateTools.Resolution.SECOND),
-			       null, true, true);
-	
+	catAndDateSearch(int maxDocs, 
+			 CompactArticleStatsArray   allStats, 
+			 EntityManager em, User u, int days,
+			 boolean useLog) throws IOException {
+	Date since = SearchResults.daysAgo( days );
 	final int M = 10000; // well, the range is supposed to be narrow...
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
-	TopDocs 	 top = searcher.search(q, M+1);
-	ScoreDoc[] scoreDocs = top.scoreDocs;
+
+	SearchResults sr = SubjectSearchResults.orderedSearch(searcher, u, since, M+1);
+	ScoreDoc[] scoreDocs = sr.scoreDocs;
 	boolean needNext=(scoreDocs.length > M);
-	Logging.info("Search over the range of " + days + " days; found " + scoreDocs.length + " docs in range");
+	Logging.info("Searched within user's subjects over the range of " + days + " days; found " + scoreDocs.length + " docs in range");
 	if (needNext) Logging.warning("Dropped some docs in range search (more results than " + M);
 
 	ArxivScoreDoc[] scores = new ArxivScoreDoc[scoreDocs.length];
@@ -476,13 +471,6 @@ public class UserProfile {
 		missingStatsCnt ++;
 		continue;
 	    } 
-	    /*
-	    ArticleStats as =allStats[docno];
-	    if (as==null) {
-		as = allStats[docno] = dfc.computeAndSaveStats(em, docno);
-		Logging.info("linSim: Computed and saved missing stats for docno=" + docno + " (gap)");
-	    } 
-	    */
 
 	    double sim = useLog? 
 		dfc.logSim(docno, allStats, hq) :
@@ -498,8 +486,63 @@ public class UserProfile {
 
 	ArxivScoreDoc[] tops=topOfTheList(scores, nnzc, maxDocs);
 	return tops;
-	//return packageEntries( tops);
     }
+
+
+    /** This method first gets an article list by date range, and then
+	orders them.
+     */
+   ArxivScoreDoc[] 
+	luceneRawSearchDateRange(int maxDocs, 
+				 //ArticleStats[] allStats, 
+				 CompactArticleStatsArray   allStats, 
+				 EntityManager em, int days,
+				 boolean useLog) throws IOException {
+	Date since = SearchResults.daysAgo( days );
+	final int M = 10000; // well, the range is supposed to be narrow...
+	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
+
+	TermRangeQuery q = 
+	    new TermRangeQuery(ArxivFields.DATE_INDEXED,
+			       DateTools.dateToString(since, DateTools.Resolution.SECOND),
+			       null, true, true);
+	Logging.info("Query=" + q);
+	TopDocs 	 top = searcher.search(q, M+1);
+	ScoreDoc[] scoreDocs = top.scoreDocs;
+
+	boolean needNext=(scoreDocs.length > M);
+	Logging.info("Searched within user's subjects over the range of " + days + " days; found " + scoreDocs.length + " docs in range");
+	if (needNext) Logging.warning("Dropped some docs in range search (more results than " + M);
+
+	ArxivScoreDoc[] scores = new ArxivScoreDoc[scoreDocs.length];
+	int  nnzc=0;
+	int missingStatsCnt =0;
+
+	for(int i=0; i< scoreDocs.length ; i++) {
+	    int docno = scoreDocs[i].doc;
+
+	    if (docno > allStats.size()) {
+		Logging.warning("linSim: no stats for docno=" + docno + " (out of range)");
+		missingStatsCnt ++;
+		continue;
+	    } 
+
+	    double sim = useLog? 
+		dfc.logSim(docno, allStats, hq) :
+		dfc.linSim(docno, allStats, hq);
+
+	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
+	}
+
+	Logging.info("nnzc=" + nnzc);
+	if (missingStatsCnt>0) {
+	    Logging.warning("used zeros for " + missingStatsCnt + " docs, because of missing stats");
+	}
+
+	ArxivScoreDoc[] tops=topOfTheList(scores, nnzc, maxDocs);
+	return tops;
+   }
+
 
     /** Creates an array of ArxivScoreDoc objects containing the (up to)
 	maxDocs top scores from the given list.

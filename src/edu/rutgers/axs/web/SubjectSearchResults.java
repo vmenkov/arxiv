@@ -63,7 +63,7 @@ public  class SubjectSearchResults extends SearchResults {
 
     public static SubjectSearchResults 
 	orderedSearch(IndexSearcher searcher, User actor, Date since,
-		      int maxlen) throws Exception {
+		      int maxlen) throws IOException {
 
 	String[] cats = actor.getCats().toArray(new String[0]);
 	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
