@@ -352,7 +352,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 
     private int emailDays;
     public  int getEmailDays() { return  emailDays; }
-    public void setEmaiDays( int x) { emailDays = x; }
+    public void setEmailDays( int x) { emailDays = x; }
  
     /** This exclusion only applies to suggestion lists, not to search
      * results */
