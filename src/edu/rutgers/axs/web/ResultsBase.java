@@ -256,11 +256,11 @@ public class ResultsBase {
 
 
     public  String urlAbstract( String id) {
-	return ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_ABSTRACT, asrc);
+	return ServletConstants.articleServletUrl(cp, id, Action.Op.VIEW_ABSTRACT, asrc);
     }
 
     public  String urlPDF( String id) {
-	return  ArticleServlet.mkUrl(cp, id, Action.Op.VIEW_PDF,asrc);
+	return ServletConstants.articleServletUrl(cp, id, Action.Op.VIEW_PDF,asrc);
     }
 
 

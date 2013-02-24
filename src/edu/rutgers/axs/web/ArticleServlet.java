@@ -68,11 +68,4 @@ public class ArticleServlet extends BaseArxivServlet {
 
     }
 
-     /** Returns a URL for this servlet */
-    static String mkUrl(String cp, String id, Action.Op op, 
-			ActionSource asrc) {
-	return cp + "/ArticleServlet?" +  ID +"="+id + "&"+ ACTION+ "="+op +
-	    asrc.toQueryString();
-    }
-
 }

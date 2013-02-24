@@ -20,7 +20,8 @@ import edu.rutgers.axs.sql.*;
 public class BaseArxivServlet extends HttpServlet {
 
     /** Artcile ID, in the format used arxiv.org */
-    final static public String ID="id", ACTION="action";
+    final static public String ID=ServletConstants.ID, 
+	ACTION=ServletConstants.ACTION; 
 
     /** May be changed in init(), by means of parameters supplied from web.xml
      */
