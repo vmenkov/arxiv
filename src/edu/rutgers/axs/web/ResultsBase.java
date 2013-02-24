@@ -34,7 +34,8 @@ public class ResultsBase {
     /** The "conext" part of our URL. It can be used by JSP pages to
      build correct links (without using lots of ".." etc). The value
      could be e.g. "/arxiv" or "". */
-    public final String cp;
+    // final
+    public  String cp;
 
     /** All the data that are meant to be persistent between requests
      * in the same session */
@@ -76,7 +77,8 @@ public class ResultsBase {
     
     private void checkRoleBits() {
 	if (roleBitsSet) return;
- 	User u = getUserEntry();
+	// the null situation in an offline (command-line) run
+ 	User u = (sd!=null? getUserEntry() : null);
 	if (u!=null) {
 	    isRunByAdmin = u.isAdmin();
 	    isRunByResearcher = u.isResearcher();
@@ -84,6 +86,8 @@ public class ResultsBase {
 	roleBitsSet = true;
    }
 
+
+    
 
     /** Is this command run by an admin-level user? */
     public boolean runByAdmin() {

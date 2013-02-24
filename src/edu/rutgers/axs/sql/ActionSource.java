@@ -93,6 +93,10 @@ public class ActionSource {
 	return s;
     }
 
+    public String toString() {
+	return "[" + toQueryString() + "]";
+    }
+
     public Vector<String[]> toQueryPairs() {
 	Vector<String[]> v= new Vector<String[]>(2);
 	if (src==null || src==Action.Source.UNKNOWN) return v;

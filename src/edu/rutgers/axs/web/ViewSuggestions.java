@@ -13,6 +13,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 
+import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.indexer.Common;
@@ -443,6 +444,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    plid =  plist.getId();
 	}
 	asrc= new ActionSource(srcType, plid);
+	Logging.info("Set asrc=" + asrc);
     }
     
     private SearchResults catSearch(IndexSearcher searcher, Date since) throws Exception {
@@ -649,11 +651,16 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     */
     ViewSuggestions(String uname, boolean _dryRun) throws Exception {
 
-	actorUserName=uname;
+	actorUserName=user=uname;
+
 	dryRun = _dryRun;
 	isSelf=false;
 	isMail = true;  // the PresentedList will have a code 
-	
+	// Unlike being in a servlet, we can't get the context path out of the
+	// request, so we must set it explicitly
+	cp =  "http://my.arxiv/arxiv";
+
+
 	EntityManager em =  Main.getEM();
 	try {
 	    actor=User.findByName(em, actorUserName);
@@ -681,9 +688,34 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
 	}
-
-
     }
+
+    String formatArticleEntryForEmail(ArticleEntry e) {
+	/*
+	String rt = "[score="+e.score+ "]";
+	if (e.researcherCommline!=null && e.researcherCommline.length()>0) {
+	    rt += "["+e.researcherCommline+"]";
+	}
+	rt += " ";
+	*/
+
+	String s = 
+	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
+	    "<div class=\"document\">\n" +
+	    e.i + ". " + 
+	    //researcherSpan(rt)+ 
+	    e.idline + "; "+e.formatDate()+"\n" +
+	    "[" + a( urlAbstract(e.id), "Details") + "]\n" +
+	    "[" + a( urlPDF(e.id), "PDF/PS/etc") + "]\n" +
+	    "<br>\n" +
+	    e.titline + "<br>\n" +
+	    e.authline+ "<br>\n" +
+	    e.subjline+ "<br>\n";
+	s += "</div></div>\n";
+	return s;
+    }
+
+
 
     /** testing 
      */
@@ -692,13 +724,27 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    System.out.println("Usage: ViewSuggestions uname");
 	    return;
 	}
+	ParseConfig ht = new ParseConfig();
 	String uname = argv[0];
-	boolean dryRun = true;
+	boolean dryRun = ht.getOption("dryRun", true);
+
 	ViewSuggestions vs = new ViewSuggestions(uname, dryRun);
 	SearchResults sr = vs.sr; 
 	for( ArticleEntry e: sr.entries) {
 	    System.out.println(e);
 	}
+
+	System.out.println("Sample HTML:");
+	// Unlike a real servlet, 
+ 	for( ArticleEntry e: sr.entries) {
+	    int flags = 0;
+	    String s =   vs.formatArticleEntryForEmail( e);
+	    // vs.resultsDivHTML(e, false, flags);
+	    System.out.println(s);
+	}
+
+
+
     }
 
 }
