@@ -658,7 +658,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	isMail = true;  // the PresentedList will have a code 
 	// Unlike being in a servlet, we can't get the context path out of the
 	// request, so we must set it explicitly
-	cp =  "http://my.arxiv/arxiv";
+	cp =  "http://my.arxiv.org/arxiv";
 
 
 	EntityManager em =  Main.getEM();
