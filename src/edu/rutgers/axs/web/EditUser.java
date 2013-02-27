@@ -233,7 +233,9 @@ public class EditUser extends Participation  {
 		em.getTransaction().begin();
 		EE4User ee4u = (EE4User)em.find(EE4User.class, r.getId());
 		if (ee4u==null) ee4u = new EE4User();
+		ee4u.setId( r.getId());
 		Tools.editEntity(EE4_PREFIX, ee4u, request);
+		
 		em.persist(ee4u);
 		em.getTransaction().commit();
 	    }
