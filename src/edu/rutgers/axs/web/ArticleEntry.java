@@ -139,7 +139,7 @@ public class ArticleEntry {
 	    Document doc = s.doc(docno);
 	    if (doc==null) return dummy;
 	    return new	ArticleEntry(pos, doc, docno);
-	} catch (Exception ex) { return null; }
+	} catch (Exception ex) { return dummy; }
     }
 
     /*
