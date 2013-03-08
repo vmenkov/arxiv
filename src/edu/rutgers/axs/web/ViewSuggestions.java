@@ -699,20 +699,41 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	rt += " ";
 	*/
 
-	String s = 
+				//s = "<p style=\"background-color:#e5e5e5\">" + s + "</p>";
+
+	/*String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
+		"<font size=\"3\">" +
+	    e.i + "." + 
+	    //researcherSpan(rt)+ 
+	    //e.idline + "; "+e.formatDate()+"\n" +
+	    "<br>\n<b>" +
+	    e.titline + "</b></font><br>\n" +
+	    e.authline+ "<br>\n" +
+	    e.subjline+ "<br>\n" +
+		"[" + a( urlAbstract(e.id), "View Details") + "]\n" +
+	    "[" + a( urlPDF(e.id), "Download") + "]\n";
+	s += "</div></div>\n";
+	return s;*/
+	
+        String s = 
+		//"<p style=\"background-color:#e5e5e5\">" +
+		"<font size=\"3\">" +
 	    e.i + ". " + 
 	    //researcherSpan(rt)+ 
-	    e.idline + "; "+e.formatDate()+"\n" +
-	    "[" + a( urlAbstract(e.id), "Details") + "]\n" +
-	    "[" + a( urlPDF(e.id), "PDF/PS/etc") + "]\n" +
-	    "<br>\n" +
-	    e.titline + "<br>\n" +
+	    //e.idline + "; "+e.formatDate()+"\n" +
+	    "<b>" +
+	    e.titline + "</b></font><br>\n" +
 	    e.authline+ "<br>\n" +
-	    e.subjline+ "<br>\n";
-	s += "</div></div>\n";
-	return s;
+	    e.subjline+ "<br>\n" +
+		"[" + a( urlAbstract(e.id), "View Details") + "]\n" +
+	    "[" + a( urlPDF(e.id), "Download") + "]\n";
+		//s += "</p>\n";
+		return s;
+	
+
+
     }
 
 

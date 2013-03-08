@@ -141,7 +141,13 @@ public class EmailSug extends ResultsBase {
 	    
 	    String firm = "My.ArXiv";
 
-	    String text = "<p>My.ArXiv has new recommendations for you.</p>";
+		String link = "http://my.arxiv.org/arxiv/#MIDDLE";
+		String accountSettingLink = "http://my.arxiv.org/arxiv/personal/editUserFormSelf.jsp";		
+
+		String text = "<p><b><font size=\"3\">"
+					+ "<a href=" + link + ">" + "Click here to view the most up-to-date recommendations." + "</a></font></b></p>";
+
+		text = text + "<p>The following papers were posted on Arxiv since your last visit.</p>";		
 
 		// Get the suggestion list for this user.
 		boolean dryRun = true;
@@ -149,38 +155,39 @@ public class EmailSug extends ResultsBase {
 		SearchResults sr = vs.sr;
 		int i = 1;
 		String firstArticle = "";
-		String link = "http://my.arxiv.org/arxiv/#MIDDLE";
-		String accountSettingLink = "http://my.arxiv.org/arxiv/personal/editUserFormSelf.jsp";
+		
+		
 		for( ArticleEntry e: sr.entries) {
+			String s =   vs.formatArticleEntryForEmail( e);
+			if(i % 2 == 0)
+				s = "<p style=\"background-color:#aad8ff;padding:10px\">" + s + "</p>";
+			else
+				s = "<p style=\"background-color:#e5e5e5;padding:10px\">" + s + "</p>";	
+
 			if(i == 1){
-				firstArticle  = e.titline;
-				String s =   vs.formatArticleEntryForEmail( e);
-				text = text + s;
-				i++;
+				firstArticle  = e.titline;			
 			}
-			else{
-				String s =   vs.formatArticleEntryForEmail( e);
-				text = text + "<br>" + s;
-				i++;
-			}
+			text = text + s;
+			i++;
 			/*text = text + "<p>" 
 				+ i + ".<br>" + "<a href=" + link + ">" + e.titline + "</a>" + "<br>" 
 				+ e.authline + "<br>Subjects: " + e.subjline + "</p>";*/
 			
 		}
 
-		String subject = "My.ArXiv recommends \"" + firstArticle + "\"";
+		//String subject = "My.ArXiv recommends \"" + firstArticle + "\"";
+		String subject = "My.ArXiv has new recommendations for you";
 	    
 	    msg.setSubject(subject);
 		
-		text = text + "<p>"
-					+ "<a href=" + link + ">" + "Update Ranking to Most Current Recommendations" + "</a></p>"
-					+ "<p><br>You can " 
+		//text = text + "<br><br>";
+
+		text = text + "<p><font color=\"gray\" size=\"1\"><br>You can " 
 					+ "<a href=" + accountSettingLink + ">" + "unsubscribe from these emails" + "</a>" 
 					+ " or change your " 
-					+ "<a href=" + accountSettingLink + ">" + "account settings" + "</a>"  
+					+ "<a href=" + accountSettingLink + ">" + "preference settings" + "</a>"  
 					+ ".";
-		text = text + "<br>Please note that this message was sent to the following e-mail address: " + email +"</p>";
+		text = text + "<br>Please note that this message was sent to the following e-mail address: " + email +"</font></p>";
 	    
 	    msg.setContent(text, "text/html");
  
