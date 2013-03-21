@@ -289,10 +289,13 @@ public class ResultsBase {
 	}
 	rt += " ";
 
+	String aName = "article_" + e.id;
+	
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
-	    e.i + ". " + 
+	    "<a name=\""+ aName +"\">\n" +
+	    e.i + ".</a>" + 
 	    researcherSpan(rt)+ 
 	    e.idline + "; "+e.formatDate()+"\n" +
 	    "[" + a( urlAbstract(e.id), "Details") + "]\n" +
