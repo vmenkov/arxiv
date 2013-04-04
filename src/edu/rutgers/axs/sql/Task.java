@@ -56,6 +56,8 @@ select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
 	    TJ_ALGO_1_SUGGESTIONS_1,
         /** Thorsten Joachims' Algorithm 2 */
 	    TJ_ALGO_2_USER_PROFILE;
+	    //	    PPP_SUGGESTIONS,
+	    //	    PPP_USER_PROFILE;
 
 	/** What kind of file is created by each task? (Some tasks may
 	 * create more than one file on occasions, but this method

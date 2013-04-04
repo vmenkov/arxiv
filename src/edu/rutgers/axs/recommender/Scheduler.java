@@ -188,6 +188,9 @@ public class Scheduler {
 			    (mode== DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) ?
 			    latestProfile : null;
 
+			Date since = chooseSince( em, u);
+
+			/*
 			//  Date lastViewed = dateOfLastSeenSugList( em, uname);
 			Date lastViewed = dateOfLastPerusedSugList( em, uname);
 
@@ -199,6 +202,7 @@ public class Scheduler {
 			    if (since.after(lastViewed)) since = lastViewed;
 			}
 			Logging.info("For user " + uname + ", last sug list on which we had feedback was generated at " +  lastViewed + "; set since=" + since);
+			*/
 
 			addTask(em, uname, mode, days, since, requiredInput );
 			createdCnt++;
@@ -213,6 +217,28 @@ public class Scheduler {
 	stage2 = !stage2; // flip the flag
 	return createdCnt;
     }
+
+    /** The proper "since" date for suggestion generation */
+    static Date chooseSince( EntityManager em, User u) {
+	String uname = u.getUser_name();
+	//  Date lastViewed = dateOfLastSeenSugList( em, uname);
+	Date lastViewed = dateOfLastPerusedSugList( em, uname);
+
+	int days= u.getDays(); // user-specific search horizon
+	if (days==0) days = Search.DEFAULT_DAYS;
+
+	Date since = null;
+	if (lastViewed==null) {
+	    since = SearchResults.daysAgo(maxRange);
+	} else {
+	    since = SearchResults.daysAgo(days);
+	    if (since.after(lastViewed)) since = lastViewed;
+	}
+	Logging.info("For user " + uname + ", last sug list on which we had feedback was generated at " +  lastViewed + "; set since=" + since);
+	return since;
+    }
+
+
 
     // update the UP0 profile?
     private int checkUP0(EntityManager em, String  uname, long lai) {

@@ -68,7 +68,7 @@ public class TaskMaster {
 	int cnt=0;
 	for(DataFile df: list) {
 	    try {
-		Vector<ArticleEntry> entries = ArticleEntry.readStoreList(df.getDocs());
+		Vector<ArticleEntry> entries = ArticleEntry.readStoredList(df.getDocs());
 	    
 		String f = DataFile.mkFileName(df.getType(), new Date());
 		df.setThisFile(f);
@@ -297,7 +297,7 @@ public class TaskMaster {
 		    searcher.close();
 		    // rank by TJ Algo 1
 		    TjAlgorithm1 algo = new TjAlgorithm1();
-		    sd = algo.rank( upro, sd, casa, em, maxDocs);
+		    sd = algo.rank( upro, sd, casa, em, maxDocs, true);
 		    
 		    // FIXME: is there a better place for the day-setting?
 		    boolean isTrivial = (upro.terms.length==0);

@@ -33,13 +33,15 @@ class TjAlgorithm1 {
 	@param sd List of documents to rank. The scores will be used by this 
 	algorithm as 	secondary keys for tie-breaking; they should be pre-set
 	as appropriate before calling this method.
+	@param nonlinear The utility function psi has a non-linear (sqrt) part.
      */
     ArxivScoreDoc[] 
 	rank( UserProfile upro,    ArxivScoreDoc[] sd,
 	     //ArticleStats[] allStats, 
 	      CompactArticleStatsArray allStats, 
-	      EntityManager em, int maxDocs )  throws IOException{
-	IndexSearcher searcher = new IndexSearcher( upro.dfc.reader);	
+	      EntityManager em, int maxDocs,
+	      boolean nonlinear)  throws IOException{
+	//	IndexSearcher searcher = new IndexSearcher( upro.dfc.reader);	
 
 	HashMap<String,Integer> termMapper=upro.mkTermMapper();
 
@@ -55,9 +57,9 @@ class TjAlgorithm1 {
 	    }
 	    */
 	    if (sd[i].doc > allStats.size()) continue;
-	    Document doc = searcher.doc(sd[i].doc);
+	    //Document doc = upro.dfc.reader.document(sd[i].doc);
 	    //String datestring = doc.get(ArxivFields.DATE);
-	    TjA1Entry tje = new TjA1Entry( sd[i], allStats, upro, termMapper);
+	    TjA1Entry tje=new TjA1Entry(sd[i],allStats,upro,termMapper,nonlinear);
 	    tjEntries[storedCnt++] = tje;
 	}
 

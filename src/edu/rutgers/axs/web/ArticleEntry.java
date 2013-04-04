@@ -19,6 +19,11 @@ public class ArticleEntry {
     /** Sequence number in the overall search result
      * sequence. (1-based, for human readers' convenience) */
     public int i;
+
+    /** For PPP sugg lists, this is the value of i pre-perturbation.
+     */
+    public int iUnperturbed;
+
     /** Article id, same as in the arXiv database and arXiv URLs */
     public String id;
     /** Various metadata, in a printable form. */
@@ -70,7 +75,7 @@ public class ArticleEntry {
 	@param docno Lucene's internal doc id
      */
     public ArticleEntry(int _i, Document doc, int _docno, double _score) {
-	i = _i;
+	iUnperturbed = i = _i;
 	docno = _docno;
 	score=_score;
 	id=doc.get(ArxivFields.PAPER);
@@ -104,7 +109,7 @@ public class ArticleEntry {
      should be followed by looking up the Document in Lucene, and calling
      populateOtherFields(doc) */
     public ArticleEntry(int _i, String aid) {
- 	i = _i;
+ 	iUnperturbed = i = _i;
 	id=aid;
 	idline="arXiv:" + id;
 	titline = "";
@@ -202,6 +207,11 @@ public class ArticleEntry {
 	for(int i=0; i<entries.size(); i++) {
 	    ArticleEntry e=entries.elementAt(i);
 	    w.print(e.id + "\t" + e.score);
+
+	    if (e.iUnperturbed!=e.i) {
+		e.researcherCommline = "iUnperturbed=" + e.iUnperturbed;
+	    }
+
 	    if (e.researcherCommline !=null && e.researcherCommline.length()>0){
 		String s=e.researcherCommline.replaceAll("\"", "'");
 		w.print("\t\"" + e.researcherCommline + "\"");
@@ -241,7 +251,14 @@ public class ArticleEntry {
 	    //System.out.println("readFile: s=["+s+"], tail=["+tail+"]");
 	    if (tail.length()>0) {
 		tail=tail.replaceAll("\"", ""); // FIXME: ...
-		e.researcherCommline = tail;
+
+		final Pattern pu = Pattern.compile("iUnperturbed=(\\d+)");
+		Matcher mu = pu.matcher(tail);
+		if (mu.matches()) {
+		    e.iUnperturbed = Integer.parseInt( mu.group(1));
+		} else {
+		    e.researcherCommline = tail;
+		}
 	    }
 	    entries.add(e);
 	}
@@ -249,13 +266,14 @@ public class ArticleEntry {
 	return entries;
     }
 
-    static public Vector<ArticleEntry> readStoreList(Vector<ListEntry> v) throws IOException {
+    static public Vector<ArticleEntry> readStoredList(Vector<ListEntry> v) throws IOException {
 	Vector<ArticleEntry> entries = new Vector<ArticleEntry>(v.size());
 	int pos=0;
 	for(ListEntry le: v) {
 	    pos++;
 	    Article a = le.getArticle();
 	    ArticleEntry e = new ArticleEntry(pos, a.getAid());
+	    e.iUnperturbed=le.getUnperturbedRank()+1;
 	    e.setScore( le.getScore());
 	    entries.add(e);
 	}
@@ -281,7 +299,7 @@ public class ArticleEntry {
     }
 
     /** Applies this user's exclusions, folder inclusions, and ratings */
-    static void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
+    public static void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
 	if (u==null) return;
     
 	HashMap<String, Action> exclusions = 
@@ -303,6 +321,18 @@ public class ArticleEntry {
 	markFolder(entries, u.getFolder());
 	markRatings(entries, u.getActionHashMap(Action.ratingOps));
     }
+
+    /** This can be used after some elements in a still-unperturbed list
+	have been removed, etc.
+     */
+    public static void refreshOrder( Vector<ArticleEntry> entries) {
+	int cnt=1;
+	for(ArticleEntry e: entries) {
+	    e.i = e.iUnperturbed = cnt;
+	    cnt++;
+	}
+    }
+
 
     /** Appends an extra text to the article's comment line.  This is a somewhat cludgy
 	way to add extra information to the display formatted in a standard way.

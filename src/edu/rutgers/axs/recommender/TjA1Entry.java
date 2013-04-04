@@ -26,10 +26,15 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	double value;
 	public Coef(int _i, double v) { i =i; value=v;}
 
-	/** @param phi  Vector phi, already component-wise multiplied
+	/** If we add q*gamma to the current vector phi, how much
+	    will it contribute to the non-linear part of Psi?
+	    (The linear part, sum1*gamma, is not included here, as it
+	    is taken care of elsewhere).
+
+	    @param phi  Vector phi, already component-wise multiplied
 	    by w2 
 	 */
-	static double uContrib(Coef[] q, double [] phi, double gamma) {
+	static private double uContrib(Coef[] q, double [] phi, double gamma) {
 	    double m = 0;
 	    for(Coef c: q) {
 
@@ -38,6 +43,7 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 
 		m += Math.sqrt( phi[ c.i ] + c.value * gamma) -
 		    Math.sqrt( phi[ c.i ] );
+
 	    }
 	    return m;
 	}
@@ -55,6 +61,12 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 
     void setScore(double x) { sd.score=(float)x;}
 
+    /** Is the nonlinear (sqrt()) part used in the utility Psi? This
+	flag is true for the original (2011) set based algorithm, and
+	false in the PPP (2013) algorithm.
+    */
+    private boolean hasNonlinear = true;
+
     /** Components of phi, pre-multiplied by w2^2, and (in the actual
 	implementation), also by IDF. (Conceptually, IDF does not
 	figure here explicitly, as IDF^{1/2} is conceptually already
@@ -70,12 +82,14 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
     */
     private Coef[] qplus, qminus;
 
-    /** Conceptually, the dot product (w1,d) */
+    /** Conceptually, the dot product (w1,d). If we multiply it by the
+	position-dependent gamma_i, this will be the linear part of the
+	document's contribution to utility Psi. */
     private double sum1;
     /** Max possible contribution to the utility of the parts of 
 	sqrt(phi) which have non-negative coefficients in w2*/
     private double mcPlus;
-    /** Non-positive */
+    /** Ditto, non-positive */
     double mcMinus;
     private double lastGamma;
 
@@ -91,11 +105,13 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 
     TjA1Entry(ArxivScoreDoc _sd,  //String _datestring,
 	      CompactArticleStatsArray casa, //ArticleStats as, 
-	      UserProfile upro, Map<String,Integer> termMapper)
+	      UserProfile upro, Map<String,Integer> termMapper,
+	      boolean _hasNonlinear)
 	throws IOException {
+	hasNonlinear =  _hasNonlinear;
 	sd = _sd;
 	//	datestring = _datestring;
-	double sum1 = 0;
+	sum1 = 0;
 
 	int docno=sd.doc;
 
@@ -138,20 +154,24 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 		}
 	    }
 	}
-	
-	Vector<Coef> vplus = new Vector<Coef> (upro.terms.length),
-	    vminus = new Vector<Coef> (upro.terms.length);
 
 	mcPlus =  mcMinus = 0;
 
+	Vector<Coef> vplus = new Vector<Coef> (upro.terms.length),
+	    vminus = new Vector<Coef> (upro.terms.length);
+	
 	double gamma= upro.getGamma(0);
 	for(int i=0; i<upro.terms.length; i++) {
 	    if (w2plus[i]!=0) {
 		vplus.add(new Coef(i, w2plus[i]));
-		mcPlus += Math.sqrt(gamma * w2plus[i]);
+		if (hasNonlinear) {
+		    mcPlus += Math.sqrt(gamma * w2plus[i]);
+		}
 	    } else if (w2minus[i]!=0) {
 		vminus.add(new Coef(i, w2minus[i]));
-		mcMinus += Math.sqrt(gamma * w2minus[i]);
+		if (hasNonlinear) {
+		    mcMinus += Math.sqrt(gamma * w2minus[i]);
+		}
 	    } 
 	}
 	   
@@ -171,25 +191,27 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 	}
     }
 
-    /** How much would this document contribute to the utility function
-	if it were to be added to the current Phi vector, with the weight
-	gamma? As a side effect, updates the stored upper bounds on updates,
+    /** How much would this document contribute to the utility
+	function if it were to be added to the current Phi vector,
+	with the weight gamma? As a side effect, updates the stored
+	value of mcPlus, can be used later to compute the upper bounds
+	of updates.
      */
     double wouldContributeNow(double[] phi, double gamma) {
-	double sum = gamma * sum1;
+	double sum = gamma * sum1; // linear part
 
 	double mcPlus0 = mcPlus;
-	mcPlus = Coef.uContrib(qplus, phi, gamma);
+	mcPlus = (hasNonlinear? Coef.uContrib(qplus, phi, gamma) : 0);
 	if (mcPlus > mcPlus0) throw new AssertionError("mcPlus increased!");
 	sum += mcPlus;
 
 	double mcMinus0 = mcMinus;
-	mcMinus = Coef.uContrib(qminus, phi, gamma);
+	mcMinus = (hasNonlinear? Coef.uContrib(qminus, phi, gamma) : 0);
 	if (mcMinus > mcMinus0) throw new AssertionError("mcMinus increased!");
 	sum -= mcMinus;
 
 	if (Double.isNaN(sum)) {
-	    String msg = "TjA1Entry.wouldContribute(), sum is NaN; mcPlus=" + mcPlus +", mcMinus=" + mcMinus;
+	    String msg = "TjA1Entry.wouldContributeNow(), sum is NaN; mcPlus=" + mcPlus +", mcMinus=" + mcMinus;
 	    Logging.error(msg);
 	    //throw new AssertionError(msg);
 	}

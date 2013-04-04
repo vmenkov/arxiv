@@ -241,11 +241,17 @@ public class UserProfile {
 	upro.save(uproFile.getFile());
     */
     DataFile saveToFile(Task task, DataFile.Type type) throws IOException {
-	DataFile uproFile=  new DataFile(task, type);
+	return saveToFile(task.getUser(), task.getId(), type);
+    }
+
+    DataFile saveToFile(String user, long taskId, DataFile.Type type) 
+	throws IOException {
+	DataFile uproFile=  new DataFile(user, taskId, type);
 	uproFile.setLastActionId( lastActionId);
 	this.save(uproFile.getFile());
 	return uproFile;
     }
+
 
     /** Saves the profile to the specified file. Before doing so, verifies
 	that the necessary directory exists, and if it does not, tries to

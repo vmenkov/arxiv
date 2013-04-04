@@ -165,7 +165,9 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    /** Peter Frazeer's Exploration Engine v2: Exploration mode */
 	    BERNOULLI_EXPLOITATION,
 	    /** Peter Frazeer's Exploration Engine v4 */
-	    EE4;
+	    EE4,
+	    /** Thorsten Joachim's Perturbed Preference Perceptron */
+	    PPP;
 
 	/** Do we need to use the Bernoulli Exploration Engine with
 	 * this program?	 */

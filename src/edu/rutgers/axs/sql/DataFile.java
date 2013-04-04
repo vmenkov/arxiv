@@ -56,8 +56,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setLastActionId(long x) { lastActionId = x; }
 
 
-    /** The task id of the Task pursuant to which the file was created,
-	If the file was not created via the TaskManager, -1 (or 0) will be stored here.
+    /** The task id of the Task pursuant to which the file was
+	created.  If the file was not created via the TaskManager, -1
+	(or 0) will be stored here.
      */
     @Basic @Display(editable=false, order=4, link="viewObject.jsp?class=Task&id=") @Column(nullable=false)
 	long task;
@@ -86,7 +87,10 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    /** Peter Frazier's algorithm v.2 - "Bernoulli Rewards" */
 	    BERNOULLI_SUGGESTIONS,
 	    /** Peter Frazier's Explolration Engine ver 4 */
-	    EE4_SUGGESTIONS;
+	    EE4_SUGGESTIONS,
+	    /**  Thorsten's Perturbed Preference Perceptron */
+	    PPP_USER_PROFILE,
+	    PPP_SUGGESTIONS;
 
 	/** What task should we run to produce this kind of data? */
 	public Task.Op producerFor() {
@@ -95,6 +99,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    else if (this == LOG_SUGGESTIONS_1) return Task.Op.LOG_SUGGESTIONS_1;
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return Task.Op.TJ_ALGO_1_SUGGESTIONS_1;
 	    else if (this == TJ_ALGO_2_USER_PROFILE) return Task.Op.TJ_ALGO_2_USER_PROFILE;
+	    //	    else if (this == PPP_SUGGESTIONS) return Task.Op.PPP_SUGGESTIONS;
+	    //	    else if (this == PPP_USER_PROFILE) return Task.Op.PPP_USER_PROFILE;
+
 	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
 	}
 
@@ -116,6 +123,10 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 		return "algo1sug1";
 	    } else if (this == EE4_SUGGESTIONS) {
 		return "ee4sug";
+	    } else if (this == PPP_USER_PROFILE) {
+		return "p3profile";
+	    } else if (this == PPP_SUGGESTIONS) {
+		return "p3sug";
 	    } else {
 		return null;
 	    }	 
@@ -142,10 +153,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public Type getType() { return type; }
     public void setType(Type x) { type = x; }
 
-   /** The time range, in days, used to sub-class certain task, such 
-	as when suggestions need to be generated only from the recently
+   /** The time range, in days, is used on certain suggestion list files,
+       as when suggestions need to be generated only from the recently
 	added articles (with dates in this ranged). 0 means "unlimited".
-	Ignored by most other tasks.
+	Mostly superseded by the "since" field in suggestion lists, and is
+	always ignored in other file types.
     */
     @Basic @Display(editable=false, order=6.1)     @Column(nullable=false)
     	private int days;   
@@ -161,8 +173,17 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public  Date getSince() { return since; }
     public void setSince(       Date x) { since = x; }
 
+    /** This flag is only applicable to PPP suggestion lists. If it is true, the
+	top "pair" is (1), rather than (1,2).
+     */
+    @Basic  @Display(editable=false, order=6.3)    boolean pppTopOrphan = false;
+    public boolean getPppTopOrphan() { return pppTopOrphan; }
+    public void setPppTopOrphan( boolean x) {pppTopOrphan  = x; }
+
+
+
     /** Has the physical file been deleted? */
-    @Basic  @Display(editable=false, order=6.3)    boolean deleted = false;
+    @Basic  @Display(editable=false, order=6.4)    boolean deleted = false;
     public boolean getDeleted() { return deleted; }
     public void setDeleted( boolean x) {  deleted = x; }
 

@@ -49,11 +49,20 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setArticle(Article x) {        article = x;    }
     public Article getArticle() {        return article;    }
 
-    /** 0-based position of this entry in the list */
+    /** 0-based position of this entry in the list. (This contrasts with ArticleEntry.i, which is 1-based). */
     @Basic  @Column(nullable=false)
 	private int rank;
     public void setRank(int x) {        rank = x;    }
     public int getRank() {        return rank;    }
+
+    /** Only relevant for PPP sugg lists, this contained (0-based)
+	rank of the document before the list was perturbed.
+     */
+    @Basic  @Column(nullable=false)
+	private int unperturbedRank;
+    public void setUnperturbedRank(int x) {         unperturbedRank = x;    }
+    public int getUnperturbedRank() {        return  unperturbedRank;    }
+
 
     /** 0-based position of this entry in the list */
     @Basic  @Column(nullable=false)
@@ -83,6 +92,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
      */
     ListEntry( EntityManager em, DataFile _df, ArticleEntry e, int _rank) throws  org.apache.lucene.index.CorruptIndexException, IOException {
 	setRank(_rank);
+	setUnperturbedRank(e.iUnperturbed-1);
 	setDf(_df);	
 	Article a = Article.getArticleAlways(em, e.getAid(), false);
 	setArticle(a);
