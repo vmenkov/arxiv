@@ -41,7 +41,9 @@ class TjAlgorithm1 {
 	      CompactArticleStatsArray allStats, 
 	      EntityManager em, int maxDocs,
 	      boolean nonlinear)  throws IOException{
-	//	IndexSearcher searcher = new IndexSearcher( upro.dfc.reader);	
+
+	Logging.info("A1(nonlinear=" + nonlinear+"); sd.length="+ sd.length);
+
 
 	HashMap<String,Integer> termMapper=upro.mkTermMapper();
 
@@ -49,38 +51,32 @@ class TjAlgorithm1 {
 	tjEntries = new TjA1Entry[sd.length];
 
 	for(int i=0; i<sd.length; i++) {
-	    /*
-	    ArticleStats as=upro.dfc.getAS(allStats, sd[i].doc, em);
+	    /*	    ArticleStats as=upro.dfc.getAS(allStats, sd[i].doc, em);
 	    if (as==null) {
 		missingStatsCnt ++;
 		continue;
-	    }
-	    */
+	    }	    */
 	    if (sd[i].doc > allStats.size()) continue;
-	    //Document doc = upro.dfc.reader.document(sd[i].doc);
-	    //String datestring = doc.get(ArxivFields.DATE);
 	    TjA1Entry tje=new TjA1Entry(sd[i],allStats,upro,termMapper,nonlinear);
 	    tjEntries[storedCnt++] = tje;
 	}
 
-	Arrays.sort(tjEntries, 0, storedCnt);  
-
+	double gamma = upro.getGamma(0);
+	TjA1Entry.DescendingUBComparator cmp= new TjA1Entry.DescendingUBComparator(gamma);
+	Arrays.sort(tjEntries, 0, storedCnt, cmp);  
 	if (storedCnt==0) return new ArxivScoreDoc[0]; // nothing!
 
 	Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
-       
-	double[] phi = new double[ upro.terms.length];
-	double gamma = upro.getGamma(0);
+	double[] phi = new double[upro.terms.length];
 	int usedCnt=0;
 
 	double utility = 0;
 	int imax=-1;
 	for(int i=0; i<storedCnt; i++) {
 	    TjA1Entry tje = tjEntries[i];
-	    double u = tje.ub() - tje.mcMinus;
+	    double u = tje.ub(gamma) - tje.mcMinus;
 	    // includes date-based tie-breaking clause
-	    if (imax<0 || u>utility ||
-		(u==utility && tje.compareTieTo(tjEntries[imax])>0)) {
+	    if (imax<0 || u>utility || (u==utility && tje.compareTieTo(tjEntries[imax])>0)) {
 		imax = i;
 		utility=u;
 	    }
@@ -92,7 +88,7 @@ class TjAlgorithm1 {
 	results.add(tje.getSd());
 
 	Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=du=" + utility 
-		     + " (tje.ub()="+tje.ub()+", tje.mcMinus="+ tje.mcMinus+")");
+		     +" (tje.ub("+gamma+")="+tje.ub(gamma)+", tje.mcMinus="+ tje.mcMinus+")");
 
 
 	if (imax > usedCnt) {		// swap if needed
@@ -107,9 +103,11 @@ class TjAlgorithm1 {
 	    double maxdu = tjEntries[usedCnt].wouldContributeNow(phi, gamma);
 	    
 	    int i;
-	    for(i=usedCnt+1; i<storedCnt && tjEntries[i].ub()>maxdu; i++) {
+	    StringBuffer q = new StringBuffer("{");
+	    for(i=usedCnt+1; i<storedCnt && tjEntries[i].ub(gamma)>=maxdu; i++) {
 		tje = tjEntries[i];
 		double du= tje.wouldContributeNow(phi, gamma);		
+		q.append(" " + du);
 		// includes date-based tie-breaking clause
 		if ( du>maxdu ||
 		    (du==maxdu && tje.compareTieTo(tjEntries[imax])>0)) {
@@ -117,6 +115,7 @@ class TjAlgorithm1 {
 		    maxdu=du;
 		}
 	    }
+	    q.append("}");
 
 	    if (maxdu<0) {
 		Logging.info("No further improvement to the utility can be achieved (maxdu=" + maxdu+")");
@@ -136,10 +135,11 @@ class TjAlgorithm1 {
 		tjEntries[usedCnt] = tje;		
 	    }
 
-	    Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=" + utility + ", du=" + maxdu);
+	    Logging.info("A1: tested du vals " + q);
+	    Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=" + utility + ", du=" + maxdu +"; scanned up to " + undisturbed);
 	    usedCnt++;
 	    
-	    finishSort(tjEntries, usedCnt, undisturbed, storedCnt);
+	    finishSort(tjEntries, usedCnt, undisturbed, storedCnt, gamma);
 
 	}
 
@@ -147,20 +147,21 @@ class TjAlgorithm1 {
     }
 
     /** "Finalizes" sorting of the array section a[n1:n3), within
-     * which the section a[n2:n3) is already sorted.
+       which the section a[n2:n3) is already sorted.
 
      @param n1:  n1 &le; n2 &le; n3;
      */
-    private static void finishSort(TjA1Entry [] a, int n1, int n2, int n3) {
+    private static void finishSort(TjA1Entry [] a, int n1, int n2, int n3, double gamma) {
 	if (n1==n2) return; // the first (unsorted) section is empty
-	Arrays.sort(a, n1, n2); // sort the first section
+	TjA1Entry.DescendingUBComparator cmp= new TjA1Entry.DescendingUBComparator(gamma);
+	Arrays.sort(a, n1, n2, cmp); // sort the first section
 	if (n2==n3) return;  // the second section is empty
 
 	// see if the beginning of the first section is already at the 
 	// right place
 	int i1 = n1;
 	int i2 = n2;
-	while(i1 < n2 && a[i1].compareTo(a[i2])<=0) { i1++; }
+	while(i1 < n2 && cmp.compare(a[i1],a[i2])<=0) { i1++; }
 
 	// merge the remainder of the first section and the second section
 	final int i1start = i1;
@@ -168,7 +169,7 @@ class TjAlgorithm1 {
 	TjA1Entry  merged[] = new TjA1Entry[n3-i1];
 	int k=0;
 	while(i1 < n2 && i2 < n3) {
-	    if (a[i1].compareTo(a[i2])<=0) {
+	    if (cmp.compare(a[i1],a[i2])<=0) {
 		merged[k++] = a[i1++];
 	    } else {
 		merged[k++] = a[i2++];

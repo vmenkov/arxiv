@@ -18,9 +18,9 @@ import edu.rutgers.axs.web.ArticleEntry;
 /** A temporary object, stores a semi-computed term vector 
     during TJ Algorithm 1.
 */
-class TjA1Entry implements Comparable<TjA1Entry>  {
+class TjA1Entry   {
 
-    static class Coef { //implements Comparable<Coef>  {
+    private static class Coef { 
 	/** index into UserProfile.terms[] */
 	int i;
 	double value;
@@ -95,22 +95,26 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 
     /** Upper bound (possibly, no longer "tight") on this document's
      * contribution to the utility function */
-    double ub() { return sum1 + mcPlus; }
-
+    double ub(double gamma) { return sum1*gamma + mcPlus; }
+  
     /** Descending order with respect to the max possible contribution. */
-    public int compareTo(TjA1Entry o) {
-	double x = o.ub() - ub();
-	return (x>0) ? 1 : (x<0) ? -1 : 0;
+    static class DescendingUBComparator implements Comparator<TjA1Entry> {
+	private final double gamma;
+	DescendingUBComparator(double _gamma) { gamma=_gamma;}
+	public int compare(TjA1Entry o1,TjA1Entry o2) {
+	    double x = o2.ub(gamma) - o1.ub(gamma);
+	    return (x>0) ? 1 : (x<0) ? -1 : 0;
+	}
     }
 
-    TjA1Entry(ArxivScoreDoc _sd,  //String _datestring,
+
+    TjA1Entry(ArxivScoreDoc _sd, 
 	      CompactArticleStatsArray casa, //ArticleStats as, 
 	      UserProfile upro, Map<String,Integer> termMapper,
 	      boolean _hasNonlinear)
 	throws IOException {
 	hasNonlinear =  _hasNonlinear;
 	sd = _sd;
-	//	datestring = _datestring;
 	sum1 = 0;
 
 	int docno=sd.doc;
@@ -173,12 +177,9 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
 		    mcMinus += Math.sqrt(gamma * w2minus[i]);
 		}
 	    } 
-	}
-	   
+	} 
 	qplus = vplus.toArray(new Coef[0]);
 	qminus = vminus.toArray(new Coef[0]);
-
-
 	lastGamma=gamma;
     }
 
@@ -200,25 +201,26 @@ class TjA1Entry implements Comparable<TjA1Entry>  {
     double wouldContributeNow(double[] phi, double gamma) {
 	double sum = gamma * sum1; // linear part
 
-	double mcPlus0 = mcPlus;
-	mcPlus = (hasNonlinear? Coef.uContrib(qplus, phi, gamma) : 0);
-	if (mcPlus > mcPlus0) throw new AssertionError("mcPlus increased!");
-	sum += mcPlus;
-
-	double mcMinus0 = mcMinus;
-	mcMinus = (hasNonlinear? Coef.uContrib(qminus, phi, gamma) : 0);
-	if (mcMinus > mcMinus0) throw new AssertionError("mcMinus increased!");
-	sum -= mcMinus;
-
-	if (Double.isNaN(sum)) {
-	    String msg = "TjA1Entry.wouldContributeNow(), sum is NaN; mcPlus=" + mcPlus +", mcMinus=" + mcMinus;
-	    Logging.error(msg);
-	    //throw new AssertionError(msg);
+	if (hasNonlinear) {
+	    double mcPlus0 = mcPlus;
+	    mcPlus =  Coef.uContrib(qplus, phi, gamma);
+	    if (mcPlus > mcPlus0) throw new AssertionError("mcPlus increased!");
+	    sum += mcPlus;
+	    
+	    double mcMinus0 = mcMinus;
+	    mcMinus = Coef.uContrib(qminus, phi, gamma);
+	    if (mcMinus > mcMinus0) throw new AssertionError("mcMinus increased!");
+	    sum -= mcMinus;
+	    if (Double.isNaN(sum)) {
+		String msg = "TjA1Entry.wouldContributeNow(), sum is NaN; mcPlus=" + mcPlus +", mcMinus=" + mcMinus;
+		Logging.error(msg);
+		//throw new AssertionError(msg);
+	    }
+	} else {
+	    mcPlus = mcMinus = 0;
 	}
 	
 	lastGamma = gamma;
-
-
 	return sum;
     }
 
