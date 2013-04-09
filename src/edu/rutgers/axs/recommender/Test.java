@@ -65,7 +65,7 @@ public class Test {
 	    ArticleEntry.save(upro.packageEntries(sd), new File("linsug.txt"));
 
 	    TjAlgorithm1 algo = new TjAlgorithm1();
-	    sd = algo.rank( upro, sd, casa, em, maxDocs);
+	    sd = algo.rank( upro, sd, casa, em, maxDocs,true);
 	    Vector<ArticleEntry> entries = upro.packageEntries(sd);
 
 	    ArticleEntry.save(entries, new File("algo1.txt"));
