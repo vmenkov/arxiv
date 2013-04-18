@@ -30,7 +30,7 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 #set opt="-cp ${cp} ${opt} -Drewrite=false"
 set baseopt="-cp ${cp} ${baseopt}"
 
-set opt="${baseopt} -Drewrite=false -Doptimize=true -Ddays=7"
+set opt="${baseopt} -Drewrite=true -Doptimize=true -Ddays=7"
 # -Dfrom=2012-01-16
 
 echo "Options for ArxivImporter: $opt"
@@ -50,11 +50,11 @@ time java $opt   edu.rutgers.axs.bernoulli.Bernoulli recent >& bernoulli-${d}.lo
 #-- Updating class stats and recommendations for Exploration Engine ver. 4
 time java $opt   edu.rutgers.axs.ee4.Daily update >& ee4-${d}.log 
 
+#-- Updating user profiles and recommendations for the 3PR (PPP) engine
+time java $opt edu.rutgers.axs.recommender.DailyPPP update >& ppp-${d}.log 
+
+
 set  opt="-Xmx1024m ${baseopt} -DexitAfter=22 -DarticlesUpdated=true"
 
 time java $opt $1 $2 $3 edu.rutgers.axs.recommender.TaskMaster >& taskmaster-${d}.log
-
-
-
-
 

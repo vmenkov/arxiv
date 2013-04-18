@@ -857,6 +857,8 @@ throws Exception
     //	return  (EE4User)em.find(EE4User.class, getId());
     //    }
 
-
+    public String toString() {
+	return "No. " + getId() + "("+getUser_name()+")";
+    }
 
 }
