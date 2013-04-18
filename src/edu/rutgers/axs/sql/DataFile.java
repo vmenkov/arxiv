@@ -8,6 +8,7 @@ import javax.persistence.*;
 import edu.cornell.cs.osmot.options.Options;
 import edu.rutgers.axs.web.ArticleEntry;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
+import edu.rutgers.axs.ParseConfig;
 
 
 /** Each DataFile instance contains information about one external
@@ -91,6 +92,13 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    /**  Thorsten's Perturbed Preference Perceptron */
 	    PPP_USER_PROFILE,
 	    PPP_SUGGESTIONS;
+
+	/** Is this a user profile file? */
+	public boolean isProfile() {
+	    return this==USER_PROFILE ||
+		this==TJ_ALGO_2_USER_PROFILE ||
+		this==PPP_USER_PROFILE;
+	}
 
 	/** What task should we run to produce this kind of data? */
 	public Task.Op producerFor() {
@@ -378,6 +386,31 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	}
     }
 
+    /** Lists all DataFile objects of a particular type based on a specified data file. 
+	This can be used e.g. to find all suggestion lists build based on a particular 
+	user profile.
+	@param srcFile The "parent" DataFile object. It can be null,
+	in which case DataFile objects with a null for inputFile are retrieved.
+     */ 
+    static public List<DataFile> getAllFilesBasedOn(EntityManager em, String  username, 
+						    Type t, DataFile srcFile) {
+	String qs = "select m from DataFile m " +
+	    "where m.user=:u and m.type=:t and m.deleted=FALSE";
+	if (srcFile==null)  {
+	    qs += " and m.inputFile is null";
+	} else {
+	    qs += " and m.inputFile=:sf";
+	}
+
+	Query q = em.createQuery(qs);
+
+	q.setParameter("u", username);
+	q.setParameter("t", t);
+	if (srcFile != null) { q.setParameter("sf", srcFile); }
+
+	return (List<DataFile>)q.getResultList();
+    }
+
 
     /** Finds the DataFile entry with a matching name */
     static public DataFile findFileByName(EntityManager em, String  username, String file) {
@@ -411,7 +444,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    Logging.error("Don't know where DATAFILE_DIRECTORY is");
 	}
 	s += "user"  +	File.separator;
-	return s + getUser() + File.separator + 	    getThisFile();
+	return s + getUser() + File.separator + getThisFile();
     }
 
     static File getMainDatafileDirectory()  {
@@ -540,6 +573,50 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 	List<DataFile> res = (List<DataFile>)q.getResultList();
 	return res;
+    }
+
+    /** Unit test */
+    static public void main(String[] argv) throws Exception {
+	ParseConfig ht = new ParseConfig();
+	
+	if (argv.length == 0) {
+	    System.out.println("This is a unit test application");
+	    System.out.println("Usage: java -Duser=xxx DataFile [basedon id]");
+	    return;
+	}
+
+	String user = ht.getOption("user", "vmenkov");
+	EntityManager em  = Main.getEM();
+
+	String cmd = argv[0];
+	if (cmd.equals("basedon")) {
+	    int srcId = Integer.parseInt(argv[1]);
+	    DataFile srcFile = (srcId==0)? null : (DataFile)em.find(DataFile.class, srcId);
+	    System.out.println("user=" + user + ", src file = " + srcFile);
+	    DataFile.Type types[] = {DataFile.Type.LINEAR_SUGGESTIONS_1,
+				     DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1,
+				     DataFile.Type.PPP_SUGGESTIONS};
+	    for(DataFile.Type type: types) {
+		System.out.println("Looking for files of the type " + type);
+		List<DataFile> list = DataFile.getAllFilesBasedOn(em,  user, 
+								  type, srcFile);
+		if (list==null) {
+		    System.out.println("Found no results");
+		} else {
+		    System.out.println("Found " +list.size() + " results");
+		    int cnt=0;
+		    for(DataFile f: list) {
+			System.out.println("Result["+cnt+"]=" + f);
+			cnt ++;
+		    }
+		}
+	    }
+	} else {
+	    System.out.println("Invalid command: " + cmd);
+	}
+	 
+
+
     }
 
 

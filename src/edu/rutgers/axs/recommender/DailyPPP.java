@@ -15,7 +15,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.Common;
 
-/** The nightly updater for Thorsten's PPP plan.
+/** The nightly updater for Thorsten's 3PR (a.k.a. PPP) plan.
  */
 public class DailyPPP {
  
@@ -47,14 +47,14 @@ public class DailyPPP {
 	    User user = User.findByName( em, onlyUser);
 	    if (user==null) throw new IllegalArgumentException("User " + onlyUser + " does not exist");
 	    if (!user.getProgram().equals(program)) throw new IllegalArgumentException("User " + onlyUser + " is not enrolled in program " + program);
-	    makeP3Sug(em, casa, searcher, user);
+	    oneUser(em, casa, searcher, user);
 	} else {
 	    List<Integer> lu = User.selectByProgram( em, program);
 	    
 	    for(int uid: lu) {
 		try {
 		    User user = (User)em.find(User.class, uid);
-		    makeP3Sug(em, casa, searcher, user);
+		    oneUser(em, casa, searcher, user);
 		} catch(Exception ex) {
 		    Logging.error(ex.toString());
 		    System.out.println(ex);
@@ -65,12 +65,91 @@ public class DailyPPP {
 	em.close();
     }
 
-    /** Max size of the list to generate */
-    static final int maxDocs=200;
+    /** Just a wrapper around 2 function calls */
+    private static void oneUser(EntityManager em,  CompactArticleStatsArray casa, IndexSearcher searcher, User user) 
+	throws IOException {
+	Logging.info("Updating profile for user " + user);
+	updateP3Profile(em,  searcher, user);
+	Logging.info("Updating suggestions for user " + user);
+	makeP3Sug(em, casa, searcher, user);
+    }
 
-    /** Generates a suggestion list for the specified user, using PPP.
+    /** Updates and saved the user profile for the specified user, as
+	long as it makes sense to do it (i.e., there is no profile yet,
+	or there has been some usable activity since the existing profile
+	has been created)
      */
-    static void makeP3Sug(EntityManager em,  CompactArticleStatsArray casa, IndexSearcher searcher, User u) 
+    private static void updateP3Profile(EntityManager em,  
+				      IndexSearcher searcher, 
+				      User u)  throws IOException {
+
+	IndexReader reader =searcher.getIndexReader();
+	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE, 
+	    stype =  DataFile.Type.PPP_SUGGESTIONS;
+	final String uname = u.getUser_name();
+	// the latest profile
+	DataFile oldProfileFile = DataFile.getLatestFile(em, uname, ptype);
+	System.out.println("Old user profile = " + oldProfileFile);
+
+	UserProfile upro = (oldProfileFile == null)?
+	    new UserProfile(reader) :  new UserProfile(oldProfileFile, reader);
+	
+	List<DataFile> sugLists = DataFile.getAllFilesBasedOn(em, uname, stype, oldProfileFile);
+
+	System.out.println("Found " +sugLists.size() + " applicable suggestion lists");
+	int cnt=0;
+	for(DataFile df: sugLists) {
+	    System.out.println("Sug list ["+cnt+"](id="+df.getId()+")=" + df);
+	    cnt ++;
+	}
+
+	cnt = 0;
+	int rocchioCnt = 0; // how many doc vectors added to profile?
+	long lid = 0;
+	for(DataFile df: sugLists) {
+	    System.out.println("Applying updates from sug list ["+(cnt++)+"](id="+df.getId()+")=" + df);
+	    PPPFeedback actionSummary = new PPPFeedback(em, u, df.getId());
+	    System.out.println("Found useable actions on " +  actionSummary.size() + " pages");
+	    if (actionSummary.size() == 0) continue;
+	    rocchioCnt += actionSummary.size();
+	    lid = Math.max(lid,  actionSummary.getLastActionId());
+
+	    boolean topOrphan = df.getPppTopOrphan();
+	    File f = df.getFile();
+	    Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
+	    HashMap<String,Double> updateCo = actionSummary.getRocchioUpdateCoeff(topOrphan, entries);
+	    System.out.println("The update will be a linear combination of " + updateCo.size() + " documents:");
+	    for(String aid: updateCo.keySet()) {
+		System.out.println("w["+aid + "]=" +  updateCo.get(aid));
+	    }
+	    upro.rocchioUpdate(updateCo );
+ 	    upro.setTermsFromHQ();
+	}
+	if (rocchioCnt==0 && oldProfileFile!=null) {
+	    System.out.println("There is no need to update the existing profile " + oldProfileFile +", because there no important actions based on it have been recorded");
+	    return;
+	}
+	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
+	if (oldProfileFile!=null) {
+	    outputFile.setInputFile(oldProfileFile);
+	}
+	outputFile.setLastActionId(lid);
+
+	em.getTransaction().begin(); 
+	em.persist(outputFile);
+	em.getTransaction().commit();
+	Logging.info("Saved profile: " + outputFile);
+ 
+    }
+    
+
+    /** Max size of the sugg list to generate */
+    private static final int maxDocs=200;
+
+    /** Generates a suggestion list for the specified user, using 3PR (PPP),
+	based on the most recent available 3PR profile.
+     */
+    private static void makeP3Sug(EntityManager em,  CompactArticleStatsArray casa, IndexSearcher searcher, User u) 
     throws IOException {
 	Vector<DataFile> ptr = new  Vector<DataFile>(0);
 
@@ -79,7 +158,6 @@ public class DailyPPP {
 	// FIXME: strictly speaking, a positive rating should perhaps
 	// "cancel" a "Don't show again" request
 	HashMap<String, Action> exclusions = u.listExclusions();
-
 
 	UserProfile upro = 
 	    getSuitableUserProfile(u, ptr, em, searcher.getIndexReader());
@@ -97,8 +175,8 @@ public class DailyPPP {
 	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
 	Logging.info("since="+since+", cat search got " +sd.length+ " results");
 	//searcher.close();
-	// rank by TJ Algo 1
 	TjAlgorithm1 algo = new TjAlgorithm1();
+	// rank by TJ Algo 1
 	sd = algo.rank( upro, sd, casa, em, maxDocs, false);
 		
 	Vector<ArticleEntry> entries = upro.packageEntries(sd);
@@ -119,8 +197,9 @@ public class DailyPPP {
 	}
 	em.persist(u);
 
+	String uname = u.getUser_name();
 		
-	DataFile outputFile=new DataFile(u.getUser_name(), 0, DataFile.Type.PPP_USER_PROFILE);	    
+	DataFile outputFile=new DataFile(uname, 0, DataFile.Type.PPP_SUGGESTIONS);	    
   
 	//	outputFile.setDays(0);
 	if (since!=null) outputFile.setSince(since);
@@ -135,15 +214,20 @@ public class DailyPPP {
 	double p = 0.5; // probability of swap
 	perturb( entries, p, topOrphan);
 
+	// save the sug list to a text file
 	ArticleEntry.save(entries, outputFile.getFile());
 	// Save the sugg list to the SQL database
-	//ArticleAnalyzer aa=new ArticleAnalyzer();
 	outputFile.fillArticleList(entries,  em);
+	em.getTransaction().begin(); 
+	em.persist(outputFile);
+	em.getTransaction().commit();
+	Logging.info("Saved sug list: " + outputFile);
+ 
     }
 
     private static void perturb(Vector<ArticleEntry> entries, double p, boolean topOrphan ) {
 	for(int i=0; i< entries.size(); i ++) {
-	    entries.elementAt(i).iUnperturbed=i+1;
+	    entries.elementAt(i).iUnperturbed=entries.elementAt(i).i = i+1;
 	}
 	for(int i = (topOrphan? 1: 0);  i+1  < entries.size(); i += 2) {
 	    if (gen.nextDouble() < p) {
@@ -151,6 +235,9 @@ public class DailyPPP {
 		entries.set(i, entries.elementAt(i+1));
 		entries.set(i+1, q);
 	    }
+	}
+	for(int i=0; i< entries.size(); i ++) {
+	    entries.elementAt(i).i = i+1;
 	}
     }
 
@@ -167,23 +254,27 @@ public class DailyPPP {
 	DataFile.Type ptype =  DataFile.Type.PPP_USER_PROFILE;
 	DataFile.Type ptype2 =  DataFile.Type.TJ_ALGO_2_USER_PROFILE;
 	
-	DataFile inputFile = 
-	    DataFile.getLatestFile(em, user.getUser_name(), ptype);
+	String uname = user.getUser_name();
+	DataFile inputFile = DataFile.getLatestFile(em, uname, ptype);
+	
+	final boolean compatibilityMode = false;
 
 	UserProfile upro;
 	if (inputFile != null) {
 	    // read it
 	    upro = new UserProfile(inputFile, reader);
-	} else if ((inputFile = 
-		    DataFile.getLatestFile(em,  user.getUser_name(), ptype2))!=null) {
-	    // compatibility step (may be used at the moment when the user 
-	    // is switched from SET_BASED to PPP
+	} else if ( compatibilityMode &&
+		    (inputFile = 
+		    DataFile.getLatestFile(em, uname, ptype2))!=null) {
+	    // Compatibility mode: may be used at the moment when the user 
+	    // is switched from SET_BASED to PPP. This has been nixed on TJ's
+	    // request (2013-04-03)
 	    upro = new UserProfile(inputFile, reader);
 	} else {
-	    // generate it
-	    // empty profile, as TJ wants (06-2012)
+	    // Generate it.
+	    // empty profile, as TJ wants (2012-06; 2013-04-03)
 	    upro = new UserProfile(reader);
-	    DataFile uproFile=upro.saveToFile(user.getUser_name(), 0, ptype);
+	    DataFile uproFile=upro.saveToFile(uname, 0, ptype);
 
 	    em.persist(uproFile);
 	    inputFile = uproFile;
@@ -211,8 +302,6 @@ public class DailyPPP {
 	} else {
 	    System.out.println("Unknown command: " + cmd);
 	}
-
     }
-
 
 }

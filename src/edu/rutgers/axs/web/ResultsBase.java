@@ -45,7 +45,7 @@ public class ResultsBase {
     public String user=null;
 
     final public String USER_NAME = "user_name",
-	FORCE="force", FILE="file";
+	FORCE="force", FILE="file", ID="id";
     static final String STARTAT = "startat";
 
     /** These two vars are here (and not e.g. in PersonalResultsBase)

@@ -9,8 +9,6 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-//import edu.cornell.cs.osmot.options.Options;
-
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
@@ -77,9 +75,7 @@ class TjAlgorithm2 {
        source of the updates.
      */
     void updateProfile(String uname, EntityManager em,
-		       ArxivScoreDoc[] sda0//,
-		       //ArticleStats[] allStats
-		       )  throws IOException {
+		       ArxivScoreDoc[] sda0)  throws IOException {
 
 	// Add zero entries for the terms that have occurred in docs viewed
 	// since the UserProfile was last created or updated

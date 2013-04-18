@@ -62,8 +62,7 @@ class TjAlgorithm1 {
 	}
 
 	double gamma = upro.getGamma(0);
-	TjA1Entry.DescendingUBComparator cmp= new TjA1Entry.DescendingUBComparator(gamma);
-	Arrays.sort(tjEntries, 0, storedCnt, cmp);  
+	Arrays.sort(tjEntries, 0, storedCnt,new TjA1Entry.DescendingUBComparator(gamma));
 	if (storedCnt==0) return new ArxivScoreDoc[0]; // nothing!
 
 	Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
@@ -103,11 +102,11 @@ class TjAlgorithm1 {
 	    double maxdu = tjEntries[usedCnt].wouldContributeNow(phi, gamma);
 	    
 	    int i;
-	    StringBuffer q = new StringBuffer("{");
+	    //StringBuffer q = new StringBuffer();
 	    for(i=usedCnt+1; i<storedCnt && tjEntries[i].ub(gamma)>=maxdu; i++) {
 		tje = tjEntries[i];
 		double du= tje.wouldContributeNow(phi, gamma);		
-		q.append(" " + du);
+		//q.append(" " + du);
 		// includes date-based tie-breaking clause
 		if ( du>maxdu ||
 		    (du==maxdu && tje.compareTieTo(tjEntries[imax])>0)) {
@@ -115,13 +114,11 @@ class TjAlgorithm1 {
 		    maxdu=du;
 		}
 	    }
-	    q.append("}");
 
 	    if (maxdu<0) {
 		Logging.info("No further improvement to the utility can be achieved (maxdu=" + maxdu+")");
 		return results.toArray(new ArxivScoreDoc[0]);
 	    } 
-		
 
 	    int undisturbed = i;
 	    tje = tjEntries[imax];
@@ -135,12 +132,12 @@ class TjAlgorithm1 {
 		tjEntries[usedCnt] = tje;		
 	    }
 
-	    Logging.info("A1: tested du vals " + q);
+	    //Logging.info("A1: tested du vals {" + q + "}");
 	    Logging.info("A1: results[" + usedCnt + "]:=tje["+imax+"], utility=" + utility + ", du=" + maxdu +"; scanned up to " + undisturbed);
 	    usedCnt++;
 	    
-	    finishSort(tjEntries, usedCnt, undisturbed, storedCnt, gamma);
-
+	    TjA1Entry.DescendingUBComparator cmp=new TjA1Entry.DescendingUBComparator(gamma);
+	    finishSort(tjEntries, usedCnt, undisturbed, storedCnt, cmp);
 	}
 
 	return results.toArray(new ArxivScoreDoc[0]);
@@ -151,39 +148,27 @@ class TjAlgorithm1 {
 
      @param n1:  n1 &le; n2 &le; n3;
      */
-    private static void finishSort(TjA1Entry [] a, int n1, int n2, int n3, double gamma) {
+    private static void finishSort(TjA1Entry [] a, int n1, int n2, int n3,
+				   Comparator<TjA1Entry> cmp) {
 	if (n1==n2) return; // the first (unsorted) section is empty
-	TjA1Entry.DescendingUBComparator cmp= new TjA1Entry.DescendingUBComparator(gamma);
 	Arrays.sort(a, n1, n2, cmp); // sort the first section
 	if (n2==n3) return;  // the second section is empty
 
-	// see if the beginning of the first section is already at the 
-	// right place
+	// see if the beginning of the first section is already in the right place
 	int i1 = n1;
 	int i2 = n2;
 	while(i1 < n2 && cmp.compare(a[i1],a[i2])<=0) { i1++; }
 
-	// merge the remainder of the first section and the second section
+	// merge the remainder of the 1st section and (the beginning of) the 2nd section
 	final int i1start = i1;
 
 	TjA1Entry  merged[] = new TjA1Entry[n3-i1];
 	int k=0;
-	while(i1 < n2 && i2 < n3) {
-	    if (cmp.compare(a[i1],a[i2])<=0) {
-		merged[k++] = a[i1++];
-	    } else {
-		merged[k++] = a[i2++];
-	    }
+	while(i1 < n2) {
+	    merged[k++] = (i2 < n3 && cmp.compare(a[i2],a[i1])<0) ? a[i2++] : a[i1++];
 	}
 
 	Logging.info("Sorting to involve " + (n2-n1) + " + " + (i2-n2) + " values");
-
-	if (i1 < n2) {	    // move up the remaining part of the first section
-	    if (i2!=n3) throw new AssertionError("error 1 in merge sort");
-	    for(int q=n2; q>i1; ) {
-		a[--i2] = a[--q];
-	    }
-	}
 
 	if (k!= (i2-i1start)) throw new AssertionError("error 2 in merge sort");
 	

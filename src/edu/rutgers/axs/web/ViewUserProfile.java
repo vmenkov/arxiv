@@ -26,6 +26,7 @@ public class ViewUserProfile extends PersonalResultsBase {
 
     /** The file, if any, whose content is being displayed. */
     public DataFile df =null;
+    public int id = 0;
 
     /** In some applications (Algo 2), the "ancestor" data file 
 	(specifically, suggestion list) based on which the currently
@@ -50,12 +51,20 @@ public class ViewUserProfile extends PersonalResultsBase {
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 
 	if (!(mode== DataFile.Type.USER_PROFILE ||
-	      mode== DataFile.Type.TJ_ALGO_2_USER_PROFILE)) {
+	      mode== DataFile.Type.TJ_ALGO_2_USER_PROFILE||
+	      mode== DataFile.Type.PPP_USER_PROFILE)) {
 	    error=true;
 	    errmsg="Mode " + mode + " not supported as a profile type";
 	    return;
 	}
 	   
+	id = (int)getLong(ID, 0);
+	if (id > 0 && requestedFile!=null) {
+	    error=true;
+	    errmsg="Cannot combine parameters '"+ID+"' and '"+FILE+"'";
+	    return;	    
+	}
+       
 
 	EntityManager em = sd.getEM();
 	IndexReader reader = null;
@@ -66,7 +75,10 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    actorLastActionId= actor.getLastActionId();
 	    em.getTransaction().begin();
 
-	    if (requestedFile!=null) {
+
+	    if (id>0) {
+		df = (DataFile)em.find(DataFile.class, id);
+	    } else if (requestedFile!=null) {
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else {
 		df = DataFile.getLatestFile(em, actorUserName, mode);

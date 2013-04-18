@@ -556,7 +556,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
      */
     public HashMap<String, Vector<Action>> getAllActionsSince(long id0, User.Day[] allowedDayTypes) {
 
-	HashMap<String, Vector<Action>> h = new HashMap<String, Vector<Action>>();
+	ActionListTable h = new ActionListTable();
 
 	int inRangeCnt=0, acceptedCnt=0;
 	if (getActions()==null) return h;
@@ -566,21 +566,27 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    if (!isAllowedType(a.getDay(), allowedDayTypes)) continue;
 	    String aid = a.getAid();
 	    if (aid==null) continue; // skip PREV_PAGE etc
-	    Vector<Action> b = h.get(aid);
-	    if (b==null) {
-		h.put(aid, b = new Vector<Action>());
-		b.add( a);
-	    } else {
-		int pos = b.size(); // ensure ascending order
-		while( pos > 0 && b.elementAt(pos-1).after(a)) pos--;
-		b.insertElementAt(a, pos);
-	    }
+	    h.add(aid, a);
 	    acceptedCnt++;
 	}
 	Logging.info("getAllActionsSince("+id0+",{"+
 		     Util.join(",", allowedDayTypes) +    "}): out of " + 
 		     inRangeCnt + " actions, accepted " + acceptedCnt);
 	return h;
+    }
+
+    static public class ActionListTable extends HashMap<String, Vector<Action>> {
+	public void add(String aid, Action a) {
+	    Vector<Action> b = this.get(aid);
+	    if (b==null) {
+		this.put(aid, b = new Vector<Action>());
+		b.add( a);
+	    } else {
+		int pos = b.size(); // ensure ascending order
+		while( pos > 0 && b.elementAt(pos-1).after(a)) pos--;
+		b.insertElementAt(a, pos);
+	    }
+	}
     }
 
     /** Checks if the day type d is among the listed types

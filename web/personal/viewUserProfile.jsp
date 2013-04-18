@@ -23,7 +23,9 @@
 <body>
 
 <h1>
-<% if (main.requestedFile!=null) { %>
+<% if (main.id>0) { %>
+Profile no. <%=main.id%>
+<% } else if (main.requestedFile!=null) { %>
 Profile <%=main.requestedFile%>
 <%}else{%>
 Most recent currently available profile of the type <%=main.mode%>

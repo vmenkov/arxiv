@@ -211,6 +211,13 @@ select le.DF_ID, le.rank, a.aid from ListEntry le, Article a where le.ARTICLE_ID
 You may want restrict by <tt>le.id</tt>, to view just one list
 
 <tr>
+<td>
+select le.df.id, le.rank, le.unperturbedRank, le.article.aid, le.unperturbedRank-le.rank from ListEntry le where le.df.id=350 order by  le.rank 
+<td>
+select *, unperturbedRank -rank from ListEntry where DF_ID=350 order by rank;
+<td>Viewing the content of a 3PR suggestion list, with the "perturbation" offsets available at a glance
+
+<tr>
 <td>select a.user, count(a) from Action a group by a.user order by count(a) desc 
 <td>select u.user_name, u.email, u.id, count(*) from Action a, arxiv_users u where a.USER_ID=u.id group by a.USER_ID  order by count(*) desc
 <td>Measuring overall user activity

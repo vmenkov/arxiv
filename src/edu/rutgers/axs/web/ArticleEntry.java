@@ -190,13 +190,16 @@ public class ArticleEntry {
 	    Logging.info("Creating dir " + g + "; success=" + code);
 	    if (!code) throw new IOException("Failed to create directory: " + g);
 	} else {
-	    Logging.info("Saving " + entries.size() + " article entries to " + g);
+	    Logging.info("Saving " + entries.size() + " article entries to " + f);
 	}
 
 	PrintWriter w= new PrintWriter(new FileWriter(f));
 	save(entries, w);
 	w.close();
     }
+
+    /** Used to encode iUnperturbed in data files, for PPP sugg */
+    private static final String I_UNPERTURBED = "iUnperturbed";
 
    /** Writes a list of ArticleEntry objects (typically, a suggestion
 	list) to a PrintWriter.
@@ -209,12 +212,13 @@ public class ArticleEntry {
 	    w.print(e.id + "\t" + e.score);
 
 	    if (e.iUnperturbed!=e.i) {
-		e.researcherCommline = "iUnperturbed=" + e.iUnperturbed;
+		// this is only needed in 3PR, which has no other comments
+		e.researcherCommline = I_UNPERTURBED + "=" + e.iUnperturbed;
 	    }
 
-	    if (e.researcherCommline !=null && e.researcherCommline.length()>0){
+	    if (e.researcherCommline!=null && e.researcherCommline.length()>0){
 		String s=e.researcherCommline.replaceAll("\"", "'");
-		w.print("\t\"" + e.researcherCommline + "\"");
+		w.print("\t\"" + s + "\"");
 	    }
 	    w.println();
 	}
@@ -252,10 +256,11 @@ public class ArticleEntry {
 	    if (tail.length()>0) {
 		tail=tail.replaceAll("\"", ""); // FIXME: ...
 
-		final Pattern pu = Pattern.compile("iUnperturbed=(\\d+)");
+		final Pattern pu = Pattern.compile(I_UNPERTURBED + "=(\\d+)");
 		Matcher mu = pu.matcher(tail);
 		if (mu.matches()) {
 		    e.iUnperturbed = Integer.parseInt( mu.group(1));
+		    e.researcherCommline = tail; // keep it for display, anyway
 		} else {
 		    e.researcherCommline = tail;
 		}

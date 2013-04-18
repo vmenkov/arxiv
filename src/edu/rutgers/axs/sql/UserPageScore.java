@@ -25,7 +25,7 @@ public class UserPageScore implements Comparable<UserPageScore> {
     /** Numeric values (used for ranking purposes) of judgment buttons */
     private static EnumMap< Action.Op, Integer> jvMap = new EnumMap< Action.Op, Integer>(Action.Op.class);    
     private static EnumMap< Action.Op, Integer> vvMap = new EnumMap< Action.Op, Integer>(Action.Op.class);
-    static {
+    static {	
 	jvMap.put( Action.Op.INTERESTING_AND_NEW, new Integer(200));
 	jvMap.put( Action.Op.INTERESTING_BUT_SEEN_TODAY, new Integer(150));
 	jvMap.put( Action.Op.INTERESTING_BUT_KNOWN, new Integer(100));
@@ -40,6 +40,19 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	}
     }
 
+    /** Used in the 3PR (PPP) recommendation engine. The values of 100
+	and above are considered as "promoted", lower positive as
+	"viewed", and negative as "demoted".
+     */
+    static public int pppValue(Action.Op op) {
+	if (op == Action.Op.COPY_TO_MY_FOLDER) {
+	    return 200;
+	} else if (jvMap.get(op)!=null) {
+	    return jvMap.get(op).intValue();
+	} else if (vvMap.get(op)!=null) {
+	    return vvMap.get(op).intValue();
+	} else return 0;	
+    }
     
 
     /** Computes the "score" of a page for a user based on the user's
@@ -133,7 +146,5 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	Arrays.sort(ups);
 	return ups;
     }  
-
-
 
 }

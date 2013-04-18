@@ -15,6 +15,8 @@ import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 
+/** Used to maintain a variety of used profiles for TJ's methods, in particular SET_BASED and PPP.
+ */
 public class UserProfile {
     /** 0 means "all" */
     static int maxTerms = 1024;
@@ -729,6 +731,30 @@ public class UserProfile {
 	return ups;
     }
 
+    /** Updating user profile in the PPP framework: adds a linear
+	combination of document vectors, Rocchio-style. (Isn't it nice
+	to have a linear model?)
+
+	@param updateCo Rocchio-type update: weights for documents
+     */ 
+    void rocchioUpdate(HashMap<String,Double> updateCo ) throws IOException {
+
+	int cnt=0;
+	for(String aid: updateCo.keySet()) {
+	    double w =  updateCo.get(aid).doubleValue();
+	    HashMap<String, Double> h = dfc.getCoef(aid);
+	    for(Map.Entry<String,Double> e: h.entrySet()) {
+		double q = e.getValue().doubleValue();
+		add1( e.getKey(), w*q);
+	    }
+	    cnt++;
+	}
+
+	// updates terms[]
+	terms = hq.keySet().toArray(new String[0]);
+	Arrays.sort(terms, getByDescVal());
+	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
+  }
 
 
     /** Stuff used to control debugging and additional verbose reporting. */

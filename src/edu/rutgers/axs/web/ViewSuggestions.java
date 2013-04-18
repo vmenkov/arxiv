@@ -96,6 +96,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response, boolean mainPage) {
 	super(_request,_response);
 
+
 	mainPage =getBoolean("main", mainPage);
 	infomsg += "mainPage=" + mainPage +", isSelf=" + isSelf + "<br>\n";
 
@@ -112,6 +113,18 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
 		if (df==null) throw new WebException("No suggestion list with id=" +id+ " exists");
+
+		DataFile.Type type = df.getType();
+		if (type.isProfile()) {
+		    // A special situation: a somewhat mistaken call from
+		    // the page displayed by QueryServlet (due to the link=...
+		    // atribute in DataFile.id
+		    String redirect =  "viewUserProfile.jsp?" + ID + "=" +id;
+	    
+		    //String eurl = response.encodeRedirectURL(redirect);
+		    _response.sendRedirect(redirect);
+		}
+
 		actorUserName = df.getUser();
 		isSelf = (actorUserName!=null && actorUserName.equals(user));
 	    }
@@ -128,7 +141,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    User.Program program = actor.getProgram();
 	    if (program==null) {
 		throw new WebException("Not known what experiment plan user "+actor+" is enrolled into");
-	    } else if (program==User.Program.SET_BASED) { // fine!
+	    } else if (program==User.Program.SET_BASED || program==User.Program.PPP) { // fine!
 	    } else if (program.needBernoulli()) {
 		throw new WebException("User "+actor+" is enrolled into Bernoulli plan, not set-based!");
 	    } else if (program==User.Program.EE4) {
@@ -298,11 +311,13 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	if (error || actor==null) return; // no list needed
 	// disregard most of params
 	User.Program program = actor.getProgram();
-	teamDraft = (program==User.Program.SET_BASED && actor.getDay()==User.Day.EVAL);
+	teamDraft= (program==User.Program.SET_BASED|| program==User.Program.PPP)
+	    && actor.getDay()==User.Day.EVAL;
 	basedon=null;
-	mode = (program==User.Program.EE4) ?
-	    DataFile.Type.EE4_SUGGESTIONS :
-	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
+	mode = (program==User.Program.EE4)?  DataFile.Type.EE4_SUGGESTIONS :
+	    (program==User.Program.SET_BASED)?  DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1 :
+	    DataFile.Type.PPP_SUGGESTIONS;
+	    
 	
 	if (expert || force) throw new WebException("The 'expert' or 'force' mode cannot be used on the main page");
 	
@@ -377,7 +392,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	
 	if (df==null) {
 
-	    if (mode == DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) {
+	    if (mode == DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1 ||
+		mode == DataFile.Type.PPP_SUGGESTIONS) {
 
 		// The on-the-fly mode: simply generate and use cat search results for now
 		sr = catSearch(searcher, since);    
@@ -493,24 +509,38 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	<p> This method presently does *not* create a disk file, 
 	because of problem with file permissions etc. Instead, the data
 	will be copied from the SQL table to a disk file later, by 
-	TaskMastet.createMissingDataFiles(), from the TaskMaster process.
+	TaskMaster.createMissingDataFiles(), from the TaskMaster process.
      */
     private DataFile saveResults(EntityManager em, IndexSearcher searcher, 
 			     //SearchResults sr, 
 			     Date since) throws IOException {
-	DataFile outputFile= new DataFile(actorUserName, 0, DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1);
+	DataFile outputFile= new DataFile(actorUserName, 0, mode);
 	outputFile.setDays(Scheduler.maxRange);
 	outputFile.setSince(since);
 
+	// Presently we cannot properly write files from the web
+	// application, because of the file ownership/permissions
+	// issues.
+	final boolean canWriteFiles = false;
 
-	// FIXME: ought to do fillArticleList as well, maybe
-	// through a TaskMaster job
-	//sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
-	//File f = outputFile.getFile();
-	//ArticleEntry.save(sr.entries, f);
+	sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
+
+	if (canWriteFiles) {
+	    File f = outputFile.getFile();
+	    ArticleEntry.save(sr.entries, f);
+	    // FIXME: READABLE  by EVERYONE, eh?
+	    outputFile.makeReadable();
+	} else {
+	    outputFile.setThisFile(null); // cannot write yet!
+	}
+	outputFile.fillArticleList(sr.entries,  em);
+
+	em.getTransaction().begin(); 
 	em.persist(outputFile);
-	// FIXME: READABLE  by EVERYONE, eh?
-	//outputFile.makeReadable();
+	em.getTransaction().commit();
+
+
+
 	return outputFile;
     }
 
@@ -670,7 +700,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    User.Program program = actor.getProgram();
 	    if (program==null) {
 		throw new WebException("Not known what experiment plan user "+actor+" is enrolled into");
-	    } else if (program==User.Program.SET_BASED) { // fine!
+	    } else if (program==User.Program.SET_BASED || program==User.Program.PPP) { // fine!
 	    } else if (program.needBernoulli()) {
 		throw new WebException("User "+actor+" is enrolled into Bernoulli plan, not set-based!");
 	    } else if (program==User.Program.EE4) {
