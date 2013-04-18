@@ -139,8 +139,7 @@ public class DailyPPP {
 	em.persist(outputFile);
 	em.getTransaction().commit();
 	Logging.info("Saved profile: " + outputFile);
- 
-    }
+     }
     
 
     /** Max size of the sugg list to generate */

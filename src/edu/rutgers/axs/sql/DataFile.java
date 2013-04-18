@@ -562,6 +562,7 @@ import edu.rutgers.axs.ParseConfig;
 	Query q = em.createQuery(qs);
 	
 	Type[] types = { Type.TJ_ALGO_1_SUGGESTIONS_1, 
+			 Type.PPP_SUGGESTIONS, 
 		       Type.BERNOULLI_SUGGESTIONS,
 		       Type.EE4_SUGGESTIONS};
 	//	for(int i=0; i<types.length; i++) {
