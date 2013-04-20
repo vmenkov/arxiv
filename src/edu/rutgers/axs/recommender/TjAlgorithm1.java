@@ -96,17 +96,17 @@ class TjAlgorithm1 {
 	}
 	usedCnt++;
 
+	final boolean stopAtMaxUtility = false;
+
 	while( results.size() < maxDocs && usedCnt < storedCnt) {
 	    gamma = upro.getGamma(results.size());
 	    imax=usedCnt;
 	    double maxdu = tjEntries[usedCnt].wouldContributeNow(phi, gamma);
 	    
 	    int i;
-	    //StringBuffer q = new StringBuffer();
-	    for(i=usedCnt+1; i<storedCnt && tjEntries[i].ub(gamma)>=maxdu; i++) {
+	    for(i=usedCnt+1; i<storedCnt && tjEntries[i].ub(gamma)>=maxdu; i++){
 		tje = tjEntries[i];
 		double du= tje.wouldContributeNow(phi, gamma);		
-		//q.append(" " + du);
 		// includes date-based tie-breaking clause
 		if ( du>maxdu ||
 		    (du==maxdu && tje.compareTieTo(tjEntries[imax])>0)) {
@@ -115,7 +115,7 @@ class TjAlgorithm1 {
 		}
 	    }
 
-	    if (maxdu<0) {
+	    if (stopAtMaxUtility && maxdu<0) {
 		Logging.info("No further improvement to the utility can be achieved (maxdu=" + maxdu+")");
 		return results.toArray(new ArxivScoreDoc[0]);
 	    } 

@@ -15,16 +15,17 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
 
-/** A temporary object, stores a semi-computed term vector 
-    during TJ Algorithm 1.
-*/
+/** This is an auxiliary class used for TJ's Algorithm 1 (part of TJ's
+    original 2011 "two-pager", as well as for the 3PR algorithm
+    (2013). A TjA1Entry instance is a temporary object, which  stores a
+    semi-computed term vector during TJ Algorithm 1.  */
 class TjA1Entry   {
 
     private static class Coef { 
 	/** index into UserProfile.terms[] */
 	int i;
 	double value;
-	public Coef(int _i, double v) { i =i; value=v;}
+	Coef(int _i, double v) { i =i; value=v;}
 
 	/** If we add q*gamma to the current vector phi, how much
 	    will it contribute to the non-linear part of Psi?
@@ -37,9 +38,8 @@ class TjA1Entry   {
 	static private double uContrib(Coef[] q, double [] phi, double gamma) {
 	    double m = 0;
 	    for(Coef c: q) {
-
 		if (phi[c.i]<0) throw new AssertionError("phi["+c.i+"]<0");
-		if (c.value+gamma<0) throw new AssertionError("c.value+gamma<0");
+		if (c.value+gamma<0)throw new AssertionError("c.value+gamma<0");
 
 		m += Math.sqrt( phi[ c.i ] + c.value * gamma) -
 		    Math.sqrt( phi[ c.i ] );
@@ -63,7 +63,7 @@ class TjA1Entry   {
 
     /** Is the nonlinear (sqrt()) part used in the utility Psi? This
 	flag is true for the original (2011) set based algorithm, and
-	false in the PPP (2013) algorithm.
+	false in the 3PR (PPP) (2013) algorithm.
     */
     private boolean hasNonlinear = true;
 
@@ -108,6 +108,12 @@ class TjA1Entry   {
     }
 
 
+    /** Initializes the linear part of the utility (sum1) as the
+	idf-weighted dot product of the user profile and the
+	(idf-weight-)normalized document vector.  In the non-linear
+	moder, initializes building blocks for the non-linear
+	part of the utility as well.
+     */
     TjA1Entry(ArxivScoreDoc _sd, 
 	      CompactArticleStatsArray casa, //ArticleStats as, 
 	      UserProfile upro, Map<String,Integer> termMapper,

@@ -743,6 +743,8 @@ public class UserProfile {
 	for(String aid: updateCo.keySet()) {
 	    double w =  updateCo.get(aid).doubleValue();
 	    HashMap<String, Double> h = dfc.getCoef(aid);
+	    double norm = dfc.tfNorm(h);
+	    w /= norm;
 	    for(Map.Entry<String,Double> e: h.entrySet()) {
 		double q = e.getValue().doubleValue();
 		add1( e.getKey(), w*q);
