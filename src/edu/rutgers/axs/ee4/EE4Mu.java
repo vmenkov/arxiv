@@ -31,14 +31,16 @@ public class EE4Mu {
     double muValue;
 
     EE4Mu(double alpha, double beta, int m, EE4User.CCode ccode) {
+	this(alpha, beta, m, ccode.doubleValue());
+    }
+   
+    EE4Mu(double alpha, double beta, int m, double c) {
 	double gamma = gamma(m);
-	double c = ccode.doubleValue();
-	//final double alpha0=1, beta0=0;
-	//muValues = Mu.EE4_DocRevVal_simp( alpha0, beta0, N, gamma, c);
 	double [] muValues = Mu.EE4_DocRevVal_simp( alpha, beta, N, gamma, c);
 	muValue = muValues[0];
     }
-    
+  
+ 
     static class Key {
 	final int m;
 	final double alpha, beta;
@@ -60,7 +62,7 @@ public class EE4Mu {
     }
 
     
-    static double getMu(double a, double b, EE4User.CCode ccode, int m) {
+    static public double getMu(double a, double b, EE4User.CCode ccode, int m) {
 	Key key = new Key(a,b,m);
 	EE4Mu[] w =  mToCMu.get(key);
 	if (w==null) {
@@ -80,10 +82,40 @@ public class EE4Mu {
 	return muValues;
     }
 
+    /** 
+	Define c*(alpha,beta) to be the largest c such that <pre>
+	mu*(alpha+beta,c) &lt; 	alpha/(alpha+beta).
+	</pre>
+     */
+    static public double thresholdC(double alpha, double beta, int m) {
+	final double q = alpha/(alpha + beta);
+
+	final double eps = 1e-4;
+	double cmin = 0, cmax = 1;
+	double cmid = 0;
+	do {
+	    cmid = (cmin + cmax) / 2;	
+	    //	    double mu = getMu(alpha, beta,  cmid, m);
+	    EE4Mu z = new EE4Mu(alpha, beta, m, cmid);
+	    double  mu = z.muValue;
+	    if (mu < q) { 
+		cmin = cmid;
+	    } else if (mu == q) {
+		return cmid;
+	    } else {
+		cmax = cmid;
+	    }
+	} while( cmin + eps < cmax);	    
+	return cmid;
+
+    }
+
+
+
 
  /** Testing 
 
-   Xiaoting's explanation (2013-01-15):
+    Xiaoting's explanation (2013-01-15):
     The output of the code will split out mu*. You will run
     EE4_DocRevVal_simp(alpha0, beta0, N=1000, gamma, c) for each
     needed (gamma,c) pair, and interpret the returned array as [
@@ -92,7 +124,7 @@ public class EE4Mu {
  */
     static public void main(String[] argv) {
 
-	Mu.debug=true;
+	Mu.debug=false;
 
 	ParseConfig ht = new ParseConfig();
 	N = ht.getOption("N", N);
@@ -141,6 +173,8 @@ public class EE4Mu {
 		    System.out.println(accept? " Y" : " N");
 		}
 		System.out.println();
+		double cStar =  thresholdC( alpha,  beta, m);
+		System.out.println("cStar = " + cStar);
 	    }
 	    System.out.println("a/(a+b) = " + t);
 	}

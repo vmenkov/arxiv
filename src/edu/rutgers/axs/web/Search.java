@@ -112,7 +112,7 @@ public class Search extends ResultsBase {
 		    Logging.warning(msg);
 		    infomsg += msg + "<br>";
 		}
-		sr.reorderCatSearchResults(reader, cats, since);
+		sr.reorderCatSearchResults(reader, cats);
 	    } else {
 		sr  = new TextSearchResults(searcher, query,  maxlen);
 	    }

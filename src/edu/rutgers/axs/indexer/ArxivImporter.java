@@ -240,6 +240,8 @@ public class ArxivImporter {
 		System.out.println("Tried to get data from the web for  document file " + doc_file +", success=" + code);
 	    } catch (IOException E) {
 		System.out.println("Failed to copy data from the web for  document file " + doc_file);
+		E.printStackTrace(System.out);
+		System.exit(0);
 		return null;
 	    }	
 	}

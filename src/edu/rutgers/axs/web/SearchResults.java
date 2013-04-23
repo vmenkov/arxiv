@@ -341,37 +341,44 @@ public class  SearchResults {
     }
 
 
+   
     /** Sets scores in each scoreDocs[] element, so that the results
 	of the category search (Treatment A) can be reordered as
 	needed for June 2012 experiments. The number of matching cats
 	is the primary key, the date is the secondary.
 
 	@param _cats List of categories that matter for the ranking.
-	If the array is empty, only dates matter.
+	If the array is empty, or null, only dates matter.
     */	
-    public void setCatSearchScores(IndexReader reader,
-				   String[] _cats, Date since) throws IOException, CorruptIndexException{
-	String[] cats = Arrays.copyOf(_cats, _cats.length);
+    private void setCatSearchScores(IndexReader reader,
+				    String[] _cats) throws IOException {
+	String[] cats = (_cats==null)? new String[0] :
+	    Arrays.copyOf(_cats, _cats.length);
 	Arrays.sort(cats);
 
 	Date now = new Date();
-	long maxMsec = now.getTime() - since.getTime();
-	if (maxMsec <= 0) maxMsec = 365 * 24 * 3600L * 1000L; // just in case
+	long maxMsec = 365 * 24 * 3600L * 1000L * 10; 
 
 	for(int i=0; i<scoreDocs.length; i++) {
-	    ScoreDoc sd = scoreDocs[i];
 	    
-	    TermFreqVector tfv=reader.getTermFreqVector(sd.doc, ArxivFields.CATEGORY);
-	    // in ascending order already, as per API docs
-	    String[] docCats=tfv.getTerms();	    
-	    int matches = matchCnt( docCats,cats);
-	    sd.score = (float)matches;
+	    ScoreDoc sd = scoreDocs[i];
+
+	    if (cats.length>0) {
+		TermFreqVector tfv=reader.getTermFreqVector(sd.doc, ArxivFields.CATEGORY);
+		// in ascending order already, as per API docs
+		String[] docCats=tfv.getTerms();	    
+		int matches = matchCnt( docCats,cats);
+		sd.score = (float)matches;
+	    } else {
+		sd.score = 0;
+	    }
 
 	    String dateString  = reader.document(sd.doc).get(ArxivFields.DATE);
 	    if (dateString != null) {
 		try {
 		    Date docDate= DateTools.stringToDate(dateString);
-		    double penalty = 0.5 * (now.getTime() - docDate.getTime())/(double)maxMsec;
+		    double penalty = 			
+			0.5 * (now.getTime() - docDate.getTime())/(double)maxMsec;
 		    sd.score -= (float) penalty;
 		} catch(java.text.ParseException ex) {}
 	    }
@@ -384,12 +391,14 @@ public class  SearchResults {
 	the primary key, the date is the secondary.
 
 	@param _cats List of categories that matter for the ranking.
-	If the array is empty, only dates matter.
+	If the array is empty, only recency matters.
     */	
-    public void reorderCatSearchResults(IndexReader reader,String[] _cats, Date since) throws IOException, CorruptIndexException{
-	setCatSearchScores(reader,  _cats, since);
+    public void reorderCatSearchResults(IndexReader reader,String[] _cats) throws IOException, CorruptIndexException{
+	setCatSearchScores(reader,  _cats);
 	Arrays.sort(scoreDocs, new SDComparator());
     }
+
+
 
     /** Saves the viewed part of this SearchResults list (i.e., the
 	entries[] array) in the SQL database as a PresentedList
@@ -487,7 +496,7 @@ public class  SearchResults {
 	SearchResults sr;
 	if (cat) {
 	    sr = new SubjectSearchResults(searcher, argv, since, 10000);
-	    sr.reorderCatSearchResults(reader,  argv, since);
+	    sr.reorderCatSearchResults(reader,  argv);
 	} else {
 	    sr =  new TextSearchResults(searcher, s,  200);
 	}

@@ -27,7 +27,7 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	return this;
     }
 
-    // Descending order! 
+    /** Sorting by score, in descending order. */
     public int compareTo(ArxivScoreDoc  other) {
 	double d = other.score - score; 
 	return (d<0) ? -1 : (d>0) ? 1: 0;
@@ -58,7 +58,10 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	return  packageEntries( scores, null, reader);
     }
 
-    /**
+    /** Converts an array of ArxivScoreDoc objects (as produced
+       e.g. by a search) into a vector of ArticleEntry objects,
+       suitable for saving into a suggestion list file.
+
        @param comments Optional comments (to be shown to researchers)
      */
     static public Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores, String comments[], IndexReader reader)  
@@ -78,12 +81,4 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	return entries;
     }
   
-
-
-//    static class OurScoreDoc extends ScoreDoc {
-//	OurScoreDoc() { super(); }
-//	OurScoreDoc(float score, int doc) { super(score, doc); }
-//    }
-
-
 }

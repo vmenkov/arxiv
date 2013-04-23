@@ -67,7 +67,7 @@ public  class SubjectSearchResults extends SearchResults {
 
 	String[] cats = actor.getCats().toArray(new String[0]);
 	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
-	sr.reorderCatSearchResults(searcher.getIndexReader(), cats, since);
+	sr.reorderCatSearchResults(searcher.getIndexReader(), cats);
 	return sr;
     }
 

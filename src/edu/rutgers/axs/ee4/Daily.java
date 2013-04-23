@@ -14,7 +14,6 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
-//import edu.rutgers.axs.recommender.ArxivScoreDoc;
 import edu.rutgers.axs.recommender.*;
 
 
@@ -237,16 +236,22 @@ public class Daily {
     /** Max length of the sugg list, as per Peter Frazier, 2013-02-13 */
     static final int MAX_SUG = 100; 
 
-    /** Generates a current suggestion list for a specified user. */
-    private static DataFile updateSugList(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User u, EE4User ee4u, int lai, boolean nofile)
+ 
+    /** Generates a current suggestion list for a specified user. 
+	@param nofile This is set to true when we're running inside a
+	web server, and aren't allowed to write disk files (due to
+	file ownership/permission issues). This flag is false in the
+	"normal operation" of this tool, i.e. in the nightly script.
+     */
+    private static DataFile updateSugList(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE4DocClass> id2dc, User u, EE4User ee4u, int lai, final boolean nofile)
 	throws IOException
      {
 	 HashMap<Integer,EE4Uci> h = ee4u.getUciAsHashMap();
 
 	 String[] cats = u.getCats().toArray(new String[0]);
 	 SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
-	 // order by date only
-	 sr.reorderCatSearchResults(searcher.getIndexReader(), new String[0], since);
+	 // Order by recency (most recent first). This is the secondary key.
+	 sr.reorderCatSearchResults(searcher.getIndexReader(), null);
 	 //	 Logging.info("Daily.USL: |sr|=" + sr.scoreDocs.length);
 
 	 Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
@@ -260,13 +265,13 @@ public class Daily {
 	     EE4DocClass c = id2dc.get(new Integer(cid));
 	     EE4Uci ee4uci = h.get(new Integer(cid));
 	     double alpha=ee4uci.getAlpha(),  beta=ee4uci.getBeta(); 
-
-	     double mu =EE4Mu.getMu(alpha, beta,  ee4u.getCCode(), c.getM());
-
+	    
+	     EE4Uci.Stats stats = ee4uci.getStats(c.getM(), ee4u.getCCode());
 	     double score = alpha/(alpha + beta);
-	     if (score >= mu) { // add to list
-		 results.add(new ArxivScoreDoc(sd).setScore(score));
-		 comments.add("Cluster "+cid+", " + alpha+"/("+alpha+"+"+beta+")>mu=" +mu);
+	     if (stats.admit) { // add to list
+		 //		 results.add(new ArxivScoreDoc(sd).setScore(score));
+		 results.add(new ArxivScoreDoc(sd).setScore(stats.cStar));
+		 comments.add("Cluster "+cid+", " + alpha+"/("+alpha+"+"+beta+")>mu=" +stats.mu +", c* = " + stats.cStar);
 		 //		 Logging.info("Daily.USL: added, score=" + score);
 	     } else {
 		 //		 Logging.info("Daily.USL: not added, score=" + score);
@@ -280,7 +285,13 @@ public class Daily {
 	 DataFile outputFile=new DataFile(u.getUser_name(), 0, DataFile.Type.EE4_SUGGESTIONS);
 	 outputFile.setSince(since);
 	 outputFile.setLastActionId(lai);
-	 Vector<ArticleEntry> entries = ArxivScoreDoc.packageEntries(results.toArray(new ArxivScoreDoc[0]), comments.toArray(new String[0]), searcher.getIndexReader());
+	 Vector<ArticleEntry> entries = 
+	     ArxivScoreDoc.packageEntries(results.toArray(new ArxivScoreDoc[0]), comments.toArray(new String[0]), searcher.getIndexReader());
+	 ArticleEntry[] tmp = (ArticleEntry[])entries.toArray(new ArticleEntry[0]);
+	 Arrays.sort(tmp);
+	 entries = new Vector();
+	 for(ArticleEntry ae: tmp) {	 entries.add(ae);}
+
 	 Logging.info("Daily.USL: |entries|=" + entries.size());
 
 	 if (nofile) { 

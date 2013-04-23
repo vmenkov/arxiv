@@ -1,5 +1,7 @@
 package edu.rutgers.axs.sql;
+
 import javax.persistence.*;
+import edu.rutgers.axs.ee4.EE4Mu;
 
  /** Information about the user's "attitudes" toward classes.
 
@@ -30,4 +32,34 @@ public class EE4Uci {
 	setAlpha(_alpha);
 	setBeta(_beta);
     }
+
+    /** Decision-related numbers for this (user,cluster) pair on a
+	particular run.  On a given run, they can be precomputed once
+	and then used for all documents from this cluster when adjudicated
+	for this user.
+     */
+    public class Stats {
+	final public double mu;
+	final public double cStar;
+	final public boolean admit;
+	private Stats(int m, EE4User.CCode  cCode) {
+	    double alpha=getAlpha(),  beta=getBeta(); 
+	    mu =EE4Mu.getMu(alpha, beta, cCode, m);	    
+	    double score = alpha/(alpha + beta);
+	    admit = (score >= mu);
+	    if (admit) { // add to list
+		cStar =  EE4Mu.thresholdC( alpha,  beta, m);
+	    } else {
+		cStar = 0;
+	    }
+	}	
+    }
+    
+    @Transient 
+    private Stats stats = null;
+    public Stats getStats(int m, EE4User.CCode  cCode) {
+	if (stats == null) stats = new Stats(m, cCode);
+	return stats;
+    }
+
 }
