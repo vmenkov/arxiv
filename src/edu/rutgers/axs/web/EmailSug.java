@@ -72,6 +72,8 @@ public class EmailSug extends ResultsBase {
 	    
 	    User r = User.findByName(em, uname);
 
+		String realName =  r.getFirstName() + " " + r.getLastName();
+
 	    if (r==null) throw new WebException("There is no account with the user name '" + uname + "' in our records");
 
 	    if (r.getEmail()==null) throw new WebException("There is no email address corresponding to the user name '" + uname + "' in our records"); 
@@ -85,7 +87,7 @@ public class EmailSug extends ResultsBase {
 	    if (dontSend) {		
 		System.out.println("Not sending email (dontSend flag on)");
 	    } else {
-		sendMail(uname, email);
+		sendMail(uname, email, realName, r.getEmailDays());
 	    }
 	    // don't commit until an email message has been sent!
 	    em.persist(r);
@@ -112,7 +114,7 @@ public class EmailSug extends ResultsBase {
 
 
     /** Sends a message to the customer service */
-    static private void sendMail(String uname, String email)
+    static private void sendMail(String uname, String email, String realName, int emailDays)
 	throws javax.mail.MessagingException,  javax.mail.internet.AddressException, Exception {
 
 	//	try {
@@ -144,10 +146,19 @@ public class EmailSug extends ResultsBase {
 		String link = "http://my.arxiv.org/arxiv/#MIDDLE";
 		String accountSettingLink = "http://my.arxiv.org/arxiv/personal/editUserFormSelf.jsp";		
 
-		String text = "<p><b><font size=\"3\">"
-					+ "<a href=" + link + ">" + "Click here to view the most up-to-date recommendations." + "</a></font></b></p>";
+		String text = "";
+ 		if (realName==null || realName.trim().equals("")) {
+			text = "<p>Dear Madam/Sir,</p>";
+		}
+		else{
+			text = "<p>Dear " + realName + ",</p>";
+		}
 
-		text = text + "<p>The following papers were posted on Arxiv since your last visit.</p>";		
+		text = text + "<p>The following papers were posted on My.ArXiv within the last " + emailDays + " days. The list is ordered based on your myarxiv profile and preferences.</p>";
+
+		text = text + "<p><b>"
+					+ "<a href=" + link + ">" + "Click here to view the most up-to-date recommendations in My.ArXiv." + "</a></b></p>";
+
 
 		// Get the suggestion list for this user.
 		boolean dryRun = true;
@@ -162,7 +173,7 @@ public class EmailSug extends ResultsBase {
 			if(i % 2 == 0)
 				s = "<p style=\"background-color:#aad8ff;padding:10px\">" + s + "</p>";
 			else
-				s = "<p style=\"background-color:#e5e5e5;padding:10px\">" + s + "</p>";	
+				s = "<p style=\"background-color:#ffb46e;padding:10px\">" + s + "</p>";	
 
 			if(i == 1){
 				firstArticle  = e.titline;			
@@ -180,8 +191,6 @@ public class EmailSug extends ResultsBase {
 	    
 	    msg.setSubject(subject);
 		
-		//text = text + "<br><br>";
-
 		text = text + "<p><font color=\"gray\" size=\"1\"><br>You can " 
 					+ "<a href=" + accountSettingLink + ">" + "unsubscribe from these emails" + "</a>" 
 					+ " or change your " 
@@ -189,7 +198,8 @@ public class EmailSug extends ResultsBase {
 					+ ".";
 		text = text + "<br>Please note that this message was sent to the following e-mail address: " + email +"</font></p>";
 	    
-	    msg.setContent(text, "text/html");
+	    //msg.setContent(text, "text/html");
+		msg.setContent(text, "text/html; charset=utf-8" );
  
 	    String mailer = firm + " Web Server";
 	    msg.setHeader("X-Mailer", mailer);

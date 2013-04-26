@@ -757,8 +757,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    e.titline + "</b></font><br>\n" +
 	    e.authline+ "<br>\n" +
 	    e.subjline+ "<br>\n" +
-		"[" + a( urlAbstract(e.id), "View Details") + "]\n" +
-	    "[" + a( urlPDF(e.id), "Download") + "]\n";
+	    "[" + a( "http://my.arxiv.org/arxiv/index3.jsp#article_" + e.id, "View online") + "]\n";
 		//s += "</p>\n";
 		return s;
 	
