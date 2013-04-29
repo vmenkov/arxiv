@@ -110,9 +110,7 @@ public class EE4Mu {
 
     }
 
-
-
-
+ 
  /** Testing 
 
     Xiaoting's explanation (2013-01-15):
