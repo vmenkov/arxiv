@@ -2,6 +2,7 @@ package edu.rutgers.axs.sql;
 
 import javax.persistence.*;
 import edu.rutgers.axs.ee4.EE4Mu;
+import edu.rutgers.axs.ee4.CStar;
 
  /** Information about the user's "attitudes" toward classes.
 
@@ -37,18 +38,24 @@ public class EE4Uci {
 	particular run.  On a given run, they can be precomputed once
 	and then used for all documents from this cluster when adjudicated
 	for this user.
-     */
+    */
     public class Stats {
 	final public double mu;
 	final public double cStar;
 	final public boolean admit;
+	/** Originally, we used binary search to find cStar 
+	    (cStar =  EE4Mu.thresholdC( alpha,  beta, m));
+	    later, switched to Xiaoting's direct method
+	    (cStar = CStar.get(alpha, beta, m)).
+	*/
 	private Stats(int m, EE4User.CCode  cCode) {
 	    double alpha=getAlpha(),  beta=getBeta(); 
 	    mu =EE4Mu.getMu(alpha, beta, cCode, m);	    
 	    double score = alpha/(alpha + beta);
 	    admit = (score >= mu);
 	    if (admit) { // add to list
-		cStar =  EE4Mu.thresholdC( alpha,  beta, m);
+		//		cStar =  EE4Mu.thresholdC( alpha,  beta, m);
+		cStar = CStar.get(alpha, beta, m);
 	    } else {
 		cStar = 0;
 	    }

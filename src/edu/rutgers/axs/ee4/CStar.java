@@ -6,6 +6,36 @@ import java.io.*;
 
 public class CStar {
     
+    private double[][] table;
+    
+    private CStar(int N, int G, double gamma) {
+	table =  cStar_m2(N,G,gamma);
+    }
+
+    /** Simple table lookup, with an asymptotic formula used if outside the
+	table range.
+     */
+    double getValue(int alpha, int beta) {
+	if (alpha <=0 || beta<=0) throw new IllegalArgumentException("alpha, beta must be positive");
+	if (alpha + beta <= table.length + 1) {
+	    return table[beta - 1][alpha - 1];
+	} else {
+	    return (double)alpha/(double)(alpha+beta);
+	}
+    }
+
+    /** Table lookup with interpolation used when needed.
+     */
+    double getValueGeneral(double alpha, double beta) {
+	if (alpha < 1 || beta < 1) throw new IllegalArgumentException("alpha, beta must be at least 1.0");
+	int a = (int)alpha, b = (int)beta;
+	double xa = alpha - a,  xb = beta - b;
+	return  (xa==0 && xb==0) ? getValue(a,b) :
+	    (1-xa)*( (1-xb) * getValue(a,b) + xb * getValue(a,b+1)) +
+	    xa * ( (1-xb) * getValue(a+1,b) + xb * getValue(a+1,b+1));
+    }
+
+
     static double[][] cStar_m2(int N, int G, double gamma) {
 
 	//%set initial alpha and beta values to be 1. 
@@ -88,12 +118,29 @@ public class CStar {
 		c_star[i][j]  /= G;
 	    }	   
 	}
-	return c_star;
+	// reverse order
+	double [][] tmp = new double[c_star.length][];
+	for(int i=0; i< c_star.length; i++) {
+	    tmp[i] = c_star[c_star.length-1-i];
+	}	
+	return tmp;
     }
 
+    /** Maps m to the cStar(alpha,beta) table */
+    static HashMap<Integer,CStar> h=new HashMap<Integer,CStar>();
 
+    public static synchronized double get(double alpha, double beta, int m) {
+	Integer key = new Integer(m);
+	CStar c = h.get(key);
+	if (c==null) {
+	    final int N=1000, G=1000;
+	    double gamma = EE4Mu.gamma(m);
+	    h.put(key, c = new CStar(N, G, gamma));
+	}
+	return c.getValueGeneral(alpha,beta);
+    }
 
-   static public void main(String[] argv) {
+    static public void main(String[] argv) {
        	if (argv.length <3 || argv.length>3) {
 	    System.out.println("Usage: java CStar N gridSize gamma");
 	    return;
