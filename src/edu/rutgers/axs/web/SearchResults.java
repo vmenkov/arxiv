@@ -397,8 +397,33 @@ public class  SearchResults {
 	setCatSearchScores(reader,  _cats);
 	Arrays.sort(scoreDocs, new SDComparator());
     }
-
-
+    
+    /** Can be used after reorderCatSearchResults(), to randomly move
+	around documents with the same scores.
+     */
+    /*
+    public void randomlyBreakTies() {
+	int k=0;
+	while(k < scoreDocs.length) {
+	    int j = k;
+	    while(j<scoreDocs.length && scoreDocs[j].score==scoreDocs[k].score){
+		j++;
+	    }
+	    if (j>k+1) {
+		System.out.println("Reordering group ["+k+":"+(j-1)+"], score=" +scoreDocs[k].score);
+		int[] p = Util.randomPermutation(j-k);
+		ScoreDoc[] tmp = new ScoreDoc[j-k];
+		for(int i=0; i<p.length; i++) {
+		    tmp[i] = scoreDocs[k + p[i]];
+		}
+		for(int i=0; i<p.length; i++) {
+		    scoreDocs[k + i] = tmp[i];
+		}	
+	    }
+	    k = j;
+	}
+    }
+    */
 
     /** Saves the viewed part of this SearchResults list (i.e., the
 	entries[] array) in the SQL database as a PresentedList

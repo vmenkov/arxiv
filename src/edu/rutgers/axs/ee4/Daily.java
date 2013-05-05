@@ -250,9 +250,12 @@ public class Daily {
 
 	 String[] cats = u.getCats().toArray(new String[0]);
 	 SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
-	 // Order by recency (most recent first). This is the secondary key.
+	 // Order by recency (most recent first). Later, this will be
+	 // used as the secondary key.
 	 sr.reorderCatSearchResults(searcher.getIndexReader(), null);
 	 //	 Logging.info("Daily.USL: |sr|=" + sr.scoreDocs.length);
+	 // random reorder within same-day groups
+	 //sr.randomlyBreakTies();
 
 	 Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
 	 Vector<String> comments = new  Vector<String>();
@@ -288,7 +291,10 @@ public class Daily {
 	 Vector<ArticleEntry> entries = 
 	     ArxivScoreDoc.packageEntries(results.toArray(new ArxivScoreDoc[0]), comments.toArray(new String[0]), searcher.getIndexReader());
 	 ArticleEntry[] tmp = (ArticleEntry[])entries.toArray(new ArticleEntry[0]);
+	 // stable sort
 	 Arrays.sort(tmp);
+	 // randomly reorder docs within each cluster
+	 randomlyBreakTies(tmp);
 	 entries = new Vector();
 	 for(ArticleEntry ae: tmp) {	 entries.add(ae);}
 
@@ -307,6 +313,27 @@ public class Daily {
 	 return outputFile;
      }
 
+    private static void randomlyBreakTies(ArticleEntry[] entries) {
+	int k=0;
+	while(k < entries.length) {
+	    int j = k;
+	    while(j<entries.length && entries[j].score==entries[k].score){
+		j++;
+	    }
+	    if (j>k+1) {
+		System.out.println("Reordering group ["+k+":"+(j-1)+"], score=" +entries[k].score);
+		int[] p = Util.randomPermutation(j-k);
+		ArticleEntry[] tmp = new ArticleEntry[j-k];
+		for(int i=0; i<p.length; i++) {
+		    tmp[i] = entries[k + p[i]];
+		}
+		for(int i=0; i<p.length; i++) {
+		    entries[k + i] = tmp[i];
+		}	
+	    }
+	    k = j;
+	}
+    }
   
     /** When the system is first set up, run
 	<pre>

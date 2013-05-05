@@ -106,4 +106,38 @@ public class Util {
 	return b.toString();
     }
 
+
+    /** Is ci[pos] different from all preceding array elements?
+     */
+    private static boolean isUnique(int[] ci, int pos) {
+	for(int i=0; i<pos; i++) {
+	    if (ci[i] == ci[pos]) return false;	    
+	}
+	return true;
+    }
+    
+    /** Returns an array of nc distinct numbers randomly selected from
+	the range [0..n), and randomly ordered. If nc==n, this is simply 
+	a random permutation of [0..n).
+	
+	<p>The average cost is O( nc * n).
+     */
+    static public int[] randomSample(int n, int nc) {
+	if (nc > n) throw new IllegalArgumentException("Cannot select " + nc + " values out of " + n + "!");
+	int ci[] = new int[nc]; 
+	for(int i=0; i<ci.length; i++) {
+	    do {
+		ci[i] = gen.nextInt(n);
+	    } while(!isUnique(ci,i));		
+	}
+	return ci;
+    }
+    
+    static public int[] randomPermutation(int n) {
+	return randomSample(n,n);
+    }
+ 
+    /** Out random number generator */
+    static private Random gen = new  Random();
+
 }

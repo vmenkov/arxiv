@@ -260,30 +260,6 @@ public class KMeans {
 	em.persist(a);
     }
 
-    /** Is ci[pos] different from all preceding array elements?
-     */
-    private static boolean isUnique(int[] ci, int pos) {
-	for(int i=0; i<pos; i++) {
-	    if (ci[i] == ci[pos]) return false;	    
-	}
-	return true;
-    }
-
-    /** Returns an array of nc distinct numbers randomly selected from
-     * the range [0..n)
-     */
-   private static int[] randomSample(int n, int nc) {
-	int ci[] = new int[nc]; 
-	for(int i=0; i<ci.length; i++) {
-	    do {
-		ci[i] = gen.nextInt(n);
-	    } while(!isUnique(ci,i));		
-	}
-	return ci;
-    }
-    
-
-
     /** How different are two assignment plans? */
     static int asgDiff(int asg1[], int asg2[]) {
 	int d = 0;
@@ -496,7 +472,7 @@ public class KMeans {
 
 	for(int istart =0; istart<nstarts; istart++) {
 	    System.out.println("Start no. " + istart);
-	    int ci[] = randomSample( vdocno.size(), nc);
+	    int ci[] = Util.randomSample( vdocno.size(), nc);
 	    System.out.print("Random centers at: ");
 	    for(int q: ci) 	    System.out.print(" " + q);
 	    System.out.println();
@@ -538,10 +514,6 @@ public class KMeans {
 	System.out.println("Created "+crtCnt+" classes");
     }
 
-
-
-    /** Out random number generator */
-    static private Random gen = new  Random();
 
     static void usage() {
 	System.out.println("Usage: [-Dn=...] [-Dclasses=...] KMeans [all|classes]");
