@@ -302,7 +302,7 @@ public class TaskMaster {
 		    // FIXME: is there a better place for the day-setting?
 		    boolean isTrivial = (upro.terms.length==0);
 		    if (isTrivial) {
-			u.forceNewDay(User.Day.LEARN);
+			u.initialNewDay();
 		    } else {
 			u.forceNewDay();
 		    }

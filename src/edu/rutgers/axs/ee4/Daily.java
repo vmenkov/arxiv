@@ -147,7 +147,9 @@ public class Daily {
 	em.getTransaction().commit();	
     }
 
-    /** 0 - ignore, +-1 - med, +-2 - high */
+    /** How important is this action for the user's "opinion" on the 
+	article? <br>
+	0 - ignore, +-1 - med, +-2 - high */
     private static int actionPriority(Action.Op op) {
 	if (op==Action.Op.INTERESTING_AND_NEW ||
 	    op==Action.Op.COPY_TO_MY_FOLDER) return 2;
@@ -172,6 +174,37 @@ public class Daily {
 	else return a.getTime().after(b.getTime()) ? a : b;
     }
 
+    /** Should this action be taken into consideration? */
+    private static boolean acceptAction(EntityManager em, Action a) {
+	if (actionPriority(a.getOp())==0) return false;
+
+	// Check source
+	Action.Source src = a.getSrc();
+	if (src == Action.Source.EMAIL_EE4 ||
+	    src == Action.Source.MAIN_EE4) {
+	    // include always
+	    System.out.println("Learning day action " + a + " accepted");
+	    return true;
+	} else if(src == Action.Source.EMAIL_EE4_MIX||
+		  src == Action.Source.MAIN_EE4_MIX ) {
+	    // include if the URL originated from List A
+	    long plid = a.getPresentedListId();
+	    PresentedList pl =(PresentedList)em.find(PresentedList.class, plid);
+	    Article art = a.getArticle();
+	    if (pl==null || art==null) return false;
+	    PresentedListEntry ple =  pl.getDocByAid(art.getAid());
+	    if (ple!=null && ple.getFromA()) 
+		System.out.println("Mixed list action " + a + " accepted");
+	    else
+		System.out.println("Mixed list action " + a + " ignored");
+
+	    return ple!=null && ple.getFromA();
+	} else {
+	    System.out.println("Action " + a + " ignored");
+	    return false;
+	}
+    }
+
     /** Recomputes alpha[z] and beta[z] for each class z for a
 	specified user.  For each (user,page) pair, only the most
 	recent action (of one of the requisite types) is considered as
@@ -180,12 +213,14 @@ public class Daily {
     */
     static int updateUserVote(EntityManager em, HashMap<Integer,EE4DocClass> id2dc, User u, 	EE4User ee4u) throws IOException {
 
+	System.out.println("updateUserVote(user=" + u);
 	Set<Action> sa = u.getActions();
 	long lai=0;
 	// maps our Article.id to the latest Action
 	HashMap<Integer, Action> lastActions = new HashMap<Integer,Action>();
 	for( Action a: sa) {
-	    if (actionPriority(a.getOp())==0) continue;
+	    if (!acceptAction( em, a)) continue; 
+
 	    Article article = a.getArticle();
 	    if (article==null) continue;
 	    Integer key = new Integer( article.getId());
@@ -204,7 +239,7 @@ public class Daily {
 	
 	em.getTransaction().begin();
 
-	System.out.println("--- Currently relevany actions for user " + u.getUser_name());
+	System.out.println("--- Currently relevant actions for user " + u.getUser_name());
 	for(Action a: lastActions.values()) {
 	    boolean plus= actionPriority(a.getOp())>0;
 	    int cid = a.getArticle().getEe4classId(); 	    
@@ -309,6 +344,16 @@ public class Daily {
 	 outputFile.fillArticleList(entries,  em);
 
 	 em.persist(outputFile);
+	 
+	 // FIXME: could use some kind of "day 1" rule
+	 boolean isTrivial = false; 
+	 if (isTrivial) {
+	     u.forceNewDay(User.Day.LEARN);
+	 } else {
+	     u.forceNewDay();
+	 }
+	 em.persist(u);
+
 	 em.getTransaction().commit();	
 	 return outputFile;
      }

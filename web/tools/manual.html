@@ -74,6 +74,15 @@ select x.article, count(distinct x.user) cnt from Action x group by x.article or
 <td> How many distinct users interacted with each article? Order results by user count, in descending order
 
 <tr>
+<td>
+select x, ple from Action x, PresentedList pl, PresentedListEntry ple where x.user.user_name='vmenkov' and 
+x.presentedListId = pl.id and ple member of pl.docs and ple.aid = x.article.aid
+order by x.id desc
+<td>
+<td>Shows all actions for a named user which originated from a "presented list" of some kind (typically, a suggestion list or a search list), linking them to the PresentedListEntry objects that give additional information about the position etc. of the article in the PresentedList. This is particularly useful on Evaluation Days, when you want to see if a page came from the baseline list (fromA=false) or the treatment list (fromA=true).
+
+
+<tr>
 <th colspan=3>The <tt>PresentedList</tt> table
 <tr><td colspan=3>Each  <tt>PresentedList</tt> object corresponds to an actual screen shown to a user. Each individual article in the list is described as an entry in the <tt>PresentedListEntry</tt> table.
 <tr>

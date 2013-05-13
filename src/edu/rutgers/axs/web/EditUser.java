@@ -89,6 +89,7 @@ public class EditUser extends Participation  {
 		} else {
 		    r = new User();
 		    r.setUser_name(uname);
+		    r.initialNewDay();
 		    r.disable();
 		}
 	    } else {

@@ -297,7 +297,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	<p> As per TJ: 
 
 	<ol> <li>"I recommend we reduce the frequency of evaluation
-	days from ½ to 1/3", 2013-01-09The rationale is that we want
+	days from ½ to 1/3", 2013-01-09. The rationale is that we want
 	users to see that their actions change the system, which only
 	happens on learning days. Some of our current users always
 	happened to draw evaluation days so far, so they think our
@@ -326,6 +326,11 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	setDay( val);
 	setDayStart(now);	
 	return val;
+    }
+
+    /** Sets day=LEARN. Can be used on new user entries. */
+    public Day initialNewDay() {
+	return forceNewDay(Day.LEARN);
     }
 
     /** Human-readable printable message about this user's current

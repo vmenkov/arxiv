@@ -27,6 +27,19 @@ public class  SearchResults {
 	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
 	ArxivFields.ARTICLE};
 
+    /** This is an extension of the standard ScoreDoc class, and is
+	only used in teamDraft-merged lists. Besides the document's
+	Lucene id and its score, it stores tracing info, as per TJ,
+	2013-01. Instances of this class are created, and stored in
+	SearchResults.scoreDocs, only in teamDraft().
+     */
+    class ScoreDocProv extends ScoreDoc {
+	final ArticleEntry.Provenance prov;
+	ScoreDocProv(ScoreDoc q, ArticleEntry.Provenance _prov) {
+	    super(q.doc,q.score);
+	    prov=_prov;	    
+	}
+    }
 
     /** All search results (not just the displayed page), as they came
 	from the searcher (or were back-converted from a DataFile).
@@ -34,11 +47,6 @@ public class  SearchResults {
 	FIXME: very little reason to make this public!
     */
     public ScoreDoc[] 	scoreDocs = new ScoreDoc[0];
-    /** This array, when it exists at all, is "parallel" to scoreDocs.
-	It is only created in teamDraft(), and used to store tracing
-	info, as per TJ, 2013-01
-     */
-    ArticleEntry.Provenance[] prov=null;
     /** This is set to true when the results are obtained from Lucene
 	search, and the search returned exactly as many results as
 	the specified upper limit. This indicates that there may be more
@@ -69,10 +77,14 @@ public class  SearchResults {
     /** Does nothing */
     protected SearchResults() {} 
 
+    /** Encapsulates the "provenance" information in scoreDocs. */
     private SearchResults(Vector<ScoreDoc> v, 
 			  Vector<ArticleEntry.Provenance> vp) {
-	scoreDocs =  v.toArray(new ScoreDoc[0]);
-	prov =  vp.toArray(new ArticleEntry.Provenance[0]);
+	if (vp==null || vp.size() != v.size()) throw new IllegalArgumentException("This constructor must be given vp of the same size as v");
+	scoreDocs = new ScoreDoc[v.size()];
+	for(int i=0; i<v.size(); i++) {
+	    scoreDocs[i] = new ScoreDocProv(v.elementAt(i), vp.elementAt(i));
+	}
     }
 
     /** Fill a SearchResults object from a DataFile. To achieve a
@@ -121,6 +133,9 @@ public class  SearchResults {
 
 	http://www.cs.cornell.edu/People/tj/publications/radlinski_etal_08b.pdf 
 
+	@param a List A; typically, method-specific sugg list
+	@param b List B; typically, baseline list
+
 	@param seed Random number generator seed. The caller can make
 	it a function of the user name and calendar date, to ensure
 	that during same-day page reload the user will see the same
@@ -129,12 +144,19 @@ public class  SearchResults {
 	@return A wrapper around the "merged" ScoreDoc array. The
 	"entries" values are not set yet; one needs to call setWindow
     */
-    public static SearchResults teamDraft(ScoreDoc[] a,  ScoreDoc[] b, long seed) {
-	HashSet<Integer> saved = new 	HashSet<Integer> ();
+    public static SearchResults teamDraft(ScoreDoc[] a, ScoreDoc[] b,long seed){
+	HashSet<Integer> saved = new HashSet<Integer> ();
 	Vector<ScoreDoc> v = new Vector<ScoreDoc>();
 	Vector<ArticleEntry.Provenance> vp = new Vector<ArticleEntry.Provenance>();
-	int acnt = 0, bcnt=0;
+	int acnt=0, bcnt=0;
 	int nexta=0, nextb=0;
+
+	System.out.print("TeamDraft list A:");
+	for(int i=0; i< a.length && i<4; i++) System.out.print(" " + a[i]+",");
+	System.out.println(" ...");
+	System.out.print("TeamDraft list B:");
+	for(int i=0; i< b.length && i<4; i++) System.out.print(" " + b[i]+",");
+	System.out.println(" ...");
 
 	
 	Random ran = new Random(seed);
@@ -142,9 +164,13 @@ public class  SearchResults {
 	while(nexta < a.length && nextb < b.length) {
 	    boolean useA = (acnt < bcnt ||  acnt==bcnt && ran.nextBoolean());
 
+	    System.out.print("TeamDraft choice: useA=" + useA + 
+			     (useA? " a["+nexta+"]" : " b["+nextb+"]"));
+
 	    vp.add( new ArticleEntry.Provenance(useA, a, b, nexta, nextb));
 
 	    ScoreDoc x = useA? a[nexta++] : b[nextb++];
+	    //System.out.println("=" + x);
 	    saved.add(new Integer(x.doc));
 	    v.add(x);
 
@@ -219,7 +245,7 @@ public class  SearchResults {
 
     /** Removes specified "excluded" entries from the list stored in
 	this SearchResults object.  This method physically replaces
-	this.scoreDocs.
+	this.scoreDocs 
     */
     void excludeSome(IndexSearcher searcher, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
 	if (exclusions==null) return;
@@ -235,7 +261,7 @@ public class  SearchResults {
 		//	Logging.info("ES Exclusion: " +aid+ " --> " + exclusions.get(aid).getOp());
 
 		int epos = excludedEntries.size()+1;
-		excludedEntries.add( new ArticleEntry(epos, doc, docno, scoreDocs[i].score));
+		excludedEntries.add( new ArticleEntry(epos, doc, scoreDocs[i]));
 	    } else {
 		kept.add( scoreDocs[i]);
 	    }			
@@ -283,20 +309,19 @@ public class  SearchResults {
 	int prevSkipped = 0;
 	int i=0;
 	for(; i< scoreDocs.length && (prevSkipped < startat || entries.size() < M); i++) {
-
-	    int docno=scoreDocs[i].doc;
+	    
+	    ScoreDoc sd = scoreDocs[i];
+	    int docno=sd.doc;
 	    Document doc = searcher.doc(docno);
 	    
 	    if ( prevSkipped < startat ) {	
 		prevSkipped ++;
 	    } else {
-		ArticleEntry e=new ArticleEntry(pos, doc, docno, scoreDocs[i].score);
+		ArticleEntry e=new ArticleEntry(pos, doc, sd);
 		ArticleEntry e0 =  entriesOrig.get(e.id);
 		if (e0 != null) {
 		    e.researcherCommline = e0.researcherCommline;
 		}
-		// provenance is only marked in lists created by team-draft
-		if (prov != null) e.prov = prov[i];
 		entries.add( e);
 		pos++;
 	    }			

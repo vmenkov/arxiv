@@ -46,7 +46,7 @@ public class GetUser extends ResultsBase {
 		} else {
 		    u = new User();
 		    u.setUser_name(uname);
-
+		    u.initialNewDay();
 		    // For any extra params, such as "program"
 		    Tools.editEntity(EntryFormTag.PREFIX, u, request);
     

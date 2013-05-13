@@ -311,11 +311,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	if (error || actor==null) return; // no list needed
 	// disregard most of params
 	User.Program program = actor.getProgram();
-	teamDraft= (program==User.Program.SET_BASED|| program==User.Program.PPP)
+	teamDraft= (program==User.Program.SET_BASED|| program==User.Program.PPP
+		    || program==User.Program.EE4) 
 	    && actor.getDay()==User.Day.EVAL;
 	basedon=null;
-	mode = (program==User.Program.EE4)?  DataFile.Type.EE4_SUGGESTIONS :
-	    (program==User.Program.SET_BASED)?  DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1 :
+	mode = (program==User.Program.EE4)? DataFile.Type.EE4_SUGGESTIONS :
+	    (program==User.Program.SET_BASED)? DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1 :
 	    DataFile.Type.PPP_SUGGESTIONS;
 	    
 	
@@ -408,19 +409,19 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    // without the actual disk file 
 	    df = saveResults(em,searcher, since );
 	} else if (teamDraft) {
-	    // The team-draft mode: merge the list from the file with
-	    // the cat search res
+	    // The team-draft mode: merge the list from the file (list A) with
+	    // the baseline list (cat search res; list B)
 	    SearchResults asr = new SearchResults(df, searcher);
 	    
 	    since = df.getSince();
 	    if (since == null) since = SearchResults.daysAgo( days );
 	    SearchResults bsr = catSearch(searcher, since);
 		    
-	    long seed =  (actorUserName.hashCode() << 16) | dfmt.format(new Date()).hashCode();
+	    long seed = (actorUserName.hashCode()<<16) | dfmt.format(new Date()).hashCode();
 	    // merge
 	    sr = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
 	} else {
-	    // simply read the artcile IDs and scores from the file
+	    // simply read the article IDs and scores from the file
 	    sr = new SearchResults(df, searcher);
 	}
 	adjustStartat(em, mainPage);
@@ -444,8 +445,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// Save the presented section of the suggestion list in the
 	// database, and set ActionSource appropriately (to be
 	// embedded in the HTML page)
-	Action.Source mpType = (mode==DataFile.Type.EE4_SUGGESTIONS?  Action.Source.MAIN_EE4:
-				teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL);
+	Action.Source mpType = 
+	    (mode==DataFile.Type.EE4_SUGGESTIONS?  
+	     (teamDraft? Action.Source.MAIN_EE4_MIX: Action.Source.MAIN_EE4):
+	     (teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL));
 
  	Action.Source srcType =
 	    mainPage? 	    ( isMail ? mpType.mainToEmail() : mpType) :	   
@@ -455,7 +458,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// (rather than to a researcher), or if it's a mail page. There is also a way
 	// to explicitly prevent the recording of a PL (the dryRun option)
 	if ((isSelf || isMail) && !dryRun) {
-	    PresentedList plist=sr.saveAsPresentedList(em, srcType, actorUserName,
+	    PresentedList plist=sr.saveAsPresentedList(em,srcType,actorUserName,
 						       df, null);
 	    plid =  plist.getId();
 	}
@@ -592,10 +595,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		s += researcherSpan(q);
 	    }
 
-	    if (mode==	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1) {
-		String q = "Merge=" + teamDraft;
-		s += researcherP(q);
-	    }
+	    String q = "Merge=" + teamDraft;
+	    s += researcherP(q);
 	}
 
 	s += super.describeList();

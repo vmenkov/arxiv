@@ -70,10 +70,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     PresentedListEntry(ArticleEntry e)    {
 	setRank(e.i);
 	setAid(e.id);
-	if (e.prov!=null) {
-	    setArank(e.prov.arank);
-	    setBrank(e.prov.brank);
-	    setFromA(e.prov.fromA);
+	ArticleEntry.Provenance prov = e.getProv();
+	if (prov!=null) {
+	    setArank(prov.arank);
+	    setBrank(prov.brank);
+	    setFromA(prov.fromA);
 	}
     }
 
@@ -96,7 +97,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setBrank(int x) {        brank = x;    }
     public int getBrank() {        return brank;    }
 
-    /** Was this page brought in from list A during the team-draft merging?
+    /** Was this page brought in from list A (typically, the
+	experimental list) during the team-draft merging?
      */
     @Basic  @Column(nullable=false)
 	boolean fromA;

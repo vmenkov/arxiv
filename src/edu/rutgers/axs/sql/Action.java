@@ -178,10 +178,10 @@ import java.lang.reflect.*;
 	    /** Peter Frazier's Exploration Engine ver 2 */
 	    BERNOULLI_EXPLORATION,	    BERNOULLI_EXPLOITATION,
 	    /** Peter Frazier's Exploration Engine ver 4 */
-	    MAIN_EE4,
+	    MAIN_EE4,  MAIN_EE4_MIX,
 
 	    /** Body of the email messages */
-	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4,
+	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4, EMAIL_EE4_MIX,
 	    /** An action from a "research page". Regular users won't have it. */
 	    RESEARCH;
 
@@ -192,10 +192,12 @@ import java.lang.reflect.*;
 	    MAIN_MIX,
 	    BERNOULLI_EXPLORATION,	    
 	    BERNOULLI_EXPLOITATION,
-	    MAIN_EE4 };
+	    MAIN_EE4,
+	    MAIN_EE4_MIX,
+	};
 
 	static Source[] emailPageSources = { 
-	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4	
+	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4, EMAIL_EE4_MIX,	
 	};
 
 
@@ -302,7 +304,7 @@ import java.lang.reflect.*;
     }
 
    public String toString() {
-       return "(id="+getId()+", u="+getUser().getId()+", op="+getOp()+", src="+getSrc()+
+       return "(id="+getId()+", u="+getUser().getId()+", op="+getOp()+", aid="+getAid()+", src="+getSrc()+
 	   ", pl=" +  getPresentedListId()+")";
    }
 

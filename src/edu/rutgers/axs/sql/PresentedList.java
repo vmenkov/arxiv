@@ -99,6 +99,15 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
         private Vector<PresentedListEntry> docs = new Vector<PresentedListEntry>();
     public Vector<PresentedListEntry> getDocs() { return docs; }
 
+    /** Looks up the entry for the article with the specified ArXiv id
+     */
+    public PresentedListEntry getDocByAid(String aid) {
+	for(PresentedListEntry ple: getDocs()) {
+	    if (aid.equals(ple.getAid())) return ple;
+	}
+	return null;
+    }
+
     /** Don't use this. It exists just to keep the enhancer from complaining */
     private PresentedList() {}
 

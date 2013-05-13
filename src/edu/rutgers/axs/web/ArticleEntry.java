@@ -72,12 +72,16 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
 	object.
 	@param doc a Document object, probably just retrieved from the
 	Lucene data store.
-	@param docno Lucene's internal doc id
-     */
-    public ArticleEntry(int _i, Document doc, int _docno, double _score) {
+	@param sd Contains Lucene's internal doc id, and (possibly) score
+    */
+    public ArticleEntry(int _i, Document doc, ScoreDoc sd) {
 	iUnperturbed = i = _i;
-	docno = _docno;
-	score=_score;
+	docno = sd.doc;
+	score=sd.score;
+	// provenance is only marked in lists created by team-draft
+	if (sd instanceof SearchResults.ScoreDocProv) {
+	    prov = ((SearchResults.ScoreDocProv)sd).prov;
+	}
 	id=doc.get(ArxivFields.PAPER);
 	idline="arXiv:" + id;
 	populateOtherFields( doc);
@@ -90,7 +94,7 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
     }
 
     public ArticleEntry(int _i, Document doc, int _docno) {
-	this(_i, doc, _docno, 0);
+	this(_i, doc, new ScoreDoc(_docno, (float)0));
     }
 
     void populateOtherFields( Document doc) {
@@ -303,8 +307,10 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
 	return docno;
     }
 
-    /** Applies this user's exclusions, folder inclusions, and ratings */
-    public static void applyUserSpecifics( Vector<ArticleEntry> entries, User u) {
+    /** Applies this user's exclusions, folder inclusions, and ratings.
+	FIXME: parallel exclusions must happen on the provenance array too!
+     */
+    public static void applyUserSpecifics(Vector<ArticleEntry> entries,User u){
 	if (u==null) return;
     
 	HashMap<String, Action> exclusions = 
@@ -330,7 +336,7 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
     /** This can be used after some elements in a still-unperturbed list
 	have been removed, etc.
      */
-    public static void refreshOrder( Vector<ArticleEntry> entries) {
+    public static void refreshOrder(Vector<ArticleEntry> entries) {
 	int cnt=1;
 	for(ArticleEntry e: entries) {
 	    e.i = e.iUnperturbed = cnt;
@@ -374,10 +380,11 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
 
     /** Tracing iformation for team-draft merging */
     static public class Provenance {
-	public int arank=0, brank=0;
-	public boolean fromA=false;
+	final public int arank, brank;
+	final public boolean fromA;
 
-	/** Returns 0-based index of the matching element, or -1
+	/** Returns 0-based index of the matching element, or -1 if
+	    none is found.
 	 */
 	static private int find(ScoreDoc[] a, ScoreDoc x, int i0) {
 	    for(int i=i0; i<a.length; i++) {
@@ -386,21 +393,22 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
 	    return -1;
 	}
     
-	public Provenance(boolean useA, ScoreDoc[] a,  ScoreDoc[] b, 
+	Provenance(boolean useA, ScoreDoc[] a,  ScoreDoc[] b, 
 			  int nexta, int nextb) {
 	    ScoreDoc x = useA? a[nexta] : b[nextb];
 	 
 	    fromA=useA;
 	    arank=find(a,x,nexta)+1;
 	    brank=find(b,x,nextb)+1;
+	    System.out.println("TeamDraft provenance: (useA="+useA+", x=" + x+", a["+nexta +" -> "+arank+"], b["+nextb+" -> "+brank+"])");
 	}
     }
    
 
 
     /** For team-draft merging */
-    public Provenance prov=null;
-
+    private Provenance prov=null;
+    public Provenance getProv() { return prov; }
 
     /** Sorting by score, in descending order. */
     public int compareTo(ArticleEntry  other) {
