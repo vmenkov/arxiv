@@ -180,14 +180,20 @@ public class SessionData {
 	hard-coded list. This is a poor substitute for specifiying
 	them in a set of "security-constraint" elements in web.xml
 
+	<p>
+	Note that the URL of the form "index.jsp?..." requires login;
+	this is for the benefit of EmailSug.jsp.
+
 	@return null if no restriction is imposed, or a list of
 	allowed roles (may be empty) otherwise
      */
-    static Role.Name[] authorizedRoles(String sp) {
-	if (sp.startsWith("/personal")) return new Role.Name[] 
-					    {Role.Name.subscriber,
-					     Role.Name.researcher,
-					     Role.Name.admin};
+    static Role.Name[] authorizedRoles(String sp, String qs) {
+	if (sp.startsWith("/personal")  ||
+	    sp.equals("/index.jsp") && qs!=null && qs.length()>0) 
+	    return new Role.Name[] 
+		{Role.Name.subscriber,
+		 Role.Name.researcher,
+		 Role.Name.admin};
 	else if (sp.startsWith("/tools")) return new Role.Name[] 
 					      {Role.Name.admin,
 					       Role.Name.researcher};
@@ -205,8 +211,9 @@ public class SessionData {
     */
     boolean isAuthorized(HttpServletRequest request, String user) {
 	String sp = request.getServletPath();
+	String qs = request.getQueryString();
 	//	Logging.info("isAuthorized("+user+", " + sp + ")?");
-	Role.Name[] ar = authorizedRoles(sp);
+	Role.Name[] ar = authorizedRoles(sp,qs);
 	if (ar==null) return true; // no restrictions
 	if (user==null) return false; // no user 
 	User u = getUserEntry(user);

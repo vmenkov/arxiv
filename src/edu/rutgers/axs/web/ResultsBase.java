@@ -290,7 +290,7 @@ public class ResultsBase {
 	rt += " ";
 
 	String aName = "article_" + e.id;
-	
+
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +

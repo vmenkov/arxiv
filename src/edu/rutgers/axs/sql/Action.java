@@ -219,6 +219,7 @@ import java.lang.reflect.*;
 	    if (this==MAIN_SL) return EMAIL_SL;
 	    else if (this==MAIN_MIX) return EMAIL_MIX;
 	    else if (this==MAIN_EE4) return EMAIL_EE4;
+	    else if (this==MAIN_EE4_MIX) return EMAIL_EE4_MIX;
 	    else return this;
 	}
 

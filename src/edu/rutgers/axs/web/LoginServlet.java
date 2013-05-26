@@ -39,7 +39,7 @@ public class LoginServlet extends HttpServlet {
 	    if (!u.checkPassword(p)) throw new WebException("Wrong password for user " + user);
 
 
-	    Role.Name[] ar = SessionData.authorizedRoles(sp);
+	    Role.Name[] ar = SessionData.authorizedRoles(sp, qs);
 	    
 	    if (ar!=null) {
 		// authorization indeed is required 

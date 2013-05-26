@@ -26,11 +26,20 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
 
-<link rel="stylesheet" type="text/css" href="_technical/styles/styles_all.css" />
+<!-- Use "simple_scroll" to get rid of frames moving within frames,
+and other "cleverness".  --> 
+
+<!-- link rel="stylesheet" type="text/css" href="_technical/styles/styles_all.css" /--> 
+
+<link rel="stylesheet" type="text/css" href="_technical/styles/styles_all_simple_scroll.css" />
 
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
 <script type="text/javascript" src="_technical/scripts/jquery.js"></script>
-<script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>
+
+<!-- The script jquery-transitions.js is commented out, because it causes a problem in 
+  Firefox: index.jsp#anchor does not work properly. See discussion e.g. at
+  https://support.mozilla.org/en-US/questions/929028 -->
+<!-- script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script -->
 <script type="text/javascript" src="scripts/blur.js"></script>
 <script type="text/javascript" src="scripts/buttons_control.js"></script>
 
@@ -52,7 +61,7 @@ window.onload = StartScripts;
 <!-- #EndEditable -->
 </head>
 
-<body onload="<%=main.onLoadJsCode()%>" >
+<body onload="<%=main.onLoadJsCode()%>">
 
 <div id="upper_frame">
 
@@ -162,6 +171,9 @@ window.onload = StartScripts;
 
 <%  } %>
 <jsp:include page="index-catlist.html" />
+
+<small><%= main.researcherP( main.infomsg) %></small>
+
 	</div>
 		<!-- Right Frame -->
 	

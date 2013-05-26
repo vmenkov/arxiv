@@ -160,6 +160,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	}
     }
 
+ 
     /** Find the PresentedList object corresponding to the most recent
 	"set based" suggestion list seen by the specified user. In
 	regard to "recency", what matters for us is not how recently
@@ -168,7 +169,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	are identical.
      */
     static public PresentedList findLatestPresentedSugList(EntityManager em, String  username) {
-	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc";
+	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc, m.id desc";
 	Query q = em.createQuery(qs);
 	q.setParameter("u", username);
 	q.setParameter("tlist", Arrays.asList(Action.Source.mainPageSources));
@@ -183,7 +184,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     }
 
     static public PresentedList findLatestEmailSugList(EntityManager em, String  username) {
-	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc";
+	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc,  m.id desc";
 	Query q = em.createQuery(qs);
 	q.setParameter("u", username);
 	q.setParameter("tlist", Arrays.asList(Action.Source.emailPageSources));

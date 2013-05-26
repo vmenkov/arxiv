@@ -45,6 +45,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     public DataFile.Type mode= 	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
     /** Date range on which is the list should be based. (0=all time). */
     public int days= 0;
+    public Date since = null;
     /** Max length to display. (Note that the suggestion list
      * generator may have its own truncation criteria!)  */
     //    public static final int maxRows = 100;
@@ -107,8 +108,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    
 	    startat = (int)Tools.getLong(request, STARTAT,0);
 
-	    // One very special mode: database ID only. This is used 
-	    // for navigation inside the "view activity" system
+	    // One very special mode: database ID only. This is used
+	    // for navigation inside the "view activity" system; this
+	    // is also used when accessing the (possibly dated) main
+	    // page from an email message
 	    long id = Tools.getLong(request, "id", 0);
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
@@ -153,10 +156,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	    // Special modes
 	    if (id>0) {  // displaying specific file
-		initList(df, null, em, false);
+		initList(df, em, false);
 		return;
 	    } else if (mainPage) {
-		infomsg += "initMainPage<br>\n";
+		infomsg += "initMainPage (df="+df+")<br>\n";
 		recordAction(em, actor);  // records user's request, if it was NEXT/PREV page
 		initMainPage(em, actor);
 		return;
@@ -262,7 +265,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    actorLastActionId= actor.getLastActionId();
 
 	    if (df!=null) {
-		initList(df,  null, em, false);
+		initList(df, em, false);
 	    }
 
 	}  catch (Exception _e) {
@@ -307,7 +310,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
      @param actor The user for whom we need the sugg list
     */
-    private void initMainPage(EntityManager em, User actor) throws Exception {
+    private void initMainPage(EntityManager em, User actor) throws IOException, WebException
+ {
 	if (error || actor==null) return; // no list needed
 	// disregard most of params
 	User.Program program = actor.getProgram();
@@ -334,9 +338,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	//				   mode, -1, basedonType);
 
 
-	/** Disregard source type (the initial file, created "on the fly",
-	    has no source at all!) */
-	df = DataFile.getLatestFile(em, actorUserName, mode);
+	if (df==null) {
+	    /** Disregard source type (the initial file, created "on the fly",
+		has no source at all!) */
+	    df = DataFile.getLatestFile(em, actorUserName, mode);
+	}
 	infomsg += "main: df=" + df+"<br>\n";
 
 	onTheFly = (df==null);
@@ -347,14 +353,15 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    //	    days =actor.getDays();
 	    //	    if (days<=0) days = Search.DEFAULT_DAYS;
 
-	    Date since = SearchResults.daysAgo(Scheduler.maxRange);
+	    since = SearchResults.daysAgo(Scheduler.maxRange);
 	    System.out.println("calling initList OTF");
-	    initList(null, since, em, true);
+	    initList(null, em, true);
 
 	} else {
 	    days = df.getDays();
+	    since = df.getSince();
 	    System.out.println("calling initList(df=" + df.getId() + ")");
-	    initList(df, null, em, true);
+	    initList(df, em, true);
 	}
 	    	    
     }
@@ -379,7 +386,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	list (either for the web site, or for an email message).
      */
     private void initList(DataFile df, 
-			  Date since, EntityManager em, boolean mainPage) throws Exception {
+			  EntityManager em, boolean mainPage) 
+	throws IOException, WebException {
+
+	if (since==null && df!=null) since = df.getSince();
 
 	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -466,7 +476,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	Logging.info("Set asrc=" + asrc);
     }
     
-    private SearchResults catSearch(IndexSearcher searcher, Date since) throws Exception {
+    private SearchResults catSearch(IndexSearcher searcher, Date since) throws IOException 
+{
 	int maxlen = 10000;
 	SearchResults bsr = 
 	    SubjectSearchResults.orderedSearch( searcher, actor, since, maxlen);
@@ -680,13 +691,16 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	a PresentedList entry in the database. This is suitable for testing
 	purposes.
     */
-    ViewSuggestions(String uname, boolean _dryRun) throws Exception {
+    ViewSuggestions(String uname, boolean _dryRun) throws IOException, WebException{
 
 	actorUserName=user=uname;
 
 	dryRun = _dryRun;
 	isSelf=false;
-	isMail = true;  // the PresentedList will have a code 
+	// the PresentedList will have a type indicating that this list
+	// was presented via email, not via the web site
+	isMail = true; 
+
 	// Unlike being in a servlet, we can't get the context path out of the
 	// request, so we must set it explicitly
 	cp =  "http://my.arxiv.org/arxiv";
@@ -714,60 +728,19 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	    System.out.println("sr=" + sr);
 
-	}  catch (Exception ex) {
+	}  catch (WebException ex) {
+	    throw ex;
+	}  catch (IOException ex) {
 	    throw ex;
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
 	}
     }
 
-    String formatArticleEntryForEmail(ArticleEntry e) {
-	/*
-	String rt = "[score="+e.score+ "]";
-	if (e.researcherCommline!=null && e.researcherCommline.length()>0) {
-	    rt += "["+e.researcherCommline+"]";
-	}
-	rt += " ";
-	*/
-
-				//s = "<p style=\"background-color:#e5e5e5\">" + s + "</p>";
-
-	/*String s = 
-	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
-	    "<div class=\"document\">\n" +
-		"<font size=\"3\">" +
-	    e.i + "." + 
-	    //researcherSpan(rt)+ 
-	    //e.idline + "; "+e.formatDate()+"\n" +
-	    "<br>\n<b>" +
-	    e.titline + "</b></font><br>\n" +
-	    e.authline+ "<br>\n" +
-	    e.subjline+ "<br>\n" +
-		"[" + a( urlAbstract(e.id), "View Details") + "]\n" +
-	    "[" + a( urlPDF(e.id), "Download") + "]\n";
-	s += "</div></div>\n";
-	return s;*/
-	
-        String s = 
-		//"<p style=\"background-color:#e5e5e5\">" +
-		"<font size=\"3\">" +
-	    e.i + ". " + 
-	    //researcherSpan(rt)+ 
-	    //e.idline + "; "+e.formatDate()+"\n" +
-	    "<b>" +
-	    e.titline + "</b></font><br>\n" +
-	    e.authline+ "<br>\n" +
-	    e.subjline+ "<br>\n" +
-	    "[" + a( "http://my.arxiv.org/arxiv/index3.jsp#article_" + e.id, "View online") + "]\n";
-		//s += "</p>\n";
-		return s;
-	
-
-
+    int getDfid() {
+	return df==null? 0: df.getId();
     }
-
-
-
+    
     /** testing 
      */
     static public void main(String argv[]) throws Exception {
@@ -786,16 +759,33 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	}
 
 	System.out.println("Sample HTML:");
-	// Unlike a real servlet, 
+
+	int dfid = vs.getDfid();
+	  
  	for( ArticleEntry e: sr.entries) {
 	    int flags = 0;
-	    String s =   vs.formatArticleEntryForEmail( e);
+	    String s =   EmailSug.formatArticleEntryForEmail( e, dfid);
 	    // vs.resultsDivHTML(e, false, flags);
 	    System.out.println(s);
 	}
+    }
 
-
-
+    /** An approximate number to describe the day range of this
+	suggestion list. This can be used e.g. in email messages.
+     */
+    int estimateEffectiveDays() {
+	if (since!=null) {
+	    long msec = (new Date()).getTime() - since.getTime();
+	    final long n = 24* 3600L * 1000L;
+	    int d = (int)(msec/n);
+	    if (d == 0) return 1;
+	    if ((msec % n) > (n/2)) d ++;
+	    return d;
+	} else if (days !=0) {
+	    return days;
+	} else { // this ought not to happen
+	    return 0;
+	}
     }
 
 }

@@ -259,7 +259,7 @@ import edu.rutgers.axs.ParseConfig;
     }
 
     public String toString() {
-	return thisFile;
+	return getThisFile() + " (no. "+getId()+")";
     }
 
     /** Gets the most recently generated non-deleted file by a given
