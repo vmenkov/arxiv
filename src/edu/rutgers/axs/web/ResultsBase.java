@@ -44,7 +44,7 @@ public class ResultsBase {
     /** User name logged in this session */
     public String user=null;
 
-    final public String USER_NAME = "user_name",
+    final public static String USER_NAME = "user_name",
 	FORCE="force", FILE="file", ID="id";
     static final String STARTAT = "startat";
 

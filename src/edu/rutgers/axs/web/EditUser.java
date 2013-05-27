@@ -31,7 +31,7 @@ public class EditUser extends Participation  {
     public User r=null;
 
     public static enum Mode {
-	EDIT_ANY, EDIT_SELF, CREATE_SELF;
+	EDIT_ANY, EDIT_SELF, CREATE_SELF, UNSUBSCRIBE;
     }
 
     /** Boolean parameter in user-creation process */
@@ -62,6 +62,11 @@ public class EditUser extends Participation  {
 	    return;
 	}
 	if (error) return; // for the super()
+
+	if (mode==Mode.UNSUBSCRIBE) {
+	    unsubscribe();
+	    return;
+	}
 
 	boolean self = uname.equals(user);
 
@@ -271,6 +276,32 @@ public class EditUser extends Participation  {
 	    ensureClosed(em, false);
 	}
     }
+
+    /** This is activated from unsubscribe.jsp, which is linked to 
+	from email messages.
+	
+	<p>One does not need to be logged in to use this functionality.
+
+	<p>
+	FIXME: It would be nice to add some level of security, so that
+	one could not just go and unsubscribe random people.
+     */
+    private void unsubscribe() {
+	EntityManager em=null;
+	try {
+	    em = sd.getEM();
+	    em.getTransaction().begin();
+	    r = User.findByName(em, uname);
+	    r.setEmailDays(0);
+	    em.getTransaction().commit();
+	}  catch (Exception _e) {
+	    setEx(_e);
+	} finally {
+	    ensureClosed(em, false);
+	}
+  
+    }
+
 
     /** @return true if the user's preferences have changed in such a way that
 	it may be appropriate to update the user's suggestion list.

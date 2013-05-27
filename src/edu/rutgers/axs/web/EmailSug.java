@@ -153,7 +153,8 @@ public class EmailSug extends ResultsBase {
 	String firm = "My.ArXiv";
 	
 	String link = cp + "/#MIDDLE";
-	String accountSettingLink = cp + "/personal/editUserFormSelf.jsp";		
+	String accountSettingLink = cp + "/personal/editUserFormSelf.jsp";
+	String unsubscribeLink = cp + "/unsubscribe.jsp?" + ResultsBase.USER_NAME + "=" + uname;
 	
 	// Get the suggestion list for this user.
 	boolean dryRun = false;
@@ -193,12 +194,17 @@ public class EmailSug extends ResultsBase {
 	
 	msg.setSubject(subject);
 	
-	text += "<p><font color=\"gray\" size=\"1\"><br>You can " 
-	    + "<a href=" + accountSettingLink + ">" + "unsubscribe from these emails" + "</a>" 
+
+	//String font = "<font color=\"gray\" size=\"1\">";
+
+	text += "<p>This message was sent to My.ArXiv user <strong>"+uname+"</strong>, at the following e-mail address: <strong>" + email +"</strong></p>\n";
+
+	text += "<p>You can " 
+	    + "<a href=" + unsubscribeLink + ">" + "unsubscribe from these emails" + "</a>" 
 	    + " or change your " 
 	    + "<a href=" + accountSettingLink + ">" + "preference settings" + "</a>"  
 	    + ".</p>\n";
-	text += "<p>Please note that this message was sent to the following e-mail address: " + email +"</font></p>\n";
+
 	    
 	//msg.setContent(text, "text/html");
 	msg.setContent(text, "text/html; charset=utf-8" );
@@ -346,12 +352,23 @@ public class EmailSug extends ResultsBase {
 	}
     }
 
+    /** Does it look like the user has a more or less valid email address? */
+    static private boolean hasEmail(User user) {
+	String email = user.getEmail();
+	if (email==null) return false;
+	return (email.indexOf("@") > 0);
+    }
+
     private static void doAllEmails(EntityManager em, User.Program program, boolean force) {
 	List<Integer> lu = User.selectByProgram(em, program);
 
 	for(int uid: lu) {
 	    try {
 		User user = (User)em.find(User.class, uid);
+		if (!hasEmail(user)) {
+		    Logging.info("No valid email address is stored for user " + user);
+		    continue;
+		}
 		boolean must = force || needEmail(em,user);
 		if (must && approvedOnly && !approvedUsersSet.contains(user.getUser_name())) {
 		    must = false;

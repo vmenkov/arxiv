@@ -116,7 +116,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
 		if (df==null) throw new WebException("No suggestion list with id=" +id+ " exists");
-
+	
 		DataFile.Type type = df.getType();
 		if (type.isProfile()) {
 		    // A special situation: a somewhat mistaken call from
@@ -130,6 +130,15 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 		actorUserName = df.getUser();
 		isSelf = (actorUserName!=null && actorUserName.equals(user));
+		if (!isSelf) {
+		    if (mainPage) {
+			throw new WebException("You are trying to view a recommendation list that was generated for a different user. This may happen, for example, if you have several user accounts, or if you are using a shared computer. Please make sure to log in with a correct user name");
+		    }
+		    if (!runByResearcher()) {
+			throw new WebException("Users are not allowed to view other users' suggestion lists");
+		    }
+		}
+		
 	    }
 
 	    if (actorUserName==null) {
