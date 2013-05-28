@@ -390,13 +390,13 @@ public class EmailSug extends ResultsBase {
     }
 
     /** On testing stage, only send emails to users in this list */
-    static final private String[] approvedUsers = {"vmenkov"};
+    static final private String[] approvedUsers = {"vmenkov", "tj"};
     static HashSet<String> approvedUsersSet= new HashSet<String>();
     static {
 	for(String x: approvedUsers) approvedUsersSet.add(x);
     }
     
-    static boolean approvedOnly = true;
+    static boolean approvedOnly = false;
 
     /** For testing */
     static public void main(String[] argv) throws Exception {

@@ -31,7 +31,7 @@ set opt="-cp ${cp} ${opt} -DdontSend=false"
 echo "opt=$opt"
 
 # time java $opt -Dsmtp=localhost  edu.rutgers.axs.web.EmailSug $1
-time java $opt -Dforce=true -Dsmtp=localhost  edu.rutgers.axs.web.EmailSug 
+time java $opt -Dforce=false -Dsmtp=localhost  edu.rutgers.axs.web.EmailSug 
 
 
 
