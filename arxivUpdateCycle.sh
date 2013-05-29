@@ -26,6 +26,12 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 #-- for applications that use MySQL (via OpenJPA)
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
+#-- for the EmailSug application, which needs Java Mail
+set jmlib=$home/arxiv/javamail-1.4.5/lib
+foreach x ($jmlib/*.jar) 
+    set cp="${cp}:${x}"
+end
+
 
 #set opt="-cp ${cp} ${opt} -Drewrite=false"
 set baseopt="-cp ${cp} ${baseopt}"
