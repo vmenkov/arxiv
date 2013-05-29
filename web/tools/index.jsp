@@ -15,17 +15,6 @@
 
 <h1>My.arXiv data research main page</h1>
 
-<!--
-<h2>Respondent Management Center</h2>
-
-<ul>
-
-<li><A href="tools/addRespondentForm.jsp">Add a new respondent entry</a>
-
-<li><A href="tools/listRespondents.jsp">List all respondents</a>. You can also use this screen to access individual entries and modify them (e.g., set the "consent" flag, or correct the phone number). This page also shows the highest consent_id value in existence.
-
-</ul>
--->
 
 <h2>User Management Center</h2>
 
@@ -34,6 +23,12 @@
 <li><A href="listUsers.jsp">List all users</a> (including links to their interaction histories)
 <li><A href="../admin/manageUsers.jsp">Manage users</a>
 <li><A href="../admin/invitations.jsp">Manage invitations</a>
+<li>Send an email to the user. Pressing the "SEND" button will send the current recommendation list to the user right away, much in the same way it's done by the regular nightly email script. 
+<form action="emailSug.jsp" method="post"><ul>
+<li>My.ArXiv user name (<em>not</em> the email address) <input type="text" name="user_name" size="20">
+<li>Check this box to <strong>force</strong> sending email (disregarding user's opting out, or the scheduling rules): <input type="checkbox" name="force" value="true">
+<li><input type="submit" value="Send email">
+</ul></form>
 </ul>
 
 

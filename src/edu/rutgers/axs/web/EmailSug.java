@@ -25,48 +25,72 @@ import edu.rutgers.axs.ParseConfig;
 
 
 public class EmailSug extends ResultsBase {
-    public String email;
-    public String uname;
+    //public String email;
+    /** The name of the user to whom we send email */
+	
+    public String uname=null;
+    /** The user object */
+    private User r=null;
+
+    /** Sending status */
+    public boolean sent = false;
 
     /** For command-line testing on machines that don't allow email sending */
     private static boolean dontSend = false;
 
+
+
     /** Email the user his suggestion list. */
-    /*
-    public EmailSug(HttpServletRequest _request, HttpServletResponse _response) {
+     public EmailSug(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 
+	EntityManager em = sd.getEM();
 	try {
-	    email=getString("email",null);
-	    if (email==null) {
-		error=true;
-		errmsg = "No email supplied";
-		return;
-	    } else if (email.indexOf("@")<=0) {
-		error=true;
-		errmsg = "Invalid email address: '"+email+"'";
-		return;
-	    }
-
+	
 	    uname = getString(USER_NAME,null);
+	    boolean force = getBoolean("force", false);
 	    if (uname==null) {
 		error=true;
 		errmsg = "No user name supplied";
 		return;
 	    }
 
-	    doEmailSug(sd.getEM(), uname);
+	    r = User.findByName(em, uname);
+	    if (r==null) {
+		error=true;
+		errmsg = "No user account named '"+uname+"' exists in my.arxiv";
+	    } else if (!hasEmail(r)) {
+		error=true;
+		errmsg = "No valid email address is stored for user " + uname;
+	    }
+	    if (error) return;
+
+	    boolean must = force || needEmail(em);
+	    if (must && approvedOnly && !approvedUsersSet.contains(uname)) {
+		must = false;
+		error=true;
+		errmsg = "Email not sent to user " + user +", because he's not on the internal approved list";
+	    }
+	    if (error || !must) return;
+	    
+	    sent = doEmailSug(em);
 	}  catch (Exception _e) {
 	    setEx(_e);
-	} finally {}
+	} finally {
+	    ensureClosed(em);
+	}
     }
-    */
+
+  
+    private EmailSug(User _r) {
+	r = _r;
+	uname = r.getUser_name();
+    }
 
     /** Email the user his suggestion list.
-	
-	@param uname The name of the user whose password is to be reset.
+	@return success status
      */
-    static void doEmailSug(EntityManager em, User r) throws WebException, javax.mail.MessagingException,  javax.mail.internet.AddressException, Exception   {
+    boolean doEmailSug(EntityManager em) throws javax.mail.MessagingException,  javax.mail.internet.AddressException, Exception   {
 
 	Logging.info("emailSug for user " + r);
 
@@ -74,12 +98,8 @@ public class EmailSug extends ResultsBase {
 	    // Begin a new local transaction 
 	    em.getTransaction().begin();
 	    
-	    String uname = r.getUser_name();
-	    //User r = User.findByName(em, uname);
-
-	    String realName =  r.getFirstName() + " " + r.getLastName();
-
 	    if (r==null) throw new WebException("There is no account with the user name '" + uname + "' in our records");
+	    String realName =  r.getFirstName() + " " + r.getLastName();
 
 	    if (r.getEmail()==null) throw new WebException("There is no email address corresponding to the user name '" + uname + "' in our records"); 
 
@@ -89,19 +109,25 @@ public class EmailSug extends ResultsBase {
 
 	    Logging.info("Sending email to " + email);
 
-	    if (dontSend) {		
-		System.out.println("Not sending email (dontSend flag on)");
-	    } else {
-		sendMail(uname, email, realName);
-	    }
-	    // don't commit until an email message has been sent!
+	    // we commit before sending the message, because no
+	    // information about the success of the actual message is stored
+	    // in the database
 	    em.persist(r);
 	    em.getTransaction().commit();
 
+	    if (dontSend) {		
+		System.out.println("Not sending email (dontSend flag on)");
+		return false;
+	    } else {
+		return sendMail(uname, email, realName);
+	    }
+
 	} catch(WebException ex) {
-	    Logging.error(ex.getMessage());
-	    throw ex;
+	    Logging.error(errmsg = ex.getMessage());
+	    error = true;
+	    return false;
 	}
+	
 		
     }
 
@@ -122,7 +148,7 @@ public class EmailSug extends ResultsBase {
     static boolean gmail = isLocal();
 
     /** Sends a message to the customer service */
-    static private void sendMail(String uname, String email, String realName)
+    static private boolean sendMail(String uname, String email, String realName)
 	throws javax.mail.MessagingException,  javax.mail.internet.AddressException, IOException, WebException {
 
 	Properties props = System.getProperties();
@@ -228,6 +254,7 @@ public class EmailSug extends ResultsBase {
 	    Transport.send(msg);	
 	}
 	Logging.info("Mail to "+uname+" ("+email+") was sent successfully.");
+	return true;
     }
 
     static void usage() {
@@ -322,17 +349,20 @@ public class EmailSug extends ResultsBase {
 		return s;	
     }
 
-    private static boolean needEmail(EntityManager em, User user) {
-	int emailDays = user.getEmailDays();
+    private boolean needEmail(EntityManager em) {
+	int emailDays = r.getEmailDays();
 	if (emailDays==0) {
-	    Logging.info("User " + user + " opted out of email");
+	    String msg = "User " + r + " opted out of email";
+	    Logging.info(msg);
+	    infomsg += msg;
 	    return false;
 	}
-	String uname = user.getUser_name();	
 	PresentedList pl1 = PresentedList.findLatestEmailSugList(em,  uname);
 	PresentedList pl2 = PresentedList.findLatestPresentedSugList(em,uname);
 	if (pl1==null && pl2==null) {
-	    Logging.info("User " + user + " never was sent an email, or viewed the main page, before");
+	    String msg = "User " + r + " never was sent an email, or viewed the main page, before";
+	    Logging.info(msg);
+	    infomsg += msg;
 	    return true;
 	}
 
@@ -341,13 +371,18 @@ public class EmailSug extends ResultsBase {
 	Date d1 = (pl1==null)? null: pl1.getTime();
 	Date d2 = (pl2==null)? null: pl2.getTime();
 	if (d1 != null && d1.after(threshold)) {
-	    Logging.info("User " + user + " was last sent an email on " + d1 +", which was less than " +  emailDays + " days ago; not eligible for new mail");
+	    String msg = "User " + r + " was last sent an email on " + d1 +", which was less than " +  emailDays + " days ago; not eligible for new mail";
+	    Logging.info(msg);
+	    infomsg += msg;
 	    return false;	    
 	} else if (d2 != null && d2.after(threshold)) {
-	    Logging.info("User " + user + " last viewed the main page on " + d2 +", which was less than " +  emailDays + " days ago; not eligible for new mail");
+	    String msg ="User " + r + " last viewed the main page on " + d2 +", which was less than " +  emailDays + " days ago; not eligible for new mail";
+	    Logging.info(msg);
+	    infomsg += msg;
 	    return false;	    
 	}  else {
-	    Logging.info("User " + user + " was last sent an email on " + d1 +", or viewed the main page on " + d2 + ", which was more than " +  emailDays + " days ago; eligible for new mail");
+	    String msg ="User " + r + " was last sent an email on " + d1 +", or viewed the main page on " + d2 + ", which was more than " +  emailDays + " days ago; eligible for new mail";
+	    infomsg += msg;
 	    return true;	        
 	}
     }
@@ -365,22 +400,28 @@ public class EmailSug extends ResultsBase {
 	for(int uid: lu) {
 	    try {
 		User user = (User)em.find(User.class, uid);
+		if (user==null) {
+		    // this ought not happen in normal operation
+		    Logging.info("User id " + uid + " is invalid!");
+		    continue; 
+		}
 		if (!hasEmail(user)) {
 		    Logging.info("No valid email address is stored for user " + user);
 		    continue;
 		}
-		boolean must = force || needEmail(em,user);
+		EmailSug q = new EmailSug(user);
+		boolean must = force || q.needEmail(em);
 		if (must && approvedOnly && !approvedUsersSet.contains(user.getUser_name())) {
 		    must = false;
 		    Logging.info("Email not sent to user " + user +", because he's not on the internal approved list");
 		}
 
 		if (must) {
-		    doEmailSug(em, user);
+		    boolean sent  = q.doEmailSug(em);
+		    if (q.error || !sent) continue;
 		} else {
 		    Logging.info("No email needed for user " + user);
 		}
-		//		makeEE4Sug(em, searcher, since, id2dc, user);
 	    } catch(Exception ex) {
 		Logging.error(ex.toString());
 		System.out.println(ex);
@@ -423,7 +464,9 @@ public class EmailSug extends ResultsBase {
 		String uname = argv[0];
 		
 		User r = User.findByName(em, uname);
-		doEmailSug(em, r);
+		if (r==null) usage("User account '" +uname+ "' does not exist");
+		EmailSug q = new EmailSug(r);
+		boolean sent = q.doEmailSug(em);
 	    } else 	{
 		usage();
 	    }

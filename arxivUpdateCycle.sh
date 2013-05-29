@@ -53,6 +53,8 @@ time java $opt   edu.rutgers.axs.ee4.Daily update >& ee4-${d}.log
 #-- Updating user profiles and recommendations for the 3PR (PPP) engine
 time java $opt edu.rutgers.axs.recommender.DailyPPP update >& ppp-${d}.log 
 
+#-- send emails to subscribers
+time java $opt -Dforce=false -Dsmtp=localhost edu.rutgers.axs.web.EmailSug  >& email-${d}.log 
 
 set  opt="-Xmx1024m ${baseopt} -DexitAfter=22 -DarticlesUpdated=true"
 
