@@ -23,7 +23,7 @@
 <li><A href="listUsers.jsp">List all users</a> (including links to their interaction histories)
 <li><A href="../admin/manageUsers.jsp">Manage users</a>
 <li><A href="../admin/invitations.jsp">Manage invitations</a>
-<li>Send an email to the user. Pressing the "SEND" button will send the current recommendation list to the user right away, much in the same way it's done by the regular nightly email script. 
+<li>Send a notification email to yourself or another user. Pressing the "SEND" button will send the current recommendation list to the user right away, much in the same way it's done by the regular nightly email script. 
 <form action="emailSug.jsp" method="post"><ul>
 <li>My.ArXiv user name (<em>not</em> the email address) <input type="text" name="user_name" value="<%=main.user%>" size="20">
 <li>Check this box to <strong>force</strong> sending email (disregarding user's opting out, or the scheduling rules): <input type="checkbox" name="force" value="true">
