@@ -122,9 +122,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     }
 
 
-  /** Fills this DataFile's list of ListEntries based on the specified list of
-	ArticleEntries.
-     */
+    /** Fills this DataFile's list of ListEntries based on the specified
+	list of ArticleEntries.
+    */
     public void fillArticleList(Vector<ArticleEntry> entries) {
 	docs.setSize(0);
 	for(int rank=0; rank<entries.size(); rank++) {
@@ -133,13 +133,14 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	}
     }
 
-    /**
-       @param entries to be filled
+    /**  Copies the content of this PresentedList into a vector of
+	 ArticleEntry objects.
+	 @param entries The vector to be filled. It also becomes the return value
     */
     public Vector<ArticleEntry> toArticleList( Vector<ArticleEntry> entries, IndexSearcher searcher) throws IOException {
 	if (entries==null) entries=new  Vector<ArticleEntry>();
 	entries.setSize(0);
-	for(PresentedListEntry le: docs) {	    
+	for(PresentedListEntry le: getDocs()) {	    
 	    ArticleEntry e = le.toArticleEntry();
 	    e.populateOtherFields(searcher);
 	    entries.add(e);

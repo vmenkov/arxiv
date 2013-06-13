@@ -271,11 +271,12 @@ public class KMeans {
     
 
     static class Clustering {
-	/** input */
+	/** Input: the objects to be clustered */
 	final Vector<SparseDataPoint> vdoc;
 
-	/** Output */
+	/** Output: an array with the cluster id assigned to each object */
 	int asg[];
+	/** Cluster centers */
 	DenseDataPoint[] centers;
 	final int nterms;
 	

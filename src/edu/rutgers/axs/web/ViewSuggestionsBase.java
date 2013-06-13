@@ -32,6 +32,10 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 
     public int folderSize=0;
 
+    /** This flag is set on "redisplay" calls (with plid=... in the URL),
+	usually email-driven.
+     */
+    public boolean isRestored = false;
  
     public ViewSuggestionsBase(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
@@ -89,6 +93,13 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
 		" through " + sr.entries.lastElement().i + " are shown below.";
 	}
 	s += "</p>\n";
+
+	if (isRestored) {
+	    s += "<p>";
+	    s += "Note: this is a re-display of the top section of a recommendation list generated earlier. Your <a href=\""+ cp + "/index.jsp\">most current recommendation list</a> may be different.";
+	    s += "</p>\n";
+	}
+
 	return s;
     }
 

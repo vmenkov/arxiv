@@ -30,10 +30,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     public Task activeTask = null, queuedTask=null, newTask=null;
 
     /** This flag is set by this module if it has found no suitable
-	data file, but generated a suggestion list directly when
-	processing the HTTP request. This is done in our June 2012
-	experiment for very recently created users, when the user has
-	no profile yet.
+	data file, but instead generated a suggestion list directly
+	when processing the HTTP request. This is done in our June
+	2012 experiment for very recently created users, who may not
+	have user profiles yet.
      */
     public boolean onTheFly = false;
 
@@ -75,7 +75,15 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
     /** Set this flag to true if we do not want to record a PresentedList */
     private boolean dryRun = false;
-   
+
+    /** The id of the PresentedList object that describes the URL list 
+	shown to the user. Typically, the list is generated in this 
+	ViewSuggestion call; but there is also a "restore list" mode,
+	when a previously generated list is displayed.
+    */
+    public long plid = 0;
+
+ 
     //    private static enum Mode {
     //	SUG2, CAT_SEARCH, TEAM_DRAFT;
     //    };
@@ -108,7 +116,31 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    
 	    startat = (int)Tools.getLong(request, STARTAT,0);
 
-	    // One very special mode: database ID only. This is used
+	    // A special mode used for  accessing the (possibly dated) main
+	    // page from an email message
+	    plid = Tools.getLong(request, "plid", 0);
+	    if (plid != 0) {
+		PresentedList plist=(PresentedList)em.find(PresentedList.class, plid);
+		if (plist==null) 	throw new WebException("PresentedList " +plid+ " does not exist");
+		long dfid = plist.getDataFileId();
+		df = (dfid==0)? null : (DataFile)em.find(DataFile.class, dfid);
+		actorUserName = plist.getUser();
+		isSelf = (actorUserName!=null && actorUserName.equals(user));
+		
+		if (!isSelf) {
+		    if (mainPage) {
+			throw new WebException("You are trying to view a recommendation list (plid="+plid+") that was generated for a different user ("+actorUserName+"). This may happen, for example, if you have several user accounts, or if you are using a shared computer. Please make sure to log in with a correct user name. Currently, you are logged in as " + user);
+		    }
+		    if (!runByResearcher()) {
+			throw new WebException("Users are not allowed to view other users' recommendations");
+		    }  
+	    	}
+		restoreList(em, plist);
+		return;
+	    }
+
+
+	    // One very special mode: data file ID only. This is used
 	    // for navigation inside the "view activity" system; this
 	    // is also used when accessing the (possibly dated) main
 	    // page from an email message
@@ -472,7 +504,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
  	Action.Source srcType =
 	    mainPage? 	    ( isMail ? mpType.mainToEmail() : mpType) :	   
 	    Action.Source.VIEW_SL;
-	long plid = 0;
 	// Presented list is to be recorded if this is a web page shown to the user himself
 	// (rather than to a researcher), or if it's a mail page. There is also a way
 	// to explicitly prevent the recording of a PL (the dryRun option)
@@ -485,6 +516,30 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	Logging.info("Set asrc=" + asrc);
     }
     
+    /** Prepares to present a list that was already presented in the
+	past, and saved in a PresentedList structure. This is
+	typically done when a user clicks on an article link in an
+	emial message, in order to show exactly the list as it existed
+	back then, without any exclusions (due to User Folder  
+	
+    */
+    private void restoreList(//DataFile df, 
+			     EntityManager em,
+			     //boolean mainPage,
+			     PresentedList plist) 
+	throws IOException, WebException {
+	
+
+	IndexReader reader=Common.newReader();
+	IndexSearcher searcher = new IndexSearcher( reader );
+	sr = new SearchResults(plist, searcher);
+	teamDraft = plist.getType().isMix();
+	isRestored=true;
+
+	searcher.close();
+	reader.close();
+    }
+
     private SearchResults catSearch(IndexSearcher searcher, Date since) throws IOException 
 {
 	int maxlen = 10000;
@@ -590,6 +645,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	String s = "";
 	if (onTheFly) {
 	    s += "<p>This is the initial suggestion list generated right now.</p>\n";
+	} else if (df==null) {
+	    // this generally should not happen
+	    s += "<p>List generation information is not presently available</p>";
 	} else {
 	    String f = df.getThisFile();
 	    String x = "no. " +df.getId()+ (f==null? " (no file)" : " ("+f+")");
@@ -769,11 +827,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	System.out.println("Sample HTML:");
 
-	int dfid = vs.getDfid();
+	//	int dfid = vs.getDfid();
 	  
  	for( ArticleEntry e: sr.entries) {
 	    int flags = 0;
-	    String s =   EmailSug.formatArticleEntryForEmail( e, dfid);
+	    String s =   EmailSug.formatArticleEntryForEmail( e, vs.plid);
 	    // vs.resultsDivHTML(e, false, flags);
 	    System.out.println(s);
 	}

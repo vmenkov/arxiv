@@ -223,6 +223,12 @@ import java.lang.reflect.*;
 	    else return this;
 	}
 
+	/** Is this an interleaved PresentedList? */
+	public boolean isMix() {
+	    return (this==MAIN_MIX || this==MAIN_EE4_MIX ||
+		    this==EMAIL_MIX || this==EMAIL_EE4_MIX);
+	}
+
 
     };
 

@@ -1,0 +1,47 @@
+<html>
+<head>
+<title>My.ArXiv server installation notes</title>
+</head>
+<body>
+<h1>My.ArXiv server installation notes</h1>
+
+<h2>Tools</h2>
+
+<p>Tools you need to have on the server.</p>
+
+<ul>
+<li>JDK - evrything runs on Java
+<li>Apache Tomcat - the web server that supports servlets and JSP
+<li>Apache Ant - used for building the system
+<li>MySQL server
+
+</ul>
+
+<h2>Java libraries</h2>
+
+<p>Important third-party libraries.
+</p>
+
+<ul>
+<li>
+Lucene. The data store.
+
+<li>
+Java Mail. The web application uses it for sending "reset password" messages. Among the crontab-driven scripts, EmailSug uses it, to send recommndation lists to users.
+
+<li>
+<A href="http://acs.lbl.gov/software/colt/">Colt</a>. It is a large math library. It is used for singular value deocmposition (SVD) in EE4.
+
+</ul>
+
+<h2>Other components</h2>
+
+<p></P>
+
+<ul>
+<li>JQuery, part of the web site.
+</ul>
+
+</body>
+
+</html>

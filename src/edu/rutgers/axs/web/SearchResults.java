@@ -120,6 +120,20 @@ public class  SearchResults {
 	}
     }
 
+    /** Fill a "fake" SearchResults object that contains just the objects from
+	one PresentedList. No  setWindow() call is needed.
+     */
+    SearchResults( PresentedList plist, IndexSearcher searcher) throws IOException {
+ 	entries.setSize(0);
+	plist.toArticleList( entries, searcher);
+	prevstart = 0;
+	nextstart = reportedLength = entries.size();
+	needPrev = false;
+	needNext = false;
+    }
+
+
+
     /** Auxiliary for teamDraft */
     private static int adjustPos(ScoreDoc[] a, int nexta, HashSet<Integer> saved) {
 	while( nexta < a.length && saved.contains(new Integer(a[nexta].doc))) nexta++;

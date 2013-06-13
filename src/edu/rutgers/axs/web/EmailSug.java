@@ -202,10 +202,11 @@ public class EmailSug extends ResultsBase {
 	
 	SearchResults sr = vs.sr;
 	int i = 1;
-	int dfid = vs.getDfid();
+	//	int dfid = vs.getDfid();
+	long plid = vs.plid;
 		
 	for( ArticleEntry e: sr.entries) {
-	    String s =   formatArticleEntryForEmail( e, dfid);
+	    String s =   formatArticleEntryForEmail( e, plid);
 	    String color = (i % 2 == 0)? "#aad8ff" : "#ffb46e";
 	    s = "<p style=\"background-color:" + color + ";padding:10px\">" + s + "</p>\n";
 	    text +=  s;
@@ -303,7 +304,7 @@ public class EmailSug extends ResultsBase {
 	return "http://" + host + ":" + port + "/arxiv";
     }
 
-    static String formatArticleEntryForEmail(ArticleEntry e, int dfid) {
+    static String formatArticleEntryForEmail(ArticleEntry e, long plid) {
 	/*
 	String rt = "[score="+e.score+ "]";
 	if (e.researcherCommline!=null && e.researcherCommline.length()>0) {
@@ -331,7 +332,8 @@ public class EmailSug extends ResultsBase {
 	return s;*/
 
 	String url =  cp + "/index.jsp";
-	if (dfid>0) url += "?id="+dfid;
+	//	if (dfid>0) url += "?id="+dfid;
+	if (plid>0) url += "?plid="+plid;
 	url += "#article_" + e.id;
 	
         String s = 
