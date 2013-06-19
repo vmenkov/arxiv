@@ -30,73 +30,6 @@ import edu.cornell.cs.osmot.options.Options;
     
  */
 public class KMeans {
-    static final boolean primaryOnly=true;
-
-    /** This class is responsible for looking up the "category" field
-	in the Lucene data store for multiple articles, and keeping
-	track of them all.
-     */
-    static class Categorizer {
-	private static final int NS = 100;
-
- 	HashMap<String, Vector<Integer>> catMembers = new 	HashMap<String, Vector<Integer>>();
-	Vector<Integer> nocatMembers= new Vector<Integer>();
-	int multiplicityCnt[] = new int[NS];
-	int cnt=0, unassignedCnt=0;	
-
-	void categorize(int docno, Document doc) {
-
-	    String aid = doc.get(ArxivFields.PAPER);
-	    String cats = doc.get(ArxivFields.CATEGORY);
-	    // System.out.println("" + docno + " : " + aid + " : " + cats);
-
-	    String[] catlist = CatInfo.split(cats);
-
-	    multiplicityCnt[ Math.min(NS-1, catlist.length)]++;
-
-	    Integer o = new Integer(docno);
-
-	    boolean assigned=false;
-	    for(String cat: catlist) {
-		Categories.Cat c = Categories.findActiveCat(cat);
-		if (c==null) continue;
-		Vector<Integer> v = catMembers.get(cat);
-		if (v==null) catMembers.put(cat, v=new Vector<Integer>());
-		v.add(o);
-		assigned=true;
-		if (primaryOnly) break; // one cat per doc only
-	    }
-	    if (!assigned) {
-		unassignedCnt++;
-		nocatMembers.add(o);
-	    }
-	    cnt++;
-	}
-
-	String stats() {
-	    return "Analyzed " + cnt + " articles; identified " +catMembers.size() + " categories. There are " + unassignedCnt + " articles that do not belong to any currently active category.";
-	}
-
-	String affiStats() {
-	    String s= "Category affiliation count for articles:\n";
-	    for(int i=0; i<multiplicityCnt.length; i++) {
-		if (multiplicityCnt[i]>0) {
-		    s += "" + i;
-		    s += (i+1==multiplicityCnt.length? " (or more)": "");
-		    s += " categories: " + multiplicityCnt[i]+" articles\n";
-		}
-	    }
-	    return s;
-	}
-
-	String catSizesStats() {
-	    String s= "Cat sizes:\n";
-	    for(String c: catMembers.keySet()) {
-		s += c + ": " + catMembers.get(c).size() + "\n";
-	    }
-	    return s;
-	}
-   }
 
     /** Classifies new docs, using the stored datapoint files for
 	cluster center points. 
@@ -108,7 +41,7 @@ public class KMeans {
 				) throws IOException {
 
 	IndexReader reader = z.reader;
-	Categorizer catz = new Categorizer();
+	Categorizer catz = new Categorizer(false);
 
 	for(ScoreDoc sd: scoreDocs) {
 	    int docno = sd.doc;
@@ -200,7 +133,7 @@ public class KMeans {
 
 	int numdocs = reader.numDocs();
 	int maxdoc = reader.maxDoc();
-	Categorizer catz = new Categorizer();
+	Categorizer catz = new Categorizer(false);
 
 	for(int docno=0; docno<maxdoc; docno++) {
 	    if (reader.isDeleted(docno)) continue;
@@ -413,17 +346,10 @@ public class KMeans {
 	files are stored for a particular category.
      */
     static String  getCatDirPath(String cat)  {
-	String s = "";
-	try {
-	    s = Options.get("DATAFILE_DIRECTORY") +	File.separator;
-	} catch(IOException ex) {
-	    Logging.error("Don't know where DATAFILE_DIRECTORY is");
-	}
+	String s = DataFile.getMainDatafileDirectory().getPath() +File.separator;
 	s += "kmeans"  +	File.separator + cat;
 	return s;
     }
-
-
 
     static String arrToString(double a[]) {
 	StringBuffer b=new StringBuffer("(");

@@ -435,19 +435,15 @@ import edu.rutgers.axs.ParseConfig;
 	return new File(getPath());
     }
 
+    
     /** Maps to a full file system path. */
     String  getPath()  {
-	String s = "";
-	try {
-	    s = Options.get("DATAFILE_DIRECTORY") +	File.separator;
-	} catch(IOException ex) {
-	    Logging.error("Don't know where DATAFILE_DIRECTORY is");
-	}
+	String s = getMainDatafileDirectory().getPath() + 	File.separator;
 	s += "user"  +	File.separator;
 	return s + getUser() + File.separator + getThisFile();
     }
 
-    static File getMainDatafileDirectory()  {
+    public static File getMainDatafileDirectory()  {
 	String s = "";
 	try {
 	    s = Options.get("DATAFILE_DIRECTORY") +	File.separator;

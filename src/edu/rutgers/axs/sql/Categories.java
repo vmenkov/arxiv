@@ -46,12 +46,23 @@ public class Categories {
 
 
     public static class Cat {
-	/** Short name */
+	/** Short name. For a major cat, that's its complete name; for a minor
+	 cat, just the second component. */
 	public String name;
 	/** Long human-readable name */
 	public String desc;
 	public Vector<Cat> subcats = new Vector<Cat>();	
-	private Cat(String _name, String _desc) {
+	/** The parent category (for minor cats only) */
+	public Cat parent = null;
+	/** Creates a new category and, if it's a minor cat, links it to 
+	    the specified (major) parent cat.
+	    @param _parent Null for a major cat, or the parent cat for
+	    a minor cat.
+	    @param _name Full name of a major cat, or the second
+	    component of the name for a minor cat
+	*/
+	private Cat(Cat _parent, String _name, String _desc) {
+	    parent = _parent;
 	    name = _name;
 	    desc = _desc;
 	}
@@ -65,6 +76,11 @@ public class Categories {
 	    return false;
 	}
 
+	public String fullName() {
+	    return parent==null? name : parent + "." + name;
+	}
+
+	public String toString() { return fullName(); }
     }
 
     static public Vector<Cat> majors = new Vector<Cat>();
@@ -76,10 +92,11 @@ public class Categories {
 	if (majorMap.containsKey(name)) {
 	    throw new CategoryException("Major category '"+name+"' already exists");
 	}
-	Cat c = new Cat(name,desc);
+	Cat c = new Cat(null, name,desc);
 	majors.add(c);
 	majorMap.put(name,c);
     }    
+    
 
     private static void addMinor(String parent, String name, String desc) throws CategoryException{
 	Cat major = majorMap.get(parent);
@@ -89,11 +106,12 @@ public class Categories {
 	if (major.hasSub(name)) {
 	    throw new CategoryException("Major category '"+parent+"' already has subcat '"+name+"'");
 	}
-	Cat newcat = new Cat(name, desc);
+	Cat newcat = new Cat(major, name, desc);
 	major.subcats.add(newcat);
-	minorMap.put(parent + "." + name, newcat);
+	minorMap.put(newcat.fullName(), newcat);
     }
 
+  
     private static void init()  throws CategoryException{
 addMajor("astro-ph","Astrophysics");
 //addMajor("acc-phys","Accelerator Physics");
@@ -310,6 +328,22 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	return null;
     }
 
+   /** Looks up the major category within which the category with the
+       specified full name.
+
+	@param fullname = "major.minor", or just "major" (if "major" has no 
+     subcats) */
+    public static Cat findMajorCat(String fullname) {
+	Cat c = majorMap.get(fullname);
+	//System.out.println("FMC: major=" + c);
+	if (c!=null) return c;
+	c = minorMap.get(fullname);	
+	//System.out.println("FMC: " + fullname + " --> minor=" + c + " --> parent = " + c.parent);
+	if (c!=null) return c.parent;
+	return null;
+    }
+
+
     /** Creates set of radio buttons reflecting the ArXiv categories
     the specified user is interested in. 
 
@@ -347,6 +381,18 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	return b.toString();
     }
 
+    /** Testing */
+    public static void main(String[] argv) {
+	for(String full: argv) {
+	    Cat major = findMajorCat(full);
+	    if (major == null) {
+		System.out.println("No major cat found for : " +full);
+	    } else {
+		System.out.println(full + " --> " +  major.fullName());
+	    }
+
+	}
+    }
 
 
 }

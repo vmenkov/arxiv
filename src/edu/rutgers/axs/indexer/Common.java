@@ -33,7 +33,7 @@ public class Common {
 	TopDocs 	 top = s.search(tq, 1);
 	ScoreDoc[] 	scoreDocs = top.scoreDocs;
 	if (scoreDocs.length < 1) {
-	    System.out.println("No document found with paper="+aid);
+	    //System.out.println("No document found with paper="+aid);
 	    throw new IOException("No document found with paper="+aid);
 	}
 	return scoreDocs[0].doc;

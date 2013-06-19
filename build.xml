@@ -153,7 +153,7 @@ code. -->
         description="Compile the source" >
   <!-- Compile the java code from ${src} into ${build} -->
   <javac srcdir="${src}" destdir="${build}"
-	 includes="edu/**"  optimize="on"
+	 includes="edu/**,org/**"  optimize="on"
 	 debug="on" debuglevel="lines,vars,source"
 	 target="1.5"
 	 includeantruntime="false" >
