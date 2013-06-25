@@ -16,6 +16,9 @@ import org.apache.lucene.search.*;
 
 import org.json.*;
 
+import cern.colt.matrix.*;
+import cern.colt.matrix.impl.SparseDoubleMatrix2D;
+
 import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
@@ -63,10 +66,12 @@ public class HistoryClustering {
 	into separate files (one per category).
      */
     private static void splitJsonFile(String fname) throws IOException, JSONException {
-
+	
 	FileReader fr = new FileReader(fname);
 	JSONTokener tok = new JSONTokener(fr);
 	JSONObject jsoOuter = new JSONObject(tok);
+	fr.close();
+
 	JSONArray jsa = jsoOuter.getJSONArray("entries");
 	int len = jsa.length();
 	System.out.println("Length of the JSON data array = " + len);
@@ -79,7 +84,7 @@ public class HistoryClustering {
 
 	//	HashMap<String, HistoryMatrix> matrixAssemblers = 
 	//	    new HashMap<String, HistoryMatrix>();
-	DataSaver saver = new DataSaver();
+	DataSaver saver = new DataSaver(new File(fname));
 
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
@@ -122,7 +127,7 @@ public class HistoryClustering {
 		saver.save( c.fullName(),  ip_hash, aid);
 	    }
 	}
-
+	
 	System.out.println("Analyzable action entries count = " + cnt);
 	if (unexpectedActionCnt>0) {
 	    System.out.println("There were also " + unexpectedActionCnt + " entries with an arxiv_id field, but with an unacceptable action type");
@@ -140,27 +145,51 @@ public class HistoryClustering {
 	w.close();
     }
 
+
+    private static File catDir(String majorCat) throws IOException {
+	File d = new File( DataFile.getMainDatafileDirectory(), "tmp");
+	d = new File(d, "hc");
+	d = new File(d, majorCat);
+	if (d.exists() && d.isDirectory()) {
+	} else {
+	    if (!d.mkdirs()) throw new IOException("Failed to create directory " + d);
+	}
+	return d;
+    }
+
+
     /** The location of the temporary CSV file into which "ip_hash,aid" pairs
 	are saved for a particular major category. With 1.5 million action per 
 	week in all categories (i.e., some 0.15 mln per cat per week), each 
 	such CSV file would have around 40 million lines.
+
+	@param origFile The name of the source file. It will be
+	incorporated into the name of the new (category-specific) file.
      */
-    private static File catFile(String majorCat) {
-	File d = new File( DataFile.getMainDatafileDirectory(), "tmp");
-	d = new File(d, "hc");
-	d.mkdirs();
-	return new File(d, majorCat + ".csv");
+    private static File catFile(String majorCat, String origFile) throws IOException {
+	File d = catDir(majorCat);
+	return new File(d, majorCat + "." + origFile + ".csv");
     }
 
     /** Used to save relevant data in a compact format (CSV) in
 	separate files (one per major category).
      */
     private static class DataSaver {
+	/** The name of the original (non-split) data file, with the
+	    dir name and the extension removed. 
+	 */
+	private final String origFile;	
+	DataSaver(File _origFile) {
+	    String name = _origFile.getName();
+	    name = name.replaceAll("\\..*", ""); // strip the extension
+	    origFile = name;
+	}
+
 	HashMap<String,PrintWriter> writers = new HashMap<String,PrintWriter>();
 	void save(String majorCat, String ip_hash, String aid) throws IOException {
 	    PrintWriter w = writers.get(majorCat);
 	    if (w==null) {
-		File f = catFile( majorCat);
+		File f = catFile( majorCat, origFile);
 		w = new PrintWriter(new FileWriter(f));
 		writers.put(majorCat, w);
 	    }
@@ -174,20 +203,123 @@ public class HistoryClustering {
 	}
     }
 
-   static void usage() {
-	System.out.println("Usage: HistoryClustering [split|...]");
-	System.exit(0);
+    /** An auxiliary class used when reading in and preprocessing the
+	(user,page) matrix. For each user id, we store a vector of
+	pages he's accessed.
+     */
+    static private class U2PL extends HashMap<String, Vector<String>> {
+	void add(String u, String p) {
+	    Vector<String> v = get(u);
+	    if (v==null) put(u, v = new Vector<String>());
+	    for(String z: v) {
+		if (z.equals(p)) return;
+	    }
+	    v.add(p);
+	}
+
+	/** The numeric map for article aids.
+	 */
+	String[] no2aid;
+	HashMap<String, Integer> aid2no;
+
+	SparseDoubleMatrix2D toMatrix() {
+	    final int user_thresh=2,  paper_thresh=2;
+
+	    System.out.println("Processing the view matrix. Originally, there are " + size() + " users");
+
+	    for(String u: keySet()) {
+		if (get(u).size()< user_thresh) remove(u);
+	    }
+
+	    System.out.println("Only " + size() + " users have at least " + user_thresh + " page views");
+
+	    HashMap<String, Integer> viewCnt = new HashMap<String, Integer>();
+
+	    for(Vector<String> v: values()) {
+		for(String aid: v) {
+		    Integer z = viewCnt.get(aid);
+		    int c = (z==null)? 0 : z.intValue();
+		    viewCnt.put(aid, new Integer(z+1));
+		}
+	    }
+
+	    System.out.println("There are " + viewCnt.size() + " papers");
+	    int cap = 0;
+
+	    for(String aid: viewCnt.keySet()) {
+		Integer z = viewCnt.get(aid);
+		if (z.intValue() < paper_thresh)  viewCnt.remove(aid);
+		else cap += viewCnt.get(aid).intValue();
+	    }
+
+	    System.out.println("But only " + viewCnt.size() + " papers with at least " + paper_thresh + " views. The view matrix will have " + cap + " nonzeros");
+
+	    no2aid = new String[ viewCnt.size() ];
+	    aid2no = new HashMap<String, Integer>();
+	    int k = 0;
+	    for(String aid: viewCnt.keySet()) {
+		aid2no.put(aid, new Integer(k));
+		no2aid[k++] = aid;
+	    }
+
+
+	    SparseDoubleMatrix2D mat = new SparseDoubleMatrix2D(size(), no2aid.length);
+	    for(String u: keySet()) {
+		//mat.setQuick(row,  int column,1.0);
+	    }
+
+	    return mat;
+	}
+    }
+
+
+    /** Reads split files for a particular category generated by DataSaver
+     */
+    static void readSplitFiles(String majorCat) throws IOException {
+	File dir = catDir(majorCat);
+	File[] files=dir.listFiles(); 
+	U2PL   user2pageList = new U2PL();
+	for(File f: files) {
+	    System.out.println("Reading split file " + f);
+	    FileReader fr = new FileReader(f);
+	    LineNumberReader r = new LineNumberReader(fr);
+	    String s = null;
+	    while((s=r.readLine())!=null) {
+		s = s.trim();
+		if (s.equals("")) continue;
+		String q[] = s.split(",");
+		if (q.length!=2) throw new IOException("Could not parse line no. " + r.getLineNumber() + " in file " + f + " as a (user,page) pair:\n" + s);
+		user2pageList.add(q[0].intern(), q[1].intern());
+	    }
+	    r.close();
+	}
+
+    }
+
+    static void usage() {
+	usage(null);
+    }
+
+    static void usage(String m) {
+	System.out.println("Usage: HistoryClustering [split filename|...]");
+	if (m!=null) {
+	    System.out.println(m);
+	}
+	System.exit(1);
     }
 
 
     public static void main(String [] argv) throws IOException, JSONException {
 
-	if (argv.length != 1) {
-	    usage();
+	if (argv.length < 1) {
+	    usage("Command not specified");
 	} else if (argv[0].equals("split")) {
+	    if (argv.length < 2) {
+		usage("File name not specified");
+	    }
 	    // String fname = "../json/user_data_0/" + "100510_user_data.json";
-	    String fname = "../json/user_data/" + "110301_user_data.json";
-
+	    //String fname = "../json/user_data/" + "110301_user_data.json";
+	    String fname = argv[1];
 	    splitJsonFile(fname);
 	} else {
 	    usage();
