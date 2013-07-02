@@ -135,7 +135,7 @@ public class Daily {
 
 	KMeans.classifyNewDocs(em, z, scoreDocs, mT);
 
-	System.out.println("mT = " +  KMeans.arrToString(mT));
+	System.out.println("mT = " +  KMeansClustering.arrToString(mT));
 
 	em.getTransaction().begin();
 	for(EE4DocClass c: id2dc.values()) {
