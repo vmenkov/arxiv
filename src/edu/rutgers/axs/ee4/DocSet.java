@@ -6,7 +6,7 @@ import java.text.*;
 
 /** A feature dictionary... */
 class DocSet {
-    private Vector<String> words=new	Vector<String>();
+    private Vector<String> words=new Vector<String>();
     private HashMap<String,Integer> word2pos = new HashMap<String,Integer>();
     /** String to int */
     int enter(String word) {

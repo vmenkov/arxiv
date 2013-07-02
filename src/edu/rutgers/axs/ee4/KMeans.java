@@ -58,7 +58,7 @@ public class KMeans {
 
 	    // read stored cluster center point files, filling the dictionary
 	    // in the process.
-	    File catdir = new File( getCatDirPath(cat));
+	    File catdir =  getCatDirPath(cat);
 	    if (!catdir.exists()) throw new IOException("Category directory " + catdir + " does not exist. Has a new category been added?");
 	    File[] cfiles = catdir.listFiles();
 	    int cids [] = new int[cfiles.length];
@@ -95,7 +95,7 @@ public class KMeans {
 	    }
 	    // "classify" each point based on which existing cluster center
 	    // is closest to it
-	    Clustering clu = new Clustering(dic.size(), vdoc, centers);
+	    KMeansClustering clu = new KMeansClustering(dic.size(), vdoc, centers);
 	    clu.voronoiAssignment();  //   asg <-- centers
 
 	    em.getTransaction().begin();
@@ -155,8 +155,8 @@ public class KMeans {
 
 	    DocSet dic = new DocSet();
 	    Vector<Integer> vdocno = catz.catMembers.get(c);
-	    Clustering clu = cluster(dic, z, vdocno);
-	    clu.saveCenters(dic,  c, id0);
+	    KMeansClustering clu = cluster(dic, z, vdocno);
+	    saveCenters(clu, dic,  c, id0);
 
 	    em.getTransaction().begin();
 	    int pos=0;
@@ -193,181 +193,42 @@ public class KMeans {
 	em.persist(a);
     }
 
-    /** How different are two assignment plans? */
-    static int asgDiff(int asg1[], int asg2[]) {
-	int d = 0;
-	for(int i=0; i<asg1.length; i++) {
-	    if (asg1[i]!=asg2[i]) d++;
+    /** Saves cluster centers in disk files. The files can be read
+	back later, to be used for classifying new documents
+	during nightly updates.
+	@param clu Clustering whose cluster centers are to be saved
+	@param cat Category name (which becomes the directory name)
+	@param id0 the cluster id of the first cluster */
+    private static void saveCenters(KMeansClustering clu, DocSet dic, String cat, int id0) throws IOException {
+	File catdir = getCatDirPath(cat);
+	catdir.mkdirs();
+	for(int i=0; i<clu.centers.length; i++) {
+	    int id = id0 + i;
+	    File f= new File(catdir, "" +id + ".dat");
+	    PrintWriter w= new PrintWriter(new FileWriter(f));
+	    clu.centers[i].save( dic,  w);
+	    w.close();
 	}
-	return d;
-    }
-    
-
-    static class Clustering {
-	/** Input: the objects to be clustered */
-	final Vector<SparseDataPoint> vdoc;
-
-	/** Output: an array with the cluster id assigned to each object */
-	int asg[];
-	/** Cluster centers */
-	DenseDataPoint[] centers;
-	final int nterms;
-	
-	/** Initializes the clustering object using a specified
-	    list of pre-computed center points.
-	*/
-	Clustering(int _nterms, Vector<SparseDataPoint> _vdoc, DenseDataPoint[] _centers) {
-	    nterms =  _nterms;
-	    vdoc = _vdoc;
-	    centers=_centers;
-	}
-
-	/** Initializes the clustering object using a specified
-	    set of data points to serve as cluster centers.
-	*/
-	Clustering(int _nterms, Vector<SparseDataPoint> _vdoc, int[] ci) {
-	    nterms =  _nterms;
-	    vdoc = _vdoc;
-	    centers=new DenseDataPoint[ci.length];
-	    for(int i=0;i<ci.length; i++) {
-		centers[i] =new DenseDataPoint(nterms, vdoc.elementAt(ci[i]));
-	    }	   
-	}
-
-	/** Runs KMeans algorithm starting with an arrangement where a specified
-	    set of points serve as cluster centers.
-	*/
-	void optimize() {
-	    System.out.print("Assignment diff =");
-	    while(true) {
-		int[] asg0=asg;
-		Profiler.profiler.push(Profiler.Code.CLU_Voronoi);
-		voronoiAssignment();  //   asg <-- centers
-		Profiler.profiler.pop(Profiler.Code.CLU_Voronoi);
-		if (asg0!=null) {
-		    int d = asgDiff(asg0,asg);
-		    System.out.print(" " + d);
-		    if (d==0) {
-			System.out.println();
-			return;
-		    }
-		}
-
-
-		Profiler.profiler.push(Profiler.Code.CLU_fc);
-		findCenters(nterms, centers.length); // centers <-- asg
-		Profiler.profiler.pop(Profiler.Code.CLU_fc);
-	    }
-	}
-
-	double [] centerNorms2() {
-	    double[] centerNorm2 = new double[centers.length];
-	    for(int i=0;i<centers.length;i++) centerNorm2[i]=centers[i].norm2();
-	    return centerNorm2;
-	}
-
-	/** Sets asg[] based on centers[] */
-	private  void voronoiAssignment() {
-	    asg = new int[vdoc.size()];
-	    double[] centerNorm2 =  centerNorms2();
-	    // |v - c|^2 = |v|^2 + |c|^2 - 2(v,c) = 1 + |c|^2 - 2(v,c)
-	    for(int j=0; j<vdoc.size(); j++) {
-		SparseDataPoint p = vdoc.elementAt(j);
-		double d2min = 0;
-		for(int i=0; i<centers.length; i++) {
-		    double d2 = 1 + centerNorm2[i] - 2*centers[i].dotProduct(p);
-		    if (i==0 || d2 < d2min) {
-			asg[j] = i;
-			d2min = d2;
-		    }
-		}
-	    }	
-	}
-   
-	double sumDist2() {
-	    double sum=0;
-	    double[] centerNorm2 =  centerNorms2();
-
-	    System.out.println("Centers' norm^2 =" + arrToString(centerNorm2));
-
-	    // |v - c|^2 = |v|^2 + |c|^2 - 2(v,c) = 1 + |c|^2 - 2(v,c)
-	    int j=0;
-	    for(SparseDataPoint p: vdoc) {
-		int ci=asg[j++];
-		sum += 1 + centerNorm2[ci] - 2*centers[ci].dotProduct(p);
-	    }	
-	    return sum;
-	}
-
-	/** Set centers[] based on asg[] */
-	void findCenters(int nterms, int nc) {
-	    centers = new DenseDataPoint[nc];
-	    int[] clusterSize = new int[nc];
-	    int i=0;
-	    for(SparseDataPoint p: vdoc) {
-		int ic = asg[i++];
-		if (centers[ic]==null) {
-		    centers[ic] = new DenseDataPoint(nterms, p);
-		} else {
-		    centers[ic].add(p);
-		}
-		clusterSize[ic]++;
-	    }
-	    for(i=0; i<nc; i++) {
-		if (centers[i]==null) {
-		    System.out.println("Invalid assigment: no doc in cluster "+i+"?; asg=" + arrToString(asg));
-		    throw new IllegalArgumentException();
-		}
-		centers[i].multiply(1.0/(double) clusterSize[i]);
-	    }
-	}
-
-	/** Saves cluster centers in disk files. The files can be read
-	    back later, to be used for classifying new documents
-	    during nightly updates.
-	    @param cat Category name (which becomes the directory name)
-	    @param id0 the cluster id of the first cluster */
-	void saveCenters(DocSet dic, String cat, int id0) throws IOException {
-	    File catdir = new File( getCatDirPath(cat));
-	    catdir.mkdirs();
-	    for(int i=0; i<centers.length; i++) {
-		int id = id0 + i;
-		File f= new File(catdir, "" +id + ".dat");
-		PrintWriter w= new PrintWriter(new FileWriter(f));
-		centers[i].save( dic,  w);
-		w.close();
-	    }
-	}
-
-
     }
 
-    /** Generates full path for the directory where cluster center
-	files are stored for a particular category.
+    /** Generates a file object for the directory where cluster center
+	files are stored for a particular category. Does not actually
+	create the directory.
+	@return Something like ~/arxiv/arXiv-data/kmeans/physics.bio-ph
      */
-    static String  getCatDirPath(String cat)  {
-	String s = DataFile.getMainDatafileDirectory().getPath() +File.separator;
-	s += "kmeans"  +	File.separator + cat;
-	return s;
-    }
-
-    static String arrToString(double a[]) {
-	StringBuffer b=new StringBuffer("(");
-	for(double q: a) 	    b.append(" " + q);
-	b.append(")");
-	return b.toString();
-    }
-
-    static String arrToString(int asg[]) {
-	StringBuffer b=new StringBuffer("(");
-	for(int q: asg) 	    b.append(" " + q);
-	b.append(")");
-	return b.toString();
+    static private File getCatDirPath(String cat)  {
+	File d = DataFile.getMainDatafileDirectory();
+	d = new File(d,  "kmeans");
+	d = new File(d, cat);
+	return d;
     }
 
     /** Runs several KMeans clustering attempts on the specified set, and
-	returns the best result */
-    static private Clustering cluster(DocSet dic, ArticleAnalyzer z,Vector<Integer> vdocno)
+	returns the best result.
+	@param vdocno The list of Lucene IDs of the documents to be clustered
+    */
+    static private KMeansClustering cluster(DocSet dic, ArticleAnalyzer z,
+					    Vector<Integer> vdocno)
 	throws IOException {
 
 	Profiler.profiler.push(Profiler.Code.OTHER);
@@ -376,50 +237,19 @@ public class KMeans {
 	//System.out.println("Reading vectors...");
 	int cnt=0;
 	for(int docno: vdocno) {
-	    SparseDataPoint q = new SparseDataPoint(z.getCoef( docno,null), dic, z);
+	    SparseDataPoint q=new SparseDataPoint(z.getCoef(docno,null),dic,z);
 	    q.normalize();
 	    vdoc.add(q);
 	    cnt++;
 	    //if (cnt  % 100 == 0) 	System.out.print(" " + cnt);
 	}
-	//	System.out.println(" " + cnt);
 
 	//	final int J = 5;
 	//	final int nc = Math.min(J, vdoc.size());
 	int nc = (int)Math.sqrt(  (double)vdoc.size()/200.0);
 	if (nc <=1) nc = 1;
 
-	System.out.println("Chose to create " + nc + " clusters");
-
-	int nstarts = 10;
-	if (vdoc.size() == nc||nc==1) nstarts=1;
-
-	double minD = 0;
-	Clustering bestClustering = null;
-
-	for(int istart =0; istart<nstarts; istart++) {
-	    System.out.println("Start no. " + istart);
-	    int ci[] = Util.randomSample( vdocno.size(), nc);
-	    System.out.print("Random centers at: ");
-	    for(int q: ci) 	    System.out.print(" " + q);
-	    System.out.println();
-	    Profiler.profiler.push(Profiler.Code.CLUSTERING);
-
-	    Clustering clu = new Clustering(dic.size(), vdoc, ci);
-	    clu.optimize();
-	    Profiler.profiler.replace(Profiler.Code.CLUSTERING,Profiler.Code.CLU_sumDif);
-	    double d = clu.sumDist2();
-	    System.out.println("D=" + d);
-	    //System.out.println("; asg=" + arrToString(clu.asg));
-	    if (bestClustering==null || d<minD) {
-		bestClustering = clu;
-		minD = d;
-	    }
-
-	    Profiler.profiler.pop(Profiler.Code.CLU_sumDif);
-	}
-	Profiler.profiler.pop(Profiler.Code.OTHER);
-	return bestClustering;
+	return KMeansClustering.findBestClustering(vdoc, dic.size(), nc);
     }
 
     /** A one-off method, to create all document classes
@@ -483,8 +313,5 @@ public class KMeans {
 	System.out.println(	Profiler.profiler.report());
 
     }
-
-
-
    
 }

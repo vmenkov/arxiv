@@ -17,7 +17,12 @@ class DenseDataPoint extends DataPoint {
     DenseDataPoint(int n, DataPoint x) {
 	this(n);
 	add(x);
+    }  
+
+    DenseDataPoint(double[] v) {
+	values = v;
     }
+
 
     void add(DataPoint a) {
 	if (a instanceof SparseDataPoint) {
