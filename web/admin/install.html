@@ -42,6 +42,69 @@ Java Mail. The web application uses it for sending "reset password" messages. Am
 <li>JQuery, part of the web site.
 </ul>
 
+<h3>Server migration notes</h3>
+
+<p>How do we move My.ArXiv - the web server, data base server, and all, to a new host?
+
+<h4>Lucene</h4>
+
+<ul>
+<li>
+Copy the entire $ARXIV/arXiv-index.
+
+<li>
+Soft link from /home/SCILSNET/vmenkov to /home/vmenkov (for compatibility with the layout on cactuar)
+
+</ul>
+
+
+<h4>MySQL</h4>
+<p>
+Before starting any Java applications, we copy the entire MySQL database from the old host. The export and import process is carried out along the lines of the <a href="http://dev.mysql.com/doc/refman/5.0/en/copying-databases.html">official instructions</a>, but we only copy the database <tt>arxiv_xs</tt>; we are not trying to copy the <tt>mysql</tt> database, as doing that my hose database logins etc.
+
+<p>Data export (dumping) on the old host is generally not problematic, but import to the new one may be a bit trickier, as file ownership and permissions matter for both input files and MySQL server files. Some useful tips can be found <a href="http://www.electrictoolbox.com/article/mysql/mysqlimport-errors/">here</a>, in particular the one about the <tt>--local</tt> option. 
+
+<p>The main points are (these are from a migration to a Ubuntu machine, not a RedHat one, like the new  Cornell hosts, but differences are probably slim):
+<ul>
+<li>Run <tt>mysqlimport</tt> as the <em>UNIX user</em> <tt>mysql</tt>, since it is that user that runs <tt>mysqld</tt> and owns MySQL server's data file
+<li>Run <tt>mysqlimport</tt> as the <em>MySQL user</em> <tt>root</tt> (rather than <tt>arxiv</tt>); this avoids the need to grant the FILE permission to user <tt>arxiv</tt> (which it otherwise does not need). 
+<li>
+</ul>
+
+<pre>
+mysqladmin -u root -p create arxiv_xs           # create database
+</pre>
+
+Then we can create the user "arxiv". Login to the MySQL server as root.
+
+<pre>
+create user  'arxiv'@'localhost' IDENTIFIED BY 'XXXX';
+GRANT ALL PRIVILEGES ON arxiv_xs.* TO 'arxiv'@'localhost';
+
+create user  'arxiv'@'%' IDENTIFIED BY 'XXXX';
+GRANT ALL PRIVILEGES ON arxiv_xs.* TO 'arxiv'@'%';
+flush privileges;
+</pre>
+
+
+(We don't do "GRANT FILE" for user "arxiv", so the actual table
+loading still has to be done by "root").
+
+<pre>
+cat DUMPDIR/*.sql | mysql  -u arxiv -p arxiv_xs   # create tables in database
+
+#-- not sure if we needed it, really
+sudo -u mysql chmod g+rwX /var/lib/mysql/arxiv_xs
+
+#-- not the "--local" option to avoid access errors
+sudo -u mysql mysqlimport --local -u arxiv -p arxiv_xs DUMPDIR/*.txt   # load data into tables
+</pre>
+
+<h4>Tomcat</h4>
+
+Enable web driven reloading (we do it from ant, as described in our build.xml), as per 
+http://tomcat.apache.org/tomcat-5.5-doc/manager-howto.html
+
 </body>
 
 </html>
