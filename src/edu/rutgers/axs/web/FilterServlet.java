@@ -355,11 +355,23 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 	    int M = 4096;
 	    byte [] buf = new byte[ M ];
+	    System.out.println("FS: no parsing for "+lURL+". Top:\n[");
+	    int loglen = 0;
+	    final int MAXLOG = 1024;
 	    while( true ) {
 		int n = in.read(buf);
 		if (n <= 0) break; // eof
 		aout.write(buf, 0, n);
+
+		StringBuffer debug=new StringBuffer();
+		for(int j = 0; j<n  && loglen < MAXLOG; j++) {
+		    debug.append((char)buf[j]);
+		    loglen++;
+		}
+		System.out.println(debug +"...]");
 	    }
+
+	 	    
 	} else {
 	    LineNumberReader r = 
 		new LineNumberReader(cs==null ?
@@ -367,12 +379,27 @@ public class FilterServlet extends  BaseArxivServlet  {
 				     new InputStreamReader(in, cs));
 
 	    PrintWriter w = new PrintWriter(aout);
+
+	    System.out.println("FS: do parsing for "+lURL+". Top:\n[");
+	    int loglen = 0;
+	    final int MAXLOG = 1024;
+	    String logInput="", logOutput="";
+	    
+
 	    for(String s = null; (s=r.readLine())!=null; ) {
 		String addBefore = conv.getAddBefore(s);
 		if (addBefore!=null) w.println(addBefore);
 		String z = conv.convertLine(s, 	    willAddNote);
 		w.println(z);
+		if (loglen < MAXLOG) {
+		    loglen += z.length();
+		    logInput+=s;
+		    logOutput+=z;
+		}
+
 	    }
+	    System.out.println("input =["+logInput+"...]");
+	    System.out.println("output=["+logOutput+"...]");
 	    w.flush();
 	}
 	in.close();
@@ -385,6 +412,11 @@ public class FilterServlet extends  BaseArxivServlet  {
     this connection is coming from our user's browser.  This way the
     remote server will send us the same doc the user would get from it
     directly.
+    
+    <p>Since 2013-07-07, the accept-encoding header received from the
+    user agent is not forwarded to the arxiv.org server. This way we
+    obviate the need to handle compressed data (gzip, deflate, etc).
+
 
     @param  aHttpURLConnection  HTTP connection whose parameters we're setting
 
@@ -416,9 +448,17 @@ public class FilterServlet extends  BaseArxivServlet  {
 	  if (name.equals(XFF)) {
 	      hasForward = true;
 	      if (!remoteUseless)   value += ", " + remoteIP;
+	  } else if (name.equals("accept-encoding")) {
+	      // FIXME: Simply stripping the accept-encoding header
+	      // is the easiest way to avoid having to deal with
+	      // "gzip" or "deflate"; but it would be more
+	      // efficient to build in some support for them...
+	      Logging.info("FS: NOT sending the "+name+" header to the arxiv.org server");
+	      continue;
 	  }
 	  aHttpURLConnection.setRequestProperty(name, value);
 	  //Logging.info("Copy header: " + name + ": " + value);
+	  //	  System.out.println("FS: Copy header: " + name + ": " + value);
       }
 
       if (!hasForward && !remoteUseless) {
