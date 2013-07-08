@@ -99,6 +99,30 @@
     <servlet-name>FilterServlet</servlet-name>
     <url-pattern>/FilterServlet/*</url-pattern>
   </servlet-mapping>
+
+
+ <servlet>
+    <servlet-name>TestFilterServlet</servlet-name>
+    <description>
+      Pulls a page from arxiv.org, re-writes links, and serves the
+      modified page, while registering the request
+    </description>
+    <servlet-class>edu.rutgers.axs.web.TestFilterServlet</servlet-class>
+    <init-param> 
+        <description>The base URL for the underlying server we connect to
+	</description> 
+        <param-name>ArxivBaseURL</param-name> 
+        <param-value>http://arxiv.org</param-value> 
+    </init-param> 
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>TestFilterServlet</servlet-name>
+    <url-pattern>/TestFilterServlet/*</url-pattern>
+  </servlet-mapping>
+  
+
   
  <servlet>
     <servlet-name>FilterServletDEV</servlet-name>
@@ -228,3 +252,4 @@
 -->
 
 </web-app>
+
