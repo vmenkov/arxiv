@@ -438,6 +438,7 @@ public class FilterServlet extends  BaseArxivServlet  {
       String remoteIP = areq.getRemoteAddr();
       boolean remoteUseless= remoteIP==null || remoteIP.equals("127.0.0.1") || remoteIP.equals("0:0:0:0:0:0:0:1");
    
+      final String ACCEPT_ENCODING = "accept-encoding";
 
       boolean hasForward = false;
       final String XFF="X-Forwarded-For";
@@ -448,7 +449,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	  if (name.equals(XFF)) {
 	      hasForward = true;
 	      if (!remoteUseless)   value += ", " + remoteIP;
-	  } else if (name.equals("accept-encoding")) {
+	  } else if (name.equalsIgnoreCase(ACCEPT_ENCODING)) {
 	      // FIXME: Simply stripping the accept-encoding header
 	      // is the easiest way to avoid having to deal with
 	      // "gzip" or "deflate"; but it would be more
@@ -464,6 +465,9 @@ public class FilterServlet extends  BaseArxivServlet  {
       if (!hasForward && !remoteUseless) {
 	  aHttpURLConnection.setRequestProperty(XFF, remoteIP );
       }
+
+      // let's belabor the obvious a bit...
+      aHttpURLConnection.setRequestProperty(ACCEPT_ENCODING, "identity");
       
       Logging.info("remote IP=" + remoteIP+", useless=" +remoteUseless);
 
