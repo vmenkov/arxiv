@@ -46,6 +46,54 @@ Java Mail. The web application uses it for sending "reset password" messages. Am
 
 <p>How do we move My.ArXiv - the web server, data base server, and all, to a new host?
 
+<p>
+Below, <tt>$ARXIV</tt> stands for the main arxiv directory (such as <tt>~vmenkov/arxiv</tt>).
+
+<h4>Standard software</h4>
+
+<p>This is not really ArXiv-specific; just some software that's likely
+to be needed on any host where serious Java-based development work
+takes place. Most of this stuff is already found on a typical Linux
+machine; but what's missing, can be installed with <tt>apt-get</tt>
+(on a Ubintu host, such as most of our laptops), or with <tt>yum</tt>
+on a RedHat Linux host (such as orie1/orie2).
+
+<p>
+On a Red Hat Enterprise Linux (RHEL, a.k.a. Fedora) machine:
+
+<pre>
+sudo yum install emacs
+sudo yum install ant
+sudo yum install tomcat
+</pre>
+
+<p>
+On Java for RedHat, see: 
+<ol>
+<li>
+http://openjdk.java.net/install/
+<li>
+https://access.redhat.com/site/documentation/en-US/JBoss_Enterprise_SOA_Platform/4.3/html/Getting_Started_Guide/appe-install_jdk_rhel.html 
+</ol>
+
+
+<h4>Create directories</h4>
+
+<p>
+We more or less reproduce the structure of the $ARXIV dir on the target
+machine. On orie1 and orie2, we make /home/vmenkov/arxiv the main
+$ARXIV dir, but put the actual data into /data/arxiv (which is on a
+different disk partition), with appropriate soft links.
+
+<pre>
+cd /data
+sudo mkdir arxiv
+cd /data/arxiv
+sudo mkdir arXiv-cache arXiv-data arXiv-index arXiv-metadata-cache arXiv-text
+
+....
+</pre>
+
 <h4>Lucene</h4>
 
 <ul>
@@ -100,9 +148,26 @@ sudo -u mysql chmod g+rwX /var/lib/mysql/arxiv_xs
 sudo -u mysql mysqlimport --local -u arxiv -p arxiv_xs DUMPDIR/*.txt   # load data into tables
 </pre>
 
+<h4>Ant</h4>
+
+<p>Copy (or soft-link) certain jar files into your <pre>~/.ant/lib</pre> directory:
+
+<pre>
+[vmenkov@cactuar lib]$ pwd
+/mnt/cactext/home/SCILSNET/vmenkov/.ant/lib
+[vmenkov@cactuar lib]$ ls -l
+total 4
+lrwxrwxrwx 1 vmenkov domain users 42 Nov  3  2011 catalina-ant.jar -> ../../tomcat55/server/lib/catalina-ant.jar
+lrwxrwxrwx 1 vmenkov domain users 65 Nov  8  2011 openjpa-all-2.1.1.jar -> /home/SCILSNET/vmenkov/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar
+</pre>
+
+<p>This is needed for the Apache Ant to be able to better perform
+certain tasks during the build process (such as communicating with the
+web server, causing the latter to reload the web application).
+
 <h4>Tomcat</h4>
 
-Enable web driven reloading (we do it from ant, as described in our build.xml), as per 
+Enable web driven reloading (we do it from ant, as described in our build.xml), as per the instructions at
 http://tomcat.apache.org/tomcat-5.5-doc/manager-howto.html
 
 </body>
