@@ -27,7 +27,7 @@
 Lucene. The data store.
 
 <li>
-Java Mail. The web application uses it for sending "reset password" messages. Among the crontab-driven scripts, EmailSug uses it, to send recommndation lists to users.
+Java Mail. The web application uses it for sending "reset password" messages. Among the crontab-driven scripts, EmailSug uses it, to send recommendation lists to users.
 
 <li>
 <A href="http://acs.lbl.gov/software/colt/">Colt</a>. It is a large math library. It is used for singular value deocmposition (SVD) in EE4.
@@ -63,8 +63,24 @@ On a Red Hat Enterprise Linux (RHEL, a.k.a. Fedora) machine:
 
 <pre>
 sudo yum install emacs
+sudo yum install svn
 sudo yum install ant
-sudo yum install tomcat
+#-- as per http://www.oracle-base.com/articles/linux/apache-tomcat-installation-on-linux.php
+sudo yum install tomcat6 tomcat6-webapps tomcat6-admin-webapps
+sudo  chkconfig tomcat6 on  #-- make the start automatic
+sudo service tomcat6 start   #-- start tomcat
+</pre>
+
+<p>As per above, tomcat gets installed into /usr/share/tomcat6 ; the main command script, in  /usr/sbin/tomcat6 ; logs go to /var/log/tomcat6
+
+
+<pre>
+# as per https://access.redhat.com/site/documentation/en-US/JBoss_Communications_Platform/5.0/html/Platform_Installation_Guide/chap-Installing_and_Configuring_Java.html
+sudo yum install 'java-1.6.0-openjdk*'
+
+# as per https://access.redhat.com/site/documentation/en-US/JBoss_Communications_Platform/5.0/html/Platform_Installation_Guide/sect-Configuring_Java.html
+sudo /usr/sbin/alternatives  --config java
+# ... and keep ver 1.6
 </pre>
 
 <p>
@@ -76,6 +92,22 @@ http://openjdk.java.net/install/
 https://access.redhat.com/site/documentation/en-US/JBoss_Enterprise_SOA_Platform/4.3/html/Getting_Started_Guide/appe-install_jdk_rhel.html 
 </ol>
 
+<h4>Install Mysql server (on RHEL)</h4>
+<p>
+Install mysql, as per
+http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html
+<pre>
+sudo yum install mysql mysql-server mysql-libs mysql-server
+sudo service mysqld start
+sudo chkconfig --levels 235 mysqld on
+</pre>
+
+As per,
+http://docs.oracle.com/cd/E17952_01/refman-5.5-en/mysql-secure-installation.html
+<pre>
+mysql_secure_installation
+</pre>
+Setting our usual MySQL root password.
 
 <h4>Create directories</h4>
 
@@ -108,7 +140,7 @@ Soft link from /home/SCILSNET/vmenkov to /home/vmenkov (for compatibility with t
 
 <h4>MySQL</h4>
 <p>
-Before starting any Java applications, we copy the entire MySQL database from the old host. The export and import process is carried out along the lines of the <a href="http://dev.mysql.com/doc/refman/5.0/en/copying-databases.html">official instructions</a>, but we only copy the database <tt>arxiv_xs</tt>; we are not trying to copy the <tt>mysql</tt> database, as doing that my hose database logins etc.
+Before starting any Java applications, we copy the entire MySQL database from the old host. The export and import process is carried out along the lines of the <a href="http://dev.mysql.com/doc/refman/5.0/en/copying-databases.html">official instructions ("Copying MySQL Databases to Another Machine")</a>, but we only copy the database <tt>arxiv_xs</tt>; we are not trying to copy the <tt>mysql</tt> database, as doing that my hose database logins etc.
 
 <p>Data export (dumping) on the old host is generally not problematic, but import to the new one may be a bit trickier, as file ownership and permissions matter for both input files and MySQL server files. Some useful tips can be found <a href="http://www.electrictoolbox.com/article/mysql/mysqlimport-errors/">here</a>, in particular the one about the <tt>--local</tt> option. 
 
@@ -138,6 +170,24 @@ flush privileges;
 (We don't do "GRANT FILE" for user "arxiv", so the actual table
 loading still has to be done by "root").
 
+
+<h5>Option A</h5>
+
+<p>
+On the old machine:
+<pre>
+mysqldump -u arxiv -p --quick arxiv_xs | gzip > arxiv.sql.gz
+</pre>
+
+<p>Transfer arxiv.sql.gz to the new machine...
+
+<p>
+On the new machine:
+<pre>
+cat arxiv.sql |mysql -u arxiv -p arxiv_xs
+</pre>
+
+<h5>Option B</h5>
 <pre>
 cat DUMPDIR/*.sql | mysql  -u arxiv -p arxiv_xs   # create tables in database
 
@@ -170,6 +220,11 @@ web server, causing the latter to reload the web application).
 Enable web driven reloading (we do it from ant, as described in our build.xml), as per the instructions at
 http://tomcat.apache.org/tomcat-5.5-doc/manager-howto.html
 
+<h5>Source code</h5>
+Check out from cornell's Source Forge, as per https://forge.cornell.edu/sf/projects/my_arxiv_org
+<pre>
+svn checkout --username vmenkov https://forge.cornell.edu/svn/repos/arxiv
+</pre>
 </body>
 
 </html>

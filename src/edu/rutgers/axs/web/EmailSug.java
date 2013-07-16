@@ -279,12 +279,14 @@ public class EmailSug extends ResultsBase {
 
     static final String cp = determineContextPath();
 
-    /** Returns true if this is a test run on a home PC */
+    /** Returns true if this is a test run on a home PC. The list of
+     such machines' host names is hard-coded inside this method. */
     static private boolean isLocal() {
 	try {
 	    String hostname = InetAddress.getLocalHost().getHostName();
 	    System.out.println("running on host = " + hostname);
-	    return hostname.equals("CC2239-Ubuntu");
+	    return hostname.equals("CC2239-Ubuntu") ||
+		hostname.equals("qilin");
 	} catch( 	java.net.UnknownHostException ex) {
 	    return false;
 	}
