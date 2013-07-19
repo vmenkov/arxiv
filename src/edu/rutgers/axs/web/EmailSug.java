@@ -1,6 +1,5 @@
 package edu.rutgers.axs.web;
 
-
 import java.io.*;
 import java.util.*;
 import java.text.*;
@@ -18,7 +17,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.ParseConfig;
 
 
-/** Email the user about his suggestion list.
+/** Sends the user's current suggestion list to the user by email.
 
   @author Vladimir Menkov, Ziyu Fan
 */
@@ -27,8 +26,8 @@ import edu.rutgers.axs.ParseConfig;
 public class EmailSug extends ResultsBase {
     //public String email;
     /** The name of the user to whom we send email */
-	
     public String uname=null;
+
     /** The user object */
     private User r=null;
 
@@ -37,8 +36,6 @@ public class EmailSug extends ResultsBase {
 
     /** For command-line testing on machines that don't allow email sending */
     private static boolean dontSend = false;
-
-
 
     /** Email the user his suggestion list. */
      public EmailSug(HttpServletRequest _request, HttpServletResponse _response) {
@@ -131,9 +128,9 @@ public class EmailSug extends ResultsBase {
 		
     }
 
-    /**  Sending mail.
-	 The hostname for the SMTP server. The typical values are "smtp" (on
-	 Telus ADSL machines) or "localhost" (on hosting.ca, or on cactuar).  
+    /**   The hostname for the SMTP server used for sending mail. The
+	 typical values are "smtp" (on Telus ADSL machines) or
+	 "localhost" (on hosting.ca, or on cactuar).
     */
     //    static String smtp = "smtp";
     static String smtp = "localhost";
@@ -147,7 +144,7 @@ public class EmailSug extends ResultsBase {
     /** The gmail mode is used for local testing only */
     static boolean gmail = isLocal();
 
-    /** Sends a message to the customer service */
+    /** Sends a message to the specified email address. */
     static private boolean sendMail(String uname, String email, String realName)
 	throws javax.mail.MessagingException,  javax.mail.internet.AddressException, IOException, WebException {
 
@@ -192,13 +189,11 @@ public class EmailSug extends ResultsBase {
 	    "<p>Dear " + firm + " user,</p>\n" :
 	    "<p>Dear " + realName + ",</p>\n";
 	
-
 	text += "<p>These are some of the papers posted on My.ArXiv within the last " + vs.estimateEffectiveDays() +
 	    " days. The list is ordered based on your My.ArXiv profile and preferences.</p>\n";
 
 	text += "<p><b>"
 	    + "<a href=" + link + ">" + "Click here to view the most up-to-date recommendations in My.ArXiv." + "</a></b></p>";
-	
 	
 	SearchResults sr = vs.sr;
 	int i = 1;
@@ -279,6 +274,20 @@ public class EmailSug extends ResultsBase {
 
     static final String cp = determineContextPath();
 
+   /** Returns true if this is a test run on a home PC. The list of
+     such machines' host names is hard-coded inside this method. */
+    static private String determineHostname() {
+	try {
+	    String hostname = InetAddress.getLocalHost().getHostName();
+	    System.out.println("running on host = " + hostname);
+	    return hostname;
+	} catch(java.net.UnknownHostException ex) {
+	    // This should not happen in any normal operation
+	    return "localhost";
+	}
+    }
+
+
     /** Returns true if this is a test run on a home PC. The list of
      such machines' host names is hard-coded inside this method. */
     static private boolean isLocal() {
@@ -287,12 +296,20 @@ public class EmailSug extends ResultsBase {
 	    System.out.println("running on host = " + hostname);
 	    return hostname.equals("CC2239-Ubuntu") ||
 		hostname.equals("qilin");
-	} catch( 	java.net.UnknownHostException ex) {
+	} catch(java.net.UnknownHostException ex) {
 	    return false;
 	}
     }
 
-    /** Cludgy... */
+    /** A cludgy way to figure (from inside a standalone command-line
+	application) what the proper context path (including the host
+	name) for our server URL is. Since this code runs inside a
+	command-line application, it has no access to HTTP requests
+	etc that a web server would have; and it cannot fully rely on
+	the response returned by "hostname" either, since the web
+	server may be set up to receive requests under a different URL.
+	Therefore, we largely rely on a hard-coded list of host names.       
+    */
     static String determineContextPath() {
 	String host;
 	int port;
@@ -306,6 +323,12 @@ public class EmailSug extends ResultsBase {
 	return "http://" + host + ":" + port + "/arxiv";
     }
 
+    /** Creates the HTML code for one article entry.
+	@param e The ArticleEntry to format.
+	@param plid Presented list id. It will be embedded into the
+	My.ArXiv URL link, so that My,ArXiv web server will present a
+	correct list once the link is clicked.
+     */
     static String formatArticleEntryForEmail(ArticleEntry e, long plid) {
 	/*
 	String rt = "[score="+e.score+ "]";
@@ -315,7 +338,7 @@ public class EmailSug extends ResultsBase {
 	rt += " ";
 	*/
 
-				//s = "<p style=\"background-color:#e5e5e5\">" + s + "</p>";
+	//s = "<p style=\"background-color:#e5e5e5\">" + s + "</p>";
 
 	/*String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +

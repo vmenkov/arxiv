@@ -135,7 +135,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 			throw new WebException("Users are not allowed to view other users' recommendations");
 		    }  
 	    	}
-		restoreList(em, plist);
+		presentOldList(em, plist);
 		return;
 	    }
 
@@ -500,13 +500,14 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    (mode==DataFile.Type.EE4_SUGGESTIONS?  
 	     (teamDraft? Action.Source.MAIN_EE4_MIX: Action.Source.MAIN_EE4):
 	     (teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL));
-
- 	Action.Source srcType =
+  
+	Action.Source srcType =
 	    mainPage? 	    ( isMail ? mpType.mainToEmail() : mpType) :	   
 	    Action.Source.VIEW_SL;
-	// Presented list is to be recorded if this is a web page shown to the user himself
-	// (rather than to a researcher), or if it's a mail page. There is also a way
-	// to explicitly prevent the recording of a PL (the dryRun option)
+	// Presented list is to be recorded if this is a web page
+	// shown to the user himself (rather than to a researcher), or
+	// if it's a mail page. There is also a way to explicitly
+	// prevent the recording of a PL (the dryRun option)
 	if ((isSelf || isMail) && !dryRun) {
 	    PresentedList plist=sr.saveAsPresentedList(em,srcType,actorUserName,
 						       df, null);
@@ -523,7 +524,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	back then, without any exclusions (due to User Folder  
 	
     */
-    private void restoreList(//DataFile df, 
+    private void presentOldList(//DataFile df, 
 			     EntityManager em,
 			     //boolean mainPage,
 			     PresentedList plist) 
@@ -533,11 +534,17 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 	sr = new SearchResults(plist, searcher);
-	teamDraft = plist.getType().isMix();
+	Action.Source mpType =  plist.getType();
+	teamDraft = mpType.isMix();
 	isRestored=true;
 
 	searcher.close();
 	reader.close();
+
+	asrc= new ActionSource(mpType, plid);
+	Logging.info("Set asrc=" + asrc);
+
+
     }
 
     private SearchResults catSearch(IndexSearcher searcher, Date since) throws IOException 
