@@ -1,31 +1,24 @@
-#!/bin/csh
+#!/bin/sh
+# ant.conf (Ant 1.7.x)
+# JPackage Project <http://www.jpackage.org/>
 
-# Commands supported: 
-# ... list
-# ... show id
-# ... showcoef id
-# ....
+# Validate --noconfig setting in case being invoked
+# from pre Ant 1.6.x environment
+if [ -z "$no_config" ] ; then
+  no_config=true
+  echo "no_config=true"
+fi
 
-set opt="-Xmx1024m -DOSMOT_CONFIG=."
+# Setup ant configuration
+if $no_config ; then
+  # Disable RPM layout
+  rpm_mode=false
+else
+  # Use RPM layout
+  rpm_mode=true
 
-set lib=$home/arxiv/lib
+  # ANT_HOME for rpm layout
+  ANT_HOME=/usr/share/ant
+fi
 
-# lucene-core-1.9.1.jar
-
-set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/commons-fileupload-1.2.1.jar:$lib/commons-io-1.4.jar:$lib/lucene-core-3.3.0.jar:$lib/mysql-connector-java-3.1.12-bin.jar:$lib/nutch-0.7.jar"
-
-set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
-
-# set cp="${cp}:/usr/local/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
-set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
-
-
-set opt="-cp ${cp} ${opt}  -DmaxTerms=8192"
-
-# -Draw=true -DmaxDocs=10000
-
-echo "opt=$opt"
-
-time java $opt $2 $3 edu.rutgers.axs.recommender.Test $1 
-
-
+  echo ANT_HOME=$ANT_HOME

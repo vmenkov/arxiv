@@ -33,6 +33,7 @@
  <property name="build.tmp" location="/tmp"/>
 
 
+<property name="tomcat.home.orie"  value="/usr/share/tomcat6" />
 <property name="tomcat.home.scils"  value="/www/icd.rutgers.edu" />
 <property name="tomcat.home.cactuar"  value="/www/my.arxiv.org" />
 
@@ -44,11 +45,20 @@
 
 <property name="tomcat.home.rutgers"  value="/www/my.arxiv.org" />
  
-<condition property="tomcat.home" 
+<condition property="tomcat.home1" 
 	   value="${tomcat.home.rutgers}" 
 	   else="/usr/local/tomcat">
   <available file="${tomcat.home.rutgers}"/>
 </condition>
+
+<condition property="tomcat.home" 
+	   value="${tomcat.home1}" 
+	   else="${tomcat.home.orie}">
+  <available file="${tomcat.home1}"/>
+</condition>
+
+
+
 <echo message="tomcat.home=${tomcat.home}"/>
 
 <!-- the location of files that will appear at the "root" of our
@@ -71,10 +81,17 @@
 
 <!-- Tomcat libraries; for Tomcat 6.* -->
 <property name="tomcat.lib.rutgers"     value="/usr/local/tomcat55/common/lib"/>
+<property name="tomcat.lib.orie"     value="/usr/share/tomcat6/lib"/>
 
-<condition property="tomcat.lib" value="${tomcat.lib.rutgers}" else="/usr/local/tomcat/lib">
-  <available file="${tomcat.lib.rutgers}" property="tomcat.lib" value="${tomcat.lib.rutgers}"/>
+<condition property="tomcat.lib" value="${tomcat.lib.rutgers}" else="${tomcat.lib.orie}">
+  <available file="${tomcat.lib.rutgers}"/>
 </condition>
+
+
+<condition property="tomcat.lib" value="${tomcat.lib}" else="/usr/local/tomcat/lib">
+  <available file="${tomcat.lib}"/>
+</condition>
+
 
 <echo message="tomcat.lib=${tomcat.lib}"/>
 
@@ -84,9 +101,9 @@
 
 <!-- where to look for OpenJPA, at home and on scils -->
 <condition property="openjpa" 
-	   value="${user.home}/apache-openjpa-2.1.1" 
-	   else="/usr/local/apache-openjpa-2.1.1">
-  <available file="${tomcat.home.rutgers}"/>
+	   value="/usr/local/apache-openjpa-2.1.1"
+	   else="${user.home}/apache-openjpa-2.1.1" >
+  <available file="/usr/local/apache-openjpa-2.1.1"/>
 </condition>
 
 <property name="javamail.lib"  location="../javamail-1.4.5/lib"/>
@@ -130,6 +147,19 @@
  </path>
  <pathconvert property="javaagent" refid="javaagent"/>
 
+
+<!-- An attempt to tell Ant where OpenJPA jars are, for a
+taskdef. This is an alternative to putting them into ~/.ant/lib, which
+works in ant 1.8 but does not seem to work with the ant 1.7
+installation on cornell machines.  See an example at
+http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
+. (2013-07-20). -->
+<path id="openjpa-classpath">
+   <fileset dir="${openjpa}">
+     <include name="openjpa-*.jar"/>
+   </fileset>
+</path>
+
 <!-- An auxiliary target; you aren't likely to use it directly.  It just creates necessary directories -->
 <target name="init">
     <!-- Create the time stamp -->
@@ -168,7 +198,8 @@ code. -->
   <copy  file="META-INF/persistence.xml" todir="${build}/META-INF"/>
 
   <!-- as per instructions in http://openjpa.apache.org/builds/1.0.2/apache-openjpa-1.0.2/docs/manual/ref_guide_integration.html -->
-  <taskdef name="openjpac" classname="org.apache.openjpa.ant.PCEnhancerTask"/>
+  <taskdef name="openjpac" classname="org.apache.openjpa.ant.PCEnhancerTask"
+	   classpathref="openjpa-classpath"/>
 
   <!-- invoke enhancer on all .java files below the model directory -->
   <openjpac>
@@ -351,11 +382,15 @@ Causing the web server to reload our web application. For how this works, see
 http://tomcat.apache.org/tomcat-6.0-doc/manager-howto.html
  -->
 
-<property name="reloadclass.correct" value="org.apache.catalina.ant.ReloadTask"/>
+<property name="reloadclass" value="org.apache.catalina.ant.ReloadTask"/>
+<!-- property name="reloadclass.correct" value="org.apache.catalina.ant.ReloadTask"/>
 
 <condition property="reloadclass" value="${reloadclass.correct}" else="">
   <available classname="${reloadclass.correct}"/>
-</condition>
+</condition -->
+
+
+<echo message="reloadclass=${reloadclass}"/>
 
 <property name="reload.url" value="http://localhost:8080/manager"/>
 <!-- Or try to run ant as follows:
