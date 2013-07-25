@@ -73,6 +73,12 @@ sudo service tomcat6 start   #-- start tomcat
 
 <p>As per above, tomcat gets installed into /usr/share/tomcat6 ; the main command script, in  /usr/sbin/tomcat6 ; logs go to /var/log/tomcat6
 
+<p>And we also need Apache httpd, for "security", you see:
+<pre>
+sudo yum install httpd
+</pre>
+
+<p>Thereafter, the main httpd dir will be in /etc/httpd
 
 <pre>
 # as per https://access.redhat.com/site/documentation/en-US/JBoss_Communications_Platform/5.0/html/Platform_Installation_Guide/chap-Installing_and_Configuring_Java.html
@@ -220,11 +226,26 @@ web server, causing the latter to reload the web application).
 Enable web driven reloading (we do it from ant, as described in our build.xml), as per the instructions at
 http://tomcat.apache.org/tomcat-5.5-doc/manager-howto.html
 
-<h5>Source code</h5>
+<h4>Source code</h4>
 Check out from cornell's Source Forge, as per https://forge.cornell.edu/sf/projects/my_arxiv_org
 <pre>
 svn checkout --username vmenkov https://forge.cornell.edu/svn/repos/arxiv
 </pre>
+
+
+<h4>Third-party libraries</h4>
+
+$ARXIV/tomcat-lib:
+
+<pre>
+ catalina-ant.jar -> /usr/local/tomcat/lib/catalina-ant.jar
+ catalina.jar -> /usr/local/tomcat/lib/catalina.jar
+ jsp-api.jar -> /usr/local/tomcat/lib/jsp-api.jar
+ servlet-api.jar -> /usr/local/tomcat/lib/servlet-api.jar
+</pre>
+
+The above is for Tomcat 5.5; in Tomcat 6, some file names are slightly different, but the directory is the same.
+
 </body>
 
 </html>
