@@ -470,11 +470,17 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return la;
     }
   
-  /** Scans the list of the user's action, taking only "main page"
-	actions into consideration, and finding the most recent (according
-	to the action ID). Note that this may perhaps be done more
-	efficiently with a SQL query instead.
+    /** Scans the list of the user's action, taking only "main page"
+	and "email page" actions into consideration, and finding the
+	most recent (according to the action ID). Note that this may
+	perhaps be done more efficiently with a SQL query instead.
 	
+	<p>FIXME: Using the "most recent action id" may sometimes be
+	deceptive, since the user may sometimes be accessing old
+	presented lists (thanks to the email interface). We may want
+	to use a different criterion when we really are concerned with
+	the most recented suggestion list...
+
 	@return The highest recorded action id, or 0 (if none is recorded)
      */
      public Action getLastMainPageAction() {
@@ -483,12 +489,15 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	//int noSrcCnt=0, noMainCnt=0, mainCnt=0;
 	for(Action a: getActions()) {
 	    if (a.getSrc()==null) {
-		// This is an old record, from before the Action.src field was added
+		// This is an old record, from before the Action.src
+		// field was introduced. Such records aren't generated
+		// anymore.
 		//System.out.println("No src in Action=" + a);
 		//noSrcCnt++;
 		continue;
 	    }
-	    if (!a.getSrc().isMainPage()) {
+	    if (!a.getSrc().isMainPage() && 
+		!a.getSrc().isEmailPage()) {
 		//System.out.println("Not an MP Action=" + a);
 		continue;
 	    }

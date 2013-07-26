@@ -37,7 +37,21 @@ public class EmailSug extends ResultsBase {
     /** For command-line testing on machines that don't allow email sending */
     private static boolean dontSend = false;
 
-    /** Email the user his suggestion list. */
+    /** Email the user his suggestion list. This is a web interface
+	driven way to activate the email sending. Note that, unlike
+	pretty much all other web-driven tools we have, the servlet
+	context path (to be used in URLs inside the email) is *not*
+	taken from the HttpServletRequest, but rather guessed in
+	exactly the same way as when the application is run from the
+	command line.  This is done this way so that the results of
+	the web-driven tool are as similar to those of the
+	command-line application as possible.
+
+	<p> FIXME: we can add a button on the web interface so that
+	the user can specifically request that the servlet's context
+	path be used... This can be useful in tricky deployment situations
+	(e.g., with a web application on a path other than /arxiv).
+     */
      public EmailSug(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 
@@ -142,7 +156,7 @@ public class EmailSug extends ResultsBase {
     public static String businessEmail = "myarxiv-admin-l@list.cornell.edu";
 
     /** The gmail mode is used for local testing only */
-    static boolean gmail = isLocal();
+    static boolean gmail = isLocal(determineHostname());
 
     /** Sends a message to the specified email address. */
     static private boolean sendMail(String uname, String email, String realName)
@@ -181,7 +195,7 @@ public class EmailSug extends ResultsBase {
 	
 	// Get the suggestion list for this user.
 	boolean dryRun = false;
-	ViewSuggestions vs = new ViewSuggestions(uname, dryRun);
+	ViewSuggestions vs = new ViewSuggestions(uname, cp, dryRun);
 
 	String text = "";
 	text += 
@@ -271,7 +285,8 @@ public class EmailSug extends ResultsBase {
 	System.exit(1);
     }
 
-
+    /** The context path to be used in all URLs that will appear in the
+	email message we're producing */
     static final String cp = determineContextPath();
 
    /** Returns true if this is a test run on a home PC. The list of
@@ -289,16 +304,23 @@ public class EmailSug extends ResultsBase {
 
 
     /** Returns true if this is a test run on a home PC. The list of
-     such machines' host names is hard-coded inside this method. */
-    static private boolean isLocal() {
-	try {
-	    String hostname = InetAddress.getLocalHost().getHostName();
-	    System.out.println("running on host = " + hostname);
-	    return hostname.equals("CC2239-Ubuntu") ||
-		hostname.equals("qilin");
+     such machines' host names is hard-coded inside this method. When
+     such a machine is used, we can use the "localhost" URL in emails,
+     since the emails will most likely be read in a web browser on the
+     same machine, possibly even in off-line mode. This contrasts with
+     production runs on a "real" web server, when the true hostname
+     should always be used.
+    */
+    static private boolean isLocal(String hostname) {
+	System.out.println("running on host = " + hostname);
+	return hostname.equals("localhost") ||
+	    hostname.equals("CC2239-Ubuntu") ||
+	    hostname.equals("qilin");
+	/*
 	} catch(java.net.UnknownHostException ex) {
 	    return false;
 	}
+	*/
     }
 
     /** A cludgy way to figure (from inside a standalone command-line
@@ -309,15 +331,26 @@ public class EmailSug extends ResultsBase {
 	the response returned by "hostname" either, since the web
 	server may be set up to receive requests under a different URL.
 	Therefore, we largely rely on a hard-coded list of host names.       
+
+	<p> FIXME: There is a hard-coded assumption here that the web
+	application runs under "arxiv". This is, of course, how we
+	normally deploy it on all, but in principle we may have a test
+	deployment where it is on a different classpath.
     */
     static String determineContextPath() {
 	String host;
 	int port;
-	if (isLocal()) {
+	String hostname =  determineHostname();
+	if (isLocal(hostname)) {
 	    host = "localhost";
 	    port = 8080;
-	} else { 
-	    host =  "my.arxiv.org";
+	} else {
+	    if (hostname.equals("cactuar.scilsnet.rutgers.edu")) {
+		host =  "my.arxiv.org";
+	    } else {
+		//  (hostname.equals("en-myarxiv02.orie.cornell.edu")), etc.
+		host=hostname;
+	    }
 	    port = 80;
 	}
 	return "http://" + host + ":" + port + "/arxiv";

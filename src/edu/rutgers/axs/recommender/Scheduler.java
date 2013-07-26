@@ -218,7 +218,7 @@ public class Scheduler {
 	return createdCnt;
     }
 
-    /** The proper "since" date for suggestion generation */
+    /** The proper "since" date for suggestion list generation. */
     static Date chooseSince( EntityManager em, User u) {
 	String uname = u.getUser_name();
 	//  Date lastViewed = dateOfLastSeenSugList( em, uname);
@@ -234,7 +234,7 @@ public class Scheduler {
 	    since = SearchResults.daysAgo(days);
 	    if (since.after(lastViewed)) since = lastViewed;
 	}
-	Logging.info("For user " + uname + ", last sug list on which we had feedback was generated at " +  lastViewed + "; set since=" + since);
+	Logging.info("For user " + uname + ", last sug list on which we have received feedback was generated at " +  lastViewed + "; set since=" + since);
 	return since;
     }
 

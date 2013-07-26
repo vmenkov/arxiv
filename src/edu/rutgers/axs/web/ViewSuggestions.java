@@ -45,6 +45,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     public DataFile.Type mode= 	    DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1;
     /** Date range on which is the list should be based. (0=all time). */
     public int days= 0;
+    /** The starting point of the data range */
     public Date since = null;
     /** Max length to display. (Note that the suggestion list
      * generator may have its own truncation criteria!)  */
@@ -82,13 +83,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	when a previously generated list is displayed.
     */
     public long plid = 0;
-
- 
-    //    private static enum Mode {
-    //	SUG2, CAT_SEARCH, TEAM_DRAFT;
-    //    };
-
-
 
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
@@ -408,7 +402,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     }
 
     /** Puts together the list of suggestions (recommendations) to
-	display. A variety of modes are supported, depending on
+	display. A variety of modes are supported, depending on the
 	circumstances: reading a saved list from a file, generating a
 	list on the fly, or merging the two with the team-draft
 	algorithm. Whatever list is eventually produced, is both
@@ -416,12 +410,15 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	structure in the database, to be available for researchers
 	later on.
 
+	<p> The data range starting point, this.since, is used if it's
+	already set (which happens in the on-the-fly mode). Otherwise,
+	the date range starting point is picked from the data file.
+
         @param df The data file to read. We will either display the
 	suggestion list from this file, or (if in the teamDraft mode)
 	mix it with the catSearch results.  If null is given, we are in
 	the onTheFly mode, and create the list right here
-	@param since Only used in the onTheFly mode. (Otherwise, the date
-	range is picked from the data file).
+
 	@param em Just so that we could save the presented list
 	@param mainPage It is true if we want to generate a main-page
 	list (either for the web site, or for an email message).
@@ -568,13 +565,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     private void adjustStartat(EntityManager em, boolean mainPage) {
 	if (mainPage && startat>0) {
 
-	    /*
-	    Action la = actor.getLastMainPageAction();
-	    if (la == null) return;
-
-	    PresentedList lastPl = (PresentedList)
-		em.find(PresentedList.class, la.getPresentedListId());
-	    */
 	    // not the most suitable method, but it will do
 	      PresentedList lastPl = PresentedList.findLatestPresentedSugList(em,  actor.getUser_name()); 
 	    if (lastPl==null) return;
@@ -597,8 +587,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	TaskMaster.createMissingDataFiles(), from the TaskMaster process.
      */
     private DataFile saveResults(EntityManager em, IndexSearcher searcher, 
-			     //SearchResults sr, 
-			     Date since) throws IOException {
+				 Date since) throws IOException {
 	DataFile outputFile= new DataFile(actorUserName, 0, mode);
 	outputFile.setDays(Scheduler.maxRange);
 	outputFile.setSince(since);
@@ -759,13 +748,17 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	applications (for sending email, or for testing), rather than
 	inside the web application.
 
-	@param uname The user for whom we want to view suggestions
+	@param uname The user for whom we want to view suggestions.
+
+	@param cp The context path to use in the URLs to generate.
+	Unlike being in a servlet, we can't get the context path out
+	of the HTTP request, so it must be provided explicitly.
 
 	@param _dryRun  If the flag is true, this method will not create
 	a PresentedList entry in the database. This is suitable for testing
 	purposes.
     */
-    ViewSuggestions(String uname, boolean _dryRun) throws IOException, WebException{
+    ViewSuggestions(String uname, String cp, boolean _dryRun) throws IOException, WebException{
 
 	actorUserName=user=uname;
 
@@ -777,8 +770,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	// Unlike being in a servlet, we can't get the context path out of the
 	// request, so we must set it explicitly
-	cp =  "http://my.arxiv.org/arxiv";
-
+	if (cp==null) {
+	    cp =  "http://my.arxiv.org/arxiv";
+	}
 
 	EntityManager em =  Main.getEM();
 	try {
@@ -826,7 +820,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	String uname = argv[0];
 	boolean dryRun = ht.getOption("dryRun", true);
 
-	ViewSuggestions vs = new ViewSuggestions(uname, dryRun);
+	ViewSuggestions vs = new ViewSuggestions(uname, null, dryRun);
 	SearchResults sr = vs.sr; 
 	for( ArticleEntry e: sr.entries) {
 	    System.out.println(e);
@@ -846,6 +840,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
     /** An approximate number to describe the day range of this
 	suggestion list. This can be used e.g. in email messages.
+	The actual underlying value is in the variable "this.since".
      */
     int estimateEffectiveDays() {
 	if (since!=null) {
