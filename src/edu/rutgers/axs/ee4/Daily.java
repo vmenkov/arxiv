@@ -151,8 +151,7 @@ public class Daily {
 	article? <br>
 	0 - ignore, +-1 - med, +-2 - high */
     private static int actionPriority(Action.Op op) {
-	if (op==Action.Op.INTERESTING_AND_NEW ||
-	    op==Action.Op.COPY_TO_MY_FOLDER) return 2;
+	if (op==Action.Op.INTERESTING_AND_NEW || op.isToFolder()) return 2;
 	else if (op==Action.Op.DONT_SHOW_AGAIN ||
 		 op==Action.Op.REMOVE_FROM_MY_FOLDER) return -2;
 	else if (op==Action.Op.EXPAND_ABSTRACT||

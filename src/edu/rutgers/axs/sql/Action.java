@@ -101,6 +101,7 @@ import java.lang.reflect.*;
 	    USELESS,                    // -200
 	    /** Only counts if not canceled by "remove" */
 	    COPY_TO_MY_FOLDER,          // +1000, if not removed
+	    MOVE_TO_MY_FOLDER,          // +1000, if not removed
 	    /** goes with ratings */
 	    DONT_SHOW_AGAIN,            // -50   (no. 13)
 	    /** Activated thru the "view folder" screen */
@@ -125,6 +126,15 @@ import java.lang.reflect.*;
 	    return false;
 	}
 
+	static public final Op[] ALL_FOLDER_OPS =  
+	    {COPY_TO_MY_FOLDER,
+	     MOVE_TO_MY_FOLDER,
+	     REMOVE_FROM_MY_FOLDER};   
+
+	public boolean isToFolder() {
+	    return (this==COPY_TO_MY_FOLDER) ||
+		(this==MOVE_TO_MY_FOLDER);
+	}
     };
 
 

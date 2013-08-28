@@ -53,10 +53,10 @@ public class RatingButton {
      with the SetBased recommender. */
     private static final RatingButton[] allRatingButtons = {
 	(new RatingButton( Action.Op.COPY_TO_MY_FOLDER,
-			  "Move to my folder",
-			  "Move this document to your personal folder. It will not show in recommendations in the future.",
+			  "Copy to my folder",
+			  "Copy this document to your personal folder.",
 			   "folder_page.png",  false, true)).
-	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)"),
+	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)"),	
 
 	(new RatingButton(  Action.Op.REMOVE_FROM_MY_FOLDER,
 			   "Remove from my folder",
@@ -88,7 +88,7 @@ public class RatingButton {
 
 
     static final RatingButton[] ee4RatingButtons = {
-	(new RatingButton( Action.Op.COPY_TO_MY_FOLDER,
+	(new RatingButton( Action.Op.MOVE_TO_MY_FOLDER,
 			  "Interesting: move to my folder, remove from list",
 			  "This document is interesting. Move this document to your personal folder. It will not show in recommendations in the future.",
 			   "folder_page.png", false, true)).
@@ -220,7 +220,7 @@ public class RatingButton {
 	if (program==User.Program.EE4 && (flags & NEED_RM_FOLDER)!=0) {
 	    return op==Action.Op.REMOVE_FROM_MY_FOLDER;
 	}
-	if ((flags & NEED_FOLDER)==0 && op==Action.Op.COPY_TO_MY_FOLDER||
+	if ((flags & NEED_FOLDER)==0 && op.isToFolder()||
 	    (flags & NEED_RM_FOLDER)==0 && op==Action.Op.REMOVE_FROM_MY_FOLDER||
 	    (flags & NEED_HIDE)==0  && op==Action.Op.DONT_SHOW_AGAIN)
 	    return false;

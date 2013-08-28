@@ -625,9 +625,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	but not removed).
     */
     public HashMap<String, Action> getFolder() {
-	Action.Op[] ops =  {Action.Op.COPY_TO_MY_FOLDER,
-			    Action.Op.REMOVE_FROM_MY_FOLDER};   
-	HashMap<String, Action> folder = getActionHashMap(ops);
+	HashMap<String,Action> folder=getActionHashMap(Action.Op.ALL_FOLDER_OPS);
 	Set<String> keys = folder.keySet();
 	//for(String aid: keys) {
 	for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
@@ -641,17 +639,26 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return folder;
     }
 
-    public int getFolderSize() {
-	Action.Op[] ops =  {Action.Op.COPY_TO_MY_FOLDER,
-			    Action.Op.REMOVE_FROM_MY_FOLDER};   
-	HashMap<String, Action> folder = getActionHashMap(ops);
-	Set<String> keys = folder.keySet();
-	int cnt=0;
-	for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
-	    String aid = it.next();
-	    if (folder.get(aid).getOp()==Action.Op.COPY_TO_MY_FOLDER) cnt++;
+    /** The same set pages as returned by getFolder(), but ordered by
+	date, most recent first. This is suitable for display in
+	folder list, as per TJ, 2013-08-20
+     */
+    public Action[] getFolderRecentFirst() {
+	HashMap<String, Action> h = getFolder();
+	Action[] arr = h.values().toArray(new Action[0]);
+	Arrays.sort(arr); // ascending date order
+	// reverse order
+	for(int i=0; i*2 < arr.length-1; i++) {
+	    Action tmp = arr[i];
+	    arr[i] = arr[arr.length-1-i];
+	    arr[arr.length-1-i] = tmp;
 	}
-	return cnt;
+	return arr;
+    }
+
+
+    public int getFolderSize() {
+	return getFolder().size(); 
     }
 
 
@@ -850,16 +857,23 @@ throws Exception
     }
 
     /** Creates a list of articles that are to be excluded from the suggestion
-     list display */
+     list display.
+    
+    FIXME: It would be better to carry out folder-based exclusions based on the
+    type of the action that put a document into the folder (COPY vs MOVE). Of
+    course, doing it would require a retroactive change to the recorded
+    actions for SET_BASED users. (Based on TJ's request, 2013-08-20). */
     public HashMap<String, Action> listExclusions() {
 	if (getProgram()==User.Program.EE4) 
 	    return union(getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN, Action.Op.INTERESTING_AND_NEW}),
 			 getFolder());
 	    
-	// SET_BASED
+	// SET_BASED: we don't exclude based on the folder content (TJ, 2013-08-20)
 	return getExcludeViewedArticles()?    getActionHashMap() :
-	    union(getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN}),
-		  getFolder());
+	    getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN});
+
+	//	    union(getActionHashMap(new Action.Op[] {Action.Op.DONT_SHOW_AGAIN}),
+	//		  getFolder());
 
     }
 

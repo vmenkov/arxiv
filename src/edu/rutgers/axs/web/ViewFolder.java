@@ -48,9 +48,10 @@ public class ViewFolder extends PersonalResultsBase {
 	    IndexSearcher s=  new IndexSearcher( Common.newReader() );
 	    int cnt=0;
 
-	    HashMap<String, Action> folder = actor.getFolder();
+	    //Collection<Action> folder = actor.getFolder().values();
 
-	    for (Action m : folder.values()) {
+	    Action[]  folder = actor.getFolderRecentFirst();
+	    for (Action m : folder) {
 		list.add(m);
 		ArticleEntry e= ArticleEntry.getArticleEntry( s, m.getAid(), cnt+1);
 		// A somewhat cludgy way of presenting the added-to-folder date
@@ -58,6 +59,7 @@ public class ViewFolder extends PersonalResultsBase {
 		entries.add(e); 
 		cnt++;
 	    }
+
 
 	    ArticleEntry.applyUserSpecifics(entries, actor);
 

@@ -45,7 +45,7 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	"viewed", and negative as "demoted".
      */
     static public int pppValue(Action.Op op) {
-	if (op == Action.Op.COPY_TO_MY_FOLDER) {
+	if (op.isToFolder()) {
 	    return 200;
 	} else if (jvMap.get(op)!=null) {
 	    return jvMap.get(op).intValue();
@@ -80,7 +80,7 @@ public class UserPageScore implements Comparable<UserPageScore> {
 
 	for(Action a: actions) {
 	    Action.Op op = a.getOp();
-	    if (op == Action.Op.COPY_TO_MY_FOLDER) {
+	    if (op.isToFolder()) {
 		inFolder=true;
 		fReason = a;
 	    } else if (op == Action.Op.REMOVE_FROM_MY_FOLDER) {

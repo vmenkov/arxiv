@@ -373,7 +373,7 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
 	be shown as already checked?
      */
     public boolean buttonShouldBeChecked( Action.Op op) {
-	if (op==Action.Op.COPY_TO_MY_FOLDER) return isInFolder;
+	if (op.isToFolder()) return isInFolder;
 	else if (op==Action.Op.REMOVE_FROM_MY_FOLDER) return !isInFolder;
 	else return (latestRating==op);
     }
