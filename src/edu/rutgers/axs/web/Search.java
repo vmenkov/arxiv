@@ -24,7 +24,7 @@ public class Search extends ResultsBase {
     /** the actual search results list is stored here */
     public SearchResults sr;
     /** List "paging" */
-    public int startat = 0;
+    public StartAt startat;
 
     /** Used for cat search, to restrict date range (the default) */
     static final public int DEFAULT_DAYS=7;
@@ -43,6 +43,8 @@ public class Search extends ResultsBase {
      */
     public Search(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
+	startat = new StartAt(request);
+
 	if (error) return;
 
 	//customizeSrc();
@@ -74,7 +76,6 @@ public class Search extends ResultsBase {
 	    SessionData sd = SessionData.getSessionData(request);  
             edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 
-	    startat = (int)Tools.getLong(request, STARTAT,0);
 
 	    User u = null;
 
@@ -97,7 +98,7 @@ public class Search extends ResultsBase {
 	    final int M=10;
 
 	    int maxlen = ( user_cat_search ? 10000 : 100);
-	    int necessary = startat + M + exclusions.size() + 1;
+	    int necessary = startat.startat + M + exclusions.size() + 1;
 	    if (maxlen <= necessary) maxlen = necessary;
 	    
 	    if (user_cat_search) {
@@ -132,7 +133,7 @@ public class Search extends ResultsBase {
 		if (u!=null) {
 		    em.getTransaction().begin();
 		    u = User.findByName(em, user); // re-read, just in case   
-		    eq=u.addQuery(query, sr.nextstart, sr.scoreDocs.length);
+		    eq=u.addQuery(query, sr.nextstart.startat, sr.scoreDocs.length);
 		    // FIXME: ideally, we may want to store a link to
 		    // EQ as part of the ActionSource info of recorded actions
 		    em.persist(u);

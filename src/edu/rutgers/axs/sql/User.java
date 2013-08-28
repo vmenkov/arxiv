@@ -712,7 +712,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return queries;
     }
 
-    public EnteredQuery addQuery(String p, int maxlen, int found) {
+     public EnteredQuery addQuery(String p, int maxlen, int found) {
 	EnteredQuery r = new  EnteredQuery( this, p, maxlen, found); 
 	queries.add(r);	
 	return r;

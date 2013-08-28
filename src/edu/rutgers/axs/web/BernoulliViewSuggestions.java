@@ -45,7 +45,6 @@ public class BernoulliViewSuggestions extends ViewSuggestionsBase {
 		return;
 	    }
 
-	    startat = (int)Tools.getLong(request, STARTAT,0);
 	    actor=User.findByName(em, actorUserName);
 
 
@@ -63,7 +62,7 @@ public class BernoulliViewSuggestions extends ViewSuggestionsBase {
 	    final int maxDays=30;
 	    
 	    if (days < 0 || days >maxDays) throw new WebException("The date range must be a positive number (no greater than " + maxDays+"), or 0 (to mean 'all dates')");
-	    initList( startat, em, actor.getCluster());
+	    initList(  em, actor.getCluster());
 
 	}  catch (Exception _e) {
 	    setEx(_e);
@@ -75,7 +74,7 @@ public class BernoulliViewSuggestions extends ViewSuggestionsBase {
     /**
        @param em Just so that we could save the list
      */
-    private void initList(int startat, EntityManager em, int cluster) throws Exception {
+    private void initList( EntityManager em, int cluster) throws Exception {
 
 	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );

@@ -48,18 +48,12 @@
 <%   } else {      %>
 <p>
 
-<P>Your personal folder contains the following <%=main.list.size()%> articles.</p>
+<P>Your personal folder contains the following <%=main.entries.size()%> articles (excluding any articles that you may have asked not to show any more). <!-- (Before exclusions:  <%=main.list.size()%> --></p>
 
 <%
-
-	for(int i=0; i<main.list.size(); i++) {
-	Action a =  main.list.elementAt(i);
-	ArticleEntry e = main.entries.elementAt(i);
+   for(ArticleEntry e: main.entries) {
 %>
 <%= main.resultsDivHTML(e) %>	
-
-
-
  <%  }  %>
 </p>
 

@@ -124,10 +124,10 @@
 
 		<div> <!-- Links to prev/next pages, if necessary -->
 	<% if (sr.needPrev) {	%> 
-	<a href="search.jsp?simple_search=<%=main.queryEncoded%>&startat=<%=sr.prevstart%>">[PREV PAGE]</a> 
+	<a href="search.jsp?simple_search=<%=main.queryEncoded%>&<%=sr.prevstart.asQS()%>">[PREV PAGE]</a> 
 	<% }	
 	 if (sr.needNext) { %>	
-	<a href="search.jsp?simple_search=<%=main.queryEncoded%>&startat=<%=sr.nextstart%>">[NEXT PAGE]</a> 	 
+	<a href="search.jsp?simple_search=<%=main.queryEncoded%>&<%=sr.nextstart.asQS()%>">[NEXT PAGE]</a> 	 
 	<% }	 %>
 		</div>
 		

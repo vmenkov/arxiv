@@ -27,16 +27,16 @@ public class ViewActions extends PersonalResultsBase {
     public Vector<EnteredQuery> qlist = new Vector<EnteredQuery>();
 
     /** List scrolling */
-    public int startat = 0;
+    public StartAt startat;
 
     static final int M = 25;
 
 
     public ViewActions(HttpServletRequest _request, HttpServletResponse _response, boolean self) {
 	super(_request,_response);
+	startat = new StartAt(request);
 
 	actorUserName = self ? user :  getString(USER_NAME, null);
-	startat = (int)Tools.getLong(request, STARTAT,0);
 
 	EntityManager em = sd.getEM();
 	try {
@@ -70,7 +70,7 @@ public class ViewActions extends PersonalResultsBase {
     }
 
     /** Links to prev/next pages; only applies to the "entries" array */
-    public int prevstart, nextstart;
+    public StartAt prevstart, nextstart;
     public boolean needPrev=false, needNext=false;
     
 
@@ -89,14 +89,14 @@ public class ViewActions extends PersonalResultsBase {
 	    IndexSearcher s=  new IndexSearcher( Common.newReader() );
 	    int cnt=0;
 
-	    prevstart = Math.max(startat - M, 0);
-	    nextstart = startat + M;
-	    needPrev = (prevstart < startat);
+	    prevstart = startat.offset(-M);
+	    nextstart = startat.offset(M);
+	    needPrev = (prevstart.startat < startat.startat);
 	
 	    for( Action m:  list) {
-		if (cnt < startat) {
+		if (cnt < startat.startat) {
 		    // skip
-		} else if (cnt < startat + M) {
+		} else if (cnt < startat.startat + M) {
 		    ArticleEntry e=
 			ArticleEntry.getArticleEntry(s, m.getAid(), list.size()-cnt);
 		    // A somewhat cludgy way of presenting the added-to-folder date

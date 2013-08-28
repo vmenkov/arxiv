@@ -46,7 +46,6 @@ public class ResultsBase {
 
     final public static String USER_NAME = "user_name",
 	FORCE="force", FILE="file", ID="id";
-    static final String STARTAT = "startat";
 
     /** These two vars are here (and not e.g. in PersonalResultsBase)
 	because they are also used by Search (which may or may not be
@@ -355,11 +354,11 @@ public class ResultsBase {
 	@param startat The value for the "startat" param in the new page's 
 	URL.
      */
-    public String repageUrl(int startat) {
+    public String repageUrl(StartAt startat) {
 	return repageUrl( startat, null);
     }
 
-    public String repageUrl(int startat, Action.Op op) {
+    public String repageUrl(StartAt startat, Action.Op op) {
 	String sp = request.getServletPath();
 	QS qs = new QS( request.getQueryString());
 
@@ -372,8 +371,7 @@ public class ResultsBase {
 	qs = m.find()?  m.replaceAll( rep ) :
 	    qs + (qs.length()>0 ?  "&" : "") + rep;
 	*/
-	qs.strip(STARTAT);
-	qs.append( STARTAT, ""+startat);
+	startat.insertIntoQS(qs);
 	if (op!=null) 	qs.append(BaseArxivServlet.ACTION, op.toString());
 
 	String x = cp + sp + "?" + qs;
@@ -464,7 +462,65 @@ public class ResultsBase {
     */
     public String onLoadJsCode() { return ""; }
 
-    
+    /** An instance of this class holds information on where the next 
+	page of results should start
+     */
+    public static class StartAt {
+	static final String STARTAT = "startat", START_ARTICLE="start_article";
+	int startat = 0;
+	/** The URL of an article which, if found, ought to be the
+	    first article appearing on this page. This is meant as an
+	    alternative to nextstart, useful in the situations when some
+	    articles in the current page are judged as "Don't show again".
+	*/
+	String startArticle = null;
+	
+	StartAt() {
+	    reset();
+	}
+
+	StartAt(int _startat, String _startArticle) {
+	    startat =_startat;
+	    startArticle = _startArticle;	    
+	}
+
+	StartAt(HttpServletRequest request) {
+	    startat = (int)Tools.getLong(request, STARTAT,0);
+	    startArticle = Tools.getString(request, START_ARTICLE,null);
+	}
+
+	void reset() {
+	    startat = 0;
+	    startArticle = null;
+	}
+
+	/** Produces the StartAt object for the next or previous page.
+	    @param n Offset, which may be positive (for the next page)
+	    or negative (for the prev page)
+	*/
+	StartAt offset(int n) {
+	    return new StartAt(Math.max(startat+n,0), null);
+	}
+
+	/** Modifies a query string so that it will incorporate the info
+	    represented by this StartAt object.
+	 */
+	void insertIntoQS(QS qs) {
+	    qs.strip(STARTAT);
+	    qs.strip(START_ARTICLE);
+	    qs.append( STARTAT, startat);
+	    if (startArticle != null) {
+		qs.append( START_ARTICLE, startArticle);
+	    }
+	}
+
+	public String asQS() {
+	    QS qs = new QS();
+	    insertIntoQS(qs);
+	    return qs.toString();
+	}
+
+    }
 
 }
 

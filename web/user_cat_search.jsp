@@ -126,10 +126,10 @@
 
 		<div> <!-- Links to prev/next pages, if necessary -->
 	<% if (sr.needPrev) {	%> 
-	<a href="user_cat_search.jsp?user_cat_search=true&days=<%=main.days%>&startat=<%=sr.prevstart%>">[PREV PAGE]</a> 
+	<a href="user_cat_search.jsp?user_cat_search=true&days=<%=main.days%>&<%=sr.prevstart.asQS()%>">[PREV PAGE]</a> 
 	<% }	
 	 if (sr.needNext) { %>	
-	<a href="user_cat_search.jsp?user_cat_search=true&days=<%=main.days%>&startat=<%=sr.nextstart%>">[NEXT PAGE]</a> 	 
+	<a href="user_cat_search.jsp?user_cat_search=true&days=<%=main.days%>&<%=sr.nextstart.asQS()%>">[NEXT PAGE]</a> 	 
 	<% }	 %>
 		</div>
 		

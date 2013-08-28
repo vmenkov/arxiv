@@ -67,9 +67,10 @@ public class  SearchResults {
     public Vector<ArticleEntry> excludedEntries= new Vector<ArticleEntry> ();
     
     /** Links to prev/next pages */
-    public int prevstart, nextstart;
+    public ResultsBase.StartAt prevstart, nextstart;
     public boolean needPrev, needNext;
     
+
     public int reportedLength;
     
     public org.apache.lucene.search.Query reportedLuceneQuery=null;
@@ -126,8 +127,9 @@ public class  SearchResults {
     SearchResults( PresentedList plist, IndexSearcher searcher) throws IOException {
  	entries.setSize(0);
 	plist.toArticleList( entries, searcher);
-	prevstart = 0;
-	nextstart = reportedLength = entries.size();
+	prevstart = new ResultsBase.StartAt();
+	reportedLength = entries.size();
+	nextstart = new ResultsBase.StartAt(reportedLength , null);
 	needPrev = false;
 	needNext = false;
     }
@@ -299,10 +301,10 @@ public class  SearchResults {
        of entries reflects their post-exclusion positions.
        
     */
-    void setWindow(IndexSearcher searcher, int startat, int M, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
-	prevstart = Math.max(startat - M, 0);
-	nextstart = startat + M;
-	needPrev = (prevstart < startat);
+    void setWindow(IndexSearcher searcher, ResultsBase.StartAt startat, int M, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
+	prevstart = startat.offset(- M);
+	nextstart = startat.offset(M);
+	needPrev = (prevstart.startat < startat.startat);
 	
 	reportedLength =scoreDocs.length;
 	if (mayHaveBeenTruncated) {
@@ -318,30 +320,44 @@ public class  SearchResults {
 	System.out.println("SearchResults: " + len0 + " results; after exclusions, " + scoreDocs.length + " remains");
 
 	entries.setSize(0); // clear old stuff
-	int pos = startat+1;
+	int pos = startat.startat+1;
 
 	int prevSkipped = 0;
 	int i=0;
-	for(; i< scoreDocs.length && (prevSkipped < startat || entries.size() < M); i++) {
+	boolean skipping = true;
+	for(; i< scoreDocs.length && (skipping || entries.size() < M); i++) {
 	    
 	    ScoreDoc sd = scoreDocs[i];
-	    int docno=sd.doc;
-	    Document doc = searcher.doc(docno);
+	    Document doc = searcher.doc( sd.doc);
 	    
-	    if ( prevSkipped < startat ) {	
+	    if (skipping && startat.startArticle!=null) {
+		String aid=doc.get(ArxivFields.PAPER);
+		if (startat.startArticle.equals(aid)) skipping = false;
+	    }
+
+	    if (skipping && prevSkipped < startat.startat) {
+		// keep skipping 
 		prevSkipped ++;
+		continue;
 	    } else {
-		ArticleEntry e=new ArticleEntry(pos, doc, sd);
-		ArticleEntry e0 =  entriesOrig.get(e.id);
-		if (e0 != null) {
-		    e.researcherCommline = e0.researcherCommline;
-		}
-		entries.add( e);
-		pos++;
-	    }			
+		skipping = false;
+	    }
+	    
+	    ArticleEntry e=new ArticleEntry(pos, doc, sd);
+	    ArticleEntry e0 =  entriesOrig.get(e.id);
+	    if (e0 != null) {
+		e.researcherCommline = e0.researcherCommline;
+	    }
+	    entries.add( e);
+	    pos++;
 	}
 	needNext=(i < scoreDocs.length);
 	//needNext=(scoreDocs.length > nextstart);
+	if (needNext) {
+	    ScoreDoc sd = scoreDocs[i];
+	    Document doc = searcher.doc( sd.doc);
+	    nextstart.startArticle=doc.get(ArxivFields.PAPER);
+	}
     }
 
     /** "foo" matches "foo*" */

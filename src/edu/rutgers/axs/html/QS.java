@@ -4,14 +4,14 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-//import edu.rutgers.axs.web.*;
-//import edu.rutgers.axs.sql.*;
-
-
 /** Utilities for rewriting query strings */
 public class QS {
     
     private String qs;
+
+    public QS() { 
+	this("");
+    }
 
     public QS(String s) { 
 	qs = s; 
@@ -24,23 +24,32 @@ public class QS {
     public void append(String name, String value) {
 	qs +=  (qs.equals("") ? "" : "&") + name + "=" + value;
     }
+ 
+    public void append(String name, int value) {
+	append(name, "" + value);
+    }
 
     /** Strips  name=[A-Za-z_0-9]+ from the query string 
      */
-    public void strip(String name) {
-	Pattern p = Pattern.compile("\\b"+ name + "=\\w+\\b");
-	Matcher m = p.matcher(qs);
-	if (!m.find()) return;
-	String a = qs.substring(0, m.start()), b=qs.substring(m.end());
-	if (a.length()>0) {
-	    if (!a.endsWith("&")) throw new IllegalArgumentException("Cannot parse query string: " + qs);
-	    qs =  a.substring(0,a.length()-1) + b;
-	} else if (b.length()>0) {
-	    if (!b.startsWith("&")) throw new IllegalArgumentException("Cannot parse query string: " + qs);
-	    qs = b.substring(1);
-	} else {
-	    qs = "";
+    public void strip(final String name) {
+	String[] z = qs.split("\\&");
+
+	int found = -1;
+	for(int i=0; i<z.length; i++) {
+	    if (z[i].startsWith( name + "=")) {
+		found = i;
+		break;
+	    }
 	}
+
+	if (found<0) return;
+	StringBuffer b = new StringBuffer(qs.length());
+	for(int i=0; i<z.length; i++) {
+	    if (i==found) continue;
+	    if (b.length()>0) b.append("&");
+	    b.append(z[i]);
+	}
+	qs = b.toString();
     }
 
     /**

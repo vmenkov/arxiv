@@ -108,8 +108,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	EntityManager em = sd.getEM();
 	try {
 	    
-	    startat = (int)Tools.getLong(request, STARTAT,0);
-
 	    // A special mode used for  accessing the (possibly dated) main
 	    // page from an email message
 	    plid = Tools.getLong(request, "plid", 0);
@@ -474,8 +472,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	}
 	adjustStartat(em, mainPage);
 	sr.setWindow( searcher, startat, M, exclusions);
-	if (startat>0 && sr.entries.size()==0) {
-	    startat=0;
+	if (startat.startat>0 && sr.entries.size()==0) {
+	    startat.reset();
 	    sr.setWindow( searcher, startat, M, exclusions);	    
 	}
 	ArticleEntry.applyUserSpecifics(sr.entries, actor);
@@ -563,14 +561,14 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	the main page.
      */
     private void adjustStartat(EntityManager em, boolean mainPage) {
-	if (mainPage && startat>0) {
+	if (mainPage && startat.startat>0) {
 
 	    // not the most suitable method, but it will do
 	      PresentedList lastPl = PresentedList.findLatestPresentedSugList(em,  actor.getUser_name()); 
 	    if (lastPl==null) return;
 	    if (lastPl.getDataFileId()!= df.getId()) {
-		Logging.info("Reset startat from " + startat + " to 0, because there have been no views of DF=" + df.getId() + " yet."); //"Last main page action was " + la.getId());
-		startat = 0;
+		Logging.info("Reset startat from " + startat.startat + " to 0, because there have been no views of DF=" + df.getId() + " yet."); //"Last main page action was " + la.getId());
+		startat.reset();
 	    }
 	}
     }
@@ -597,7 +595,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// issues.
 	final boolean canWriteFiles = false;
 
-	sr.setWindow( searcher, 0, sr.scoreDocs.length , null);
+	sr.setWindow( searcher, new StartAt(), sr.scoreDocs.length , null);
 
 	if (canWriteFiles) {
 	    File f = outputFile.getFile();
