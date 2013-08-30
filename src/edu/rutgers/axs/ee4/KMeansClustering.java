@@ -6,20 +6,29 @@ import java.text.*;
 
 import edu.rutgers.axs.sql.Util;
 
-/** Our own implementation on KMeans clustering. */
+/** Our own implementation of k-means clustering. The objects being
+    clustered are of the DataPoint class (or, actually, one of its
+    subclasses). */
 class KMeansClustering {
     /** Input: the objects to be clustered */
-    //final Vector<SparseDataPoint> vdoc;
     final Vector<? extends DataPoint> vdoc; 
 
     /** Output: an array with the cluster id assigned to each object */
     int asg[];
-    /** Cluster centers */
+    /** Cluster centers. */
     DenseDataPoint[] centers;
     final int nterms;
     
     /** Initializes the clustering object using a specified
 	list of pre-computed center points.
+	@param _vdoc The list of objects to cluster
+	@param _nterm The dimension of the vector space to which the
+	objects from _vdoc belong. In case of sparse vectors, this is
+	the number of distinct features; in case of dense vectors, the
+	size of each one.
+	@param _centers Initial centers of the clusters. During the
+	clustering process, the cluster centers will change, but their
+	number will stay constant.
     */
     KMeansClustering(int _nterms, 
 		     //Vector<SparseDataPoint> _vdoc, 
@@ -32,6 +41,7 @@ class KMeansClustering {
 
     /** Initializes the clustering object using a specified
 	set of data points to serve as cluster centers.
+ 	@param _vdoc The list of objects to cluster
     */
     KMeansClustering(int _nterms, Vector<? extends DataPoint> _vdoc, int[] ci) {
 	nterms = _nterms;

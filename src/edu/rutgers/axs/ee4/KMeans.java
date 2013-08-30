@@ -33,6 +33,8 @@ public class KMeans {
 
     /** Classifies new docs, using the stored datapoint files for
 	cluster center points. 
+	@param z
+	@param scoreDocs list of documents to classify
 	@param mT output parameter; number of docs per class
     */
     static void classifyNewDocs(EntityManager em, ArticleAnalyzer z, ScoreDoc[] scoreDocs,

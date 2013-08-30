@@ -565,7 +565,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     /** Similar to getAllActionsHashMap(), but only looks at actions with id
 	greater than id0.
 
-	@param dayType If not null, only actions on days of these
+	@param allowedDayTypes If not null, only actions on days of these
 	types are taken into consideration
      */
     public HashMap<String, Vector<Action>> getAllActionsSince(long id0, User.Day[] allowedDayTypes) {

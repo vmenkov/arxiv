@@ -17,7 +17,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     articles that was presented to the user within a single web page.   
     This is typically a section (10-25 articles) of the search results
     list produced for a particular query (or for the user's categories
-    of interest), or a suggestion list produced by one algorithm or another.
+    of interest), or of a suggestion list produced by one algorithm or another.
 
     <p> Links to a PresentedList are contained in the "action source"
     information of all user actions where it makes sense. This allows

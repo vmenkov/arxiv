@@ -10,12 +10,27 @@ import edu.rutgers.axs.web.Tools;
 import edu.rutgers.axs.web.ResultsBase;
 import edu.rutgers.axs.html.QS;
 
+/** An ActionSource objects indicates in what kind of context the user
+    has carried out a particular action. Support is provided for
+    tracking the user's action context through a sequence of visited
+    pages. This is usually done by means of encapsulating the
+    ActionSource information into a URL: an ActionSource object can be
+    converted into a string that can be inserted into a URL, and it
+    can also be initialized based on the data extracted from a URL.
+ */
 public class ActionSource {
 
     /** Special (optional) parameters for JudgmentServlet, Search, etc */
     private final static String SRC = "src", PL = "pl";
 
+    /** The context type (e.g., vieweing the main page, viewing the
+	user folder, etc.) */
     public Action.Source src=Action.Source.UNKNOWN;
+    /** Whenever applicable, refers to the particular {@link edu.rutgers.axs.sql.PresentedList presented list}
+	(typically, a one-page section of the suggestion list) in the
+	context of which the action was carried out. The value of 0 means that
+	the context did not involve a PresentedList.
+     */
     public long presentedListId=0;
     public ActionSource( Action.Source _src, long _presentedListId) {
 	src = _src;
@@ -25,9 +40,9 @@ public class ActionSource {
     /** Used for inserting ActionSource info into a FilterServlet url */
     static private String myPrefix = "/my.";
 
-    /** Generating the string that needs to be inserted into the
+    /** Generates the string that needs to be inserted into the
 	beginning of PathInfo when ArticleServlet redirects to 
-	FilterServlet
+	{@link edu.rutgers.axs.web.FilterServlet}.
      */
     public String toFilterServletString() {
 	String q="";
@@ -45,9 +60,15 @@ public class ActionSource {
 	Pattern.compile( Pattern.quote(myPrefix + PL + ":" ) + "([0-9]+)");
 
     /** Checks if a special text, such as '/my.src:MAIN_SL/my.df:128',
-	has been prepended to the PathInfo, to indicate that 
+	has been prepended to the PathInfo, to indicate the action
+	source. If this has been found, initializes this ActionSource
+	object accordingly, and removes the action source information
+	from the path. This is used when processing {@link
+	edu.rutgers.axs.web.FilterServlet} requests.
 
-	@param asrc Primarily an output parameter: modified based on what we've found
+	@param pi The PathInfo string to be analyzed
+	@return What's left of the PathInfo string after the
+	ActionSource information (if found) has been removed from it.
      */
     public String extractFromFilterServletPathInfo(String pi) {
 	Matcher m = patSrc.matcher(pi);

@@ -230,7 +230,7 @@ public class Reflect {
 	return b.toString();
     }
 
-    /** More pretty version of {@link #reflectToString()} */
+    /** More pretty version of {@link #reflectToString(Object o)} */
     public static String  customizedReflect(Object o, PairFormatter f) {
 	StringBuffer b = new StringBuffer();
 	Reflect r = Reflect.getReflect(  o.getClass());

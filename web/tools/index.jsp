@@ -49,18 +49,17 @@
 </ul>
 
 
-<!--
 <h2>Documentation Center</h2>
 
 <ul>
 
+<li><A href="../admin/install.html">Deployment Guide</a> - for maintenance programmers and system administrators
+
+<li><A href="../javadoc/">API documentation</a>
+
+<!--
 <li><A href="manual.html">User's Guide</a> - for interviewers and data researchers
 
-<li><A href="tools/listRules.jsp">The transition rules for all survey pages</a>: summary of all "skips"; names of fields where inputs are recorded
-
-<li><A href="deployment.html">Deployment Guide</a> - for maintenance programmers
-
-<li><A href="javadoc/">API documentation</a>
 -->
 
 </ul>

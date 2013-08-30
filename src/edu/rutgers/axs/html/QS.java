@@ -53,7 +53,7 @@ public class QS {
     }
 
     /**
-       @param A Vector of (name, value) pairs, e.g. such as those produced by actionSource.toQueryPairs()
+       @param pairs A Vector of (name, value) pairs, e.g. such as those produced by actionSource.toQueryPairs()
      */
     public void append( Vector<String[]> pairs) {
 	for(String[] p:  pairs) {

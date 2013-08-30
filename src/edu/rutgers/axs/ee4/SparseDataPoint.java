@@ -7,10 +7,11 @@ import java.text.*;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 
-/** A sparse vector, for use in KMeans */
+/** A sparse vector, for use in KMeans. An object of this type is
+    constructed from a document stored in Lucene.  */
 class SparseDataPoint extends DataPoint {
 
-    /** Feature ids, as per the FeatureDictionary, in increasing order */
+    /** Feature ids, as per the feature dictionary, in increasing order */
     int[] features;
     /** List of feature ids */
     //public int[] getFeatures() { return features; }
@@ -18,6 +19,12 @@ class SparseDataPoint extends DataPoint {
     /** Number of non-zeros */
     public int size() { return features.length; }
 
+    /** Initializes the vector using the term frequencies for a document
+	@param h Term frequencies (processed)
+	@param s The feature dictionary, which maps (or will map)
+	terms (strings) to integer term id.
+	@param z Is used to get certain document stats from the SQL database
+     */
     SparseDataPoint(HashMap<String, Double> h, DocSet s, ArticleAnalyzer z) {
 	int n = h.size();
 	features = new int[n];

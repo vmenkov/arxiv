@@ -40,13 +40,20 @@ public class EditUser extends Participation  {
     final static String EE4_PREFIX="ree4";
 
 
-    /** @param selfForm Set this to true when invoking this
-	constructor from the form for editing one's own entry (the
-	only form that can be used by non-admins)
-	@param create Set this param  to true (and selfForm=false)
-	when invoking the constructor from the page that creates
-	a new user entry and fills its fields at the same time.
-    */
+    /** A versatile method for editing a user's record in the SQL
+	database. The method is invoked from a variety of web pages,
+	both those accessible to the user himself (self-service) and
+	those for the site administrator.
+
+	@param mode Depends on the circumstances under which the
+	method is called. The value is EDIT_SELF when we invoke this
+	constructor from the form for user's editing one's own entry
+	(historically this was the only form that can be used by
+	non-admins). CREATE_SELF is used when a user registers for the
+	first time. UNSUBSCRIBE refers to the user's clicking on the
+	special
+
+  */
     public EditUser(HttpServletRequest _request, HttpServletResponse _response, Mode mode) {
 	super(_request,_response,mode);
 

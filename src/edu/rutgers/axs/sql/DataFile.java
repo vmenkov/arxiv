@@ -502,16 +502,16 @@ import edu.rutgers.axs.ParseConfig;
 	created for the specified task. Picks more or less unique name
 	for it.
 
+	<p>
 	The method is static-synchronized to ensure that the
 	"fileCnt++" thing is atomic.
 
+	<p>
 	FIXME: the name won't be unique if we have 2 processes - some hours
-	apart - with the same pid!
+	apart - with the same pid! In reality, of course, this is rather
+	unlilely (less than 1e-4 probability).
 	
-	@return The DataFile object to be created for the task, or
-	null if no file needs to be created. The object so created
-	needs to be "persisted" later.
-    */
+   */
     public DataFile(Task task) {
     	this(task, task.getOp().outputFor()); 
     }

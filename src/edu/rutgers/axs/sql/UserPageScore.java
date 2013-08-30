@@ -56,8 +56,9 @@ public class UserPageScore implements Comparable<UserPageScore> {
     
 
     /** Computes the "score" of a page for a user based on the user's
-	actions for that page. The score is computed as the sum of
-	terms determined by the following factors:
+	actions for that page. Fills the array "reasons"
+	accordingly. The score is computed as the sum of terms
+	determined by the following factors:
 
 	@param actions A sorted (in ascending date order) array of the
 	user's actions with respect to the page.
@@ -68,7 +69,6 @@ public class UserPageScore implements Comparable<UserPageScore> {
 	<li>The "strongest" view type
 	</ol>
 
-	@param outReasons An output parameter: the actions that contributed to the score
     */
     public UserPageScore(String _aid, Vector<Action> actions) {
 	aid= _aid;

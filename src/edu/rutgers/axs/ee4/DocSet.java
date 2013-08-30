@@ -4,7 +4,8 @@ import java.util.*;
 import java.io.*;
 import java.text.*;
 
-/** A feature dictionary... */
+/** A feature dictionary. Used as an auxiliary class when preapring
+    data for the k-means clustering. */
 class DocSet {
     private Vector<String> words=new Vector<String>();
     private HashMap<String,Integer> word2pos = new HashMap<String,Integer>();

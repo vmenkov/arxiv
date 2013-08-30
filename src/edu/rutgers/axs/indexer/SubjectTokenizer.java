@@ -17,7 +17,7 @@ public final class SubjectTokenizer extends Tokenizer {
  
   /**
    * 
-   * @param input The input reader
+   * @param _text Text to tokenize
    *
    * 
    */

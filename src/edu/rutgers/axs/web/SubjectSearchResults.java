@@ -13,14 +13,15 @@ import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.ParseConfig;
 
-/** Subject search */
+/** Category (subject) search; used to retrieve articles in particular
+    categories. */
 public  class SubjectSearchResults extends SearchResults {
+
     /**Performs a Lucene search. Creates an SearchResults object
        that's a wrapper around the results array produced by Lucene (without
        My.ArXiv's own re-ordering - that is to be done separately).
 
-       @param cat
-       @param startat How many top search results to skip (0, 25, ...)
+       @param cats Array of categories.
     */
     public SubjectSearchResults(IndexSearcher searcher, String[] cats, 
 				Date since, int maxlen) 
