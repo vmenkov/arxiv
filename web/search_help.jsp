@@ -14,7 +14,7 @@ These are examples of queries you can type into the search box:
 <br>
 
 <dt>"dying rabbit"
-<dd>Phrasal query: All occurrence of the exact phrase "white rabbit". Double quotes are used for phrasal queries. Phrasal queries cannot be combined with anything else; i.e., if you use a double-quoted phrase, you can't have anything else in the search box besides it.
+<dd>Phrasal query: All occurrence of the exact phrase "dying rabbit". Double quotes are used for phrasal queries. Phrasal queries cannot be combined with anything else; i.e., if you use a double-quoted phrase, you can't have anything else in the search box besides it.
 
 <dt>dying rabbit
 <dd>The article  must include both "dying" and "rabbit", in any positions, in any field. Any number of terms can be listed together like this; it is an AND query. 
@@ -26,7 +26,7 @@ These are examples of queries you can type into the search box:
 <dd>The authors list must include Oller, and there must be the word "rabbit" in any field.
 
 <dt>squirrel*
-<dd>Prefix query: All occurrences of the words "squirrel", "squirrels", "squirreles", etc; "*" is a wild card. The "*" can only be used at the end of a word.
+<dd>Prefix query: All occurrences of the words "squirrel", "squirrels", "squirreled", etc; "*" is a wild card. The "*" can only be used at the end of a word.
 
 <dt>
 forest squirrel*

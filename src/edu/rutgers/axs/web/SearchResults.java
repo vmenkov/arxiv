@@ -535,12 +535,12 @@ public class  SearchResults {
     }
 
     static void usage(String m) {
-	/*
-	System.out.println("Arxiv Importer Tool");
-	System.out.println("Usage: java [options] ArxivImporter all [max-page-cnt]");
-	System.out.println("Optons:");
-	System.out.println(" [-Dtoken=xxx]");
-	*/
+	System.out.println("Search query interface tool");
+	System.out.println("Usage:\n");
+	System.out.println(" java -Dcat=true [-Dout=out.csv] [-Ddays=n] SearchResults cat1 [cat2 ...]");
+	System.out.println(" java [-Dout=out.csv] SearchResults query");
+	//	System.out.println("Optons:");
+	//	System.out.println("Usage: java [options] SearchResults");
 	if (m!=null) {
 	    System.out.println(m);
 	}
@@ -548,7 +548,13 @@ public class  SearchResults {
     }
 
 
-    /** For testing */
+    /** This method is used for command-line testing of our search
+	engine which is normally used as part of a web application. 
+
+	<p>If the only command-line argument is "-", we read arguments
+	from the standard input instead. This is convenient for 
+	long lists, or when '*' and/or other special characters are involved.
+    */
     static public void main(String[] argv) throws Exception {
 	if (argv.length==0) usage();
 
@@ -556,30 +562,33 @@ public class  SearchResults {
 	//int maxDocs = ht.getOption("maxDocs", -1);
 	boolean cat = ht.getOption("cat", false);
 	boolean custom = ht.getOption("custom", false);
+	String outfile = ht.getOption("out", null);
 
 	int days=ht.getOption("days", 0);
 	Date since = (days <=0) ? null: daysAgo(days);
 
-	String s="";
-	for(String x: argv) {
-	    if (s.length()>0) s += " ";
-	    s += x;
-	}
+	// max number of results we'll be asking Lucene for
+	int maxlen = ht.getOption("maxlen", cat? 10000 : 200);
 
+	String[] z =  (argv.length == 1 && argv[0].equals("-")) ?
+	    readStdin() : argv;
+	
 	System.out.println( (cat? "Subject search":"Text search") +
-			    " for: " + s + "; since " + since);
-
+			    " for: " + join(" ",z) + "; since " + since);
+      
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
 
 	//	HashMap<String, Action> exc = new HashMap<String, Action>();
 	SearchResults sr;
 	if (cat) {
-	    sr = new SubjectSearchResults(searcher, argv, since, 10000);
-	    sr.reorderCatSearchResults(reader,  argv);
+	    sr = new SubjectSearchResults(searcher, z, since, maxlen);
+	    sr.reorderCatSearchResults(reader,  z);
 	} else {
-	    sr =  new TextSearchResults(searcher, s,  200);
+	    String s = join(" ", z);
+	    sr =  new TextSearchResults(searcher, s,  maxlen);
 	}
+
 
 	// "windowing" not needed here
 	//    sr.setWindow( searcher, startat, exc);
@@ -587,25 +596,64 @@ public class  SearchResults {
 
 	int cnt=0;	
 	System.out.println("Found " +  sr.scoreDocs.length + " results");
+	if (sr.mayHaveBeenTruncated) {
+	    System.out.println("The list may have been truncated (maxlen="+maxlen+")");
+	}
+
+	PrintWriter fw = null;
+	if (outfile != null) {
+	    fw = new PrintWriter(new FileWriter(outfile));
+	    System.out.println("Writing the list of document ArXiv IDs to file " + outfile);
+	}
 
   	for(ScoreDoc q: sr.scoreDocs) {
 	    cnt++;
-	    if (cnt > 10) {
-		System.out.println("List truncated");
-		break;
-	    }
 	    int docno = q.doc;
 	    Document d = reader.document(docno);
-	    System.out.println("["+cnt+"][s="+q.score+"] " + d.get(ArxivFields.PAPER) +
-			       "; " + d.get(ArxivFields.CATEGORY) +
-			       "; " + d.get(ArxivFields.TITLE) +
-			       " ("+ d.get(ArxivFields.DATE)+")");
+	    String aid = d.get(ArxivFields.PAPER);
+	    if (fw!=null) {
+		fw.println(aid);
+	    } else {
+		if (cnt > 10) {
+		    System.out.println("List truncated. To view the complete list, use the option -Dout=filename");
+		    break;
+		}
+
+		System.out.println("["+cnt+"][s="+q.score+"] " + aid +
+				   "; " + d.get(ArxivFields.CATEGORY) +
+				   "; " + d.get(ArxivFields.TITLE) +
+				   " ("+ d.get(ArxivFields.DATE)+")");
+	    }
 
 	}
 	searcher.close();
 	reader.close();
      
+	if (fw!=null) fw.close();
+
     }
 
+    /** Reads all lines of standard input. */
+    static String[] readStdin() throws IOException {
+	Vector<String> v = new Vector<String>();
+	LineNumberReader r = new LineNumberReader(new InputStreamReader(System.in));
+	String s = null;
+	while((s=r.readLine())!=null) {
+	    s = s.trim();
+	    if (s.equals("") || s.startsWith("#")) continue;
+	    v.add(s);
+	}
+	return v.toArray(new String[0]);
+    }
+    
+    /** Like "join()" in perl. */
+    static String join(String sep, String[] v) {
+	StringBuffer s = new StringBuffer();
+	for(String z: v) {
+	    if (s.length()>0) s.append(" ");
+	    s.append(z);
+	}
+	return s.toString();
+    }
 
 }

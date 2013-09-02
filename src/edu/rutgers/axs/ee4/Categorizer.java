@@ -22,6 +22,12 @@ class Categorizer {
 
     /** Are we converting from minor to major categories? */
     final boolean toMajor;
+    /**
+       @param _toMajor If this flag is true, the actual category
+       stored in the article will be converted to the "major category"
+       (e.g. "physics.bio-ph" to "physics"), thus resulting in a
+       "coarser" categorization.
+     */
     Categorizer(boolean _toMajor) {
 	toMajor = _toMajor;
     }

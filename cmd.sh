@@ -2,11 +2,13 @@
 
 # Commands supported: 
 # ... list
-# ... show id
-# ... showcoef id
-# ....
+# ... show aid
+# ... showcoef aid|docno
+# ... showcoef2 aid [aid2 ...]
+# cat aid-list.txt | ... showcoef2 -
 
-set opt="-DOSMOT_CONFIG=."
+
+set opt="-DOSMOT_CONFIG=$home/arxiv/arxiv"
 
 set lib=$home/arxiv/lib
 
@@ -22,6 +24,6 @@ set opt="-cp ${cp} ${opt}"
 #echo "opt=$opt"
 
 #echo java $opt edu.cornell.cs.osmot.indexer.Indexer $1 $2 $3
-java $opt edu.rutgers.axs.indexer.Indexer $1 $2 $3
+java $opt edu.rutgers.axs.indexer.Indexer $argv
 
 

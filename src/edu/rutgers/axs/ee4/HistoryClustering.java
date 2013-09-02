@@ -30,7 +30,7 @@ import edu.cornell.cs.osmot.options.Options;
 
 /** Document clustering based on user-ArXiv interaction history, for
     Peter Frazier's Exploration Engine ver. 4. For details, see PF's
-    2013-06-07 message.
+    2013-06-07 message, "new clustering scheme (was Re: EE4 developments)".
 
     
  */
@@ -63,7 +63,7 @@ public class HistoryClustering {
 	return aid;
     } 
 
-    /** Reads a JSON file, extracts relevants entries, and writes them
+    /** Reads a JSON file, extracts relevant entries, and writes them
 	into separate files (one per category).
      */
     private static void splitJsonFile(String fname) throws IOException, JSONException {

@@ -8,7 +8,7 @@ import java.lang.reflect.*;
 import java.lang.annotation.*;
 
 
-/** Information related to a class of documents. as per the EE ver 4 writeup.
+/** Information related to a class of documents, as per the EE ver 4 writeup.
  */
 @Entity 
     public class EE4DocClass extends OurTable 

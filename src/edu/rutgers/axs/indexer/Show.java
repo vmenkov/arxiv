@@ -31,11 +31,17 @@ class Show {
     private IndexReader reader;
     
     public Show()  throws IOException {
+	this(true);
+
+    }
+    public Show(boolean verbose)  throws IOException {
 	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
 	reader =  IndexReader.open( indexDirectory);  
-   	int numdocs = reader.numDocs();
-   	int maxdoc = reader.maxDoc();
-	System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
+	if (verbose) {
+	    int numdocs = reader.numDocs();
+	    int maxdoc = reader.maxDoc();
+	    System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
+	}
     }
 
     /** Interpret a given string (a command line argument) as an
@@ -57,7 +63,7 @@ class Show {
 
 	IndexSearcher s = new IndexSearcher( reader );
    	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
-	System.out.println("query=("+tq+")");
+	//System.out.println("query=("+tq+")");
 	TopDocs 	 top = s.search(tq, 1);
 	ScoreDoc[] 	scoreDocs = top.scoreDocs;
 	if (scoreDocs.length < 1) {
@@ -94,11 +100,15 @@ class Show {
 	System.out.println("Document=" + doc);
     }
 
-    /** Note: using 
+    /** Shows the terms and coefficients for a particular document.
+
+	<p>Note: using 
 	long utc = reader.getUniqueTermCount();
 	won't do, as we get an java.lang.UnsupportedOperationException: 
 	"this reader does not implement getUniqueTermCount()".
 	This is why we use subreaders.
+
+	@param is The ArXiv document ID
     */
    void showCoef(String id) throws IOException {
 	int docno = find(id);
@@ -106,7 +116,11 @@ class Show {
 	showCoef(docno);
     }
 
-    void showCoef(int docno) throws IOException {
+    /** Shows the terms and coefficients for a particular document.
+
+	@param docno The internal Lucene document ID
+    */
+   void showCoef(int docno) throws IOException {
 
 	//long utc = reader.getUniqueTermCount();
 	//System.out.println("Index has "+utc +" unique terms");
@@ -124,6 +138,13 @@ class Show {
 	showField(docno, doc,ArxivFields.CATEGORY);
     }
 
+    /** Shows the terms and coefficients for a particular field of a
+     * particular document.
+
+	@param docno The internal Lucene document ID
+	@param doc The Lucen document object
+	@param name The field name
+    */
     void showField(int docno,	Document doc, String name)throws IOException  {
 	Fieldable f = doc.getFieldable(name);
 	System.out.println("["+name+"]="+f);
@@ -140,5 +161,47 @@ class Show {
 	    System.out.println(" " + terms[i] + " : " + freqs[i] + "; df=" +reader.docFreq(term) );
 	}
     }
+
+  /** The concise version of {@link #showCoef(String)}; used for
+	producing CSV output
+     */
+    void showCoef2(String aid) throws IOException {
+	int docno = find(aid);
+	Document doc = reader.document(docno);
+	showField2(aid, docno, doc,ArxivFields.CATEGORY);
+ 	for(String name: SearchResults.searchFields) {
+	    showField2(aid, docno, doc, name);
+	}
+    }
     
+    static void showFieldHeaders2() {
+	System.out.println("#ArxivID,FieldName,Term,DF,TF");
+    }
+
+
+    /** The concise version of {@link #showField(int, doc, name)}; used for
+	producing CSV output
+     */
+    void showField2(String aid, int docno, Document doc, String name)throws IOException  {
+	Fieldable f = doc.getFieldable(name);
+	//System.out.println("["+name+"]="+f);
+	TermFreqVector tfv=reader.getTermFreqVector(docno, name);
+	if (tfv==null) {
+	    //System.out.println("--No terms--");
+	    return;
+	}
+	//System.out.println("--Terms--");
+	int[] freqs=tfv.getTermFrequencies();
+	String[] terms=tfv.getTerms();
+	String q = "" + '"';
+	for(int i=0; i<terms.length; i++) {
+	    Term term = new Term(name, terms[i]);
+	    System.out.println(q + aid + q + "," +
+			       q + name + q +"," +
+			       q + terms[i] + q + "," + 
+			       freqs[i] + "," +
+			       reader.docFreq(term) );
+	}
+    }
+
 }

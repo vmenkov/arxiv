@@ -1,6 +1,6 @@
 #!/bin/csh
 
-set opt="-DOSMOT_CONFIG=."
+set opt="-DOSMOT_CONFIG=$home/arxiv/arxiv"
 
 set lib=$home/arxiv/lib
 
@@ -10,9 +10,9 @@ set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/co
 
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 
-set opt="-cp ${cp} ${opt} -Dcat=true -Ddays=90 -Dcustom=true"
+set opt="-cp ${cp} ${opt} -Dcat=true -Ddays=180 -Dcustom=true"
 
 echo "opt=$opt"
 
-/usr/bin/time java $opt edu.rutgers.axs.web.SearchResults "$1" "$2" "$3"
+/usr/bin/time java $opt -Dout=tmp.csv edu.rutgers.axs.web.SearchResults $argv
 

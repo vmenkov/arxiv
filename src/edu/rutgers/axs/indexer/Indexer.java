@@ -689,6 +689,24 @@ public class Indexer {
 		int docno=show.figureDocno(v);
 		show.showCoef(docno); 
 	    }
+	} else if (args[0].equals("showcoef2")) {  // CSV format
+	    Show show = new Show(false);
+	    show.showFieldHeaders2();
+	    for(int j=1; j<args.length; j++) {
+		String v = args[j];
+		if (v.equals("-")) {
+		    // read doc IDs from the standard input
+		    LineNumberReader r = new LineNumberReader(new InputStreamReader(System.in));
+		    String s = null;
+		    while((s=r.readLine())!=null) {
+			s = s.trim();
+			if (s.equals("") || s.startsWith("#")) continue;
+			show.showCoef2(s); 
+		    }
+		} else {
+		    show.showCoef2(v); 
+		}
+	    }
 	} else if (args[0].equals("list")) {
 	    int max=-1;
 	    if (args.length >1) {

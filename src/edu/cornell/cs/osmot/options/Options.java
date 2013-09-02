@@ -237,7 +237,7 @@ public class Options {
 	    File f = new File(path);
 	    if (f.exists()) {
 		if (f.isDirectory()) {
-		    System.err.println("For "+paths[i]+", directory "+path + " already exists");		
+		    //System.err.println("For "+paths[i]+", directory "+path + " already exists");		
 		} else {
 		    throw new  IOException("Path " +path+ " already exists, but is not a directory");
 		}
