@@ -12,30 +12,6 @@ As per Simeon Warner, 2012-12-07:
 
 <pre>
 Long ago ao-sci was moved to physics.ao-ph, see http://arxiv.org/list/physics.ao-ph/recent for recent subs.
-
-This list of subsumed categories is:
-
-simeon@ice ~>grep SUBSUMED ~/arXivLib/lib/arXiv/Config/Archives.pm
-..
-$SUBSUMED{'cmp-lg'} = 'cs.CL';
-$SUBSUMED{'adap-org'} = 'nlin.AO';
-$SUBSUMED{'comp-gas'} = 'nlin.CG';
-$SUBSUMED{'chao-dyn'} = 'nlin.CD';
-$SUBSUMED{'solv-int'} = 'nlin.SI';
-$SUBSUMED{'patt-sol'} = 'nlin.PS';
-$SUBSUMED{'alg-geom'} = 'math.AG';
-$SUBSUMED{'dg-ga'} = 'math.DG';
-$SUBSUMED{'funct-an'} = 'math.FA';
-$SUBSUMED{'q-alg'} = 'math.QA';
-$SUBSUMED{'mtrl-th'} = 'cond-mat.mtrl-sci';
-$SUBSUMED{'supr-con'} = 'cond-mat.supr-con';
-$SUBSUMED{'acc-phys'} = 'physics.acc-ph';
-$SUBSUMED{'ao-sci'} = 'physics.ao-ph';
-$SUBSUMED{'atom-ph'} = 'physics.atom-ph';
-$SUBSUMED{'bayes-an'} = 'physics.data-an';
-$SUBSUMED{'chem-ph'} = 'physics.chem-ph';
-$SUBSUMED{'plasm-ph'} = 'physics.plasm-ph';
-</pre>
 */
 
 public class Categories {
@@ -297,6 +273,29 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	}
     }
 
+    /** Abolished categories */
+    private static HashMap<String,String> subsumed = new HashMap<String,String>();
+    static {
+	subsumed.put("cmp-lg","cs.CL");
+	subsumed.put("adap-org","nlin.AO");
+	subsumed.put("comp-gas","nlin.CG");
+	subsumed.put("chao-dyn","nlin.CD");
+	subsumed.put("solv-int","nlin.SI");
+	subsumed.put("patt-sol","nlin.PS");
+	subsumed.put("alg-geom","math.AG");
+	subsumed.put("dg-ga","math.DG");
+	subsumed.put("funct-an","math.FA");
+	subsumed.put("q-alg","math.QA");
+	subsumed.put("mtrl-th","cond-mat.mtrl-sci");
+	subsumed.put("supr-con","cond-mat.supr-con");
+	subsumed.put("acc-phys","physics.acc-ph");
+	subsumed.put("ao-sci","physics.ao-ph");
+	subsumed.put("atom-ph","physics.atom-ph");
+	subsumed.put("bayes-an","physics.data-an");
+	subsumed.put("chem-ph","physics.chem-ph");
+	subsumed.put("plasm-ph","physics.plasm-ph");
+    }
+
     static public Vector<String> listAllStorableCats() {
 	Vector<String> v = new  Vector<String> ();
 	for(Categories.Cat major: Categories.majors) {
@@ -379,6 +378,12 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	}
 	b.append("</table>\n");
 	return b.toString();
+    }
+
+    /** Checks if this is one of the "abolished" categories, and returns
+	the modern substitute, if known. */
+    static public String subsumedBy(String s) {
+	return subsumed.get(s);
     }
 
     /** Testing */

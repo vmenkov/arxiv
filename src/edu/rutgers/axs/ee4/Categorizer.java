@@ -60,6 +60,18 @@ class Categorizer {
 	    Categories.Cat c = toMajor?
 		Categories.findMajorCat(cat):
 		Categories.findActiveCat(cat);
+
+	    if (c==null) {
+		// check if this is an abolished category
+		String newcat = Categories.subsumedBy(cat);
+		if (newcat!=null) { 
+		    c = toMajor?
+			Categories.findMajorCat(cat):
+			Categories.findActiveCat(cat);
+		}
+	    }
+
+
 	    if (c!=null) {
 		if (firstCat == null) firstCat = c;
 		String key = c.fullName();
