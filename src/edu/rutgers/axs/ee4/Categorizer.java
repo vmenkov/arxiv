@@ -66,8 +66,8 @@ class Categorizer {
 		String newcat = Categories.subsumedBy(cat);
 		if (newcat!=null) { 
 		    c = toMajor?
-			Categories.findMajorCat(cat):
-			Categories.findActiveCat(cat);
+			Categories.findMajorCat(newcat):
+			Categories.findActiveCat(newcat);
 		}
 	    }
 
