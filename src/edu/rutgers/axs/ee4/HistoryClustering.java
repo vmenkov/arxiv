@@ -50,7 +50,11 @@ public class HistoryClustering {
     /** Do we process JSON records with this particular action type?
      */
     static private boolean typeIsAcceptable(String x) {
-	final String types[] = {"abstract", "download", "ftp_download"};
+	final String types[] = {
+	    "abstract", "download", "ftp_download",
+	    //  as seen in /data/json/usage/2010/100101_usage.json.gz  :
+	    "txt", "abs", "src"
+	};
 	for(String q: types) { 
 	    if (x.equals(q)) return true;
 	} 
@@ -97,12 +101,13 @@ public class HistoryClustering {
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
 
-	int cnt=0, invalidAidCnt = 0, unexpectedActionCnt=0;
+	int cnt=0, ignorableActionCnt=0, invalidAidCnt = 0, unexpectedActionCnt=0;
 	for(int i=0; i< len; i++) {
 	    JSONObject jso = jsa.getJSONObject(i);
 	    String type =  jso.getString( "type");
 	    if (!typeIsAcceptable(type)) {
-		if (jso.has("aid")) 		    unexpectedActionCnt++;
+		ignorableActionCnt++;
+		if (jso.has("arxiv_id"))    unexpectedActionCnt++;
 		continue;		
 	    }
 
@@ -138,6 +143,8 @@ public class HistoryClustering {
 	saver.closeAll();
 	
 	System.out.println("Analyzable action entries count = " + cnt);
+	System.out.println("Ignorable  action entries count = " + ignorableActionCnt);
+
 	if (unexpectedActionCnt>0) {
 	    System.out.println("There were also " + unexpectedActionCnt + " entries with an arxiv_id field, but with an unacceptable action type");
 	}
