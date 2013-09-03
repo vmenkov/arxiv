@@ -35,14 +35,12 @@ echo "opt=$opt"
 # 62.159u 1.636s 0:46.40 137.4%   0+0k 323472+96io 0pf+0w
 
 
-# time java $opt -Dsmtp=localhost  edu.rutgers.axs.web.EmailSug $1
-
 #foreach f (~/arxiv/json/user_data/11030?_user_data.json) 
 #    echo Splitting file $f
 #    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
 #end
 
-time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd math
+time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd physics
 
 
 

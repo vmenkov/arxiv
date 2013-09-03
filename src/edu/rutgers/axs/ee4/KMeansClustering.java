@@ -60,7 +60,9 @@ class KMeansClustering {
 	while(true) {
 	    int[] asg0=asg;
 	    //	    Profiler.profiler.push(Profiler.Code.CLU_Voronoi);
-	    voronoiAssignment();  //   asg <-- centers
+	    voronoiAssignment();  //   asg <-- centers	    
+	    handleEmptyClusters(centers.length); // adjust asg if needed
+
 	    //	    Profiler.profiler.pop(Profiler.Code.CLU_Voronoi);
 	    if (asg0!=null) {
 		int d = asgDiff(asg0,asg);
@@ -73,10 +75,12 @@ class KMeansClustering {
 	    
 
 	    //	    Profiler.profiler.push(Profiler.Code.CLU_fc);
-	    findCenters(nterms, centers.length); // centers <-- asg
+	    findCenters( centers.length); // centers <-- asg
 	    // Profiler.profiler.pop(Profiler.Code.CLU_fc);
 	}
     }
+
+    
 
     double [] centerNorms2() {
 	double[] centerNorm2 = new double[centers.length];
@@ -97,11 +101,57 @@ class KMeansClustering {
 		if (i==0 || d2 < d2min) {
 		    asg[j] = i;
 		    d2min = d2;
+		} else if (d2==d2min) {		    // tie? 
+		    //System.out.print(" [point "+j+": "+asg[j]+" ~ " +i+"]");
 		}
 	    }
 	}	
     }
+
+    /** Checks the current assignment in asg[] for any empty clusters
+	(which is a possible, even if rare, outcome of Voronoi tesselation).
+	When such a cluster is found, it is "reused" for splitting 
+	one of the existing clusters.
+     */
+    private void handleEmptyClusters(int nc) {
+	int population[] = clusterPopulations(nc);
+
+	int eCnt=0;
+	for(int nchecked=0; nchecked < nc; nchecked++) {
+	    if (population[nchecked]>0) continue; // not empty
+	    eCnt++;
+	    System.out.print(" [Empty cluster "+nchecked+"] ");
+	    // find the biggest non-empty cluster to split
+	    int mi=0;
+	    for(int i=0; i<nc; i++) {
+		if (population[i]  > population[mi]) mi = i;
+	    }
+	    if (population[mi]<2) throw new IllegalArgumentException("Way too many clusters for way too few examples?");
+	    // reassign about half of the examples from this largest cluster
+	    // to the empty cluster
+	    for(int j=0; population[nchecked] + 1 < population[mi]; j++) {
+		if (j>=asg.length) throw new AssertionError();
+		if (asg[j]==mi) {
+		    asg[j]=nchecked;
+		    population[mi]--;
+		    population[nchecked]++;
+		}
+	    }
+	    
+	}
+	
+    }
    
+    /** Reports current cluster sizes (as in asg[]) */
+    private int[] clusterPopulations(int nc) {
+	int population[] = new int[nc];
+	for(int c: asg) {
+	    population[c]++;
+	}
+	return population;
+    }
+    
+
     double sumDist2() {
 	double sum=0;
 	double[] centerNorm2 =  centerNorms2();
@@ -117,8 +167,17 @@ class KMeansClustering {
 	return sum;
     }
 
-    /** Set centers[] based on asg[] */
-    void findCenters(int nterms, int nc) {
+    /** This is the list of empty clusters, if any. The vector is
+	re-initialied by each findCenters() call.
+     */
+    private Vector<Integer> emptyClusters = new Vector<Integer>();
+
+    /** Set centers[] based on asg[]. Before calling this method, the array asg[] should be checked for empty clusters, and any such clusters should be removed.
+	@param nc The expected number of clusters. The values in asg[] should
+	be in the range [0..nc-1]
+    */
+    private void findCenters( int nc) {
+	emptyClusters.clear();
 	centers = new DenseDataPoint[nc];
 	int[] clusterSize = new int[nc];
 	int i=0;
@@ -133,10 +192,12 @@ class KMeansClustering {
 	}
 	for(i=0; i<nc; i++) {
 	    if (centers[i]==null) {
-		System.out.println("Invalid assigment: no doc in cluster "+i+"?; asg=" + arrToString(asg));
-		throw new IllegalArgumentException();
+		String msg = "Invalid assigment: no doc in cluster "+i+"?; asg=" + arrToString(asg);
+		System.out.println(msg);
+		throw new IllegalArgumentException(msg);
+	    } else {
+		centers[i].multiply(1.0/(double) clusterSize[i]);
 	    }
-	    centers[i].multiply(1.0/(double) clusterSize[i]);
 	}
     }
 
