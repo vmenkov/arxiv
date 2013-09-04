@@ -3,7 +3,7 @@
 #-- Usage: emailSug.sh username email  [new_password]
 
 # set opt="-DOSMOT_CONFIG=."
-set opt="-Xmx4096m -DOSMOT_CONFIG=."
+set opt="-Xmx4096m -XX:MaxPermSize=256m -DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib
 set tclib=/usr/local/tomcat/lib
@@ -35,14 +35,14 @@ echo "opt=$opt"
 # 62.159u 1.636s 0:46.40 137.4%   0+0k 323472+96io 0pf+0w
 
 
-#foreach f (~/arxiv/json/user_data/11030?_user_data.json) 
-foreach f (/data/json/usage/201[012]/*.json.gz) 
-    date
-    echo Splitting file $f
-    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
-end
 
-#time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd physics
+#foreach f (/data/json/usage/201[012]/*.json.gz) 
+#    date
+#    echo Splitting file $f
+#    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
+#end
+
+time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd math
 
 
 
