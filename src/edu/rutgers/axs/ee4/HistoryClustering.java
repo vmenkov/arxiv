@@ -227,13 +227,15 @@ public class HistoryClustering {
 	(user,page) matrix. For each user id, we store a vector of
 	pages he's accessed.
      */
-    static private class U2PL extends HashMap<String, Vector<String>> {
+    static private class U2PL extends HashMap<String, HashSet<String>> {
 	void add(String u, String p) {
-	    Vector<String> v = get(u);
-	    if (v==null) put(u, v = new Vector<String>());
+	    HashSet<String> v = get(u);
+	    if (v==null) put(u, v = new HashSet<String>());
+	    /*
 	    for(String z: v) {
 		if (z.equals(p)) return;
 	    }
+	    */
 	    v.add(p);
 	}
 
@@ -261,7 +263,7 @@ public class HistoryClustering {
 	    }
 	    */
 
-	    for(Iterator<Map.Entry<String,Vector<String>>> it = entrySet().iterator();
+	    for(Iterator<Map.Entry<String,HashSet<String>>> it = entrySet().iterator();
 		it.hasNext(); ) {
 		if (it.next().getValue().size()< user_thresh) it.remove();
 	    }
@@ -271,11 +273,11 @@ public class HistoryClustering {
 	    // view count for each page
 	    HashMap<String, Integer> viewCnt = new HashMap<String, Integer>();
 
-	    Integer zero = new Integer(0);
-	    for(Vector<String> v: values()) {
+	    Integer one = new Integer(1);
+	    for(HashSet<String> v: values()) {
 		for(String aid: v) {
 		    Integer z = viewCnt.get(aid);
-		    viewCnt.put(aid,z==null? zero: new Integer(z.intValue()+1));
+		    viewCnt.put(aid,z==null? one: new Integer(z.intValue()+1));
 		}
 	    }
 
@@ -364,9 +366,13 @@ public class HistoryClustering {
     }
 
     static void doSvd(String majorCat) throws IOException {
-	U2PL user2pageList = readSplitFiles(majorCat);
-	SparseDoubleMatrix2D mat = user2pageList.toMatrix();
-	String[] no2aid = user2pageList.no2aid;
+	SparseDoubleMatrix2D mat;
+	String[] no2aid;
+	{
+	    U2PL user2pageList = readSplitFiles(majorCat);
+	    mat = user2pageList.toMatrix();
+	    no2aid = user2pageList.no2aid;
+	}
 
 	//boolean useMySVD = false;
 	boolean useMySVD = true;
