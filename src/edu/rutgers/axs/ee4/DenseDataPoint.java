@@ -14,6 +14,7 @@ class DenseDataPoint extends DataPoint {
 	values = new double[n];
     }
 
+    /** Copy constructor */
     DenseDataPoint(int n, DataPoint x) {
 	this(n);
 	add(x);

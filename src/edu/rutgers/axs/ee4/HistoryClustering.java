@@ -17,9 +17,10 @@ import org.apache.lucene.search.*;
 
 import org.json.*;
 
-import cern.colt.matrix.*;
-import cern.colt.matrix.impl.SparseDoubleMatrix2D;
-import cern.colt.matrix.linalg.SingularValueDecomposition;
+//import cern.colt.matrix.*;
+//import cern.colt.matrix.impl.SparseDoubleMatrix2D;
+//import cern.colt.matrix.linalg.SingularValueDecomposition;
+
 
 import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
@@ -94,8 +95,6 @@ public class HistoryClustering {
 	// Arxiv IDs, or for those with no valid major cat 
 	HashMap<String, Categories.Cat> catAsg= new HashMap<String, Categories.Cat>();
 
-	//	HashMap<String, HistoryMatrix> matrixAssemblers = 
-	//	    new HashMap<String, HistoryMatrix>();
 	DataSaver saver = new DataSaver(new File(fname));
 
 	IndexReader reader = Common.newReader();
@@ -262,9 +261,9 @@ public class HistoryClustering {
 
 
 	/** Removes "low activity" users and papers; converts the rest
-	    into a SparseDoubleMatrix2D object, for use with SVD.
+	    into a SparseDoubleMatrix2Dx object, for use with SVD.
 	*/
-	SparseDoubleMatrix2D toMatrix() {
+	SparseDoubleMatrix2Dx toMatrix() {
 	    final int user_thresh=2,  paper_thresh=2;
 
 	    System.out.println("Processing the view matrix. Originally, there are " + map.size() + " users");
@@ -319,16 +318,26 @@ public class HistoryClustering {
 		no2u[k++] = u;
 	    }
 
-	    SparseDoubleMatrix2D mat2 = new SparseDoubleMatrix2D(map.size(), no2aid.length);
+	    SparseDoubleMatrix2Dx mat2 = new SparseDoubleMatrix2Dx(map.size(), no2aid.length);
 	    for(String u: map.keySet()) {
 		int row = u2no.get(u).intValue();
+		int cnt = 0;
+		for(Integer _origno: map.get(u)) {
+		    int origno = _origno.intValue();
+		    if (viewCnt[origno] >= paper_thresh) cnt++;
+		}
+		int pos[] = new int[cnt];
+
+		k=0;
 		for(Integer _origno: map.get(u)) {
 		    int origno = _origno.intValue();
 		    if (viewCnt[origno] < paper_thresh)  continue;
 		    String aid = origno2aid.elementAt(origno);
 		    int col = aid2no.get(aid).intValue();
-		    mat2.setQuick(row, col, 1.0);
+		    //mat2.setQuick(row, col, 1.0);
+		    pos[k++] = col;
 		}
+		mat2.setRowSameValue(row, pos, 1.0);
 	    }
 	    System.out.println("Have a " + mat2.rows() + " by " + mat2.columns() + " matrix with " + mat2.cardinality()  + " non-zeros");
 	    return mat2;
@@ -340,10 +349,7 @@ public class HistoryClustering {
 	All files found in the category's splt file directory will be read;
 	so make sure you have the correct selection of files there.
      */
-    static 
-    //SparseDoubleMatrix2D 
-	U2PL
-	readSplitFiles(String majorCat) throws IOException {
+    static U2PL	readSplitFiles(String majorCat) throws IOException {
 	File dir = catDir(majorCat);
 	File[] files=dir.listFiles(); 
 	U2PL   user2pageList = new U2PL();
@@ -365,7 +371,7 @@ public class HistoryClustering {
     }
 
     static void doSvd(String majorCat) throws IOException {
-	SparseDoubleMatrix2D mat;
+	SparseDoubleMatrix2Dx mat;
 	String[] no2aid;
 	{
 	    U2PL user2pageList = readSplitFiles(majorCat);
@@ -390,6 +396,8 @@ public class HistoryClustering {
 	    sval = svd.getSingularValues();
 	    qq = svd.vIntoArrayOfRows();
 	} else {
+	    throw new AssertionError("COLT SVD no longer supported");
+	    /*
 	    SingularValueDecomposition svd=new SingularValueDecomposition(mat);
 
 	    sval = svd.getSingularValues();
@@ -397,6 +405,7 @@ public class HistoryClustering {
 
 	    // cluster *rows* of V
 	    qq = intoArrayOfRows(v, keepSvd);
+	    */
 	}
 
 	keepSvd = (k_svd < sval.length)? k_svd : sval.length;
@@ -424,7 +433,8 @@ public class HistoryClustering {
     /** Converts a section (first keepSvd columns) of a DoubleMatrix2D
 	into a 2D array of doubles.  The first keepSvd elements of each row
 	will be packaged into an arrray of doubles. */
-    static private double[][] intoArrayOfRows(DoubleMatrix2D v, int keepSvd) {
+    /*
+    static private double[][] intoArrayOfRows(SparseDoubleMatrix2D v, int keepSvd) {
 	
 	int ndoc  = v.rows();
 	double[][] z = new double[ndoc][];
@@ -438,7 +448,7 @@ public class HistoryClustering {
 	}
 	return z;
     }
-
+    */
     static private File getAsgDirPath(String cat)  {
 	File d = DataFile.getMainDatafileDirectory();
 	d = new File(d,  "tmp");

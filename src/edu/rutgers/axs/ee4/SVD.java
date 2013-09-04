@@ -4,14 +4,17 @@ import java.util.*;
 
 import cern.colt.matrix.*;
 import cern.colt.matrix.impl.*;
+//import edu.rutgers.axs.matrix.SparseDoubleMatrix2Dx;
+
+
 
 /** Our own implementation of partial Singular Value Decomposition. */
 public class SVD {
 
-    private SparseDoubleMatrix2D matrix;
+    private SparseDoubleMatrix2Dx matrix;
     private boolean verbose = true;
 
-    SVD(SparseDoubleMatrix2D a) {
+    SVD(SparseDoubleMatrix2Dx a) {
 	matrix = a;
     }
 
@@ -25,7 +28,7 @@ public class SVD {
 
     /** Partial SVD of matrix a */
     void findTopSingularVectors(int k_svd) {
-	SparseDoubleMatrix2D a=matrix;
+	SparseDoubleMatrix2Dx a=matrix;
 	int n = a.columns();
 	if (k_svd > n) k_svd = n;
 
@@ -37,8 +40,8 @@ public class SVD {
 	    normalize(x);
 	    int i = 0;
 	    while(true) {
-		DoubleMatrix1D y = a.zMult(x,null);
-		DenseDoubleMatrix1D z = (DenseDoubleMatrix1D)a.zMult(y, null, 1, 0, true);
+		DenseDoubleMatrix1D y = a.zMult(x,null);
+		DenseDoubleMatrix1D z = a.zMultTrans(y, null);
 		ortho(z, results);
 
 		double norm = Math.sqrt(norm2(z));
@@ -61,7 +64,6 @@ public class SVD {
 	    k_svd = results.size();
 	    sval = Arrays.copyOfRange(sval, 0, k_svd);
 	}
-	//return results.toArray(new DenseDoubleMatrix1D[0]);
     }
 
     /** Creates a random vector (not normalized) */
