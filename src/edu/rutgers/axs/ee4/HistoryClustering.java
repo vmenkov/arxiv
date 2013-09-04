@@ -227,27 +227,39 @@ public class HistoryClustering {
 	(user,page) matrix. For each user id, we store a vector of
 	pages he's accessed.
      */
-    static private class U2PL extends HashMap<String, HashSet<String>> {
-	void add(String u, String p) {
-	    HashSet<String> v = get(u);
-	    if (v==null) put(u, v = new HashSet<String>());
-	    /*
-	    for(String z: v) {
-		if (z.equals(p)) return;
-	    }
-	    */
-	    v.add(p);
-	}
+    static private class U2PL  {
 
-	/** The numeric map for article IDs.	 */
+	private HashMap<String, HashSet<Integer>> map = new HashMap<String, HashSet<Integer>>();
+
+	/** This map is used during the table-building process only */
+	private Vector<String> origno2aid = new Vector<String>();
+	private HashMap<String, Integer> aid2origno = new HashMap<String, Integer>();
+	
+	/** The final numeric map for article IDs.	 */
 	String[] no2aid;
 	HashMap<String, Integer> aid2no;
-
 
 	/** The numeric map for IP hash values (which are a surrogate
 	    for user identifiers). 	 */
 	String[] no2u;
 	HashMap<String, Integer> u2no;
+
+	private Integer registerPage(String p) {
+	    Integer q = aid2origno.get(p);
+	    if (q==null) {
+		q = new Integer(origno2aid.size());
+		origno2aid.add(p);
+		aid2origno.put(p,q);
+	    }
+	    return q;
+	}
+
+	void add(String u, String p) {
+	    HashSet<Integer> v = map.get(u);
+	    if (v==null) map.put(u, v = new HashSet<Integer>());
+	    v.add(registerPage(p));
+	}
+
 
 	/** Removes "low activity" users and papers; converts the rest
 	    into a SparseDoubleMatrix2D object, for use with SVD.
@@ -255,79 +267,71 @@ public class HistoryClustering {
 	SparseDoubleMatrix2D toMatrix() {
 	    final int user_thresh=2,  paper_thresh=2;
 
-	    System.out.println("Processing the view matrix. Originally, there are " + size() + " users");
+	    System.out.println("Processing the view matrix. Originally, there are " + map.size() + " users");
 
-	    /*
-	    for(String u: keySet()) {
-		if (get(u).size()< user_thresh) remove(u);
-	    }
-	    */
 
-	    for(Iterator<Map.Entry<String,HashSet<String>>> it = entrySet().iterator();
+	    for(Iterator<Map.Entry<String,HashSet<Integer>>> it = map.entrySet().iterator();
 		it.hasNext(); ) {
 		if (it.next().getValue().size()< user_thresh) it.remove();
 	    }
 
-	    System.out.println("Only " + size() + " users have at least " + user_thresh + " page views");
+	    System.out.println("Only " + map.size() + " users have at least " + user_thresh + " page views");
 	    
 	    // view count for each page
-	    HashMap<String, Integer> viewCnt = new HashMap<String, Integer>();
+	    int[] viewCnt = new int[origno2aid.size()];
 
-	    Integer one = new Integer(1);
-	    for(HashSet<String> v: values()) {
-		for(String aid: v) {
-		    Integer z = viewCnt.get(aid);
-		    viewCnt.put(aid,z==null? one: new Integer(z.intValue()+1));
+	    for(HashSet<Integer> v: map.values()) {
+		for(Integer origno: v) {
+		    viewCnt[origno.intValue()] ++;
+		}
+	    }
+	    
+	    int viewedPagesCnt=0, popularPagesCnt=0;
+	    int cap = 0;
+	    for(int vc:  viewCnt) {
+		if (vc>0)  viewedPagesCnt++;
+		if (vc>=paper_thresh)  {
+		    popularPagesCnt++;
+		    cap += vc;
 		}
 	    }
 
-	    System.out.println("There are " + viewCnt.size() + " papers");
-	    int cap = 0;
+	    System.out.println("There are " + viewCnt.length + " papers; among them, " + viewedPagesCnt + " have been viewed by at least 1 'relevant' user, and " +  popularPagesCnt  + " have been viewed by at least " + paper_thresh + " relevant users");
 
-	    /*
-	    for(String aid: viewCnt.keySet()) {
-		int z = viewCnt.get(aid).intValue();
-		if (z < paper_thresh)  viewCnt.remove(aid);
-		else cap += z;
-	    }
-	    */
-	    for(Iterator<Map.Entry<String,Integer>> it = viewCnt.entrySet().iterator();
-		it.hasNext(); ) {
-		int z = it.next().getValue().intValue();
-		if (z < paper_thresh)  it.remove();
-		else cap += z;
-	    }
+	    System.out.println("The view matrix will have " +cap+ " nonzeros");
 
-
-	    System.out.println("But only " + viewCnt.size() + " papers with at least " + paper_thresh + " views. The view matrix will have " + cap + " nonzeros");
-
-	    no2aid = new String[ viewCnt.size() ];
+	    // create the permanent page map (only including "popular" pages)
+	    no2aid = new String[  popularPagesCnt ];
 	    aid2no = new HashMap<String, Integer>();
 	    int k = 0;
-	    for(String aid: viewCnt.keySet()) {
+	    for(int i=0; i<viewCnt.length; i++) {		
+		if (viewCnt[i]<paper_thresh)  continue;
+		String aid = origno2aid.elementAt(i);
 		aid2no.put(aid, new Integer(k));
 		no2aid[k++] = aid;
 	    }
-
-	    no2u = new String[ size() ];
+	
+	    no2u = new String[ map.size() ];
 	    u2no = new HashMap<String, Integer>();
 	    k = 0;
-	    for(String u: keySet()) {
+	    for(String u: map.keySet()) {
 		u2no.put(u, new Integer(k));
 		no2u[k++] = u;
 	    }
 
-	    SparseDoubleMatrix2D mat = new SparseDoubleMatrix2D(size(), no2aid.length);
-	    for(String u: keySet()) {
+	    SparseDoubleMatrix2D mat2 = new SparseDoubleMatrix2D(map.size(), no2aid.length);
+	    for(String u: map.keySet()) {
 		int row = u2no.get(u).intValue();
-		for(String aid: get(u)) {
-		    if (!viewCnt.containsKey(aid)) continue;
+		for(Integer _origno: map.get(u)) {
+		    int origno = _origno.intValue();
+		    if (viewCnt[origno] < paper_thresh)  continue;
+		    String aid = origno2aid.elementAt(origno);
 		    int col = aid2no.get(aid).intValue();
-		    mat.setQuick(row, col, 1.0);
+		    mat2.setQuick(row, col, 1.0);
 		}
 	    }
-	    System.out.println("Have a " + mat.rows() + " by " + mat.columns() + " matrix with " + mat.cardinality()  + " non-zeros");
-	    return mat;
+	    System.out.println("Have a " + mat2.rows() + " by " + mat2.columns() + " matrix with " + mat2.cardinality()  + " non-zeros");
+	    return mat2;
 	}
     }
 
@@ -353,16 +357,11 @@ public class HistoryClustering {
 		if (s.equals("")) continue;
 		String q[] = s.split(",");
 		if (q.length!=2) throw new IOException("Could not parse line no. " + r.getLineNumber() + " in file " + f + " as a (user,page) pair:\n" + s);
-		user2pageList.add(q[0].intern(), q[1].intern());
+		user2pageList.add(q[0], q[1]);
 	    }
 	    r.close();
 	}
 	return user2pageList;
-	/*
-	SparseDoubleMatrix2D mat = user2pageList.toMatrix();
-	String[] no2aid = user2pageList.no2aid;
-	return mat;
-	*/
     }
 
     static void doSvd(String majorCat) throws IOException {
