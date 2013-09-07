@@ -6,7 +6,9 @@ import java.io.*;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 
-/** A replacement for cern.colt.matrix.impl.SparseDoubleMatrix2D.
+/** A replacement for cern.colt.matrix.impl.SparseDoubleMatrix2D,
+    necessitated by the restriction, |cols|*|rows|&lt;MAX_INT that the
+    latter has.
  */
 class SparseDoubleMatrix2Dx {
     private int ncol, nrow;
