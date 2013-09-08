@@ -42,7 +42,12 @@ echo "opt=$opt"
 #    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
 #end
 
-time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd math
+set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
+date
 
+foreach cat ($cats) 
+ echo Processing category $cat
+ time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd $cat >& svd-${cat}.log
+end
 
 

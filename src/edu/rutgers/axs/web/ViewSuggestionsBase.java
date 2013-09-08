@@ -26,7 +26,7 @@ public  class ViewSuggestionsBase extends PersonalResultsBase {
     /** Contols suggestion list paging. Typically supplied via the URL
 	(0 by default), but may be adjusted by application if it does
 	not have much sense otherwise. */
-    public StartAt startat;
+    public StartAt startat=new StartAt();
     /** the actual suggestion list to be displayed is stored here */
     public SearchResults sr;
 

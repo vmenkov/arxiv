@@ -561,7 +561,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	the main page.
      */
     private void adjustStartat(EntityManager em, boolean mainPage) {
-	if (mainPage && startat.startat>0) {
+	if (mainPage && startat!=null && startat.startat>0) {
 
 	    // not the most suitable method, but it will do
 	      PresentedList lastPl = PresentedList.findLatestPresentedSugList(em,  actor.getUser_name()); 
