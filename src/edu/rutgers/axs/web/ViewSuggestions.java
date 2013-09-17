@@ -331,7 +331,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	}
 
 	em.getTransaction().begin();
-	Action a = actor.addAction(em, null, op, asrc);
+	Action a = actor.addAction(em, sd, null, op, asrc);
 	//em.persist(u);	       
 	em.getTransaction().commit(); 
     }

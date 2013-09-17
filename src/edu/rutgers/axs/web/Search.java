@@ -76,13 +76,8 @@ public class Search extends ResultsBase {
 	    SessionData sd = SessionData.getSessionData(request);  
             edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 
-
-	    User u = null;
-
-	    if (user!=null) {
-		em = sd.getEM();
-		u = User.findByName(em, user);    
-	    }
+	    em = sd.getEM();
+	    User u = (user!=null) ?  User.findByName(em, user) : null;    
 
 	    // The list (possibly empty) of pages that the user does
 	    // not want ever shown 
@@ -129,16 +124,21 @@ public class Search extends ResultsBase {
 	    }
 
 	    EnteredQuery eq=null;
-	    if (!user_cat_search && user!=null) {
-		if (u!=null) {
-		    em.getTransaction().begin();
+	    if (!user_cat_search) {
+		em.getTransaction().begin();
+		if (user!=null && u!=null) {
 		    u = User.findByName(em, user); // re-read, just in case   
-		    eq=u.addQuery(query, sr.nextstart.startat, sr.scoreDocs.length);
+		    eq=u.addQuery(query, sd, sr.nextstart.startat, sr.scoreDocs.length);
 		    // FIXME: ideally, we may want to store a link to
 		    // EQ as part of the ActionSource info of recorded actions
 		    em.persist(u);
-		    em.getTransaction().commit(); 
+		} else {
+		    // anon action
+		    EnteredQuery r = new EnteredQuery(null, sd, query,
+						      sr.nextstart.startat, sr.scoreDocs.length);
+		    em.persist(r);
 		}
+		em.getTransaction().commit(); 
 	    }
 
 	    PresentedList plist = null;

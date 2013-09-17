@@ -6,6 +6,7 @@ import java.text.*;
 import javax.persistence.*;
 
 import java.lang.reflect.*;
+import  edu.rutgers.axs.web.SessionData;
 
 /** An EnteredQuery instance records a single search query entered by the user.
  */
@@ -24,7 +25,14 @@ import java.lang.reflect.*;
 	User user;
     public User getUser() {	return user;    }
     public void setUser(User c) { user=c;    }
-  
+      
+    @Column(nullable=false)
+    @Display(editable=false, order=1.2) 
+	long session;
+      public long getSession() {	return session;    }
+    private void setSession(long  c) {	session=c;    }
+   
+
     /** The text of the query */
     @Basic @Column(nullable=false)
     @Display(editable=false, order=2) 
@@ -66,11 +74,12 @@ import java.lang.reflect.*;
 
     public EnteredQuery() {}
 
-    public EnteredQuery(User u, String _query, int _maxLen, int _foundCnt){ 
+    public EnteredQuery(User u, SessionData sd, String _query, int _maxLen, int _foundCnt){ 
 	setUser(u);
 	setQuery(_query);
 	setMaxLen(_maxLen);
 	setFoundCnt(_foundCnt);
+	setSession(sd.getSqlSessionId());
 	Date now = (new GregorianCalendar()).getTime();
 	setTime(now);
     }

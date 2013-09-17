@@ -665,7 +665,14 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     /** Adds an Action object to the record of this user's activity.
 	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
     */
-    public Action addAction(EntityManager em, String p, Action.Op op, ActionSource asrc) {
+   public Action addAction(EntityManager em, SessionData sd, String p, Action.Op op, ActionSource asrc) {
+       return addNewAction(this, em, sd, p, op, asrc);
+   }
+
+    /** Also works for anon users.
+     @param u User object. May be null (for anon user actions)
+    */
+    static public Action addNewAction(User u, EntityManager em, SessionData sd, String p, Action.Op op, ActionSource asrc) {
 	Article a=null;
 	if (p==null) {
 	    if (op!=Action.Op.NEXT_PAGE && op!=Action.Op.PREV_PAGE) {
@@ -674,11 +681,11 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	} else {
 	    a = Article.getArticleAlways(em,p,false); // no commit needed here
 	}
-	Action r = new Action(this, a, op); 
+	Action r = new Action(u, sd, a, op); 
 	r.setActionSource(asrc);
-        actions.add(r);
+        if (u!=null) u.actions.add(r); 
 	em.persist(r);
-	r.bernoulliFeedback(em); // only affects Bernoulli users
+	if (u!=null) r.bernoulliFeedback(em); // only affects Bernoulli users
 	return r;
     }
 
@@ -712,8 +719,8 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return queries;
     }
 
-     public EnteredQuery addQuery(String p, int maxlen, int found) {
-	EnteredQuery r = new  EnteredQuery( this, p, maxlen, found); 
+    public EnteredQuery addQuery(String p, SessionData sd, int maxlen, int found) {
+	EnteredQuery r = new EnteredQuery( this, sd, p, maxlen, found); 
 	queries.add(r);	
 	return r;
     }

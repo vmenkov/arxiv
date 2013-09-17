@@ -62,7 +62,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 		    String id = request.getParameter(ID);
 		    if (id==null) throw new WebException("No aticle id supplied");
 		    em.getTransaction().begin();
-		    Action a = u.addAction(em, id, op, asrc);
+		    Action a = u.addAction(em, sd, id, op, asrc);
 		    //em.persist(u);	       
 		    em.getTransaction().commit(); 
 		}

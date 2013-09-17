@@ -13,15 +13,20 @@ import javax.persistence.*;
 import edu.rutgers.axs.sql.*;
 
 /** A single instance of this class is associated with a particular
- * session of the ICD application
-
+    session of the My.ArXiv web application.
  */
 public class SessionData {
 
     /** Back-pointer */
     final private HttpSession session;
 
-    final private EntityManagerFactory factory;// = null;
+    static private EntityManagerFactory factory;// = null;
+
+    /** The ID of the Session object in the SQL database
+     */
+    final private long sqlSessionId;
+
+    public  long getSqlSessionId() { return sqlSessionId;}
 
     /** Generates proper link URLs */
     //final public Link link;
@@ -32,25 +37,52 @@ public class SessionData {
 
 	//-- not used any more: use persistence.xml instead
 	Properties p = //new Properties();  
-	readProperties();
+	readProperties();     
 
-        // Create a new EntityManagerFactory using the System properties.
         // The "arxiv" name will be used to configure based on the
         // corresponding name in the META-INF/persistence.xml file
-	factory = Persistence.
-	    createEntityManagerFactory(Main.persistenceUnitName,p);
-
+	initFactory(p);
+	// record the session in the database
+	EntityManager em=null;
+	try {
+	    em = getEM();
+	    em.getTransaction().begin(); 
+	    Session s = new Session(_session);
+	    em.persist(s);
+	    em.getTransaction().commit(); 
+	    Logging.info("Recorded session " + s + "; web server session id=" + _session.getId());
+	    sqlSessionId = s.getId();
+	    //	} catch (IOException ex) {
+	    //	    ex.printStackTrace(System.out); // just for debugging
+	    //	    throw ex;
+	} finally {
+	    if (em!=null) em.close();
+	}
     }
 
+    /** Create a new EntityManagerFactory using the System properties.
+     */
+    private static synchronized void initFactory(Properties p) {
+	if (factory!=null) return;
+	factory = Persistence.
+	    createEntityManagerFactory(Main.persistenceUnitName,p);
+    }
 
+    /** Creates a new EntityManager from the EntityManagerFactory. The
+	EntityManager is the main object in the Java persistence API, and is
+        used to create, delete, and query objects, as well as access
+        the current transaction.
+    */
     public EntityManager getEM() {
-        // Create a new EntityManager from the EntityManagerFactory. The
-        // EntityManager is the main object in the persistence API, and is
-        // used to create, delete, and query objects, as well as access
-        // the current transaction
+	return getEM0();
+    }
+
+    private static EntityManager getEM0() {
+	if (factory==null) throw new AssertionError("SessionData.getEM() should not be called until at least one  SessionData object has been created");
         EntityManager em = factory.createEntityManager();
   	return em;
     }  
+
 
     /** Looks up the SessionData object already associated with the
 	current session, or creates a new one. This is done atomically,
@@ -60,14 +92,16 @@ public class SessionData {
 	throws WebException, IOException {
 
 	HttpSession session = request.getSession();
-	String name = "sd";
 	SessionData sd  = null;
 	synchronized(session) {
   
-	    sd  = ( SessionData) session.getAttribute(name);
+	    final String ATTRIBUTE_SD = "sd";
+	    sd  = ( SessionData) session.getAttribute(ATTRIBUTE_SD);
 	    if (sd == null) {
 		sd = new SessionData(session,request);
-		session.setAttribute(name, sd);
+		session.setAttribute(ATTRIBUTE_SD, sd);
+		
+
 	    }
 	    //sd.update(request);
 
@@ -118,13 +152,15 @@ public class SessionData {
     /** Gets the user name associated with this session. Originally,
 	this method relied on Tomcat keeping track of this stuff, but
 	as Tomcat is not always deployed quite right, we don't do it
-	anymore. Instead, an instance variable (storedUserName) in
-	this SessionData object is used to keep track of the user name
-	within the current Tomcat session. Between Tomcat sessions (e.g.,
-	after server restart), the  ExtendedSessionManagement module is used
-	to find the user name based on a cookie sent by the browser.
+	this way anymore. Instead, an instance variable
+	(storedUserName) in this SessionData object is used to keep
+	track of the user name within the current Tomcat
+	session. Between Tomcat sessions (e.g., after server restart),
+	the ExtendedSessionManagement module is used to find the user
+	name based on a cookie sent by the browser.
 
-	Starts the new experimental day, if necessary. 
+	<p>
+	This method also starts the new experimental day, whenever necessary. 
      */
     String getRemoteUser(HttpServletRequest request) {    
 	String u;
@@ -153,6 +189,8 @@ public class SessionData {
 				em.getTransaction().commit(); 
 			    }
 			    //			    Logging.info("getRemoteUser("+u+"); committed");
+			    storeUserName(u);
+			    storeUserInfoInSQL(em, user);
 			}
 		    } finally {
 			em.close();
@@ -176,7 +214,15 @@ public class SessionData {
 	storedUserName = u;
     }
 
-    /** Gets the list of authorized roles for this URL, from a
+    void storeUserInfoInSQL(EntityManager em, User user) {
+	em.getTransaction().begin(); 
+	Session s = (Session)em.find(Session.class, sqlSessionId);
+	s.setUser(user);
+	em.persist(s);
+	em.getTransaction().commit(); 	
+    }
+
+    /** Gets the list of authorized roles for the specified URL, from a
 	hard-coded list. This is a poor substitute for specifiying
 	them in a set of "security-constraint" elements in web.xml
 

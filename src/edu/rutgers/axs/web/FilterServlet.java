@@ -83,13 +83,13 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	    User u=null;
 	    // FIXME: need to record the viewing act for all other arxiv.org pages as well
-	    if (user!=null &&  actionable.isActionable())  {
+	    if (actionable.isActionable())  {
 		em = sd.getEM();
 		em.getTransaction().begin();		
-		u = User.findByName(em, user);
+		u = (user!=null) ? User.findByName(em, user) : null;
 		if (u!=null) {
 		    Logging.info("FS: pi="+pi+", recording as " + actionable);
-		    Action a = u.addAction(em, actionable.aid, actionable.op, asrc);
+		    Action a = u.addAction(em, sd, actionable.aid, actionable.op, asrc);
 
 		    skeletonAE = ArticleEntry.getDummyArticleEntry(actionable.aid, 1);
 		    Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
@@ -101,6 +101,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 					     u.getActionHashMap(Action.ratingOps));
 
 		    //em.persist(u);
+		} else { // anon 
+		    Action r = User.addNewAction(null, em, sd, actionable.aid, actionable.op, asrc);
+
 		}
 		em.getTransaction().commit(); 
 		em.close();

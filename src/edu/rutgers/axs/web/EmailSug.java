@@ -175,7 +175,7 @@ public class EmailSug extends ResultsBase {
 	if (mailhost != null)    props.put("mail.smtp.host", mailhost);
 	
 	// Get a Session object
-	Session session = Session.getDefaultInstance(props, null);
+	javax.mail.Session session = javax.mail.Session.getDefaultInstance(props, null);
 	
 	// construct the message
 	javax.mail.Message msg = new MimeMessage(session);
@@ -346,9 +346,10 @@ public class EmailSug extends ResultsBase {
 	    port = 8080;
 	} else {
 	    if (hostname.equals("cactuar.scilsnet.rutgers.edu")) {
-		host =  "my.arxiv.org";
+		host =  "my.arxiv.org"; // FIXME: need new address...
+	    } else if (hostname.equals("en-myarxiv02.orie.cornell.edu")) {
+		host =  "my.arxiv.org"; // since 2013-09
 	    } else {
-		//  (hostname.equals("en-myarxiv02.orie.cornell.edu")), etc.
 		host=hostname;
 	    }
 	    port = 80;

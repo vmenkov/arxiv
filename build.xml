@@ -238,6 +238,7 @@ code. -->
       <include name="EE4User.class" />
       <include name="EE4DocClass.class" />
       <include name="EE4Uci.class" />
+      <include name="Session.class" />
     </fileset>
   </openjpac>
 

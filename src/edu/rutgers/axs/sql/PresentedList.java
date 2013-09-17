@@ -35,10 +35,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public long getId() {        return id;    }
 
     /** Name of the user to whom the list was presented. (It would have been
-	more efficient to store the numeric user id...)
+	more efficient to store the numeric user id...). Null is stored for anon
+	users.
      */
     //@ManyToOne
-    @Column(nullable=false)
+    @Column(nullable=true)
     @Display(editable=false, order=2) 
     //User user;
 	@Basic String user;

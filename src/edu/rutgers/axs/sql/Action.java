@@ -7,6 +7,8 @@ import javax.persistence.*;
 
 import java.lang.reflect.*;
 
+import  edu.rutgers.axs.web.SessionData;
+
 /** An Action instance records such an event as a user's viewing an
     article's abstract, or making a judgment about the article's
     usefulness for him. Most actions are article-specific, but the user's
@@ -23,11 +25,22 @@ import java.lang.reflect.*;
     public void setId(long val) {        id = val;    }
     public long getId() {        return id;    }
 
-    /** Link to the user whose action this is */
+    /** Link to the user whose action this is. This can be null for anon users */
+
     @ManyToOne
     @Column(nullable=false)
-    @Display(editable=false, order=1) 
+	@Display(editable=false, order=1, link="viewUser.jsp") 
 	User user;
+
+    /*  
+    @ManyToOne
+    @Column(nullable=true)
+    @Display(editable=false, order=1.2) 
+	Session session;
+    */
+    @Column(nullable=false)
+    @Display(editable=false, order=1.2) 
+	long session;
   
     /** The arXiv article id of the article involved. This must be
 	present in all Action entries, except for those of the
@@ -68,6 +81,15 @@ import java.lang.reflect.*;
 	user=c;
     }
     
+    public long getSession() {
+	return session;
+    }
+
+    private void setSession(long  c) {
+	session=c;
+    }
+    
+
     @Display(editable=false, order=3) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
 	Date time;
@@ -307,11 +329,19 @@ import java.lang.reflect.*;
     }
     */
 
-    public Action(User u, Article _article, Op _op){
+    /**
+       @param u The user object. May be null, in case of anon actions.
+       @param sd Used to obtain session info.
+     */
+//    public
+    Action(User u, SessionData sd, Article _article, Op _op){     
 	setUser(u);
-	setDay(u.getDay());
+	if (u!=null) {
+	    setDay(u.getDay());
+	}
 	setArticle(_article);
 	setOp(_op);
+	setSession(sd.getSqlSessionId());
 	Date now = new Date();
 	setTime(now);
     }

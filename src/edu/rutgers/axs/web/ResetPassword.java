@@ -148,7 +148,7 @@ public class ResetPassword extends ResultsBase {
 
 
 	    // Get a Session object
-	    Session session = Session.getDefaultInstance(props, null);
+	    javax.mail.Session session = javax.mail.Session.getDefaultInstance(props, null);
 	
 	    // construct the message
 	    javax.mail.Message msg = new MimeMessage(session);

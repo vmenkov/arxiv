@@ -15,7 +15,7 @@ import org.apache.lucene.document.*;
 import edu.rutgers.axs.indexer.ArxivFields;
 
 
-/**  */
+/** Very basic information about an ArXiv article. */
 @Entity  
    @Table(uniqueConstraints=@UniqueConstraint(name="article_id_cnstrt",columnNames="id"))
     public class Article extends OurTable 

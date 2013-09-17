@@ -49,6 +49,7 @@ public class LoginServlet extends HttpServlet {
 	    }
 	    // all OK
 	    sd.storeUserName(user);
+	    sd.storeUserInfoInSQL(em, u);
 
 	    boolean newDay = u.changeDayIfNeeded();
 	    Logging.info("LoginServlet("+user+"); change day=" + newDay +"; now day=" + u.getDay());
