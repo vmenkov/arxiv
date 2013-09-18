@@ -32,6 +32,9 @@ import  edu.rutgers.axs.web.SessionData;
 	@Display(editable=false, order=1, link="viewUser.jsp") 
 	User user;
 
+    public User getUser() {	return user;    }
+    private void setUser(User c) {	user=c;    }
+
     /*  
     @ManyToOne
     @Column(nullable=true)
@@ -73,13 +76,6 @@ import  edu.rutgers.axs.web.SessionData;
 	this.article = article;
     }
 
-    public User getUser() {
-	return user;
-    }
-
-    private void setUser(User c) {
-	user=c;
-    }
     
     public long getSession() {
 	return session;

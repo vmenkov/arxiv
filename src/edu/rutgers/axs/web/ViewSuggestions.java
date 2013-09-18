@@ -116,7 +116,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		if (plist==null) 	throw new WebException("PresentedList " +plid+ " does not exist");
 		long dfid = plist.getDataFileId();
 		df = (dfid==0)? null : (DataFile)em.find(DataFile.class, dfid);
-		actorUserName = plist.getUser();
+
+		actor = plist.getUser();
+		actorUserName = (actor==null)? null: actor.getUser_name();
 		isSelf = (actorUserName!=null && actorUserName.equals(user));
 		
 		if (!isSelf) {
@@ -168,7 +170,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    if (actorUserName==null) {
 		throw new WebException("No user name specified!");
 	    }
+
+	    // Yes, we do it again (even though it was already done 
+	    // in ResultsBase), just so that actor.getActions() 
+	    // could return a result! FIXME...
 	    actor=User.findByName(em, actorUserName);
+
 	    if (actor==null) {
 		throw new WebException("There is no user named '"+ actorUserName+"'");
 	    }
@@ -504,7 +511,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// if it's a mail page. There is also a way to explicitly
 	// prevent the recording of a PL (the dryRun option)
 	if ((isSelf || isMail) && !dryRun) {
-	    PresentedList plist=sr.saveAsPresentedList(em,srcType,actorUserName,
+	    PresentedList plist=sr.saveAsPresentedList(em,srcType,actor,
 						       df, null);
 	    plid =  plist.getId();
 	}

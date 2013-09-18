@@ -45,10 +45,10 @@ first). All actions, even clicking the "Don't show this article again" button ar
 	 <!-- Links to prev/next pages, if necessary -->
 <p>
 <% if (main.needPrev) {	%> 
-<a href="<%= main.repageUrl(main.prevstart) %>">[PREV PAGE (LATER)]</a> 
+<a href="<%= main.repageUrl(main.prevstart)%>">[PREV PAGE (LATER)]</a> 
 <% } else { %> [THIS IS THE TOP OF THE LIST] <% } 	
  if (main.needNext) { %>	
-<a href="<%= main.repageUrl(main.nextstart) %>">[NEXT PAGE (EARLIER)]</a>
+<a href="<%= main.repageUrl(main.nextstart)%>">[NEXT PAGE (EARLIER)]</a>
 <% }	 %>
 </p>
 

@@ -538,7 +538,10 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     */
     public HashMap<String, Action> getActionHashMap(Action.Op[] ops) {
 	HashMap<String, Action> h = new HashMap<String, Action>();
-	for( Action a: actions) {
+	if (getActions()==null) {
+	    throw new IllegalArgumentException("actions==null! user name = " + getUser_name());
+	}
+	for(Action a: getActions()) {
 	    String aid = a.getAid();
 	    if (aid==null) continue;
 	    if (a.opInList(ops))  {

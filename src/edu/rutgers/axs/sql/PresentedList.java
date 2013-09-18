@@ -34,10 +34,21 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setId(long val) {        id = val;    }
     public long getId() {        return id;    }
 
+
+   @ManyToOne
+    @Column(nullable=false)
+	@Display(editable=false, order=1, link="viewUser.jsp") 
+	User user;
+
+    public User getUser() {	return user;    }
+    private void setUser(User c) {	user=c;    }
+
+
     /** Name of the user to whom the list was presented. (It would have been
 	more efficient to store the numeric user id...). Null is stored for anon
 	users.
      */
+    /*
     //@ManyToOne
     @Column(nullable=true)
     @Display(editable=false, order=2) 
@@ -46,7 +57,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
     public String getUser() { return user;}
     public void setUser(String x) { user=x;}
-
+    */
 
     /** When was this list (first) presented? */
     @Display(editable=false, order=3) 
@@ -116,9 +127,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	methods for the data list source (data file or query), and
 	filling the actual list. 
      */
-    public PresentedList(Action.Source type, String username) {
+    public PresentedList(Action.Source type, User u) {
 	setType(type);
-	setUser(username);
+	setUser(u);
 	setTime( new Date());
     }
 
@@ -171,7 +182,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	are identical.
      */
     static public PresentedList findLatestPresentedSugList(EntityManager em, String  username) {
-	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc, m.id desc";
+	String qs = "select m from PresentedList m where m.user is not null and m.user.user_name=:u and m.type in (:tlist) order by m.dataFileId desc, m.id desc";
 	Query q = em.createQuery(qs);
 	q.setParameter("u", username);
 	q.setParameter("tlist", Arrays.asList(Action.Source.mainPageSources));
@@ -186,7 +197,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     }
 
     static public PresentedList findLatestEmailSugList(EntityManager em, String  username) {
-	String qs = "select m from PresentedList m where m.user=:u and m.type in (:tlist) order by m.dataFileId desc,  m.id desc";
+	String qs = "select m from PresentedList m where m.user is not null and m.user.user_name=:u and m.type in (:tlist) order by m.dataFileId desc,  m.id desc";
 	Query q = em.createQuery(qs);
 	q.setParameter("u", username);
 	q.setParameter("tlist", Arrays.asList(Action.Source.emailPageSources));

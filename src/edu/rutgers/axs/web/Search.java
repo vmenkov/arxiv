@@ -142,10 +142,8 @@ public class Search extends ResultsBase {
 	    }
 
 	    PresentedList plist = null;
-	    if (user!=null) {
-		// Save the presented search results in the database
-		plist = sr.saveAsPresentedList(em, Action.Source.SEARCH, user, null, eq);
-	    }
+	    // Save the presented search results in the database
+	    plist = sr.saveAsPresentedList(em, Action.Source.SEARCH, u, null, eq);
 	
 	    if (em!=null) em.close();
 

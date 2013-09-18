@@ -200,6 +200,9 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	return res;
     }
 
+    /** Just for openjpa.Enhance, to keep it from complaining */
+    private ArticleStats() {}
+
     public ArticleStats(Article a) {
 	setId(a.getId());
 	setAid(a.getAid());
