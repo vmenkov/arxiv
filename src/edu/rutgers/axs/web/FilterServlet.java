@@ -27,9 +27,12 @@ import edu.rutgers.axs.html.RatingButton;
  */
 public class FilterServlet extends  BaseArxivServlet  {
 
-    /** May be changed in init(), by means of parameters supplied from web.xml
-     */
+    /** May be changed (e.g. to export.arxiv.org) in init(), by means
+	of parameters supplied from web.xml     */
     private String ARXIV_BASE = "http://arxiv.org";
+    /** This one stays constant.
+	FIXME: maybe we can also make it configurable */
+    private final static String ARXIV_BASE_PDF = "http://arxiv.org";
 
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
@@ -125,8 +128,10 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 
 	    // Some pages (such as "view PDF") we won't "filter", but
-	    // rather will simply redirect to.  This is per Simeon
-	    // Warner's request 2011-12-21, 2012-01-04
+	    // rather will simply redirect to (so that the user's
+	    // browser will send a new request directly to the
+	    // arxiv.org server).  This is per Simeon Warner's
+	    // request 2011-12-21, 2012-01-04
 	    boolean mustRedirect= actionable.mustRedirect();
 	    Logging.info("pi="+pi+", redirect=" + mustRedirect);
 	    if (mustRedirect) {
@@ -135,7 +140,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		  "http://arxiv.org/abs/" + aid :
 		  "http://arxiv.org/format/" + aid;
 		*/
-		String url=ARXIV_BASE +  pi;
+		String url=ARXIV_BASE_PDF +  pi;
 		String eurl = response.encodeRedirectURL(url);
 		Logging.info("sendRedirect to: " + eurl);
 		response.sendRedirect(eurl);
