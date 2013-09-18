@@ -27,8 +27,22 @@ import edu.rutgers.axs.html.RatingButton;
  */
 public class FilterServlet extends  BaseArxivServlet  {
 
+    /** May be changed in init(), by means of parameters supplied from web.xml
+     */
+    private String ARXIV_BASE = "http://arxiv.org";
+
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
+	final String name = "ArxivBaseURL";
+	String s  = config.getInitParameter(name);
+	if (s!=null && !s.equals("")) {
+	    ARXIV_BASE = s;
+	    Logging.info("Read property " + name + "=" + 	    ARXIV_BASE);
+	} else {
+	    Logging.info("No property value found for " + name + "; keep " + 	    ARXIV_BASE);
+	}
+
+
     }
 
 

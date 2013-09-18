@@ -23,10 +23,6 @@ public class BaseArxivServlet extends HttpServlet {
     final static public String ID=ServletConstants.ID, 
 	ACTION=ServletConstants.ACTION; 
 
-    /** May be changed in init(), by means of parameters supplied from web.xml
-     */
-    String ARXIV_BASE = "http://arxiv.org";
-
     /** E.g., "/arxiv". It is set in init(); */
     private String cp;
   
@@ -41,9 +37,6 @@ public class BaseArxivServlet extends HttpServlet {
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
 	ServletContext context=config.getServletContext();
-
-	String s  = config.getInitParameter("ArxivBaseURL");
-	if (s!=null && !s.equals("")) ARXIV_BASE = s;
 
 	// Alas, this is only available since Servlet API 2.5 (= Tomcat 6);
 	//cp= context.getContextPath(); 

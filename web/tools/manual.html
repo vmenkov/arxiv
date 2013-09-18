@@ -140,7 +140,7 @@ evironment
 <tr>
 <th colspan=3>The <tt>EnteredQuery</tt> table
 <tr>
-<td>select x from Action x, User u where x.user=u and u.user_name='vmenkov'
+<td>select x from Action x where x.user.user_name='vmenkov'
 <td>select x.* from Action x, arxiv_users u where x.user_id=u.id and u.user_name='vmenkov'
 <tr><td> select x from EnteredQuery x
     <td> select x.* from EnteredQuery x

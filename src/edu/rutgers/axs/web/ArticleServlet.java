@@ -44,7 +44,6 @@ public class ArticleServlet extends BaseArxivServlet {
 
 	    ActionSource asrc = new ActionSource(request);
 
-	    //String base = ARXIV_BASE;
 	    String base =   getContextPath() +  FilterServlet.FS;
 	    String url = base +
 		asrc.toFilterServletString() +
