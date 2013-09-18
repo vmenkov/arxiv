@@ -635,7 +635,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 		if (mayRewrite) {
 		    return effectiveFs + link;
 		} else {
-		    return ARXIV_BASE + link;
+		    // CSS files, like PDF, should be always read from arxiv.org
+		    // (not export.arxiv.org)
+		    return ARXIV_BASE_PDF + link;
 		}
 	    } else {
 		// relative URL
