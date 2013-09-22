@@ -36,7 +36,7 @@ import edu.cornell.cs.osmot.options.Options;
     
  */
 public class HistoryClustering {
-    /**
+    /**  Old format
       {
             "referrer": "http://arxiv.org/find", 
             "ip_hash": "30505f2428eb9b6dd2617307ced6d8b3", 
@@ -46,6 +46,18 @@ public class HistoryClustering {
             "entry": 2, 
             "type": "abstract"
         },
+
+	New format
+   {
+      "arxiv_id": "0902.0656", 
+      "cookie_hash": "a1bab5ac50bfd9aa", 
+      "entry": 3, 
+      "ip_hash": "414a807fcda84084", 
+      "type": "txt", 
+      "user_agent": "Mozilla/5.0 (X11; U; Linux i686; en-GB; rv:1.9.0.10) Gecko/2009042523", "utc": 126230400
+2
+    }
+
     */
 
     /** Do we process JSON records with this particular action type?
@@ -74,17 +86,8 @@ public class HistoryClustering {
 	@param fname The input file name (complete path)
      */
     private static void splitJsonFile(String fname) throws IOException, JSONException {
-	
-	FileInputStream fis = new FileInputStream(fname);
-	InputStream is = (fname.endsWith(".gz") ?
-			  new GZIPInputStream(fis) : fis);
-	
-	InputStreamReader fr = new InputStreamReader(is);
-	//FileReader fr = new FileReader(fname);
-	JSONTokener tok = new JSONTokener(fr);
-	JSONObject jsoOuter = new JSONObject(tok);
-	fr.close();
 
+	JSONObject jsoOuter = Json.readJsonFile(fname);
 	JSONArray jsa = jsoOuter.getJSONArray("entries");
 	int len = jsa.length();
 	System.out.println("Length of the JSON data array = " + len);
@@ -110,8 +113,12 @@ public class HistoryClustering {
 		continue;		
 	    }
 
-	    String ip_hash = jso.getString("ip_hash").intern();
-	    String aid = canonicAid(jso.getString( "arxiv_id")).intern();
+	    String ip_hash = jso.getString("ip_hash");
+	    String aid = canonicAid(jso.getString( "arxiv_id"));
+	    String cookie = jso.getString("cookie_hash");
+	    if (cookie==null) cookie = jso.getString("cookie");
+	    if (cookie==null) cookie = "";
+
 	    cnt ++;
 
 	    Categories.Cat c = null;
@@ -136,7 +143,7 @@ public class HistoryClustering {
 		catAsg.put(aid, c);
 	    }
 	    if (c!=null) {
-		saver.save( c.fullName(),  ip_hash, aid);
+		saver.save( c.fullName(),  ip_hash, cookie, aid);
 	    }
 	}
 	saver.closeAll();
@@ -204,14 +211,14 @@ public class HistoryClustering {
 	}
 
 	HashMap<String,PrintWriter> writers = new HashMap<String,PrintWriter>();
-	void save(String majorCat, String ip_hash, String aid) throws IOException {
+	void save(String majorCat, String ip_hash, String cookie, String aid) throws IOException {
 	    PrintWriter w = writers.get(majorCat);
 	    if (w==null) {
 		File f = catFile( majorCat, origFile);
 		w = new PrintWriter(new FileWriter(f));
 		writers.put(majorCat, w);
 	    }
-	    w.println(ip_hash + "," + aid);
+	    w.println(ip_hash + "," + cookie + "," + aid);
 	}
 	
 	void closeAll() {
@@ -362,8 +369,8 @@ public class HistoryClustering {
 		s = s.trim();
 		if (s.equals("")) continue;
 		String q[] = s.split(",");
-		if (q.length!=2) throw new IOException("Could not parse line no. " + r.getLineNumber() + " in file " + f + " as a (user,page) pair:\n" + s);
-		user2pageList.add(q[0], q[1]);
+		if (q.length!=3) throw new IOException("Could not parse line no. " + r.getLineNumber() + " in file " + f + " as an (ip,cookie,page) tuple:\n" + s);
+		user2pageList.add(q[0], q[2]);
 	    }
 	    r.close();
 	}
@@ -508,12 +515,5 @@ public class HistoryClustering {
 
 
     }
-
-    /*
-    static class HistoryMatrix {
-	HashMap<String, Integer> u2pageCnt = new HashMap<String, Integer>;
-	
-    }
-    */
 
 }
