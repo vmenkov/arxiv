@@ -315,6 +315,11 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 	}
 
+	String foundCookie = lURLConnection.getHeaderField("Set-Cookie");
+	if (foundCookie != null) {
+	    Logging.info("FS: remote server does Set-Cookie: " + foundCookie);
+	}
+
 	final int ChunkSize = 8192;
 	int lContentLength = lURLConnection.getContentLength();
 	// e.g.  "Content-Type: text/html; charset=ISO-8859-4"
@@ -478,6 +483,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 	      // efficient to build in some support for them...
 	      Logging.info("FS: NOT sending the "+name+" header to the arxiv.org server");
 	      continue;
+	  } else if (name.equalsIgnoreCase("Cookie") ||
+		     name.equalsIgnoreCase("Set-Cookie")) {
+	      Logging.info("FS: copyRequestHeaders detects: " + name + ": " +value);
 	  }
 	  aHttpURLConnection.setRequestProperty(name, value);
 	  //Logging.info("Copy header: " + name + ": " + value);
