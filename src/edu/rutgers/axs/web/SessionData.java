@@ -34,14 +34,7 @@ public class SessionData {
     private SessionData( HttpSession _session,HttpServletRequest request )
 	throws WebException, IOException {
 	session = _session;
-
-	//-- not used any more: use persistence.xml instead
-	Properties p = //new Properties();  
-	readProperties();     
-
-        // The "arxiv" name will be used to configure based on the
-        // corresponding name in the META-INF/persistence.xml file
-	initFactory(p);
+	initFactory( session );
 	// record the session in the database
 	EntityManager em=null;
 	try {
@@ -62,8 +55,10 @@ public class SessionData {
 
     /** Create a new EntityManagerFactory using the System properties.
      */
-    private static synchronized void initFactory(Properties p) {
+    private static synchronized void initFactory(HttpSession session) 
+	throws IOException, WebException {
 	if (factory!=null) return;
+	Properties p = getProperties(session.getServletContext());     
 	factory = Persistence.
 	    createEntityManagerFactory(Main.persistenceUnitName,p);
     }
@@ -118,26 +113,28 @@ public class SessionData {
     //final static NumberFormat pcfmt = new DecimalFormat("#0.##");
     //final static NumberFormat ratefmt = new DecimalFormat("0.###");
 
-    /** Really should be session-scope, rather than static read*/
-    private Properties readProperties() 
+
+    private static Properties ourProperties=null;
+
+    /** Really should be session-scope, rather than static read. (?) */
+    private static synchronized Properties getProperties(ServletContext context) 
 	throws WebException, IOException {
 
-	ServletContext context = session.getServletContext(); 
-
-	Properties p = new Properties(); // or we can pass system prop?
+	if (ourProperties!=null) return ourProperties;
+	ourProperties= new Properties(); // or we can pass system prop?
 	String path = "/WEB-INF/connection.properties";
-	edu.rutgers.axs.sql.Logging.info("SessionData.readProperties(): Trying to read properties from " + path);
+	edu.rutgers.axs.sql.Logging.info("SessionData.getProperties(): Trying to read properties from " + path);
 	InputStream is = context.getResourceAsStream(path);
 	if (is==null) throw new WebException("Cannot find file '"+path+"' at the server's application context.");
 
-	p.load(is);
+	ourProperties.load(is);
 	is.close();
 
-	edu.rutgers.axs.sql.Logging.info("SessionData.readProperties() - loaded");
+	edu.rutgers.axs.sql.Logging.info("SessionData.getProperties() - loaded");
 	//	for(Object k:p.keySet()) {
 	    //edu.rutgers.axs.sql.Logging.info("Prop["+k+"]='"+p.get(k)+"'");}
 
-	return p;
+	return ourProperties;
     }
 
 
