@@ -425,8 +425,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 		}
 
 	    }
-	    System.out.println("input =["+logInput+"...]");
-	    System.out.println("output=["+logOutput+"...]");
+	    //System.out.println("input =["+logInput+"...]");
+	    //System.out.println("output=["+logOutput+"...]");
 	    w.flush();
 	}
 	in.close();
