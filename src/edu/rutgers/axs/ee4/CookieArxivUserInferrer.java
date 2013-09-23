@@ -32,7 +32,14 @@ class CookieArxivUserInferrer extends ArxivUserInferrer {
 	    return u;
 	} else {
 	    fromAnonCookieCnt++;
-	    return cookie_hash;
+	    if (table.cookie2user.containsKey(cookie_hash)) {
+		// avoiding potential ambiguity between cookie_hash
+		// and user_hash values
+		ambigCnt++;
+		return "C-" + cookie_hash;
+	    } else {
+		return cookie_hash;
+	    }
 	}
     }
 }
