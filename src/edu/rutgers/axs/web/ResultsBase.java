@@ -108,6 +108,13 @@ public class ResultsBase {
     public ResultsBase(HttpServletRequest _request, HttpServletResponse response) {
 	request = _request;
 	cp = request.getContextPath(); 
+
+	String foundCookie = request.getHeader("Cookie");
+	if (foundCookie!=null) {
+	    infomsg+= "Cookie: " + foundCookie + "<br>\n" ;
+	    Logging.info("Cookie: " + foundCookie);
+	}
+
 	try {
 	    userAgent = request.getHeader("User-Agent");
 	    infomsg+= "User-Agent: " + userAgent + "<br>\n";

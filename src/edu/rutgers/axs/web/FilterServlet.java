@@ -444,7 +444,6 @@ public class FilterServlet extends  BaseArxivServlet  {
     user agent is not forwarded to the arxiv.org server. This way we
     obviate the need to handle compressed data (gzip, deflate, etc).
 
-
     @param  aHttpURLConnection  HTTP connection whose parameters we're setting
 
     @param areq The request from the browser whose parameters we're reading
