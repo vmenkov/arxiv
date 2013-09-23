@@ -90,7 +90,7 @@
         <description>The base URL for the underlying server we connect to
 	</description> 
         <param-name>ArxivBaseURL</param-name> 
-        <param-value>http://arxiv.org</param-value> 
+        <param-value>http://export.arxiv.org</param-value> 
     </init-param> 
     <load-on-startup>1</load-on-startup>
   </servlet>
@@ -112,7 +112,7 @@
         <description>The base URL for the underlying server we connect to
 	</description> 
         <param-name>ArxivBaseURL</param-name> 
-        <param-value>http://arxiv.org</param-value> 
+        <param-value>http://export.arxiv.org</param-value> 
     </init-param> 
     <load-on-startup>1</load-on-startup>
   </servlet>
