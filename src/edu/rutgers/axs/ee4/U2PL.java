@@ -14,7 +14,7 @@ class U2PL  {
     
     /** This map is used during the table-building process only */
     private Vector<String> origno2aid = new Vector<String>();
-    private HashMap<String, Integer> aid2origno = new HashMap<String, Integer>();
+    private HashMap<String, Integer> aid2origno=new HashMap<String, Integer>();
     
     /** The final numeric map for article IDs.	 */
     String[] no2aid;
