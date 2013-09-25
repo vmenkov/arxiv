@@ -10,54 +10,48 @@ import java.util.regex.*;
 */
 class U2PL  {
 
-    /** This is meant to be, on average, more efficient than HashSet<Integer>
+    /** This is meant to be, on average, more memory-efficient than HashSet<Integer>
      */
     static private class IntStore {
-	final Vector<Integer> integers;
-	IntStore(Vector<Integer> _integers) {
-	    integers = _integers;
-	}
-	private HashSet<Integer> h = null;
-	final int N=32;
+
 	private int n=0;
-	int store[] = new int[N];
-
-	HashSet<Integer> convertToHash() {
-	    if (h==null) {
-		h = new HashSet<Integer>();
-		for(int x: store) {
-		    h.add(integers.elementAt(x));
-		}
-		store=null; // save space
-	    }
-	    return h;
-	}
-
-	int[] convertToArray() {
-	    if (h==null) convertToHash();
-	    store = new int[h.size()];
-	    int i=0;	    
-	    for(Integer x: h) {
-		store[i++] = x.intValue();		
-	    }
-	    Arrays.sort(store); 
-	    h = null; // save space
-	    return store;
-	}
-
+	private int store[] = new int[32];
+	private boolean dirty = false;
+	
 	int[] getArray() { return store; }
 
-	void add(Integer q) {
-	    if (h==null) {
-		if (n<store.length) {
-		    store[n++] = q.intValue();
-		} else {
-		    convertToHash();
-		    h.add(q);
-		}
-	    } else {
-		h.add(q);
+	synchronized void add(Integer q) {
+	    if (n==store.length) {
+		// sort and resize;
+		clean(store.length*2);
 	    }
+	    dirty=true;	
+	    store[n++] = q.intValue();
+	}
+
+	/** Resizes the array to specified new  length, sorts values,
+	    and removes duplicates
+	 */
+	synchronized private void clean(int newLen) {
+	    Arrays.sort(store,0,n); 
+	    int[] w = new int[newLen];
+	    int n0 = n;
+	    n=0;
+	    for(int i=0; i<n0; i++) {
+		int x=store[i];
+		if (n==0 || x>w[n]) w[n++] = x;
+	    }
+	    store = w;	    
+	    dirty=false;
+	}
+
+	synchronized void clean() {
+	    if (dirty || n!=store.length) clean(n);	    
+	}
+	
+	synchronized int[] getStore() {
+	    clean();
+	    return store;
 	}
     }
 
@@ -66,8 +60,6 @@ class U2PL  {
     /** This map is used during the table-building process only */
     private Vector<String> origno2aid = new Vector<String>();
     private HashMap<String, Integer> aid2origno=new HashMap<String, Integer>();
-    /** Just a list of unique integer objects */
-    private Vector<Integer> integers = new  Vector<Integer>();
 
     /** The final numeric map for article IDs.	 */
     String[] no2aid;
@@ -82,7 +74,6 @@ class U2PL  {
 	Integer q = aid2origno.get(p);
 	if (q==null) {
 	    q = new Integer(origno2aid.size());
-	    integers.add(q);
 	    origno2aid.add(p);
 	    aid2origno.put(p,q);
 	}
@@ -91,7 +82,7 @@ class U2PL  {
 
     void add(String u, String p) {
 	IntStore v = map.get(u);
-	if (v==null) map.put(u, v = new IntStore(integers));
+	if (v==null) map.put(u, v = new IntStore());
 	v.add(registerPage(p));
     }
 
@@ -108,12 +99,11 @@ class U2PL  {
 	for(Iterator<Map.Entry<String,IntStore>> it = 
 		map.entrySet().iterator();   it.hasNext(); ) {	    
 	    IntStore z = it.next().getValue();
-	    int c = z.convertToHash().size();
+	    z.clean();
+	    int c = z.getStore().length;
 	    origCnt += c;
 	    if (c< user_thresh) {
 		it.remove();
-	    } else {
-		z.convertToArray();
 	    }
 	}
 
@@ -123,7 +113,7 @@ class U2PL  {
 	int[] viewCnt = new int[origno2aid.size()];
 	
 	for(IntStore v: map.values()) {
-	    for(int origno: v.getArray()) {
+	    for(int origno: v.getStore()) {
 		viewCnt[origno] ++;
 	    }
 	}
@@ -165,13 +155,13 @@ class U2PL  {
 	for(String u: map.keySet()) {
 	    int row = u2no.get(u).intValue();
 	    int cnt = 0;
-	    for(int origno: map.get(u).getArray()) {
+	    for(int origno: map.get(u).getStore()) {
 		if (viewCnt[origno] >= paper_thresh) cnt++;
 	    }
 	    int pos[] = new int[cnt];
 	    
 	    k=0;
-	    for(int origno: map.get(u).getArray()) {
+	    for(int origno: map.get(u).getStore()) {
 		if (viewCnt[origno] < paper_thresh)  continue;
 		String aid = origno2aid.elementAt(origno);
 		int col = aid2no.get(aid).intValue();
