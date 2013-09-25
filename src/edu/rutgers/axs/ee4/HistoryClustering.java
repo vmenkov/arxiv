@@ -44,7 +44,7 @@ public class HistoryClustering {
 	U2PL   user2pageList = new U2PL();
 
 	for(File f: files) {
-	    System.out.println("Reading split file " + f);
+	    System.out.println("Reading split file " + f + ", at "+ new Date());
 	    FileReader fr = new FileReader(f);
 	    LineNumberReader r = new LineNumberReader(fr);
 	    String s = null;
@@ -55,7 +55,9 @@ public class HistoryClustering {
 		String q[] = commaPattern.split(s);
 		if (q.length!=3) throw new IOException("Could not parse line no. " + r.getLineNumber() + " in file " + f + " as an (ip,cookie,page) tuple:\n" + s);
 		String user = inferrer.inferUser(q[0],q[1]);
-		if (user==null) {
+		if (user==null) { 
+		    // let's ignore no-cookie entries (which, actually,
+		    // don't exist)
 		} else {
 		    user2pageList.add(user, q[2]);
 		}
