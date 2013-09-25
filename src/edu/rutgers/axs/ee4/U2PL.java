@@ -18,8 +18,6 @@ class U2PL  {
 	private int store[] = new int[32];
 	private boolean dirty = false;
 	
-	int[] getArray() { return store; }
-
 	synchronized void add(Integer q) {
 	    if (n==store.length) {
 		// sort and resize;
@@ -31,15 +29,24 @@ class U2PL  {
 
 	/** Resizes the array to specified new  length, sorts values,
 	    and removes duplicates
+	    @param newLen The desired array length. If 0, it means use 
+	    just as much memory as needed to fit what's there
 	 */
 	synchronized private void clean(int newLen) {
 	    Arrays.sort(store,0,n); 
+	    if (newLen<=0) {
+		newLen=0;
+		for(int i=0; i<n; i++) {
+		    if (i==0 || store[i]>store[i-1]) newLen++;
+		}
+	    }
+
 	    int[] w = new int[newLen];
 	    int n0 = n;
 	    n=0;
 	    for(int i=0; i<n0; i++) {
 		int x=store[i];
-		if (n==0 || x>w[n]) w[n++] = x;
+		if (n==0 || x>w[n-1]) w[n++] = x;
 	    }
 	    store = w;	    
 	    dirty=false;
