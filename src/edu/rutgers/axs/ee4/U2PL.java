@@ -15,7 +15,7 @@ class U2PL  {
     static private class IntStore {
 
 	private int n=0;
-	private int store[] = new int[32];
+	private int store[] = new int[8];
 	private boolean dirty = false;
 	
 	synchronized void add(Integer q) {
