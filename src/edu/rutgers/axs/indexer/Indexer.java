@@ -582,6 +582,13 @@ public class Indexer {
 	writer.close();
     }
 
+    /**
+       Examples:
+       <pre>
+       grep ',1$' ../arXiv-data/tmp/svd-asg/math/asg.dat | perl -pe 's/,.*//' | ./cmd.sh showtitle - 
+
+       </pre>
+     */
     public static void main(String[] args) throws Exception {
 	
 	Options.init(); // read the config file
@@ -665,9 +672,30 @@ public class Indexer {
 	    Show show = new Show();
 	    for(int j=1; j<args.length; j++) {
 		String v = args[j];
-		// is it numeric?
-		int docno=show.figureDocno(v);
-		show.show(docno);  
+		if (v.equals("-")) {   // read doc IDs from the standard input
+		    for(FileIterator it=new FileIterator(); it.hasNext();){
+			int docno=show.figureDocno(it.next());
+			show.show(docno); 
+		    }
+		} else {	// is it numeric?
+		    int docno=show.figureDocno(v);
+		    show.show(docno);  
+		}
+	    }
+	} else if (args[0].equals("showtitle")) {
+	    System.out.println("Default encoding is: " + System.getProperty("file.encoding"));
+	    Show show = new Show();
+	    for(int j=1; j<args.length; j++) {
+		String v = args[j];
+		if (v.equals("-")) {   // read doc IDs from the standard input
+		    for(FileIterator it=new FileIterator(); it.hasNext();){
+			int docno=show.figureDocno(it.next());
+			show.showTitle(docno); 
+		    }
+		} else {	// is it numeric?
+		    int docno=show.figureDocno(v);
+		    show.showTitle(docno);  
+		}
 	    }
 	} else if (args[0].equals("showcoef")) {
 	    System.out.println("Note: the following stop words are not stored in the Lucene index:");
@@ -685,23 +713,25 @@ public class Indexer {
 	    Show show = new Show();
 	    for(int j=1; j<args.length; j++) {
 		String v = args[j];
-		// is it numeric?
-		int docno=show.figureDocno(v);
-		show.showCoef(docno); 
+		if (v.equals("-")) {   // read doc IDs from the standard input
+		    for(FileIterator it=new FileIterator(); it.hasNext();){
+			int docno=show.figureDocno(it.next());
+			show.showCoef(docno); 
+		    }
+		} else {
+		    // is it numeric?
+		    int docno=show.figureDocno(v);
+		    show.showCoef(docno); 
+		}
 	    }
 	} else if (args[0].equals("showcoef2")) {  // CSV format
 	    Show show = new Show(false);
 	    show.showFieldHeaders2();
 	    for(int j=1; j<args.length; j++) {
 		String v = args[j];
-		if (v.equals("-")) {
-		    // read doc IDs from the standard input
-		    LineNumberReader r = new LineNumberReader(new InputStreamReader(System.in));
-		    String s = null;
-		    while((s=r.readLine())!=null) {
-			s = s.trim();
-			if (s.equals("") || s.startsWith("#")) continue;
-			show.showCoef2(s); 
+		if (v.equals("-")) {   // read doc IDs from the standard input
+		    for(FileIterator it=new FileIterator(); it.hasNext();){
+			show.showCoef2(it.next()); 
 		    }
 		} else {
 		    show.showCoef2(v); 

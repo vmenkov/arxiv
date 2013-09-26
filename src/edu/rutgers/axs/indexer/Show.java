@@ -100,6 +100,21 @@ class Show {
 	System.out.println("Document=" + doc);
     }
 
+   void showTitle(int docno) throws IOException {
+	Document doc = reader.document(docno);
+	//System.out.println("Doc no.=" + docno);
+	//System.out.println("dateIndexed=" + doc.get(ArxivFields.DATE_INDEXED));
+	//System.out.println("date       =" + doc.get(ArxivFields.DATE));
+	//System.out.println("authors    =" + doc.get(ArxivFields.AUTHORS));
+	//System.out.println("Document=" + doc);
+	String s = "[" +doc.get(ArxivFields.PAPER)+ "] " + 
+			   doc.get(ArxivFields.CATEGORY) + "; " +
+			   doc.get(ArxivFields.TITLE);
+	s = s.replaceAll("\\s+", " ");
+	System.out.println(s);
+    }
+
+
     /** Shows the terms and coefficients for a particular document.
 
 	<p>Note: using 
