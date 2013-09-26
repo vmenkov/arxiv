@@ -585,7 +585,7 @@ public class Indexer {
     /**
        Examples:
        <pre>
-       grep ',1$' ../arXiv-data/tmp/svd-asg/math/asg.dat | perl -pe 's/,.*//' | ./cmd.sh showtitle - 
+       grep ',1$' ../arXiv-data/tmp/svd-asg/math/asg.dat | perl -pe 's/,.+//' | ./cmd.sh showtitle - 
 
        </pre>
      */
