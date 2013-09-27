@@ -81,7 +81,6 @@ public class HistoryClustering {
 	boolean useMySVD = true;
 
 	System.out.println("Doing SVD");
-	final int k_svd = 5; // number of singular vectors to keep
 	int keepSvd = k_svd;
 
 	double[] sval;
@@ -116,10 +115,12 @@ public class HistoryClustering {
 	    vdoc.add(new DenseDataPoint(q));
 	}
 
-	// desired number of clusters
-	int k_kmeans = (int)Math.sqrt(  (double)vdoc.size()/200.0);
-	if (k_kmeans <=1) k_kmeans = 1;
-
+	// Set the desired number of clusters (if not specified in options)
+	if (k_kmeans <= 0) {
+	    k_kmeans = (int)Math.sqrt(  (double)vdoc.size()/200.0);
+	    if (k_kmeans <=1) k_kmeans = 1;
+	    System.out.println("Will create " + k_kmeans + " clusters");
+	}
 	KMeansClustering clu = KMeansClustering.findBestClustering(vdoc,
 								   keepSvd,
 								   k_kmeans);
@@ -181,8 +182,16 @@ public class HistoryClustering {
 	System.exit(1);
     }
 
+    /** The number of singular vectors to keep */
+    static private int k_svd = 5;
+    /** The number of clusters to create. 0 means using an adaptive formula.
+     */
+    static private int k_kmeans = 0;
 
     public static void main(String [] argv) throws IOException, JSONException {
+	ParseConfig ht = new ParseConfig();
+	k_kmeans = ht.getOption("k_kmeans", k_kmeans);
+	k_kmeans = ht.getOption("k_svd", k_svd);
 
 	if (argv.length < 1) {
 	    usage("Command not specified");
