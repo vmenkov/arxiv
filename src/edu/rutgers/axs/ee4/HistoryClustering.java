@@ -191,7 +191,7 @@ public class HistoryClustering {
     public static void main(String [] argv) throws IOException, JSONException {
 	ParseConfig ht = new ParseConfig();
 	k_kmeans = ht.getOption("k_kmeans", k_kmeans);
-	k_kmeans = ht.getOption("k_svd", k_svd);
+	k_svd = ht.getOption("k_svd", k_svd);
 
 	if (argv.length < 1) {
 	    usage("Command not specified");
