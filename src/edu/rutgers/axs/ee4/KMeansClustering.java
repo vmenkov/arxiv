@@ -126,7 +126,7 @@ class KMeansClustering {
 	    eCnt++;
 
 	    if (!printedPops) {
-		System.out.print("\nPops:");
+		System.out.print("\nPops-before:");
 		for(int p: population) System.out.print(" " + p);
 		System.out.println("\nPops:");
 	    }
@@ -154,9 +154,8 @@ class KMeansClustering {
 	}
 
 	if (eCnt>0) {
-	    System.out.print("\nPops:");
+	    System.out.print("Pops-after :");
 	    for(int p: population) System.out.print(" " + p);
-	    System.out.println("\nPops:");
 	}
 	
     }
