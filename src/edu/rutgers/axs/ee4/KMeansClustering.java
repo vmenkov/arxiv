@@ -13,6 +13,9 @@ class KMeansClustering {
     /** Input: the objects to be clustered */
     final Vector<? extends DataPoint> vdoc; 
 
+    /** Square of norms of the objects */
+    double [] vdocNorm2;
+
     /** Output: an array with the cluster id assigned to each object */
     int asg[];
     /** Cluster centers. */
@@ -31,12 +34,14 @@ class KMeansClustering {
 	number will stay constant.
     */
     KMeansClustering(int _nterms, 
-		     //Vector<SparseDataPoint> _vdoc, 
 		     Vector<? extends DataPoint> _vdoc, 
 		     DenseDataPoint[] _centers) {
 	nterms = _nterms;
 	vdoc = _vdoc;
+	vdocNorm2 = new double[vdoc.size()];
 	centers=_centers;
+	int i=0;
+	for(DataPoint p: vdoc) vdocNorm2[i++]=p.norm2();
     }
 
     /** Initializes the clustering object using a specified
@@ -44,9 +49,7 @@ class KMeansClustering {
  	@param _vdoc The list of objects to cluster
     */
     KMeansClustering(int _nterms, Vector<? extends DataPoint> _vdoc, int[] ci) {
-	nterms = _nterms;
-	vdoc = _vdoc;
-	centers=new DenseDataPoint[ci.length];
+	this( _nterms, _vdoc, new DenseDataPoint[ci.length]);
 	for(int i=0;i<ci.length; i++) {
 	    centers[i] =new DenseDataPoint(nterms, vdoc.elementAt(ci[i]));
 	}	   
@@ -94,10 +97,9 @@ class KMeansClustering {
 	double[] centerNorm2 =  centerNorms2();
 	// |v - c|^2 = |v|^2 + |c|^2 - 2(v,c) = 1 + |c|^2 - 2(v,c)
 	for(int j=0; j<vdoc.size(); j++) {
-	    DataPoint p = vdoc.elementAt(j);
 	    double d2min = 0;
 	    for(int i=0; i<centers.length; i++) {
-		double d2 = 1 + centerNorm2[i] - 2*centers[i].dotProduct(p);
+		double d2 = vdocNorm2[i] + centerNorm2[i] - 2*centers[i].dotProduct( vdoc.elementAt(j)  );
 		if (i==0 || d2 < d2min) {
 		    asg[j] = i;
 		    d2min = d2;
@@ -156,19 +158,42 @@ class KMeansClustering {
 	double sum=0;
 	double[] centerNorm2 =  centerNorms2();
 
-	System.out.println("Centers' norm^2 =" + arrToString(centerNorm2));
+	//	System.out.println("Centers' norm^2 =" + arrToString(centerNorm2));
 	
 	// |v - c|^2 = |v|^2 + |c|^2 - 2(v,c) = 1 + |c|^2 - 2(v,c)
 	int j=0;
 	for(DataPoint p: vdoc) {
-	    int ci=asg[j++];
-	    sum += 1 + centerNorm2[ci] - 2*centers[ci].dotProduct(p);
+	    int ci=asg[j];
+	    sum += vdocNorm2[j] + centerNorm2[ci] - 2*centers[ci].dotProduct(p);
+	    j++;
 	}	
 	return sum;
     }
 
+    String describeStats() {
+	StringBuffer s=new StringBuffer();
+	double[] centerNorm2 =  centerNorms2();
+	int[] pop = clusterPopulations(centers.length);
+	double r[] = new double[centers.length];
+	int j=0;
+	for(DataPoint p: vdoc) {
+	    int ci=asg[j];
+	    // FIXME: not "1", but |v|^2... here and everewhere!
+	    r[ci] +=vdocNorm2[j]+centerNorm2[ci] - 2*centers[ci].dotProduct(p);
+	    j++;
+	}	
+	for(int i=0; i<centers.length; i++) {
+	    r[i] = Math.sqrt(r[i]/pop[i]);
+	    if (i>0) s.append(", ");
+	    s.append("{pop=" + pop[i] + 
+		     " |c|=" + Math.sqrt( centerNorm2[i]) +
+		     " |r|=" + r[i] + "}");
+	}
+	return s.toString();
+    }
+
     /** This is the list of empty clusters, if any. The vector is
-	re-initialied by each findCenters() call.
+	re-initialized by each findCenters() call.
      */
     private Vector<Integer> emptyClusters = new Vector<Integer>();
 
@@ -241,6 +266,7 @@ class KMeansClustering {
 
 	double minD = 0;
 	KMeansClustering bestClustering = null;
+	int bestIstart = 0;
 
 	for(int istart =0; istart<nstarts; istart++) {
 	    System.out.println("Start no. " + istart);
@@ -253,10 +279,14 @@ class KMeansClustering {
 	    KMeansClustering clu = new KMeansClustering(nFeatures, vdoc, ci);
 	    clu.optimize();
 	    //	    Profiler.profiler.replace(Profiler.Code.CLUSTERING,Profiler.Code.CLU_sumDif);
+	    System.out.println("Clustering scheme no. " + istart + ": " +
+			       clu.describeStats());
+
 	    double d = clu.sumDist2();
 	    System.out.println("D=" + d);
 	    //System.out.println("; asg=" + arrToString(clu.asg));
 	    if (bestClustering==null || d<minD) {
+		bestIstart = istart;
 		bestClustering = clu;
 		minD = d;
 	    }
@@ -264,6 +294,8 @@ class KMeansClustering {
 	    //	    Profiler.profiler.pop(Profiler.Code.CLU_sumDif);
 	}
 	//	Profiler.profiler.pop(Profiler.Code.OTHER);
+	
+	System.out.println("Chose clustering scheme from run " + bestIstart + " as the best");
 	return bestClustering;
     }
 
