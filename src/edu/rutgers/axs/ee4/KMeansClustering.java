@@ -118,10 +118,19 @@ class KMeansClustering {
     private void handleEmptyClusters(int nc) {
 	int population[] = clusterPopulations(nc);
 
+	boolean printedPops=false;
+
 	int eCnt=0;
 	for(int nchecked=0; nchecked < nc; nchecked++) {
 	    if (population[nchecked]>0) continue; // not empty
 	    eCnt++;
+
+	    if (!printedPops) {
+		System.out.print("\nPops:");
+		for(int p: population) System.out.print(" " + p);
+		System.out.println("\nPops:");
+	    }
+
 	    System.out.print(" [Empty cluster "+nchecked+"] ");
 	    // find the biggest non-empty cluster to split
 	    int mi=0;
@@ -129,6 +138,8 @@ class KMeansClustering {
 		if (population[i]  > population[mi]) mi = i;
 	    }
 	    if (population[mi]<2) throw new IllegalArgumentException("Way too many clusters for way too few examples?");
+
+
 	    // reassign about half of the examples from this largest cluster
 	    // to the empty cluster
 	    for(int j=0; population[nchecked] + 1 < population[mi]; j++) {
@@ -140,6 +151,12 @@ class KMeansClustering {
 		}
 	    }
 	    
+	}
+
+	if (eCnt>0) {
+	    System.out.print("\nPops:");
+	    for(int p: population) System.out.print(" " + p);
+	    System.out.println("\nPops:");
 	}
 	
     }
@@ -170,7 +187,14 @@ class KMeansClustering {
 	return sum;
     }
 
-    String describeStats() {
+    /** Square of the distance from vdoc[j] to the center of its 
+     currently assigned cluster. */
+    //    double distanceToCenter2(int j, DataPoint c) {
+    //	return vdocNorm2[j]+centerNorm2[ci] - 2*c.dotProduct(p);
+    //    }
+
+
+    private String describeStats() {
 	StringBuffer s=new StringBuffer();
 	double[] centerNorm2 =  centerNorms2();
 	int[] pop = clusterPopulations(centers.length);
