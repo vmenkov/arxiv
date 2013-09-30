@@ -64,6 +64,7 @@ class KMeansClustering {
 	    int[] asg0=asg;
 	    //	    Profiler.profiler.push(Profiler.Code.CLU_Voronoi);
 	    voronoiAssignment();  //   asg <-- centers	    
+	    //	    System.out.println("V:D2=" + sumDist2());
 	    handleEmptyClusters(centers.length); // adjust asg if needed
 
 	    //	    Profiler.profiler.pop(Profiler.Code.CLU_Voronoi);
@@ -76,9 +77,10 @@ class KMeansClustering {
 		}
 	    }
 	    
-
 	    //	    Profiler.profiler.push(Profiler.Code.CLU_fc);
 	    findCenters( centers.length); // centers <-- asg
+	    //	    System.out.println("; C:D2=" + sumDist2());
+
 	    // Profiler.profiler.pop(Profiler.Code.CLU_fc);
 	}
     }
@@ -99,7 +101,7 @@ class KMeansClustering {
 	for(int j=0; j<vdoc.size(); j++) {
 	    double d2min = 0;
 	    for(int i=0; i<centers.length; i++) {
-		double d2 = vdocNorm2[i] + centerNorm2[i] - 2*centers[i].dotProduct( vdoc.elementAt(j)  );
+		double d2 = vdocNorm2[j] + centerNorm2[i] - 2*centers[i].dotProduct( vdoc.elementAt(j)  );
 		if (i==0 || d2 < d2min) {
 		    asg[j] = i;
 		    d2min = d2;
@@ -128,7 +130,7 @@ class KMeansClustering {
 	    if (!printedPops) {
 		System.out.print("\nPops-before:");
 		for(int p: population) System.out.print(" " + p);
-		System.out.println("\nPops:");
+		printedPops=true;
 	    }
 
 	    System.out.print(" [Empty cluster "+nchecked+"] ");
@@ -148,15 +150,17 @@ class KMeansClustering {
 		    asg[j]=nchecked;
 		    population[mi]--;
 		    population[nchecked]++;
-		}
+		}		
 	    }
+	    centers[nchecked]=centers[mi]; // just for reporting
 	    
 	}
 
 	if (eCnt>0) {
-	    System.out.print("Pops-after :");
+	    System.out.print("\nPops-after :");
 	    for(int p: population) System.out.print(" " + p);
 	}
+	//	System.out.println("E:D2=" + sumDist2());
 	
     }
    
