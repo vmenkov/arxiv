@@ -33,6 +33,7 @@ class DataPoint {
 	return Math.sqrt(norm2());
     }
 
+    /** Normalizes this vector "in place" */
     void normalize() {
 	multiply( 1.0 / norm());
     }

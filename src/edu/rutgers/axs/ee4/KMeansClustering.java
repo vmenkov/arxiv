@@ -11,11 +11,11 @@ import edu.rutgers.axs.sql.Util;
     subclasses). */
 class KMeansClustering {
     /** Input: the objects to be clustered */
-    final Vector<? extends DataPoint> vdoc; 
+    private final Vector<? extends DataPoint> vdoc; 
 
     /** Square of norms of the objects */
-    double [] vdocNorm2;
-
+    private double [] vdocNorm2;
+    
     /** Output: an array with the cluster id assigned to each object */
     int asg[];
     /** Cluster centers. */

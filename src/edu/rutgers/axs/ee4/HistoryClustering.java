@@ -68,7 +68,12 @@ public class HistoryClustering {
 	return user2pageList;
     }
 
-    static void doSvd(String majorCat, 	ArxivUserInferrer inferrer)  throws IOException {
+    /**
+       @param normalize Normalize object vectors in the reduced-dim space,
+       as a (silly) experiment.
+    */
+    static void doSvd(String majorCat, 	ArxivUserInferrer inferrer,
+		      boolean normalize)  throws IOException {
 	SparseDoubleMatrix2Dx mat;
 	String[] no2aid;
 	{
@@ -112,7 +117,11 @@ public class HistoryClustering {
 
 	Vector<DenseDataPoint> vdoc = new Vector<DenseDataPoint>(qq.length);
 	for(double[] q: qq) {
-	    vdoc.add(new DenseDataPoint(q));
+	    DenseDataPoint p = new DenseDataPoint(q);
+	    if (normalize) { 
+		p.normalize();
+	    }
+	    vdoc.add(p);
 	}
 
 	// Set the desired number of clusters (if not specified in options)
@@ -192,6 +201,7 @@ public class HistoryClustering {
 	ParseConfig ht = new ParseConfig();
 	k_kmeans = ht.getOption("k_kmeans", k_kmeans);
 	k_svd = ht.getOption("k_svd", k_svd);
+	boolean normalize = ht.getOption("normalize", false);
 
 	if (argv.length < 1) {
 	    usage("Command not specified");
@@ -214,7 +224,8 @@ public class HistoryClustering {
 	    ArxivUserInferrer inferrer = useCookies?
 		new CookieArxivUserInferrer(new ArxivUserTable(tcPath)):
 		new IPArxivUserInferrer();
-	    doSvd(majorCat,inferrer);
+	    if (normalize) System.out.println("Will normalize document vectors in reduced-dim space");
+	    doSvd(majorCat,inferrer,normalize);
 	} else {
 	    usage();
 	}
