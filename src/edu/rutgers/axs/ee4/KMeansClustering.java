@@ -128,8 +128,8 @@ class KMeansClustering {
 	    eCnt++;
 
 	    if (!printedPops) {
-		System.out.print("\nPops-before:");
-		for(int p: population) System.out.print(" " + p);
+	    //		System.out.print("\nPops-before:");
+	    //		for(int p: population) System.out.print(" " + p);
 		printedPops=true;
 	    }
 
@@ -157,8 +157,10 @@ class KMeansClustering {
 	}
 
 	if (eCnt>0) {
-	    System.out.print("\nPops-after :");
-	    for(int p: population) System.out.print(" " + p);
+	    System.out.print(" ");
+	    for(int i=0; i<eCnt; i++) { System.out.print("E");}
+	    //	    System.out.print("\nPops-after :");
+	    //	    for(int p: population) System.out.print(" " + p);
 	}
 	//	System.out.println("E:D2=" + sumDist2());
 	
@@ -296,9 +298,9 @@ class KMeansClustering {
 	int bestIstart = 0;
 
 	for(int istart =0; istart<nstarts; istart++) {
-	    System.out.println("Start no. " + istart);
 	    int ci[] = Util.randomSample( vdoc.size(), nc);
-	    System.out.print("Random centers at: ");
+	    System.out.println("Start no. " + istart +
+			       "; random centers at: ");
 	    for(int q: ci) 	    System.out.print(" " + q);
 	    System.out.println();
 	    //	    Profiler.profiler.push(Profiler.Code.CLUSTERING);
