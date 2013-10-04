@@ -135,7 +135,7 @@ public class HistoryClustering {
 								   k_kmeans);
 
 	int id0 = 1;
-	saveAsg( clu, no2aid, majorCat, id0);
+	AsgMap.saveAsg( clu.asg, no2aid, majorCat, id0);
     }
 
     /** Converts a section (first keepSvd columns) of a DoubleMatrix2D
@@ -157,27 +157,6 @@ public class HistoryClustering {
 	return z;
     }
     */
-    static private File getAsgDirPath(String cat)  {
-	File d = DataFile.getMainDatafileDirectory();
-	d = new File(d,  "tmp");
-	d = new File(d,  "svd-asg");
-	d = new File(d, cat);
-	return d;
-    }
-
-
-    private static void saveAsg(KMeansClustering clu, String[] no2aid, String cat, int id0) throws IOException {
-	File catdir =  getAsgDirPath(cat);
-	catdir.mkdirs();
-	File f = new File(catdir, "asg.dat");
-	PrintWriter w= new PrintWriter(new FileWriter(f));
-	for(int i=0; i<no2aid.length; i++) {
-	    int id = id0 + clu.asg[i];
-	    String aid = no2aid[i];
-	    w.println(aid + "," + id);
-	}
-	w.close();
-    }
 
     static void usage() {
 	usage(null);
@@ -189,6 +168,26 @@ public class HistoryClustering {
 	    System.out.println(m);
 	}
 	System.exit(1);
+    }
+
+
+    private static void doSvm(String majorCat)  throws IOException {
+	// FIXME: is there a nicer way, without hogging the static space?
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	DocumentExporter de = new DocumentExporter();
+	
+	//	File d = AsgMap.getAsgMainDir();
+	final File d =  AsgMap.getAsgDirPath(majorCat);
+	File g = new File(d, "train.dat");
+	System.out.println("Saving training set to " + g);
+	PrintWriter w= new PrintWriter(new FileWriter(g));
+	de.exportAll( majorCat,w);
+	w.close();
+
+	File f = new File(d, "asg.dic");
+	System.out.println("Saving dictionary to " + f);
+	de.dic.save(f);
+
     }
 
     /** The number of singular vectors to keep */
@@ -226,6 +225,12 @@ public class HistoryClustering {
 		new IPArxivUserInferrer();
 	    if (normalize) System.out.println("Will normalize document vectors in reduced-dim space");
 	    doSvd(majorCat,inferrer,normalize);
+	} else if (argv[0].equals("svm")) {
+	    if (argv.length < 2) {
+		usage("Category name not specified");
+	    }
+	    String majorCat = argv[1];	
+	    doSvm( majorCat);
 	} else {
 	    usage();
 	}
