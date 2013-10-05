@@ -108,20 +108,30 @@ class DocumentExporter {
 
     static private final String PRIMARY_CATEGORY = "primary_"+ArxivFields.CATEGORY;
 
-    void exportAll(String majorCat, PrintWriter w)  throws IOException {
+    /**
+       @param w The training file for SVM will be written here
+       @param wasg The list of docs described in w will be written here
+     */
+    void exportAll(String majorCat, PrintWriter w, PrintWriter wasg)  throws IOException {
        	AsgMap map = new AsgMap(majorCat);
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 
+	
 	Categorizer catz = new Categorizer(false); // no conversion to major
-
-	for( String aid: map.map.keySet()) {
+	int ignoreCnt=0;
+	for( String aid: map.list) {
 	    int docno = Common.find(searcher, aid);
 	    Document doc = reader.document(docno);
 
 	    Vector<Pair> h = new Vector<Pair>();
  
 	    Categories.Cat c = catz.categorize(docno, doc);
+	    if (c==null) {
+		System.out.println("Ignoring document " + aid + ": primary cat is not valid");
+		ignoreCnt++;
+		continue;
+	    }
 	    String primaryCat = c.fullName();
 	    int key =dic.get(PRIMARY_CATEGORY, primaryCat);
 	    //	    b.append(" " + key + ":" + 1);
@@ -131,14 +141,19 @@ class DocumentExporter {
 		processField(reader, h, docno, doc, name);
 	    }
 	    Pair[] pairs = h.toArray(new Pair[0]);
-	    Arrays.sort(pairs); // sort by feature number, as requird by SVM
+	    Arrays.sort(pairs); // sort by feature number, as required by SVM
 
-	    w.print("" + map.map.get(aid));
+	    int clu = map.map.get(aid).intValue();
+	    w.print("" + clu);
 	    for(Pair p: pairs) {
 		w.print(" " + p.key + ":" + p.val);
 	    }
 	    w.println( " # " + aid);
+	    if (wasg!=null) {
+		wasg.println(aid + "," + clu);
+	    }
 	}
+	System.out.println("Out of " + map.list.size() + " documents, ignored " + ignoreCnt);
     }
 
 }

@@ -179,10 +179,16 @@ public class HistoryClustering {
 	//	File d = AsgMap.getAsgMainDir();
 	final File d =  AsgMap.getAsgDirPath(majorCat);
 	File g = new File(d, "train.dat");
-	System.out.println("Saving training set to " + g);
 	PrintWriter w= new PrintWriter(new FileWriter(g));
-	de.exportAll( majorCat,w);
+
+	File h = new File(d, "exported.asg");
+	PrintWriter wasg = new PrintWriter(new FileWriter(h));
+
+	System.out.println("Saving training set to " + g + "; list of exported docs, to " + h);
+
+	de.exportAll( majorCat,w, wasg);
 	w.close();
+	wasg.close();
 
 	File f = new File(d, "asg.dic");
 	System.out.println("Saving dictionary to " + f);

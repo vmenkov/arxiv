@@ -1,9 +1,5 @@
 package edu.rutgers.axs.ee4;
 
-//import org.apache.lucene.document.*;
-//import org.apache.lucene.index.*;
-//import org.apache.lucene.search.*;
-
 import java.io.*;
 import java.util.*;
 
@@ -12,13 +8,17 @@ import edu.rutgers.axs.sql.DataFile;
 /** Auxiliary class used for reading in assignment files */
 class AsgMap {
     HashMap<String,Integer> map = new 	HashMap<String,Integer>();
+    Vector<String> list=new  Vector<String>();
     /** Used to map int value to unique Integer objects (space-saving) */
     private Vector<Integer> integers = new Vector<Integer>();
     
-    /** Reads the map from a file */
+    /** Reads the map from the assignment file for a specified major category */
     AsgMap(String cat) throws IOException {
-	File catdir =  getAsgDirPath(cat);
-	File f = new File(catdir, "asg.dat");
+	this( new File( getAsgDirPath(cat),  "asg.dat"));
+    }
+
+    /** Reads the map from the specified file */
+    AsgMap(File f) throws IOException {
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
 	String s;
@@ -30,6 +30,7 @@ class AsgMap {
 		while (integers.size() <= x) {
 		    integers.add(integers.size(), new Integer(integers.size()));
 		}
+		list.add(q[0]);
 		map.put(q[0], integers.elementAt(x));
 	}
 	r.close();
