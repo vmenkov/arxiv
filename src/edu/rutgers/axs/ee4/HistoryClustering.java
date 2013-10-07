@@ -177,7 +177,12 @@ public class HistoryClustering {
 	DocumentExporter de = new DocumentExporter();
 	
 	//	File d = AsgMap.getAsgMainDir();
-	final File d =  AsgMap.getAsgDirPath(majorCat);
+
+	String asgPath = ht.getOption("asgPath", null);
+	final File d =  (asgPath!=null)?	    new File(asgPath) :
+	    AsgMap.getAsgDirPath(majorCat);
+
+
 	File g = new File(d, "train.dat");
 	PrintWriter w= new PrintWriter(new FileWriter(g));
 
@@ -202,8 +207,10 @@ public class HistoryClustering {
      */
     static private int k_kmeans = 0;
 
+    private static ParseConfig ht = null;
     public static void main(String [] argv) throws IOException, JSONException {
-	ParseConfig ht = new ParseConfig();
+	ht = new ParseConfig();
+	// options for SVD run
 	k_kmeans = ht.getOption("k_kmeans", k_kmeans);
 	k_svd = ht.getOption("k_svd", k_svd);
 	boolean normalize = ht.getOption("normalize", false);

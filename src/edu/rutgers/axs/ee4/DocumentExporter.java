@@ -116,7 +116,6 @@ class DocumentExporter {
        	AsgMap map = new AsgMap(majorCat);
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
-
 	
 	Categorizer catz = new Categorizer(false); // no conversion to major
 	int ignoreCnt=0;
