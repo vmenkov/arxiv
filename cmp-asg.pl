@@ -7,7 +7,7 @@
 #
 # ~/arxiv/svm/svm_multiclass_learn -c 1 train.dat model.dat
 #  ~/arxiv/svm/svm_multiclass_classify train.dat model.dat classify-out.dat
-#  perl ~/arxiv/arxiv/cmp-asg.sh exported.asg classify-out.dat
+#  perl ~/arxiv/arxiv/cmp-asg.pl exported.asg classify-out.dat
 #-------------------------------------------------------------------------
 
 use strict;
@@ -39,5 +39,5 @@ foreach my $i (0..$#list1) {
 	}
 }
 
-print "Match: $eqCnt, misMath: $eqCnt, correct percentage ".
+print "Match: $eqCnt, misMath: $neCnt, correct percentage ".
 ($eqCnt / ($eqCnt + $neCnt)) * 100 . "%\n";
