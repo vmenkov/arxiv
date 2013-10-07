@@ -112,8 +112,8 @@ class DocumentExporter {
        @param w The training file for SVM will be written here
        @param wasg The list of docs described in w will be written here
      */
-    void exportAll(String majorCat, PrintWriter w, PrintWriter wasg)  throws IOException {
-       	AsgMap map = new AsgMap(majorCat);
+    void exportAll(File asgFile, PrintWriter w, PrintWriter wasg)  throws IOException {
+       	AsgMap map = new AsgMap(asgFile);
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 	
