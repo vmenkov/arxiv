@@ -37,6 +37,8 @@ class DocumentExporter {
 		get(ArxivFields.CATEGORY, cat);
 	    }
 	}
+	/** Returns the index for the existing record or a new one,
+	 as appropriate. */
 	synchronized int get(String name, String term) {
 	    String x = name + ":" + term;
 	    return get(x);
@@ -71,9 +73,7 @@ class DocumentExporter {
 	}
     }
 	
-
-    private void processField(IndexReader reader, 
-			      Vector<Pair> h,
+    private void processField(Vector<Pair> h,
 			      //StringBuffer b, 
 			      int docno, Document doc, String name) throws IOException {
 	Fieldable f = doc.getFieldable(name);
@@ -87,14 +87,8 @@ class DocumentExporter {
 	int[] freqs=tfv.getTermFrequencies();
 	String[] terms=tfv.getTerms();
 	for(int i=0; i<terms.length; i++) {
-	    //		Term term = new Term(name, terms[i]);
-
-	    if (name!=ArxivFields.CATEGORY &&
-		UserProfile.isUseless(terms[i])) {
-		continue;
-	    }
+	    if (ignorable(name, terms[i])) continue;
 	    int key=dic.get(name, terms[i]);
-	    //b.append(" " + key + ":" + freqs[i]);
 	    h.add(new Pair(key, freqs[i]));
 	}
     }
@@ -108,13 +102,30 @@ class DocumentExporter {
 
     static private final String PRIMARY_CATEGORY = "primary_"+ArxivFields.CATEGORY;
 
+    private final IndexReader reader = Common.newReader2();
+    private final int numdocs = reader.numDocs();
+    private final int MINDF = 5, MAXDF = numdocs/2;
+
+    private boolean ignorable(String name, String word) throws IOException {
+	if (name==ArxivFields.CATEGORY) return false;
+	if (UserProfile.isUseless(word)) return true;
+	Term term = new Term(name, word);
+	int df = reader.docFreq(term);
+	return  (df < MINDF || df > MAXDF);
+    }
+
+    public void finalize()  {
+	try {
+	    reader.close();
+	} catch (IOException ex) {}
+    }
+
     /**
        @param w The training file for SVM will be written here
        @param wasg The list of docs described in w will be written here
      */
     void exportAll(File asgFile, PrintWriter w, PrintWriter wasg)  throws IOException {
        	AsgMap map = new AsgMap(asgFile);
-	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 	
 	Categorizer catz = new Categorizer(false); // no conversion to major
@@ -137,7 +148,7 @@ class DocumentExporter {
 	    h.add(new Pair(key, 1));
 
 	    for(String name: fields) {
-		processField(reader, h, docno, doc, name);
+		processField( h, docno, doc, name);
 	    }
 	    Pair[] pairs = h.toArray(new Pair[0]);
 	    Arrays.sort(pairs); // sort by feature number, as required by SVM

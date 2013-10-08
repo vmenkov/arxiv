@@ -96,7 +96,7 @@ public class UserProfile {
 	if (stoplist!=null && stoplist.contains(t)) return true;
 
 	// Presently only allow words starting with an English letter,
-	// and including alhanumeric letters and dots.
+	// and including only alphanumeric letters and dots.
 	if (!Character.isJavaIdentifierStart(t.charAt(0))) return true;
 	for(int i=1; i<t.length(); i++) {
 	    char c= t.charAt(i);

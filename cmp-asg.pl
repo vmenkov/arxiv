@@ -39,5 +39,5 @@ foreach my $i (0..$#list1) {
 	}
 }
 
-printf( "Match: $eqCnt, misMath: $neCnt, correct percentage %5.2f%%\n",
+printf( "Match: $eqCnt, misMatch: $neCnt, correct percentage %5.2f%%\n",
 	($eqCnt / ($eqCnt + $neCnt)) * 100 );

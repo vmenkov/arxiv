@@ -23,6 +23,17 @@ public class Common {
 	return reader;
     }
 
+    /** A cludgy way of calling newReader() without having to do an explicit
+	exception catch */
+    static public IndexReader newReader2()  throws AssertionError {
+	try {
+	    return newReader();
+	} catch(IOException ex) {
+	    ex.printStackTrace(System.err);
+	    throw new AssertionError("IOException in newReader(): " + ex);
+	}
+    }
+
    /** Find a document by article ID, using a given searcher.
      @return Lucene internal doc id.
      @throws IOException if not found.
