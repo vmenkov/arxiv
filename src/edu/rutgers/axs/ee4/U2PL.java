@@ -97,6 +97,8 @@ class U2PL  {
 
     int ignoreCnt = 0;
 
+    final Pattern pat = Pattern.compile("([0-9][0-9])[0-9][0-9]\\.[0-9][0-9][0-9][0-9]");
+
     /** Checks if the page is acceptable for our analysis.
 
 	<p>
@@ -106,6 +108,14 @@ class U2PL  {
         # submitted in the given time-period (2010-2011)"
      */
     private boolean acceptable(String aid) throws IOException {
+	// some heuristics first (determining date based on doc name)
+	Matcher m = pat.matcher(aid);
+	if (m.matches()) {
+	    String g = m.group(1);
+	    return g.equals("10") || g.equals("11");
+	}
+
+
 	int docno = Common.find(searcher, aid);
 	if (docno<=0) return false;
 	Document doc = reader.document(docno, fieldSelectorDate);
