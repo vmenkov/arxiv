@@ -26,31 +26,62 @@ import edu.rutgers.axs.recommender.*;
     Multiclass SVM tool. */
 class DocumentExporter {
 
-    static class Dictionary {
+    class Dictionary {
 	/** One-based, for the SVM tool */
 	private Vector<String> v=new Vector<String>();
 	private HashMap<String,Integer> map=new HashMap<String,Integer>();
+
+	private final int numdocs = reader.numDocs();
+	private final int MINDF = 5, MAXDF = numdocs/2;
+
 	Dictionary() {
 	    v.add("null");
 	    for(String cat: Categories.listAllStorableCats()) {
-		get(PRIMARY_CATEGORY, cat);
-		get(ArxivFields.CATEGORY, cat);
+		get0(PRIMARY_CATEGORY, cat);
+		get0(ArxivFields.CATEGORY, cat);
 	    }
 	}
+
 	/** Returns the index for the existing record or a new one,
 	 as appropriate. */
-	synchronized int get(String name, String term) {
-	    String x = name + ":" + term;
-	    return get(x);
+	synchronized int get0(String name, String term) {
+	    return get0(name + ":" + term);
 	}
-	synchronized int get(String s) {
+	synchronized int get0(String s) {
 	    Integer x = map.get(s);
-	    if (x==null) {
-		map.put(s, x=new Integer(v.size()));
-		v.add(s);		
-	    }
-	    return x.intValue();
+	    return  (x==null) ?  add(s) : x.intValue();
 	}
+
+	private int add(String s) {
+	    int pos=v.size();
+	    map.put(s, new Integer(pos));
+	    v.add(s);
+	    return pos;
+	}
+
+	/** We put common words here, to reduce the number of
+	    calls to IndexReader.docFreq() */
+	private HashSet<String> moreStopWords = new HashSet<String>();
+
+	/** @return The stored or new record index, if the term is not
+	    ignorable; 0 otherwise.
+	 */
+	synchronized int get1(String name, String word) throws IOException {
+	    String key = name + ":" + word;
+	    if (name==ArxivFields.CATEGORY) return get0(key);
+	    int has = map.get(key);
+	    if (has>0) return has;
+	    if (UserProfile.isUseless(word) ||
+		moreStopWords.contains(key)) return 0;
+	    Term term = new Term(name, word);
+	    int df = reader.docFreq(term);
+	    if (df > MAXDF) {
+		moreStopWords.add(key);
+		return 0;
+	    }
+	    return  (df < MINDF) ?  0 : add(key);
+	}
+
 	void save(File f) throws IOException {
 	    PrintWriter w= new PrintWriter(new FileWriter(f));
 	    for(int i=1; i<v.size(); i++) {
@@ -76,7 +107,7 @@ class DocumentExporter {
     private void processField(Vector<Pair> h,
 			      //StringBuffer b, 
 			      int docno, Document doc, String name) throws IOException {
-	Fieldable f = doc.getFieldable(name);
+	//Fieldable f = doc.getFieldable(name);
 	
 	TermFreqVector tfv=reader.getTermFreqVector(docno, name);
 	if (tfv==null) {
@@ -87,9 +118,8 @@ class DocumentExporter {
 	int[] freqs=tfv.getTermFrequencies();
 	String[] terms=tfv.getTerms();
 	for(int i=0; i<terms.length; i++) {
-	    if (ignorable(name, terms[i])) continue;
-	    int key=dic.get(name, terms[i]);
-	    h.add(new Pair(key, freqs[i]));
+	    int key=dic.get1(name, terms[i]);
+	    if (key>0) h.add(new Pair(key, freqs[i]));
 	}
     }
 
@@ -103,17 +133,23 @@ class DocumentExporter {
     static private final String PRIMARY_CATEGORY = "primary_"+ArxivFields.CATEGORY;
 
     private final IndexReader reader = Common.newReader2();
-    private final int numdocs = reader.numDocs();
-    private final int MINDF = 5, MAXDF = numdocs/2;
 
+    /*
     private boolean ignorable(String name, String word) throws IOException {
-	if (name==ArxivFields.CATEGORY) return false;
-	if (UserProfile.isUseless(word)) return true;
+	String key = name + ":" + word;
+	if (name==ArxivFields.CATEGORY ||
+	    dic.contains(key)) return false;
+	if (UserProfile.isUseless(word) ||
+	    moreStopWords.contains(key)) return true;
 	Term term = new Term(name, word);
-	int df = reader.docFreq(term);
-	return  (df < MINDF || df > MAXDF);
+    	int df = reader.docFreq(term);
+	if (df > MAXDF) {
+	    moreStopWords.add(key);
+	    return true;
+	}
+	return  (df < MINDF);
     }
-
+    */
     public void finalize()  {
 	try {
 	    reader.close();
@@ -143,8 +179,7 @@ class DocumentExporter {
 		continue;
 	    }
 	    String primaryCat = c.fullName();
-	    int key =dic.get(PRIMARY_CATEGORY, primaryCat);
-	    //	    b.append(" " + key + ":" + 1);
+	    int key =dic.get0(PRIMARY_CATEGORY, primaryCat);
 	    h.add(new Pair(key, 1));
 
 	    for(String name: fields) {
