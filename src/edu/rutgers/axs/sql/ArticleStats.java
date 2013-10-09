@@ -9,10 +9,9 @@ import javax.persistence.*;
 import org.apache.openjpa.persistence.jdbc.*;
 
 import org.apache.lucene.index.*;
-
-
 import org.apache.lucene.document.*;
-import edu.rutgers.axs.indexer.ArxivFields;
+
+import edu.rutgers.axs.indexer.*;
 
 
 /** Statistical information about an article's content, used for
@@ -230,6 +229,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	return (astDate==null || docDate.after(astDate));
     }
 
+    /*
     private static class FsAidOnly implements FieldSelector {
 	public FieldSelectorResult accept(String fieldName) {
 	    return fieldName.equals(ArxivFields.PAPER) ?
@@ -237,11 +237,11 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 		FieldSelectorResult.NO_LOAD;
 	}
     }
-
+    */
     /** Used as a cost-saving measure when we only need to retrieve
      * the Article ID from Lucene */
-    public final static FieldSelector fieldSelectorAid = new FsAidOnly();
-
+    public final static FieldSelector fieldSelectorAid = 
+	new OneFieldSelector(ArxivFields.PAPER);
 
     /** Reads the entire table of pre-computed data from the SQL database.
 	@return An array including all ArticleStats entries in our

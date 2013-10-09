@@ -39,6 +39,7 @@ public class SVD {
 	    DenseDoubleMatrix1D x = randomVector(n);	
 	    normalize(x);
 	    int i = 0;
+	    boolean foundZeroValue=false;
 	    while(true) {
 		DenseDoubleMatrix1D y = a.zMult(x,null);
 		DenseDoubleMatrix1D z = a.zMultTrans(y, null);
@@ -53,11 +54,23 @@ public class SVD {
 		    System.out.println("["+i+"], |PAtAx|=" + norm +", |z-x|=" + normDiff);
 		}
 		x = z;
+
+		if (norm < 1e-12) {
+		    // it does not help to compute normDiff here, as 
+		    // computation errors may be too big 
+		    if (verbose) {
+			System.out.println("Apparently found a zero singular value... finishing SVD");
+		    }
+		    foundZeroValue=true;
+		    break;
+		}
+
 		if (normDiff < 1e-6) {
 		    sval[results.size()] = Math.sqrt(norm);
 		    break;
 		}
 	    }
+	    if (foundZeroValue) break;
 	    results.add(x);
 	}
 	if (results.size() < k_svd) {
@@ -130,7 +143,8 @@ public class SVD {
 	vectors of A) into a 2-D array of doubles, stored by row.
 	Each row of V will be packaged into an arrray of doubles. */
     double[][] vIntoArrayOfRows() {
-	
+
+	if (results.size()==0) throw new IllegalArgumentException("Empty matrix - nothing to do!");
 	int ndoc  = results.elementAt(0).size();
 	double[][] z = new double[ndoc][];
 

@@ -4,6 +4,14 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
+import org.apache.lucene.document.*;
+
+import edu.rutgers.axs.indexer.*;
+
+
+
 /** An auxiliary class used when reading in and preprocessing the
     (user,page) matrix in HistoryClustering. For each user id, we
     store a vector of pages he's accessed. 
@@ -64,7 +72,7 @@ class U2PL  {
 
     private HashMap<String, IntStore> map = new HashMap<String, IntStore>();
     
-    /** This map is used during the table-building process only */
+    /** This map is used during the table-building process only: add(), registerPage() */
     private Vector<String> origno2aid = new Vector<String>();
     private HashMap<String, Integer> aid2origno=new HashMap<String, Integer>();
 
@@ -77,20 +85,65 @@ class U2PL  {
     String[] no2u;
     HashMap<String, Integer> u2no;
     
-    private Integer registerPage(String p) {
-	Integer q = aid2origno.get(p);
+    private final IndexReader reader = Common.newReader2();
+    private final IndexSearcher searcher = new IndexSearcher( reader );
+
+    final private static FieldSelector fieldSelectorDate = 
+	new OneFieldSelector(ArxivFields.DATE);
+
+    /** 0-based month, 1-based day */
+    final private static Date
+	date1 = new GregorianCalendar(2010, 0, 1).getTime(),
+	date2 = new GregorianCalendar(2012, 0, 1).getTime();
+
+    int ignoreCnt = 0;
+
+    /** Checks if the page is acceptable for our analysis.
+
+	<p>
+	"Let Items be the set of papers meeting the following criteria (as per
+	 PF's specs):
+        # primary category is in the super-category
+        # submitted in the given time-period (2010-2011)"
+     */
+    private boolean acceptable(String aid) throws IOException {
+	int docno = Common.find(searcher, aid);
+	if (docno<=0) return false;
+	Document doc = reader.document(docno, fieldSelectorDate);
+	if (doc==null) return false;
+	String dateString = doc.get(ArxivFields.DATE);
+	if (dateString==null) return false;
+	try {
+	    Date date= DateTools.stringToDate(dateString);
+	    return date!=null && date.after(date1) && date.before(date2);
+	} catch (java.text.ParseException ex) {
+	    return false;
+	}
+    }
+
+    /** Checks is the article is acceptable based on our criteria,
+	and if yes, puts it into the table (unless it's there already)
+	@return An Integer object, or null
+     */
+    private Integer registerPage(String aid)  throws IOException {
+	Integer q = aid2origno.get(aid);
 	if (q==null) {
+	    if (!acceptable(aid)) {
+		ignoreCnt++;
+		return null;
+	    }
 	    q = new Integer(origno2aid.size());
-	    origno2aid.add(p);
-	    aid2origno.put(p,q);
+	    origno2aid.add(aid);
+	    aid2origno.put(aid,q);
 	}
 	return q;
     }
 
-    void add(String u, String p) {
+    void add(String u, String aid) throws  IOException{
 	IntStore v = map.get(u);
 	if (v==null) map.put(u, v = new IntStore());
-	v.add(registerPage(p));
+	Integer q = registerPage(aid);
+	if (q!=null) v.add(q);
     }
 
 
