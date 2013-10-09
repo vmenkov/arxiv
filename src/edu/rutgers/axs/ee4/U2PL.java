@@ -11,7 +11,6 @@ import org.apache.lucene.document.*;
 import edu.rutgers.axs.indexer.*;
 
 
-
 /** An auxiliary class used when reading in and preprocessing the
     (user,page) matrix in HistoryClustering. For each user id, we
     store a vector of pages he's accessed. 
@@ -121,6 +120,10 @@ class U2PL  {
 	}
     }
 
+    /** List of articles known to be inaccepatable (for date reasons etc)
+     */
+    private HashSet<String> inacceptableArticles = new HashSet<String>();
+
     /** Checks is the article is acceptable based on our criteria,
 	and if yes, puts it into the table (unless it's there already)
 	@return An Integer object, or null
@@ -128,7 +131,11 @@ class U2PL  {
     private Integer registerPage(String aid)  throws IOException {
 	Integer q = aid2origno.get(aid);
 	if (q==null) {
-	    if (!acceptable(aid)) {
+	    if (inacceptableArticles.contains(aid)) {
+		ignoreCnt++;
+		return null;
+	    } else if (!acceptable(aid)) {
+		inacceptableArticles.add(aid);
 		ignoreCnt++;
 		return null;
 	    }
