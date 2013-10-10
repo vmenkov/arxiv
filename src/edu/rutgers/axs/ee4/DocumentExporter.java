@@ -13,10 +13,6 @@ import javax.persistence.*;
 
 import org.json.*;
 
-//import cern.colt.matrix.*;
-//import cern.colt.matrix.impl.SparseDoubleMatrix2D;
-//import cern.colt.matrix.linalg.SingularValueDecomposition;
-
 import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
@@ -29,7 +25,7 @@ class DocumentExporter {
     class Dictionary {
 	/** One-based, for the SVM tool */
 	private Vector<String> v=new Vector<String>();
-	private HashMap<String,Integer> map=new HashMap<String,Integer>();
+	private final HashMap<String,Integer> map=new HashMap<String,Integer>();
 
 	private final int numdocs = reader.numDocs();
 	private final int MINDF = 5, MAXDF = numdocs/2;
@@ -44,7 +40,7 @@ class DocumentExporter {
 
 	/** Returns the index for the existing record or a new one,
 	 as appropriate. */
-	synchronized int get0(String name, String term) {
+	int get0(String name, String term) {
 	    return get0(name + ":" + term);
 	}
 	synchronized int get0(String s) {
@@ -52,7 +48,7 @@ class DocumentExporter {
 	    return  (x==null) ?  add(s) : x.intValue();
 	}
 
-	private int add(String s) {
+	private synchronized int add(String s) {
 	    int pos=v.size();
 	    map.put(s, new Integer(pos));
 	    v.add(s);
@@ -69,8 +65,8 @@ class DocumentExporter {
 	synchronized int get1(String name, String word) throws IOException {
 	    String key = name + ":" + word;
 	    if (name==ArxivFields.CATEGORY) return get0(key);
-	    int has = map.get(key);
-	    if (has>0) return has;
+	    Integer has = map.get(key);
+	    if (has!=null) return has.intValue();
 	    if (UserProfile.isUseless(word) ||
 		moreStopWords.contains(key)) return 0;
 	    Term term = new Term(name, word);
@@ -91,8 +87,6 @@ class DocumentExporter {
 	}
     }
 
-    Dictionary dic=new Dictionary();
-
     static private class Pair implements Comparable<Pair> {
 	int key,  val;
 	Pair(	int _key, int _val) {
@@ -105,15 +99,10 @@ class DocumentExporter {
     }
 	
     private void processField(Vector<Pair> h,
-			      //StringBuffer b, 
 			      int docno, Document doc, String name) throws IOException {
-	//Fieldable f = doc.getFieldable(name);
 	
 	TermFreqVector tfv=reader.getTermFreqVector(docno, name);
-	if (tfv==null) {
-	    //System.out.println("--No terms--");
-	    return;
-	} 
+	if (tfv==null)     return; 
 	
 	int[] freqs=tfv.getTermFrequencies();
 	String[] terms=tfv.getTerms();
@@ -133,6 +122,7 @@ class DocumentExporter {
     static private final String PRIMARY_CATEGORY = "primary_"+ArxivFields.CATEGORY;
 
     private final IndexReader reader = Common.newReader2();
+    final Dictionary dic=new Dictionary();
 
     /*
     private boolean ignorable(String name, String word) throws IOException {
