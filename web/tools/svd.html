@@ -1,0 +1,141 @@
+<html>
+<head>
+<title>SVD clustering
+</title>
+</head>
+<body>
+<h1>SVD clustering: How-to guide
+</h1>
+
+<h2>Peter Frazer's original specs
+</h2>
+
+<p>
+(From 2013-06-07 message)
+
+<pre>
+We split up papers into what we are calling "super-categories", which are
+disjoint unions of arxiv categories.  I am envisioning that we would have one
+super-category for each of the bulletted list of categories at the main page on
+arxiv.org.  So for example, one super-category would correspond to all the
+astro-ph categories, one to all the cond-mat categories, etc.  Currently we are
+doing our analysis on the hep-th super-category.
+
+1. For each super-category, do the following:
+
+a. Create a ratings matrix from historical data, with users on the rows, and papers on the columns.  We do this as follows:
+    Let Users be the set of users who viewed at least user_thresh=2 papers in the super-category in the given time-period (2010-2012).
+    Let Items be the set of papers meeting the following criteria:
+        primary category is in the super-category
+        submitted in the given time-period (2010-2011)
+        viewed by at least paper_thresh=2 users from Users
+    Create a matrix R with rows in Users and columns in Items, with a 1 at cell (u,i) if user u viewed paper i, and a 0 otherwise.
+    user_thresh and paper_thresh are both tunable parameters, which we might play around with at some point, as is the time period.
+
+1b. Do an SVD of the ratings matrix, as per the standard approach in low-rank
+matrix factorization for recommender systems.  So in particular, compute
+matrices U, D, and V where R = U D V^T, U and V are orthonormal matrices, D is
+diagonal and has entries sorted from largest to smallest, where U has |Users|
+rows, and V has |Items| rows.  Then drop all but the top k_svd entries in D, and
+drop the corresponding rows in U and V, so that U and V now both have k_svd
+columns, and we are approximating R by  U D V^T.  k_svd is a tunable parameter,
+but we are currently feeling good about k_svd=5.
+
+1c. Use kmeans to cluster the rows of V (which now has |Items| rows and k_svd
+columns), as points in kvsd-dimensional space.  Use k_kmeans clusters.  Again,
+k_kmeans is a tunable parameter, and we want to do some back-testing to figure
+out what will work well, but it probably makes sense to set it the same way we
+were setting it for the original clustering scheme you implemented.
+
+1d. Now, for each paper in Items, we have a kmeans cluster label.  Using this
+as training data, train an SVM multiclass classifier to predict the kmeans
+cluster label from your custom features, which include TF-IDF and authors,
+etc., and also adding to this set of features the primary category of the
+paper, and the binary vector listing which secondary categories are turned on.
+
+
+2.  When a new paper arrives, figure out what its super category is, and then
+take the corresponding trained multiclass SVM, and apply it to the paper's
+feature vector to predict its cluster label.  So for example, if a paper is in
+the astro-ph super category, we will use the astro-ph multi-class SVM.  Say
+that SVM predicts a cluster label of 6.  Then the paper's cluster will be
+"astro-ph:6".
+
+</pre>
+
+<h2>Arrangements</h2>
+
+<p>These instructions are for en-myarxiv02.orie.cornell.edu
+
+<p>The main data directory is  /data/arxiv/arXiv-data. Make sure to set up a symbolic link so that you can access it via ~/arxiv/arXiv-data.  (I.e.:
+<pre>
+   cd ~/arxiv
+   ln -s  /data/arxiv/arXiv-data .
+</pre>
+
+<p>The scripts are designed for running in <tt>
+$home/arxiv/arxiv </tt>. The shell variable <tt>$home</tt> (in C
+shell, at any rate) refers to your home directory; it's the same thing
+as "~". In my case, $home=/home/vm293 ; for you, it will be your home
+directory. For everything to work smoothly, you may need to sym-link a
+few important directories into your ~/arxiv, e.g.
+<pre>
+   cd ~/arxiv
+   ln -s  ~vm293/arxiv/lib .
+   mkdir arxiv
+</pre>
+
+<p>A number of shell scripts and perl scripts will be discussed
+below. They reside in ~vm293/arxiv/arxiv. Before running them, you can
+copy them to ~/arxiv/arxiv (i.e., the analogously named directory in
+your own directory tree). Alternatively, you can check everything out from 
+ <a href="https://forge.cornell.edu/sf/projects/my_arxiv_org">the Cornell SourceFourge repository for the Project my.arxiv.org</a>
+
+<p>Below, unless explicitly indicated otherwise, it will be assumed that all commands are run in <pre>~/arxiv/arxiv</pre> .
+
+<h2>Splitting usage data</h2>
+
+<p>The 10+ years of the usage data files, uploaded by Dr. Ginsparg, are in 
+<tt> /data/json/usage </tt>. The first step of processing them for our purposes is splitting them into 18 major categories ("super categories", in Peter's terminology). Since this has been done already, you probably will <strong>not</strong> need to re-do it. Nonetheless, for completeness, here's the command:
+
+<pre>
+  ./json.sh
+</pre>
+
+If you look inside the script, you'll see that, after setting the classpath etc, it does the following:
+<pre>
+foreach f (/data/json/usage/201[012]/*.json.gz) 
+    date
+    echo Splitting file $f
+    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
+end
+</pre>
+
+<p>The split files are written into  /data/arxiv/arXiv-data/tmp/hc
+
+<h2>Running SVD and clustering</h2>
+
+<p>The next script carries out, separately for each major category, the following steps:
+<ul>
+<li>Creation of the coaccess matrix from the usage data. At this step, "inappropriate" articles (those with a creation date outside of the specified date range) are excluded, and the list of users and articles may be pruned as well, based on Peter's criteria. Of course we don't actually know "who is who", user-wise; what the program does is going by the cookies: all activities associated with the same cookie are treated as carries out by the same user; and if multiple cookies are linked to the same registered user (as per /data/json/usage/tc.json.gz ), then they all are interpreted as the same user, too.
+
+<li>
+Incomplete SVD factoring of the co-access matrix. The parameter "k_svd" is customizable; this is how many top singular values will be found.
+
+<li>
+The k-Means clustering of the article set in the reduced-dimension (k_svd-dimensional) space. The number of clusters is controlled by the parameter "k_kmeans". if it is not set, or is set to 0, then the number of clusters will be determined adaptively, by the formula
+<pre>
+	    k_kmeans = (int)Math.sqrt(  N / 200.0),
+</pre>
+where N is the number of articles in the super-category (that is,
+the number of articles that remain after all ineligible articles have been removed).
+</ul>
+
+<p>
+The assignment map will be written, by default, to the file <tt>
+/data/arxiv/arXiv-data/tmp/svd-asg/$cat/asg.dat </tt>,
+where $cat is the major category name ("math", "astro-ph", etc).
+
+
+</body>
+</html>

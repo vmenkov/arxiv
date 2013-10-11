@@ -55,6 +55,8 @@
 
 <li><A href="../admin/install.html">Deployment Guide</a> - for maintenance programmers and system administrators
 
+<li><A href="../admin/svd.html">SVD + k-Means clustering</a>
+
 <li><A href="../javadoc/">API documentation</a>
 
 <!--
