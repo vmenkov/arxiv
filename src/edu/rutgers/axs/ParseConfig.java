@@ -2,6 +2,7 @@ package edu.rutgers.axs;
 
 import java.io.*;
 import java.util.*;
+import java.text.*;
 
 
 /**
@@ -239,6 +240,17 @@ public final class ParseConfig extends Hashtable<String,Object> {
 		if (property != null)
 			value = (new Boolean(property)).booleanValue();
 		return value;
+	}
+
+	/** Gets a date parameter, in the format YYYYMMDD
+	   @param aDefault 'YYYYMMDD' or 'YYMMDD'; the latter, for 20YY
+	 */
+	public Date getOptionDate(String aName, String aDefault) throws java.text.ParseException {
+	    String x= getOption(aName, aDefault);
+	    if (x==null) return null;
+	    //	date1 = new GregorianCalendar(2010, 0, 1).getTime(),
+	    final DateFormat fmt = new SimpleDateFormat("yyyyMMDD");
+	    return fmt.parse(x);
 	}
 
 	/**

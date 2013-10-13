@@ -26,7 +26,7 @@ end
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 # set opt="-cp ${cp} ${opt}"
-set opt="-cp ${cp} ${opt} -DdontSend=false"
+set opt="-cp ${cp} ${opt}"
 
 echo "opt=$opt"
 
@@ -39,7 +39,7 @@ echo "opt=$opt"
 foreach f (/data/json/usage/201[012]/*.json.gz) 
     date
     echo Splitting file $f
-    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
+    time java $opt edu.rutgers.axs.ee4.HistoryClustering split $f
 end
 
 #time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd physics

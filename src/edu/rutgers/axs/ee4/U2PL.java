@@ -90,10 +90,20 @@ class U2PL  {
     final private static FieldSelector fieldSelectorDate = 
 	new OneFieldSelector(ArxivFields.DATE);
 
+    /** Only articles with submission dates in this range are accepted */
+    private  Date date1, date2;
     /** 0-based month, 1-based day */
-    final private static Date
+    /*
 	date1 = new GregorianCalendar(2010, 0, 1).getTime(),
 	date2 = new GregorianCalendar(2012, 0, 1).getTime();
+    */
+
+    void setArticleDateRange(Date articleDateFrom,  Date articleDateTo) {
+	date1 = articleDateFrom;
+	date2 = articleDateTo;
+    }
+
+
 
     int ignoreCnt = 0;
 

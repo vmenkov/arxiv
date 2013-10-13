@@ -2,8 +2,7 @@
 
 #-- Usage: emailSug.sh username email  [new_password]
 
-# set opt="-DOSMOT_CONFIG=."
-set opt="-Xmx4096m -XX:MaxPermSize=256m -DOSMOT_CONFIG=."
+set baseopt="-Xmx4096m -XX:MaxPermSize=256m -DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib
 set tclib=/usr/local/tomcat/lib
@@ -25,8 +24,9 @@ end
 
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
-# set opt="-cp ${cp} ${opt}"
-set opt="-cp ${cp} ${opt} -DdontSend=false"
+set baseopt="-cp ${cp} ${baseopt}"
+
+set opt="$baseopt"
 
 echo "opt=$opt"
 
@@ -44,6 +44,9 @@ echo "opt=$opt"
 
 set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
 date
+
+#-- specify date range
+set opt="$baseopt -DusageFrom=100101 -DusageThru=121231"
 
 foreach cat ($cats) 
  echo Processing category $cat
