@@ -102,8 +102,8 @@ class U2PL  {
 	date1 = articleDateFrom;
 	date2 = articleDateTo;
 	System.out.println("Accepting articles dated "+date1+ " to " +date2);
-	System.out.println("msec: "+	date1.getTime() +" : " +
-			   date2.getTime());
+	//	System.out.println("msec: "+	date1.getTime() +" : " +
+	//		   date2.getTime());
 
     }
 

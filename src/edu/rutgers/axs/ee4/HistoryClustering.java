@@ -276,8 +276,8 @@ public class HistoryClustering {
 	usageFrom=getDateStringOption(ht,"usageFrom");
 	usageTo  =getDateStringOption(ht,"usageTo");
 
-	Date articleDateFrom = ht.getOptionDate("articleDateFrom", "20100101");
-	Date articleDateTo = ht.getOptionDate("articleDateTo", "20120101");
+	articleDateFrom = ht.getOptionDate("articleDateFrom", "20100101");
+	articleDateTo = ht.getOptionDate("articleDateTo", "20120101");
 
 	if (argv.length < 1) {
 	    usage("Command not specified");
