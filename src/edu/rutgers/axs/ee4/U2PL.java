@@ -147,7 +147,10 @@ class U2PL  {
 	    // The entire intervale (d1,d2) is within the permitted range
 	    if (!d1.before(date1) && !d2.after(date2)) return true;
 	    // The entire intervale (d1,d2) is outside the permitted range
-	    if (!d2.after(date1) || !d1.before(date2)) return false;
+	    if (!d2.after(date1) || !d1.before(date2)) {
+		//		System.out.println("Date reject: "+aid+" --> ("+d1+" : "+d2+")");
+		return false;
+	    }
 	}
 
 
@@ -159,10 +162,13 @@ class U2PL  {
 	if (dateString==null) return false;
 	try {
 	    Date date= DateTools.stringToDate(dateString);
-	    return date!=null && 
-		(date1==null || date.after(date1)) && 
-		(date2==null || date.before(date2));
+	    boolean r=(date!=null && !date.before(date1) && date.before(date2));
+	    if (!r) {
+		//		System.out.println("Date reject: " + date);
+	    }
+	    return r;
 	} catch (java.text.ParseException ex) {
+	    //	    System.out.println("Date reject: parse exception on " + dateString);
 	    return false;
 	}
     }
