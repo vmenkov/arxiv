@@ -259,7 +259,7 @@ public class HistoryClustering {
 	if (x==null) return x;
 	if (x!=null && x.equals("null")) return null;
 	if (x.length()==6) return x;
-	if (x.length()==8 && x.startsWith("20")) return x.substring(2,0);
+	if (x.length()==8 && x.startsWith("20")) return x.substring(2);
 	usage("Option " + name + " must be in the format YYMMDD or YYYYMMDD");
 	return null;
     }
