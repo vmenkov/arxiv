@@ -58,10 +58,17 @@ class AsgMap {
 	human-readable permanent ArXiv IDs.
 	@param id0 Is added to each cluster id.
     */
-    static void saveAsg(int asg[], String[] no2aid, String cat, int id0) throws IOException {
-	File catdir =  getAsgDirPath(cat);
-	catdir.mkdirs();
-	File f = new File(catdir, "asg.dat");
+    static void saveAsg(int asg[], String[] no2aid, String cat, int id0, String asgPath) throws IOException {
+	File f;
+	if (asgPath!=null) {
+	    f = new File(asgPath);
+	    File d= f.getParentFile();
+	    if (d!=null) d.mkdirs();
+	} else {
+	    File catdir =  getAsgDirPath(cat);
+	    catdir.mkdirs();
+	    f = new File(catdir, "asg.dat");
+	}
 	PrintWriter w= new PrintWriter(new FileWriter(f));
 	for(int i=0; i<no2aid.length; i++) {
 	    int id = id0 + asg[i];

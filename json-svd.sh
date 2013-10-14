@@ -44,6 +44,11 @@ set opt="$baseopt -DusageFrom=20100101 -DusageTo=20130101 -DarticleDateFrom=2010
 
 foreach cat ($cats) 
  echo Processing category $cat
+
+ # One can add an option such as 
+ # -DasgPath=../arXiv-data/tmp/svd-asg/$cat/asg.dat 
+ # to control the location of the output file (the assignment map)
+
  time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd $cat >& svd-${cat}.log
 end
 

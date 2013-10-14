@@ -91,7 +91,7 @@ copy them to ~/arxiv/arxiv (i.e., the analogously named directory in
 your own directory tree). Alternatively, you can check everything out from 
  <a href="https://forge.cornell.edu/sf/projects/my_arxiv_org">the Cornell SourceFourge repository for the Project my.arxiv.org</a>
 
-<p>Below, unless explicitly indicated otherwise, it will be assumed that all commands are run in <pre>~/arxiv/arxiv</pre> .
+<p>Below, unless explicitly indicated otherwise, it will be assumed that all commands are run in the directory <tt>~/arxiv/arxiv</tt> .
 
 <h2>Splitting usage data</h2>
 
@@ -119,7 +119,16 @@ end
 
 <p>The next script carries out, separately for each major category, the following steps:
 <ul>
-<li>Creation of the coaccess matrix from the usage data. At this step, "inappropriate" articles (those with a creation date outside of the specified date range) are excluded, and the list of users and articles may be pruned as well, based on Peter's criteria. Of course we don't actually know "who is who", user-wise; what the program does is going by the cookies: all activities associated with the same cookie are treated as carries out by the same user; and if multiple cookies are linked to the same registered user (as per /data/json/usage/tc.json.gz ), then they all are interpreted as the same user, too.
+<li>Creation of the coaccess matrix from the usage data. At this step,
+split files (generated at the previous step) are read; "inappropriate"
+articles (those with a creation date outside of the specified date
+range) are excluded, and the list of users and articles may be pruned
+as well, based on Peter's criteria. Of course we don't actually know
+"who is who", user-wise; what the program does is going by the
+cookies: all activities associated with the same cookie are treated as
+carries out by the same user; and if multiple cookies are linked to
+the same registered user (as per /data/json/usage/tc.json.gz ), then
+they all are interpreted as the same user, too.
 
 <li>
 Incomplete SVD factoring of the co-access matrix. The parameter "k_svd" is customizable; this is how many top singular values will be found.
@@ -160,11 +169,21 @@ date
 # -Dk_kmeans=0 : the number of clusters to create. (0 means setting the number adaptively, based on the set size)
 set opt="$baseopt -DusageFrom=20100101 -DusageTo=20130101 -DarticleDateFrom=20100101 -DarticleDateTo=20120101 -Dk_svd=5 -Dk_kmeans=0"
 
+
 foreach cat ($cats) 
  echo Processing category $cat
+
+ # One can add an option such as 
+ # -DasgPath=../arXiv-data/tmp/svd-asg/$cat/asg.dat 
+ # to control the location of the output file (the assignment map)
+
  time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd $cat >& svd-${cat}.log
 end
+
 </pre>
+
+<p>The output file (the assignment map) for each category $cat will go
+to the file <tt> ../arXiv-data/tmp/svd-asg/$cat/asg.dat </tt>, unless indicated otherwise using the option -DasgPath=... 
 
 <p>To run SVD with different options, you can simply copy this script to a script of your own and modify the options as required.
 

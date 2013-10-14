@@ -165,7 +165,10 @@ public class HistoryClustering {
 								   k_kmeans);
 
 	int id0 = 1;
-	AsgMap.saveAsg( clu.asg, no2aid, majorCat, id0);
+
+	String asgPath = ht.getOption("asgPath", null);
+	if (asgPath=="null") asgPath = null;
+	AsgMap.saveAsg( clu.asg, no2aid, majorCat, id0, asgPath);
     }
 
     /** Converts a section (first keepSvd columns) of a DoubleMatrix2D
@@ -200,7 +203,6 @@ public class HistoryClustering {
 	System.exit(1);
     }
 
-
     private static void doSvm(String majorCat)  throws IOException {
 	// FIXME: is there a nicer way, without hogging the static space?
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
@@ -208,11 +210,9 @@ public class HistoryClustering {
 	
 	//	File d = AsgMap.getAsgMainDir();
 
+	// The file to process
 	String asgPath = ht.getOption("asgPath", null);
-	final File d =  	    AsgMap.getAsgDirPath(majorCat);
-
-
-
+	final File d =  AsgMap.getAsgDirPath(majorCat);
 
 	File asgFile =  (asgPath!=null)?	    
 	    new File(asgPath) :
