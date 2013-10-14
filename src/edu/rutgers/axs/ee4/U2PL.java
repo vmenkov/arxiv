@@ -101,6 +101,10 @@ class U2PL  {
     void setArticleDateRange(Date articleDateFrom,  Date articleDateTo) {
 	date1 = articleDateFrom;
 	date2 = articleDateTo;
+	System.out.println("Accepting articles dated "+date1+ " to " +date2);
+	System.out.println("msec: "+	date1.getTime() +" : " +
+			   date2.getTime());
+
     }
 
 
@@ -134,7 +138,12 @@ class U2PL  {
 	if (dateString==null) return false;
 	try {
 	    Date date= DateTools.stringToDate(dateString);
-	    return date!=null && date.after(date1) && date.before(date2);
+	    if (date!=null) {
+		long z = date.getTime();
+	    }
+	    return date!=null && 
+		(date1==null || date.after(date1)) && 
+		(date2==null || date.before(date2));
 	} catch (java.text.ParseException ex) {
 	    return false;
 	}
