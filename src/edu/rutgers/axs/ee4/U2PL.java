@@ -104,14 +104,17 @@ class U2PL  {
 	System.out.println("Accepting articles dated "+date1+ " to " +date2);
 	//	System.out.println("msec: "+	date1.getTime() +" : " +
 	//		   date2.getTime());
-
+	if (date1==null && date2 != null ||
+	    date1!=null && date2 == null) {
+	    throw new IllegalArgumentException("Only one of the articleDateFrom  and articleDateTo dates have been provided. You must provide either both, or neither");
+	}
     }
 
 
 
     int ignoreCnt = 0;
 
-    final Pattern pat = Pattern.compile("([0-9][0-9])[0-9][0-9]\\.[0-9][0-9][0-9][0-9]");
+    final Pattern pat = Pattern.compile("([0-9][0-9])([0-9][0-9])\\.[0-9][0-9][0-9][0-9]");
 
     /** Checks if the page is acceptable for our analysis.
 
@@ -122,11 +125,29 @@ class U2PL  {
         # submitted in the given time-period (2010-2011)"
      */
     private boolean acceptable(String aid) throws IOException {
-	// some heuristics first (determining date based on doc name)
-	Matcher m = pat.matcher(aid);
-	if (m.matches()) {
-	    String g = m.group(1);
-	    return g.equals("10") || g.equals("11");
+	if (date1==null && date2==null) return true;
+	if (date1==null || date2==null) throw new IllegalArgumentException();
+
+	// some heuristics first (determining approximate date based
+	// on doc name)
+	Matcher mat = pat.matcher(aid);
+	if (mat.matches()) {
+	    String yy = mat.group(1);
+	    String mm = mat.group(2);
+	    yy = yy.startsWith("9") ? "19" + yy : "20" + yy;
+
+	    int y = Integer.parseInt(yy);
+	    int m = Integer.parseInt(mm);
+	    //Month value is 0-based. e.g., 0 for January.
+	    GregorianCalendar cal = new GregorianCalendar(y,m-1,1);
+	    Date d1 = cal.getTime();
+	    cal.add( Calendar.MONTH, 1);
+	    Date d2 = cal.getTime();
+	    // We know that the article time is somewhere between d1 and d2...
+	    // The entire intervale (d1,d2) is within the permitted range
+	    if (!d1.before(date1) && !d2.after(date2)) return true;
+	    // The entire intervale (d1,d2) is outside the permitted range
+	    if (!d2.after(date1) || !d1.before(date2)) return false;
 	}
 
 
@@ -138,9 +159,6 @@ class U2PL  {
 	if (dateString==null) return false;
 	try {
 	    Date date= DateTools.stringToDate(dateString);
-	    if (date!=null) {
-		long z = date.getTime();
-	    }
 	    return date!=null && 
 		(date1==null || date.after(date1)) && 
 		(date2==null || date.before(date2));
