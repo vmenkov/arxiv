@@ -10,6 +10,8 @@
 <h2>Peter Frazer's original specs
 </h2>
 
+<center><em>2013-10-13</em></center>
+
 <p>
 (From 2013-06-07 message)
 
@@ -82,8 +84,13 @@ few important directories into your ~/arxiv, e.g.
 <pre>
    cd ~/arxiv
    ln -s  ~vm293/arxiv/lib .
+   ln -s  ~vm293/arxiv/lucene .
    mkdir arxiv
 </pre>
+This is necessary in order for your Java application to find
+certain <tt>jar</tt> files. (You can check the list of jar files
+needed by each script by looking inside each script, paying attention
+to how the classpath is constructed.)
 
 <p>A number of shell scripts and perl scripts will be discussed
 below. They reside in ~vm293/arxiv/arxiv. Before running them, you can
