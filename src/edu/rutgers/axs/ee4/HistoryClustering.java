@@ -48,7 +48,7 @@ public class HistoryClustering {
 	} 
 	String d = m.group();
 	if (usageFrom != null && d.compareTo(usageFrom) < 0) return false;
-	if (usageTo != null && d.compareTo(d) >= 0) return false;
+	if (usageTo != null && d.compareTo(usageTo) >= 0) return false;
 	return true;
     }
 
@@ -67,6 +67,7 @@ public class HistoryClustering {
 
 	    if (!dateIsAcceptable(f)){
 		System.out.println("Skip file " + f );
+		continue;
 	    }
 
 	    System.out.println("Reading split file " + f + ", at "+ new Date());
@@ -278,6 +279,9 @@ public class HistoryClustering {
 
 	articleDateFrom = ht.getOptionDate("articleDateFrom", "20100101");
 	articleDateTo = ht.getOptionDate("articleDateTo", "20120101");
+
+	System.out.println("Reading pre-split usage files dated " +
+			   usageFrom + " to " + usageTo);
 
 	if (argv.length < 1) {
 	    usage("Command not specified");
