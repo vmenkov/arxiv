@@ -16,8 +16,6 @@ set cp="${cp}:/usr/local/tomcat/bin/tomcat-juli.jar"
 set cp="${cp}:../tomcat-lib-to-copy/catalina.jar"
 
 set jmlib=$home/arxiv/javamail-1.4.5/lib
-
-# set cp="${cp}:$jmlib/mailapi.jar"
 foreach x ($jmlib/*.jar) 
     set cp="${cp}:${x}"
 end
@@ -30,23 +28,19 @@ set opt="$baseopt"
 
 echo "opt=$opt"
 
-#-- reads  2,603,324 entries in 1 min, using 4GB of memory
-# Length = 2603324
-# 62.159u 1.636s 0:46.40 137.4%   0+0k 323472+96io 0pf+0w
-
-
-
-#foreach f (/data/json/usage/201[012]/*.json.gz) 
-#    date
-#    echo Splitting file $f
-#    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
-#end
-
+#-- List of categories to process. This command simply lists all subdirectories
+#-- in ../arXiv-data/tmp/hc , so that all major cats are processed. For
+#-- testing purposes, you can have a shorter list instead
 set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
 date
 
-#-- specify date range
-set opt="$baseopt -DusageFrom=100101 -DusageThru=121231"
+#-- Specify various options:
+# -DusageFrom=20100101 -DusageTo=20130101   : the range of usage files
+# -DarticleDateFrom=20100101 -DarticleDateTo=20120101 : article submission dates
+# -Dk_svd=5 : the number of singular vectors to keep
+# -Dk_kmeans=0 : the number of clusters to create. (0 means setting the number adaptively, based on the set size)
+set opt="$baseopt -DusageFrom=20100101 -DusageTo=20130101 -DarticleDateFrom=20100101 -DarticleDateTo=20120101 -Dk_svd=5 -Dk_kmeans=0"
+
 
 foreach cat ($cats) 
  echo Processing category $cat

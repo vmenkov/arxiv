@@ -4,9 +4,6 @@ import java.util.*;
 
 import cern.colt.matrix.*;
 import cern.colt.matrix.impl.*;
-//import edu.rutgers.axs.matrix.SparseDoubleMatrix2Dx;
-
-
 
 /** Our own implementation of partial Singular Value Decomposition. */
 public class SVD {

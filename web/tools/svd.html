@@ -63,7 +63,7 @@ that SVM predicts a cluster label of 6.  Then the paper's cluster will be
 
 </pre>
 
-<h2>Arrangements</h2>
+<h2>Overall arrangements</h2>
 
 <p>These instructions are for en-myarxiv02.orie.cornell.edu
 
@@ -96,7 +96,7 @@ your own directory tree). Alternatively, you can check everything out from
 <h2>Splitting usage data</h2>
 
 <p>The 10+ years of the usage data files, uploaded by Dr. Ginsparg, are in 
-<tt> /data/json/usage </tt>. The first step of processing them for our purposes is splitting them into 18 major categories ("super categories", in Peter's terminology). Since this has been done already, you probably will <strong>not</strong> need to re-do it. Nonetheless, for completeness, here's the command:
+<tt> /data/json/usage </tt>. The first step of processing them for our purposes is splitting them into 18 major categories ("super categories", in Peter's terminology). Since this has been done already (for years 2009-2012), you probably will <strong>not</strong> need to re-do it. Nonetheless, for completeness, here's the command:
 
 <pre>
   ./json.sh
@@ -111,7 +111,9 @@ foreach f (/data/json/usage/201[012]/*.json.gz)
 end
 </pre>
 
-<p>The split files are written into  /data/arxiv/arXiv-data/tmp/hc
+<p>In a separate run, the usage files for 2009 have been split as well.
+
+<p>All split files are written into  /data/arxiv/arXiv-data/tmp/hc
 
 <h2>Running SVD and clustering</h2>
 
@@ -136,6 +138,35 @@ The assignment map will be written, by default, to the file <tt>
 /data/arxiv/arXiv-data/tmp/svd-asg/$cat/asg.dat </tt>,
 where $cat is the major category name ("math", "astro-ph", etc).
 
+<p>The command to run this step is
+<pre>
+./json-svd.sh
+</pre>
+
+<p>This is what inside the script:
+
+<pre>
+#-- List of categories to process. This command simply lists all subdirectories
+#-- in ../arXiv-data/tmp/hc , so that all major cats are processed. For
+#-- testing purposes, you can have a shorter list instead
+set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
+date
+
+
+#-- Specify various options:
+# -DusageFrom=20100101 -DusageTo=20130101   : the range of usage files
+# -DarticleDateFrom=20100101 -DarticleDateTo=20120101 : article submission dates
+# -Dk_svd=5 : the number of singular vectors to keep
+# -Dk_kmeans=0 : the number of clusters to create. (0 means setting the number adaptively, based on the set size)
+set opt="$baseopt -DusageFrom=20100101 -DusageTo=20130101 -DarticleDateFrom=20100101 -DarticleDateTo=20120101 -Dk_svd=5 -Dk_kmeans=0"
+
+foreach cat ($cats) 
+ echo Processing category $cat
+ time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd $cat >& svd-${cat}.log
+end
+</pre>
+
+<p>To run SVD with different options, you can simply copy this script to a script of your own and modify the options as required.
 
 </body>
 </html>
