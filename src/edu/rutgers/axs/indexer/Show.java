@@ -121,7 +121,7 @@ class Show {
     void showAbstract(int docno) throws IOException {
 	Document doc = reader.document(docno);
 	String a = doc.get(ArxivFields.ABSTRACT);
-	a = a.replaceAll("\\s+", " ").replaceAll("\"", " ");
+	a = a.replaceAll("\"", " ").replaceAll("\\s+", " ").trim();
 	String s = doc.get(ArxivFields.PAPER)+ ",\"" + a + "\"";
 	System.out.println(s);
     }
