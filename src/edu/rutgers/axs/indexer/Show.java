@@ -40,7 +40,7 @@ class Show {
 	if (verbose) {
 	    int numdocs = reader.numDocs();
 	    int maxdoc = reader.maxDoc();
-	    System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
+	    //	    System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
 	}
     }
 
@@ -102,15 +102,27 @@ class Show {
 
    void showTitle(int docno) throws IOException {
 	Document doc = reader.document(docno);
-	//System.out.println("Doc no.=" + docno);
-	//System.out.println("dateIndexed=" + doc.get(ArxivFields.DATE_INDEXED));
-	//System.out.println("date       =" + doc.get(ArxivFields.DATE));
-	//System.out.println("authors    =" + doc.get(ArxivFields.AUTHORS));
-	//System.out.println("Document=" + doc);
 	String s = "[" +doc.get(ArxivFields.PAPER)+ "] " + 
 			   doc.get(ArxivFields.CATEGORY) + "; " +
 			   doc.get(ArxivFields.TITLE);
 	s = s.replaceAll("\\s+", " ");
+	System.out.println(s);
+    }
+
+    /** Specifically for David Blei's request, 2013-10-11
+	<pre>
+	here is the form of data that i would like.
+
+	1. a file with article abstracts.  each line contains
+
+	&lt;arxiv id&gt;, &lt;the text of the abstract in quotes&gt;
+	</pre>
+    */
+    void showAbstract(int docno) throws IOException {
+	Document doc = reader.document(docno);
+	String a = doc.get(ArxivFields.ABSTRACT);
+	a = a.replaceAll("\\s+", " ").replaceAll("\"", " ");
+	String s = doc.get(ArxivFields.PAPER)+ ",\"" + a + "\"";
 	System.out.println(s);
     }
 

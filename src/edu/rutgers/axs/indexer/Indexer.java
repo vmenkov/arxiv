@@ -668,34 +668,23 @@ public class Indexer {
 	    i.fromXML(args[1], args[2]);
 
 	} else if (args[0].equals("show")) {
-	    System.out.println("Default encoding is: " + System.getProperty("file.encoding"));
+	    //	    System.out.println("Default encoding is: " + System.getProperty("file.encoding"));
 	    Show show = new Show();
-	    for(int j=1; j<args.length; j++) {
-		String v = args[j];
-		if (v.equals("-")) {   // read doc IDs from the standard input
-		    for(FileIterator it=new FileIterator(); it.hasNext();){
-			int docno=show.figureDocno(it.next());
-			show.show(docno); 
-		    }
-		} else {	// is it numeric?
-		    int docno=show.figureDocno(v);
-		    show.show(docno);  
-		}
+	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
+		int docno=show.figureDocno(it.next());
+		show.show(docno); 
 	    }
 	} else if (args[0].equals("showtitle")) {
-	    System.out.println("Default encoding is: " + System.getProperty("file.encoding"));
 	    Show show = new Show();
-	    for(int j=1; j<args.length; j++) {
-		String v = args[j];
-		if (v.equals("-")) {   // read doc IDs from the standard input
-		    for(FileIterator it=new FileIterator(); it.hasNext();){
-			int docno=show.figureDocno(it.next());
-			show.showTitle(docno); 
-		    }
-		} else {	// is it numeric?
-		    int docno=show.figureDocno(v);
-		    show.showTitle(docno);  
-		}
+	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
+		int docno=show.figureDocno(it.next());// is it numeric?
+		show.showTitle(docno); 
+	    }
+	} else if (args[0].equals("showabstract")) {
+	    Show show = new Show();
+	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
+		int docno=show.figureDocno(it.next());// is it numeric?
+		show.showAbstract(docno); 
 	    }
 	} else if (args[0].equals("showcoef")) {
 	    System.out.println("Note: the following stop words are not stored in the Lucene index:");
@@ -711,31 +700,15 @@ public class Indexer {
 	    }
 	    System.out.println();
 	    Show show = new Show();
-	    for(int j=1; j<args.length; j++) {
-		String v = args[j];
-		if (v.equals("-")) {   // read doc IDs from the standard input
-		    for(FileIterator it=new FileIterator(); it.hasNext();){
-			int docno=show.figureDocno(it.next());
-			show.showCoef(docno); 
-		    }
-		} else {
-		    // is it numeric?
-		    int docno=show.figureDocno(v);
-		    show.showCoef(docno); 
-		}
+	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
+		int docno=show.figureDocno(it.next());
+		show.showCoef(docno); 
 	    }
 	} else if (args[0].equals("showcoef2")) {  // CSV format
 	    Show show = new Show(false);
 	    show.showFieldHeaders2();
-	    for(int j=1; j<args.length; j++) {
-		String v = args[j];
-		if (v.equals("-")) {   // read doc IDs from the standard input
-		    for(FileIterator it=new FileIterator(); it.hasNext();){
-			show.showCoef2(it.next()); 
-		    }
-		} else {
-		    show.showCoef2(v); 
-		}
+	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
+		show.showCoef2(it.next()); 
 	    }
 	} else if (args[0].equals("list")) {
 	    int max=-1;

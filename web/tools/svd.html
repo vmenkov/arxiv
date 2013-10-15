@@ -194,5 +194,83 @@ to the file <tt> ../arXiv-data/tmp/svd-asg/$cat/asg.dat </tt>, unless indicated 
 
 <p>To run SVD with different options, you can simply copy this script to a script of your own and modify the options as required.
 
+<h2>Assessing clustering quality</h2>
+
+<p>There are a few tools for checking out on the quality of your clustering.
+
+<h3>File locations</h3>
+
+<p>
+The assignment maps for all super categories are in
+<tt>/data/arxiv/arXiv-data/tmp/svd-asg</tt>
+The log files from my clustering tool run are in
+<tt>/home/vm293/arxiv/arxiv/logs/svd</tt>
+
+<p>In your own clustering runs, you can conrol the output files by modifying the shell script (jason-svd.sh) as desired.
+
+<h3>Checking singular values</h3>
+
+<pre>
+% cd /home/vm293/arxiv/arxiv/logs/svd
+% grep values svd-math-5.log
+Top 5 singular values: 421.5746912265288 392.1722034100277
+255.29508914447823 241.239429802076 235.5894627912343
+</pre>
+
+<p>
+So this shows that we had 26 clusters for the category "math". (The
+number of clusters is chosen based on the category size). For each
+super-cat we do 10 runs, and choose the best; the above report shows
+that out of the 10 clustering runs, the clustering scheme from run no.
+8 was chosen...
+
+<pre>
+% grep 'scheme no. 8' svd-math-5.log
+Clustering scheme no. 8: {pop=8479 |c|=0.003684813868064367
+|r|=7.568944337459525E-4}, {pop=6138 |c|=0.004479121211981062
+|r|=0.001301160030551117}, {pop=191 |c|=0.026135334603835353
+|r|=0.0076945166942782185}, {pop=4383 |c|=0.005446239633873648
+|r|=0.001414896394050918}, ....
+</pre>
+
+<p>
+The above shows stats for all 26 clusters in the chosen clustering
+scheme. The stats for each cluster are in the following format:
+<pre>
+{pop= <em>cluster size</em>
+ |c|= <em>the Euclidean norm of the cluster's centroid (i.e., the distance to origin)</em>
+  |r|=  <em>sqrt( <|x-center|^2>,  the "radius" of the cluster, i.e. the
+square root of the average distance of cluster members to the cluster's centroid</em>
+}
+
+<h3>How good is the clustering?</h3>
+
+<p> The following tool can be used to
+review the list of articles assigned to a given cluster:
+
+<pre>
+% cd /home/vm293/arxiv/arxiv
+% ./showCluster.sh /data/arxiv/arXiv-data/tmp/svd-asg/physics/asg.dat 1 | more
+[1105.0968] physics.ao-ph; Paleoclimate Implications for Human-Made
+Climate Change
+[1104.2026] physics.soc-ph cs.GT cs.SI; Collaboration in Social Networks
+[1104.1789] physics.soc-ph cs.SI; Zipf's law unzipped
+[1104.1788] physics.pop-ph physics.soc-ph; Trees as Filters of
+Radioactive Fallout from the Chernobyl Accident
+...
+</pre>
+
+<p>
+This displays the article id, the categories, and the title for each
+article in cluster no. 1 of the "physics" super-cat.
+
+<p>
+One of the reasons I am broadcasting this note is because I am not all
+that sure that the quality of the clustering we generate is all that
+good; so I am inviting those of us who have interests in particular
+subject areas to take a look at how their categories of interests are
+clustered.
+
+
 </body>
 </html>
