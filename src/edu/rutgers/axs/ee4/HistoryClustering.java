@@ -268,6 +268,12 @@ public class HistoryClustering {
 
     private static ParseConfig ht = null;
     public static void main(String [] argv) throws IOException, java.text.ParseException, JSONException {
+
+	final String tcPath = "/data/json/usage/tc.json.gz";
+	final boolean useCookies=true;
+
+
+
 	ht = new ParseConfig();
 	// options for SVD run
 	k_kmeans = ht.getOption("k_kmeans", k_kmeans);
@@ -298,9 +304,7 @@ public class HistoryClustering {
 		usage("Category name not specified");
 	    }
 	    String majorCat = argv[1];	
-	    final boolean useCookies=true;
-
-	    final String tcPath = "/data/json/usage/tc.json.gz";
+	    
 	    ArxivUserInferrer inferrer = useCookies?
 		new CookieArxivUserInferrer(new ArxivUserTable(tcPath)):
 		new IPArxivUserInferrer();
@@ -312,6 +316,16 @@ public class HistoryClustering {
 	    }
 	    String majorCat = argv[1];	
 	    doSvm( majorCat);
+	} else if (argv[0].equals("blei")) {	   
+	    // output for David Blei's team, as per his 2013-11-11 msg
+	    if (argv.length != 3) usage("Command 'blei' needs infile outfile");
+	    ArxivUserInferrer inferrer = useCookies?
+		new CookieArxivUserInferrer(new ArxivUserTable(tcPath)):
+		new IPArxivUserInferrer();
+	    String fname = argv[1];
+	    File outfile = new File(argv[2]);
+
+	    Json.convertJsonFileBlei(fname, inferrer,  outfile);
 	} else {
 	    usage();
 	}

@@ -227,5 +227,61 @@ class Json {
 	}
     }
 
+    /**  output for David Blei's team, as per his 2013-11-11 msg
+	 2. a file with user data.  each line contains
+
+	 user_hash article_id date downloaded_y/n
+    */
+    static void convertJsonFileBlei(String fname, ArxivUserInferrer inferrer,
+				    File outfile) throws IOException, JSONException {
+
+
+	JSONObject jsoOuter = Json.readJsonFile(fname);
+	JSONArray jsa = jsoOuter.getJSONArray("entries");
+ 	int len = jsa.length();
+
+
+	File d= outfile.getParentFile();
+	System.out.println("Creating directory "+d+", if required");
+	if (d!=null) d.mkdirs();
+
+	PrintWriter w = new PrintWriter(new FileWriter(outfile));
+
+
+	int cnt=0, ignorableActionCnt=0, unexpectedActionCnt=0;
+
+ 	for(int i=0; i< len; i++) {
+	    JSONObject jso = jsa.getJSONObject(i);
+	    String type =  jso.getString( "type");
+	    if (!typeIsAcceptable(type)) {
+		ignorableActionCnt++;
+		if (jso.has("arxiv_id"))    unexpectedActionCnt++;
+		continue;		
+	    } 
+	    cnt ++;
+
+	    String ip_hash = jso.getString("ip_hash");
+	    String aid = canonicAid(jso.getString( "arxiv_id"));
+	    String cookie = jso.getString("cookie_hash");
+	    if (cookie==null) cookie = jso.getString("cookie");
+	    if (cookie==null) cookie = "";
+	    int utc = jso.getInt("utc");
+
+	    String user = inferrer.inferUser(ip_hash,cookie);
+	    if (user==null) { 
+		// let's ignore no-cookie entries (which, actually,
+		// don't exist in Paul Ginsparg's arxiv.org logs)
+		continue;
+	    }
+	    //user_hash article_id date downloaded_y/n
+	    boolean down =  !(type.equals("abs") || type.equals("abstract"));
+	    w.println(user + " " + aid + " " + utc + " " + (down?1:0));
+
+	    
+	}
+    }
+
+
+
  
 }
