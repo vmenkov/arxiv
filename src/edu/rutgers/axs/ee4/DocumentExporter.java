@@ -152,12 +152,17 @@ class DocumentExporter {
      */
     void exportAll(File asgFile, PrintWriter w, PrintWriter wasg)  throws IOException {
        	AsgMap map = new AsgMap(asgFile);
-	IndexSearcher searcher = new IndexSearcher( reader );
-	
+	IndexSearcher searcher = new IndexSearcher( reader );	
 	Categorizer catz = new Categorizer(false); // no conversion to major
-	int ignoreCnt=0;
+	int ignoreCnt=0, missingCnt=0;
 	for( String aid: map.list) {
-	    int docno = Common.find(searcher, aid);
+	    int docno = 0;
+	    try {
+		docno =	Common.find(searcher, aid);
+	    } catch(IOException ex) {
+		missingCnt ++;
+		continue;
+	    }
 	    Document doc = reader.document(docno);
 
 	    Vector<Pair> h = new Vector<Pair>();
@@ -188,7 +193,7 @@ class DocumentExporter {
 		wasg.println(aid + "," + clu);
 	    }
 	}
-	System.out.println("Out of " + map.list.size() + " documents, ignored " + ignoreCnt);
+	System.out.println("Out of " + map.list.size() + " documents, " + missingCnt + " not found in Lucene; ignored due to poor category information, " + ignoreCnt);
     }
 
 }

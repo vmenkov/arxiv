@@ -14,8 +14,8 @@ if ($pct < 0 || $pct > 1) {
 
 open(F, "<$in") or die "Cannot read $in\n";
 
-open(G1, ">$out1") or die "Cannot write $in\n";
-open(G2, ">$out2") or die "Cannot write $in\n";
+open(G1, ">$out1") or die "Cannot write $out1\n";
+open(G2, ">$out2") or die "Cannot write $out2\n";
 
 my $s=undef;
 my $cnt1=0;

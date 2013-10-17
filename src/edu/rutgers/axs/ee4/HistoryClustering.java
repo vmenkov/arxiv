@@ -204,21 +204,16 @@ public class HistoryClustering {
 	System.exit(1);
     }
 
-    private static void doSvm(String majorCat)  throws IOException {
+    /** Prepares input files for the SVM application, based on the
+	assignment map file and the data in the Lucene data store.
+	@param asgFile The cluster assignment map file to be used
+	@param d Directory for output files
+    */
+    private static void doSvm(File asgFile, File d)  throws IOException {
 	// FIXME: is there a nicer way, without hogging the static space?
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 	DocumentExporter de = new DocumentExporter();
 	
-	//	File d = AsgMap.getAsgMainDir();
-
-	// The file to process
-	String asgPath = ht.getOption("asgPath", null);
-	final File d =  AsgMap.getAsgDirPath(majorCat);
-
-	File asgFile =  (asgPath!=null)?	    
-	    new File(asgPath) :
-	    new File(d,  "asg.dat");
- 
 	File g = new File(d, "train.dat");
 	PrintWriter w= new PrintWriter(new FileWriter(g));
 
@@ -311,11 +306,22 @@ public class HistoryClustering {
 	    if (normalize) System.out.println("Will normalize document vectors in reduced-dim space");
 	    doSvd(majorCat,inferrer,normalize);
 	} else if (argv[0].equals("svm")) {
-	    if (argv.length < 2) {
-		usage("Category name not specified");
-	    }
-	    String majorCat = argv[1];	
-	    doSvm( majorCat);
+	    // one of the two must be supplied
+	    final String svmDir = ht.getOption("svmDir", null);
+	    final String majorCat = (argv.length < 2)? null : argv[1];	
+	    if (svmDir==null && majorCat==null) usage("Either -DsvmDir=... must be set, or majorCat must be supplied");
+	    // directory for output files
+	    final File d =  (svmDir!=null) ?
+		new File(svmDir) : AsgMap.getAsgDirPath(majorCat);
+
+	    // The file to process
+	    String asgPath = ht.getOption("asgPath", null);
+	    
+	    File asgFile =  (asgPath!=null)?	    
+		new File(asgPath) :
+		new File(d,  "asg.dat");
+
+	    doSvm(asgFile, d);
 	} else if (argv[0].equals("blei")) {	   
 	    // output for David Blei's team, as per his 2013-11-11 msg
 	    if (argv.length != 3) usage("Command 'blei' needs infile outfile");

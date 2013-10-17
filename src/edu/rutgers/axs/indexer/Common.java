@@ -11,7 +11,6 @@ import org.apache.lucene.search.*;
 
 import edu.cornell.cs.osmot.options.Options;
 
-
 public class Common {
     
     static final Version LuceneVersion = Version.LUCENE_33; 
