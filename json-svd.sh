@@ -15,11 +15,6 @@ set cp="${cp}:/usr/local/tomcat/bin/tomcat-juli.jar"
 # on cactuar
 set cp="${cp}:../tomcat-lib-to-copy/catalina.jar"
 
-#set jmlib=$home/arxiv/javamail-1.4.5/lib
-#foreach x ($jmlib/*.jar) 
-#    set cp="${cp}:${x}"
-#end
-
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 set baseopt="-cp ${cp} ${baseopt}"

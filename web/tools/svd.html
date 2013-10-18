@@ -71,6 +71,8 @@ that SVM predicts a cluster label of 6.  Then the paper's cluster will be
 
 <p>The main data directory is  /data/arxiv/arXiv-data. Make sure to set up a symbolic link so that you can access it via ~/arxiv/arXiv-data.  (I.e.:
 <pre>
+   cd ~
+   mkdir arxiv
    cd ~/arxiv
    ln -s  /data/arxiv/arXiv-data .
 </pre>
@@ -85,6 +87,8 @@ few important directories into your ~/arxiv, e.g.
    cd ~/arxiv
    ln -s  ~vm293/arxiv/lib .
    ln -s  ~vm293/arxiv/lucene .
+   <em>Maybe a few more similar sym links... you'll see if you need them
+    based on "No class found" errors etc.</em>
    mkdir arxiv
 </pre>
 This is necessary in order for your Java application to find
@@ -181,7 +185,7 @@ foreach cat ($cats)
  echo Processing category $cat
 
  # One can add an option such as 
- # -DasgPath=../arXiv-data/tmp/svd-asg/$cat/asg.dat 
+ # -DasgPath=../arXiv-data/tmp/svd-asg/$cat/asg.dat right after $opt
  # to control the location of the output file (the assignment map)
 
  time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd $cat >& svd-${cat}.log
@@ -191,6 +195,9 @@ end
 
 <p>The output file (the assignment map) for each category $cat will go
 to the file <tt> ../arXiv-data/tmp/svd-asg/$cat/asg.dat </tt>, unless indicated otherwise using the option -DasgPath=... 
+
+<p><strong>You probably want to set the  option -DasgPath=... to soemthing reasonable (e.g.  -DasgPath=./my-svd-out-dir ), so that the files will go to your own, writeable, data directory.
+</strong>
 
 <p>To run SVD with different options, you can simply copy this script to a script of your own and modify the options as required.
 

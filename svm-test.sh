@@ -40,7 +40,7 @@ set d=tmp
 mkdir $d
 
 ./sample-set.pl ../classic-2012-asg.csv 0 200 $d/sample1-asg.dat
-./sample-set.pl ../classic-2012-asg.csv 1 100 $d/sample2-asg.dat
+./sample-set.pl ../classic-2012-asg.csv 1 200 $d/sample2-asg.dat
 
  #-- convert each part into an SVM input file
 foreach x (1 2) 
