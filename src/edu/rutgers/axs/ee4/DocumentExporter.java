@@ -37,7 +37,7 @@ class DocumentExporter {
 	Dictionary(File f) throws IOException {
 	    v.add("null");
 	    if (f==null) {
-		System.out.print("Creating a new feature dictionary");
+		System.out.println("Creating a new feature dictionary");
 		for(String cat: Categories.listAllStorableCats()) {
 		    get0(PRIMARY_CATEGORY, cat);
 		    get0(ArxivFields.CATEGORY, cat);

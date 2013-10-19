@@ -39,17 +39,23 @@ set d=tmp
 
 mkdir $d
 
-./sample-set.pl ../classic-2012-asg.csv 0 200 $d/sample1-asg.dat
+./sample-set.pl ../classic-2012-asg.csv 0 400 $d/sample1-asg.dat
 ./sample-set.pl ../classic-2012-asg.csv 1 200 $d/sample2-asg.dat
 
  #-- convert each part into an SVM input file
 foreach x (1 2) 
- time java $opt -DasgPath=$d/sample${x}-asg.dat -DsvmDir=$d edu.rutgers.axs.ee4.HistoryClustering svm >& svm-sample-prepare${x}.log
+ set zopt="$opt"
+ echo  "x is $x"
+ if ($x == 2) then
+    set zopt="$opt -DdicFile=$d/asg.dic"
+  endif
+  echo zopt=$zopt
+ time java $zopt  -DasgPath=$d/sample${x}-asg.dat -DsvmDir=$d edu.rutgers.axs.ee4.HistoryClustering svm >& svm-sample-prepare${x}.log
 
- if ($status) then
+  if ($status) then
     echo "Error while exporting data"
     exit 1
- endif
+  endif
 
 
  mv $d/exported.asg $d/exported-part${x}.asg
@@ -72,7 +78,7 @@ set log=svm-sample-classify-halves.log
 echo "Testing on both halves of the split set" > $log
 foreach z (1 2) 
    set dat=$d/train-part${z}.dat
-   echo "Applying the model to the data set $dat" >> &log
+   echo "Applying the model to the data set $dat" >> $log
    $svm/svm_multiclass_classify  $dat $model $d/results-train-part${z}.out  >>& $log
 
  if ($status) then
