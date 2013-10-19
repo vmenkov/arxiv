@@ -207,12 +207,13 @@ public class HistoryClustering {
     /** Prepares input files for the SVM application, based on the
 	assignment map file and the data in the Lucene data store.
 	@param asgFile The cluster assignment map file to be used
+	@param dicFile Old dictionary (may be null)
 	@param d Directory for output files
     */
-    private static void doSvm(File asgFile, File d)  throws IOException {
+    private static void doSvm(File asgFile, File dicFile, File d)  throws IOException {
 	// FIXME: is there a nicer way, without hogging the static space?
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
-	DocumentExporter de = new DocumentExporter();
+	DocumentExporter de = new DocumentExporter(dicFile);
 	
 	File g = new File(d, "train.dat");
 	PrintWriter w= new PrintWriter(new FileWriter(g));
@@ -321,7 +322,12 @@ public class HistoryClustering {
 		new File(asgPath) :
 		new File(d,  "asg.dat");
 
-	    doSvm(asgFile, d);
+	    // The file to process
+	    String dicFilePath = ht.getOption("dicFile", null);
+	    File dicFile =  (dicFilePath!=null)?	    
+		new File(dicFilePath) : null;
+
+	    doSvm(asgFile, dicFile, d);
 	} else if (argv[0].equals("blei")) {	   
 	    // output for David Blei's team, as per his 2013-11-11 msg
 	    if (argv.length != 3) usage("Command 'blei' needs infile outfile");

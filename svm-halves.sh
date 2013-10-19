@@ -37,18 +37,9 @@ echo "opt=$opt"
 # 62.159u 1.636s 0:46.40 137.4%   0+0k 323472+96io 0pf+0w
 
 
-
-#foreach f (/data/json/usage/201[012]/*.json.gz) 
-#    date
-#    echo Splitting file $f
-#    time java $opt  edu.rutgers.axs.ee4.HistoryClustering split $f
-#end
-
 set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
 #set cats=(q-bio)
 date
-
-
 
 foreach cat ($cats) 
  echo Processing category $cat
@@ -63,7 +54,8 @@ foreach cat ($cats)
  time java $opt -DasgPath=$d/asg-part1.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >& svm-${cat}.log
  mv $d/exported.asg $d/exported-part1.asg
  mv $d/train.dat $d/train-part1.dat
- time java $opt -DasgPath=$d/asg-part2.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >>& svm-${cat}.log
+
+ time java $opt -DasgPath=$d/asg-part2.dat -DdicFile=$d/asg.dic edu.rutgers.axs.ee4.HistoryClustering svm $cat >>& svm-${cat}.log
  mv $d/exported.asg $d/exported-part2.asg
  mv $d/train.dat $d/train-part2.dat
  
@@ -75,7 +67,7 @@ foreach cat ($cats)
  echo "Testing on both halvs of the split set" > $log
   foreach z (1 2) 
    set dat=$d/train-part${z}.dat
-   echo "Applying the model to the data set $dat" >> &log
+   echo "Applying the model to the data set $dat" >> $log
    $svm/svm_multiclass_classify  $dat $model $d/results-train-part${z}.out  >>& $log
    ./cmp-asg.pl $d/exported-part${z}.asg $d/results-train-part${z}.out >> & $log
   end

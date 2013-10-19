@@ -23,6 +23,7 @@ import edu.rutgers.axs.recommender.*;
 class DocumentExporter {
 
     class Dictionary {
+
 	/** One-based, for the SVM tool */
 	private Vector<String> v=new Vector<String>();
 	private final HashMap<String,Integer> map=new HashMap<String,Integer>();
@@ -30,11 +31,33 @@ class DocumentExporter {
 	private final int numdocs = reader.numDocs();
 	private final int MINDF = 5, MAXDF = numdocs/2;
 
-	Dictionary() {
+	/** Restores a saved dictionary from a file
+	    @param f File to read. Null means none.
+	 */
+	Dictionary(File f) throws IOException {
 	    v.add("null");
-	    for(String cat: Categories.listAllStorableCats()) {
-		get0(PRIMARY_CATEGORY, cat);
-		get0(ArxivFields.CATEGORY, cat);
+	    if (f==null) {
+		System.out.print("Creating a new feature dictionary");
+		for(String cat: Categories.listAllStorableCats()) {
+		    get0(PRIMARY_CATEGORY, cat);
+		    get0(ArxivFields.CATEGORY, cat);
+		}
+		
+	    } else {
+		System.out.println("Reading feature dictionary from "+f);
+		FileReader fr = new FileReader(f);
+		LineNumberReader r = new LineNumberReader(fr);
+		String s;
+		int linecnt=0;
+		while((s=r.readLine())!=null) {
+		    linecnt++;
+		    s = s.trim();
+		    if (s.equals("") || s.startsWith("#")) continue;
+		    String[] q= s.split(",");
+		    int k = Integer.parseInt(q[0]);
+		    if (k!=v.size()) throw new IllegalArgumentException("File " + f + ", line " + linecnt + ": found " + k +", expected " + v.size());
+		    get0(q[1]);
+		}
 	    }
 	}
 
@@ -122,7 +145,14 @@ class DocumentExporter {
     static private final String PRIMARY_CATEGORY = "primary_"+ArxivFields.CATEGORY;
 
     private final IndexReader reader = Common.newReader2();
-    final Dictionary dic=new Dictionary();
+    final Dictionary dic;
+
+    /** @param The exitsting dictionary file to be read in. Null means there
+	isn't one.
+     */
+    DocumentExporter(File oldDicFile) throws IOException {
+	dic=new Dictionary(oldDicFile);
+    }
 
     /*
     private boolean ignorable(String name, String word) throws IOException {
