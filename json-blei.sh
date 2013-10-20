@@ -30,7 +30,7 @@ set outdir=/data/arxiv/blei/usage
 
 foreach d (/data/json/usage) 
 echo "Directory $d"
-set files=`(cd $d; ls 2010/100101*.json.gz)` 
+set files=`(cd $d; ls 200?/*.json.gz)` 
 
 foreach g ($files)
     set f="$d/$g"
@@ -38,7 +38,7 @@ foreach g ($files)
     set h="$outdir/$g0"
     date
     echo "Converting file $f to $h"
-echo     time java $opt edu.rutgers.axs.ee4.HistoryClustering blei $f $h
+    time java $opt edu.rutgers.axs.ee4.HistoryClustering blei $f $h
 
     if (-e $h.gz) then
       echo Deleting old file $h.gz

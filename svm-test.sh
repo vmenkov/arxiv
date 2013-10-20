@@ -36,10 +36,12 @@ echo "opt=$opt"
 
 set masterAsg=../classic-2012-asg.csv
 set d=tmp
+set logs=../runs/svm
+
 
 mkdir $d
 
-./sample-set.pl ../classic-2012-asg.csv 0 400 $d/sample1-asg.dat
+./sample-set.pl ../classic-2012-asg.csv 0 1000 $d/sample1-asg.dat
 ./sample-set.pl ../classic-2012-asg.csv 1 200 $d/sample2-asg.dat
 
  #-- convert each part into an SVM input file
@@ -50,7 +52,7 @@ foreach x (1 2)
     set zopt="$opt -DdicFile=$d/asg.dic"
   endif
   echo zopt=$zopt
- time java $zopt  -DasgPath=$d/sample${x}-asg.dat -DsvmDir=$d edu.rutgers.axs.ee4.HistoryClustering svm >& svm-sample-prepare${x}.log
+ time java $zopt  -DasgPath=$d/sample${x}-asg.dat -DsvmDir=$d edu.rutgers.axs.ee4.HistoryClustering svm >& $logs/svm-sample-prepare${x}.log
 
   if ($status) then
     echo "Error while exporting data"
@@ -66,8 +68,8 @@ end
 #-- train model on section 1
 set model=$d/model-part1.dat
 set dat=$d/train-part1.dat
-$svm/svm_multiclass_learn -c 10 -f 2 $dat $model >& svm-sample-learn.log
-set log=svm-sample-classify-halves.log
+$svm/svm_multiclass_learn -c 10 -f 2 $dat $model >& $logs/svm-sample-learn.log
+set log=$logs/svm-sample-classify-halves.log
 
  if ($status) then
     echo "Error while training SVM on $dat"
