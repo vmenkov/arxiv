@@ -66,7 +66,7 @@ end
 #-- train model on section 1
 set model=$d/model-part1.dat
 set dat=$d/train-part1.dat
-$svm/svm_multiclass_learn -c 1 $dat $model >& svm-sample-learn.log
+$svm/svm_multiclass_learn -c 10 -f 2 $dat $model >& svm-sample-learn.log
 set log=svm-sample-classify-halves.log
 
  if ($status) then
