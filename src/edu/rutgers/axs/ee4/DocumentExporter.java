@@ -82,7 +82,10 @@ class DocumentExporter {
 	    calls to IndexReader.docFreq() */
 	private HashSet<String> moreStopWords = new HashSet<String>();
 
-	/** @return The stored or new record index, if the term is not
+	/** Checks if the feature "name:word" is already in the
+	    dictionary, and if it is not, adds it, provided it is
+	    acceptable (based on DF criteria etc)
+	    @return The stored or new record index, if the term is not
 	    ignorable; 0 otherwise.
 	 */
 	synchronized int get1(String name, String word) throws IOException {

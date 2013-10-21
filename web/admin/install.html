@@ -80,6 +80,11 @@ sudo yum install httpd
 
 <p>Thereafter, the main httpd dir will be in /etc/httpd
 
+<p>It appears that if the host is rebooted, httpd needs to be restarted with
+<pre>
+sudo service httpd start
+</pre>
+
 <pre>
 # as per https://access.redhat.com/site/documentation/en-US/JBoss_Communications_Platform/5.0/html/Platform_Installation_Guide/chap-Installing_and_Configuring_Java.html
 sudo yum install 'java-1.6.0-openjdk*'
@@ -108,12 +113,17 @@ sudo service mysqld start
 sudo chkconfig --levels 235 mysqld on
 </pre>
 
+<p>
 As per,
 http://docs.oracle.com/cd/E17952_01/refman-5.5-en/mysql-secure-installation.html
 <pre>
 mysql_secure_installation
 </pre>
 Setting our usual MySQL root password.
+
+<p>
+(Note: After reboot, mysqld apparently automatically restarts).
+
 
 <h4>Create directories</h4>
 
