@@ -28,42 +28,70 @@ end
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 # set opt="-cp ${cp} ${opt}"
-set opt="-cp ${cp} ${opt} -DdontSend=false"
+set opt="-cp ${cp} ${opt}"
 
 echo "opt=$opt"
 
-#-- reads  2,603,324 entries in 1 min, using 4GB of memory
-# Length = 2603324
-# 62.159u 1.636s 0:46.40 137.4%   0+0k 323472+96io 0pf+0w
 
+set logbase=../runs/svm-halves
 
 set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
 #set cats=(q-bio)
 date
 
 foreach cat ($cats) 
- echo Processing category $cat
 # time java $opt  edu.rutgers.axs.ee4.HistoryClustering svd $cat >& svd-${cat}.log
+
+#  if ($status) then
+#    echo "Error while exporting data"
+#    exit 1
+#  endif
 
 
  set d=$arxiv/arXiv-data/tmp/svd-asg/$cat
+ set logs=../runs/svm-halves/$cat
+
+ echo "Processing category $cat; data in $d, logs in $logs"
+
+ if (! -e $logs) then
+    mkdir $logs
+ endif
+
+ cp $0 $logs
+
     #-- split doc list
  ./split-set.pl $d/asg.dat 0.50 $d/asg-part1.dat $d/asg-part2.dat
 
+ set log=$logs/svm-prepare-${cat}.log
    #-- convert each part into an SVM input file
- time java $opt -DasgPath=$d/asg-part1.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >& svm-${cat}.log
+ time java $opt -DasgPath=$d/asg-part1.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >& $log
  mv $d/exported.asg $d/exported-part1.asg
  mv $d/train.dat $d/train-part1.dat
 
- time java $opt -DasgPath=$d/asg-part2.dat -DdicFile=$d/asg.dic edu.rutgers.axs.ee4.HistoryClustering svm $cat >>& svm-${cat}.log
+ time java $opt -DasgPath=$d/asg-part2.dat -DdicFile=$d/asg.dic edu.rutgers.axs.ee4.HistoryClustering svm $cat >>& $log
  mv $d/exported.asg $d/exported-part2.asg
  mv $d/train.dat $d/train-part2.dat
  
 
    #-- train model on section 1
  set model=$d/model-part1.dat
- $svm/svm_multiclass_learn -c 1 $d/train-part1.dat $model >& svm-${cat}-learn.log
- set log=svm-${cat}-classify-halves.log
+ set log=$logs/svm-${cat}-learn.log
+ $svm/svm_multiclass_learn -c 10 -f 2 $d/train-part1.dat $model >& $log
+
+ set failed=0
+ if ($status) then
+    echo "Error while training SVM on $dat"
+    set failed=1
+endif
+
+set g=`grep -c "Out of memory" $log`
+if ("$g" == "1") then
+    echo "Out of memory error while training SVM on $dat"
+    set failed=1
+endif
+
+if (! $failed) then
+ set log=$logs/svm-${cat}-classify-halves.log
  echo "Testing on both halvs of the split set" > $log
   foreach z (1 2) 
    set dat=$d/train-part${z}.dat
@@ -71,6 +99,9 @@ foreach cat ($cats)
    $svm/svm_multiclass_classify  $dat $model $d/results-train-part${z}.out  >>& $log
    ./cmp-asg.pl $d/exported-part${z}.asg $d/results-train-part${z}.out >> & $log
   end
+endif
 end
+
+#------------------------------------------
 
 

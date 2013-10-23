@@ -35,12 +35,17 @@ set opt="-cp ${cp} ${opt}"
 echo "opt=$opt"
 
 set masterAsg=../classic-2012-asg.csv
+#set fewCatsAsg=../classic-2012-asg-fewCats.csv
+#grep '0$' $masterAsg | perl -pe 's/0$//' > $fewCatsAsg
 
-grep '0$' $masterAsg | perl -pe 's/0$//' > ../classic-2012-asg-fewCats.csv
-set masterAsg=../classic-2012-asg-fewCats.csv
+set fewCatsAsg=../classic-2012-asg-firstCats.csv
+grep ',.$\|,[1234].$' $masterAsg  > $fewCatsAsg
 
+set masterAsg=$fewCatsAsg
+
+set r=4
 set d=tmp
-set logs=../runs/svm
+set logs=../runs/svm.first49cats.${r}
 
 if (! -e $logs) then
     mkdir $logs
@@ -52,8 +57,11 @@ endif
 
 echo "Using directory $logs for logs, $d for data files"
 
-./sample-set.pl ../classic-2012-asg.csv 0 100 $d/sample1-asg.dat
-./sample-set.pl ../classic-2012-asg.csv 1 100 $d/sample2-asg.dat
+cp $0 $logs
+
+
+./sample-set.pl $masterAsg 0 $r $d/sample1-asg.dat
+./sample-set.pl $masterAsg 1 $r $d/sample2-asg.dat
 
  #-- convert each part into an SVM input file
 foreach x (1 2) 
@@ -81,12 +89,19 @@ echo Exported both sets
 set model=$d/model-part1.dat
 set dat=$d/train-part1.dat
 $svm/svm_multiclass_learn -c 10 -f 2 $dat $model >& $logs/svm-sample-learn.log
-set log=$logs/svm-sample-classify-halves.log
 
 if ($status) then
     echo "Error while training SVM on $dat"
     exit 1
 endif
+
+set g=`grep -c "Out of memory" $logs/svm-sample-learn.log`
+if ("$g" == "1") then
+    echo "Out of memory error while training SVM on $dat"
+    exit 1
+endif
+
+set log=$logs/svm-sample-classify-halves.log
 
 
 echo "Testing on both halves of the split set" > $log
@@ -106,6 +121,7 @@ foreach z (1 2)
 end
 
 echo "All done"
+
 
 
 
