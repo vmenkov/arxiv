@@ -7,7 +7,7 @@
 <h1>Applying multiclass SVM to our clustering schemes
 </h1>
 
-<center><em>Updated: 2013-10-19</em></center>
+<center><em>Updated: 2013-10-24</em></center>
 
 <h2>Overview</h2>
 
@@ -30,6 +30,12 @@ follows:
 <li>Apply the model to the training set and to the test set
 <li>Compare the results to the "true" cluster assignments. 
 </ol>
+
+<p>The main goal of this project was to look at how well the co-access
+based clustering can be described in the term available to a SVM
+learner (see <a href="#coaccess">the results here</a>); but, for
+comparison, we looked also at feature-based clustering schemes, which
+should be (and are) easier for SVM.
 
 <h2>Discriminating between ArXiv categories</h2>
 
@@ -99,7 +105,7 @@ categories, and between feature-based clusters  within the same minor category.
 identification percentage even on the training set is only 75%, the
 categories are apparently not fully linearly separable.
 
-<h2>Discriminating between (all) feature based clusters</h2>
+<h2><a name="492">Discriminating between (all) feature based clusters</a></h2>
 
 <p>What I really wanted to do first was to apply the SVM learner to
 all 492 feature-based clusters. However to do it with large samples,
@@ -127,7 +133,7 @@ training sizes. (1553 training examples for 492 clusters means, on
 average, just over 3 examples per cluster). The results, no doubt,
 would be much better with a larger training sample.
 
-<h2>Applying SVM to the coaccess-based clustering</h2>
+<h2><a name="coaccess">Applying SVM to the coaccess-based clustering</a></h2>
 
 <p>This section discusses the classification task around which this
 entire SVM application project was based. Peter Frazier's June 2013
@@ -170,75 +176,89 @@ end
 <th>Number of clusters
 <th>Size of the training set
 <th>% correct on the training set <th>% correct on the test set
+<th>Relative size of the largest cluster
 <tr><th> astro-ph
 <td align=right>10
 <td align=right>11779
 <td align=right>74.15%
 <td align=right>45.39%
+<td align=right>28.39%
 </tr>
 <tr><th> cond-mat
 <td align=right>10
 <td align=right>11456
 <td align=right>66.68%
 <td align=right>45.90%
+<td align=right>34.19%
 </tr>
 <tr><th> cs
 <td align=right>8
 <td align=right>6905
 <td align=right>82.00%
 <td align=right>41.69%
+<td align=right>32.95%
 </tr>
 <tr><th> gr-qc
 <td align=right>4
 <td align=right>2079
 <td align=right>87.21%
 <td align=right>55.27%
+<td align=right>40.64%
 </tr>
 <tr><th> hep-ex
 <td align=right>3
 <td align=right>903
 <td align=right>99.78%
 <td align=right>99.34%
+<td align=right>94.35%
 </tr>
 <tr><th> hep-lat
 <td align=right>2
 <td align=right>582
 <td align=right>97.42%
 <td align=right>64.15%
+<td align=right>60.43%
 </tr>
 <tr><th> hep-ph
 <td align=right>6
 <td align=right>4415
 <td align=right>78.66%
 <td align=right>51.69%
+<td align=right>35.54%
 </tr>
 <tr><th> hep-th
 <td align=right>5
 <td align=right>3350
 <td align=right>83.73%
 <td align=right>54.81%
+<td align=right>37.58%
 </tr>
 <tr><th> math
 <td align=right>13
 <td align=right>17039
-<td>?<td>?
+<td>?
+<td>?
+<td align=right>30.65%
 </tr>
 <tr><th> math-ph
 <td align=right>4
 <td align=right>1676
 <td align=right>93.32%
 <td align=right>41.74%
+<td align=right>34.83%
 </tr>
 <tr><th> nlin
 <td align=right>2
 <td align=right>750
 <td align=right>98.27%
 <td align=right>55.53%
+<td align=right>51.17%
 </tr>
 <tr><th> nucl-ex
 <td align=right>2
 <td align=right>497
 <td align=right>100.00%
+<td align=right>99.80%
 <td align=right>99.80%
 </tr>
 <tr><th> nucl-th
@@ -246,49 +266,59 @@ end
 <td align=right>1221
 <td align=right>95.41%
 <td align=right>86.17%
+<td align=right>65.98%
 </tr>
 <tr><th> physics
 <td align=right>7
 <td align=right>5242
 <td align=right>80.01%
 <td align=right>50.33%
+<td align=right>39.56%
 </tr>
 <tr><th> q-bio
 <td align=right>2
 <td align=right>730
 <td align=right>99.86%
 <td align=right>54.66%
+<td align=right>52.19%
 </tr>
 <tr><th> q-fin
 <td align=right>2
 <td align=right>451
 <td align=right>99.78%
 <td align=right>54.32%
+<td align=right>51.22%
 </tr>
 <tr><th> quant-ph
 <td align=right>5
 <td align=right>3478
 <td align=right>82.58%
 <td align=right>52.14%
+<td align=right>36.34%
 </tr>
 <tr><th> stat
 <td align=right>2
 <td align=right>791
 <td align=right>99.87%
 <td align=right>57.20%
+<td align=right>50.85%
 </tr>
+<tr><th colspan=5>Controls
 <tr><th> testA
 <td align=right>4
 <td align=right>1678
 <td align=right>99.94%
 <td align=right>99.40%
+<td align=right>43.58%
 </tr>
 <tr><th> testB
 <td align=right>3
 <td align=right>1227
 <td align=right>99.67%
 <td align=right>97.15%
+<td align=right>59.51%
 </tr>
+
 </table>
 
 <p>
@@ -302,6 +332,13 @@ matrix. (As expected, the clustering there "re-discovered" major
 categories; similarly, it was not difficult for SVM to re-discover
 this clustering).
 
+<p>To evaluate the performance of a classifier on a particular major
+category, it is useful to compare it with that of a "baseline
+classifier" - a nearly-trivial classifier that simply assigns all
+examples to the largest cluster. Since clusters are often of unequal
+size, this baseline number may be higher than 1/(number of clusters).
+For reference, the baseline number is given in the last column of the table above.
+
 <p>For two major categories (hep-ex and nucl-ex) we see an anomalously
 high percentage of correct answers. This is apparently because the
 clustering on these categories produced clusters of very unequal size,
@@ -310,6 +347,11 @@ these two major categories should be disregarded. (One can also ask if
 one should try to add a sanity check of some kind to k-Means
 clustering process we're using).
 
+<p>The overall result is that even though the SVM model is better
+guessing correct clusters than the baseline, the predictive power is
+not that great. Therefore my impression is that coaccess-based classes
+can be only rather poorly described in terms of our feature set (terms
+and minor categories).
 
 </body>
 </html>

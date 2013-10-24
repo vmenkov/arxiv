@@ -28,4 +28,4 @@ foreach my $q (@cnt) {
 
 my $maxRatio = $maxCnt / $sum;
 
-printf( "Largest cluster: $maxCnt / $sum =  %5.2f%%\n",$maxRatio );
+printf( "Largest cluster: $maxCnt / $sum =  %5.2f%%\n", ($maxRatio*100) );
