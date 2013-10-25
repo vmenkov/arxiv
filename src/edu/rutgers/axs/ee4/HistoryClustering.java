@@ -210,10 +210,10 @@ public class HistoryClustering {
 	@param dicFile Old dictionary (may be null)
 	@param d Directory for output files
     */
-    private static void doSvm(File asgFile, File dicFile, File d)  throws IOException {
+    private static void doSvm(File asgFile, File dicFile, File d, boolean normalize)  throws IOException {
 	// FIXME: is there a nicer way, without hogging the static space?
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
-	DocumentExporter de = new DocumentExporter(dicFile);
+	DocumentExporter de = new DocumentExporter(dicFile, normalize);
 	
 	File g = new File(d, "train.dat");
 	PrintWriter w= new PrintWriter(new FileWriter(g));
@@ -327,7 +327,7 @@ public class HistoryClustering {
 	    File dicFile =  (dicFilePath!=null)?	    
 		new File(dicFilePath) : null;
 
-	    doSvm(asgFile, dicFile, d);
+	    doSvm(asgFile, dicFile, d, normalize);
 	} else if (argv[0].equals("blei")) {	   
 	    // output for David Blei's team, as per his 2013-11-11 msg
 	    if (argv.length != 3) usage("Command 'blei' needs infile outfile");

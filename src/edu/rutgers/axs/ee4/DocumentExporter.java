@@ -149,11 +149,13 @@ class DocumentExporter {
 
     private final IndexReader reader = Common.newReader2();
     final Dictionary dic;
+    private final boolean normalize;
 
     /** @param The exitsting dictionary file to be read in. Null means there
 	isn't one.
      */
-    DocumentExporter(File oldDicFile) throws IOException {
+    DocumentExporter(File oldDicFile, boolean _normalize) throws IOException {
+	normalize = _normalize;
 	dic=new Dictionary(oldDicFile);
     }
 
