@@ -218,10 +218,25 @@ class DocumentExporter {
 	    Pair[] pairs = h.toArray(new Pair[0]);
 	    Arrays.sort(pairs); // sort by feature number, as required by SVM
 
+	    double norm = 1;
+	    if (normalize) {
+		norm=0;
+		for(Pair p: pairs) {
+		    norm += p.val*p.val;
+		}
+		norm = Math.sqrt(norm);
+	    }
+
+
 	    int clu = map.map.get(aid).intValue();
 	    w.print("" + clu);
 	    for(Pair p: pairs) {
-		w.print(" " + p.key + ":" + p.val);
+		w.print(" " + p.key + ":");
+		if (normalize) {
+		    w.print(p.val/norm);
+		} else {
+		    w.print(p.val);
+		}
 	    }
 	    w.println( " # " + aid);
 	    if (wasg!=null) {
