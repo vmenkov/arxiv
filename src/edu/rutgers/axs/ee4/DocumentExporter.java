@@ -26,6 +26,7 @@ class DocumentExporter {
 
 	/** One-based, for the SVM tool */
 	private Vector<String> v=new Vector<String>();
+	/** Maps the qualified term to its integer id (position in "v") */
 	private final HashMap<String,Integer> map=new HashMap<String,Integer>();
 
 	private final int numdocs = reader.numDocs();
@@ -62,11 +63,13 @@ class DocumentExporter {
 	}
 
 	/** Returns the index for the existing record or a new one,
-	 as appropriate. */
+	    as appropriate. */
 	int get0(String name, String term) {
 	    return get0(name + ":" + term);
 	}
-	synchronized int get0(String s) {
+	/** Returns the index for the existing record or a new one,
+	    as appropriate. */
+	private synchronized int get0(String s) {
 	    Integer x = map.get(s);
 	    return  (x==null) ?  add(s) : x.intValue();
 	}
@@ -111,7 +114,19 @@ class DocumentExporter {
 	    }
 	    w.close();
 	}
+
+	double idf(String term) {
+	    try {
+		return  1+ Math.log(numdocs*fields.length / (1.0 + totalDF(term)));
+	    } catch(IOException ex) { 
+		// not likely to happen, as df is normally already cached
+		return 1;
+	    }
+	}
+
+
     }
+
 
     static private class Pair implements Comparable<Pair> {
 	int key,  val;
