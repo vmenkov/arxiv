@@ -18,13 +18,6 @@ set cp="${cp}:/usr/local/tomcat/bin/tomcat-juli.jar"
 # on cactuar
 set cp="${cp}:../tomcat-lib-to-copy/catalina.jar"
 
-set jmlib=$arxiv/javamail-1.4.5/lib
-
-# set cp="${cp}:$jmlib/mailapi.jar"
-foreach x ($jmlib/*.jar) 
-    set cp="${cp}:${x}"
-end
-
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 # set opt="-cp ${cp} ${opt}"
@@ -33,7 +26,8 @@ set opt="-cp ${cp} ${opt}"
 echo "opt=$opt"
 
 
-set logbase=../runs/svm-halves
+set logbase=../runs/svm-halves-normalize
+mkdir $logbase
 
 set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
 #set cats=(q-bio)
@@ -49,7 +43,7 @@ foreach cat ($cats)
 
 
  set d=$arxiv/arXiv-data/tmp/svd-asg/$cat
- set logs=../runs/svm-halves/$cat
+ set logs=$logbase/$cat
 
  echo "Processing category $cat; data in $d, logs in $logs"
 
@@ -62,16 +56,18 @@ foreach cat ($cats)
     #-- split doc list
  ./split-set.pl $d/asg.dat 0.50 $d/asg-part1.dat $d/asg-part2.dat
 
+set zopt="$opt -Dnormalize=true"
  set log=$logs/svm-prepare-${cat}.log
    #-- convert each part into an SVM input file
- time java $opt -DasgPath=$d/asg-part1.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >& $log
+ time java $zopt -DasgPath=$d/asg-part1.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >& $log
  mv $d/exported.asg $d/exported-part1.asg
  mv $d/train.dat $d/train-part1.dat
 
- time java $opt -DasgPath=$d/asg-part2.dat -DdicFile=$d/asg.dic edu.rutgers.axs.ee4.HistoryClustering svm $cat >>& $log
+ time java $zopt -DasgPath=$d/asg-part2.dat -DdicFile=$d/asg.dic edu.rutgers.axs.ee4.HistoryClustering svm $cat >>& $log
  mv $d/exported.asg $d/exported-part2.asg
  mv $d/train.dat $d/train-part2.dat
- 
+
+ ./cluster-sizes.pl $d/asg.dat > $logs/clusters.log 
 
    #-- train model on section 1
  set model=$d/model-part1.dat
@@ -103,5 +99,6 @@ endif
 end
 
 #------------------------------------------
+
 
 
