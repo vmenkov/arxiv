@@ -123,24 +123,24 @@ class DocumentExporter {
 	}
 
 	private double computeIdf(String name, String t) throws IOException {
-	    //try {
-		Term term = new Term(name, t);
-		int df = reader.docFreq(term);
-		return  1+ Math.log(numdocs*fields.length / (1.0 + df));
-		//} catch(IOException ex) { 
-		//	return 1;
-		//}
+	    Term term = new Term(name, t);
+	    int df = reader.docFreq(term);
+	    return  1+ Math.log(numdocs*fields.length / (1.0 + df));
 	}
 
     }
 
 
     static private class Pair implements Comparable<Pair> {
-	int key,  val;
-	Pair(	int _key, int _val) {
+	/** Feature ID (as per the Dictionary) */
+	int key;
+	/** IF, or TF*IDF, as appropriate */
+	double val;
+	Pair(	int _key, double _val) {
 	    key=_key;
 	    val=_val;
 	}
+	/** Used for ascending-order sort by feature id */
 	public int compareTo(Pair other) {
 	    return key-other.key;
 	}
@@ -156,7 +156,9 @@ class DocumentExporter {
 	String[] terms=tfv.getTerms();
 	for(int i=0; i<terms.length; i++) {
 	    int key=dic.get1(name, terms[i]);
-	    if (key>0) h.add(new Pair(key, freqs[i]));
+	    double v =  freqs[i];
+	    if (useIdf) v *= dic.idf.elementAt(key).doubleValue();
+	    if (key>0) h.add(new Pair(key, v));
 	}
     }
 
