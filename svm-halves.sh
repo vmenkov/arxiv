@@ -26,11 +26,12 @@ set opt="-cp ${cp} ${opt}"
 echo "opt=$opt"
 
 
-set logbase=../runs/svm-halves-normalize
+#set logbase=../runs/svm-halves
+set logbase=../runs/svm-halves-idf
 mkdir $logbase
 
-set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
-#set cats=(q-bio)
+#set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
+set cats=(all)
 date
 
 foreach cat ($cats) 
@@ -56,7 +57,8 @@ foreach cat ($cats)
     #-- split doc list
  ./split-set.pl $d/asg.dat 0.50 $d/asg-part1.dat $d/asg-part2.dat
 
-set zopt="$opt -Dnormalize=true"
+#set zopt="$opt -Dnormalize=true"
+set zopt="$opt -Didf=true"
  set log=$logs/svm-prepare-${cat}.log
    #-- convert each part into an SVM input file
  time java $zopt -DasgPath=$d/asg-part1.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >& $log

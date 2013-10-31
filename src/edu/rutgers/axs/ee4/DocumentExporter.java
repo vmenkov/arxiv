@@ -26,6 +26,8 @@ class DocumentExporter {
 
 	/** One-based, for the SVM tool */
 	private Vector<String> v=new Vector<String>();
+	/** IDF values. This array is filled only if useIdf=true. */
+	private Vector<Double> idf=new Vector<Double>();
 	/** Maps the qualified term to its integer id (position in "v") */
 	private final HashMap<String,Integer> map=new HashMap<String,Integer>();
 
@@ -37,6 +39,7 @@ class DocumentExporter {
 	 */
 	Dictionary(File f) throws IOException {
 	    v.add("null");
+	    idf.add(new Double(1));
 	    if (f==null) {
 		System.out.println("Creating a new feature dictionary");
 		for(String cat: Categories.listAllStorableCats()) {
@@ -55,29 +58,33 @@ class DocumentExporter {
 		    s = s.trim();
 		    if (s.equals("") || s.startsWith("#")) continue;
 		    String[] q= s.split(",");
+		    if (q.length!=2) throw new IllegalArgumentException("File " + f + ", line " + linecnt);
 		    int k = Integer.parseInt(q[0]);
 		    if (k!=v.size()) throw new IllegalArgumentException("File " + f + ", line " + linecnt + ": found " + k +", expected " + v.size());
-		    get0(q[1]);
+		    String z[] = q[1].split(":");
+		    if (z.length!=2) throw new IllegalArgumentException("File " + f + ", line " + linecnt);
+		    get0(z[0],z[1]);
 		}
 	    }
 	}
 
 	/** Returns the index for the existing record or a new one,
 	    as appropriate. */
-	int get0(String name, String term) {
-	    return get0(name + ":" + term);
-	}
-	/** Returns the index for the existing record or a new one,
-	    as appropriate. */
-	private synchronized int get0(String s) {
+	int get0(String name, String term)  throws IOException{
+	    String s=name + ":" + term;
 	    Integer x = map.get(s);
-	    return  (x==null) ?  add(s) : x.intValue();
+	    return  (x==null) ?  add(name,term) : x.intValue();
 	}
 
-	private synchronized int add(String s) {
+	private synchronized int add(String name, String term)  throws IOException{
+	    String s=name + ":" + term;
 	    int pos=v.size();
 	    map.put(s, new Integer(pos));
 	    v.add(s);
+	    if (useIdf) {
+		double q = computeIdf(name,term);
+		idf.add(new Double(q));
+	    }
 	    return pos;
 	}
 
@@ -93,7 +100,7 @@ class DocumentExporter {
 	 */
 	synchronized int get1(String name, String word) throws IOException {
 	    String key = name + ":" + word;
-	    if (name==ArxivFields.CATEGORY) return get0(key);
+	    if (name==ArxivFields.CATEGORY) return get0(name, word);
 	    Integer has = map.get(key);
 	    if (has!=null) return has.intValue();
 	    if (UserProfile.isUseless(word) ||
@@ -104,7 +111,7 @@ class DocumentExporter {
 		moreStopWords.add(key);
 		return 0;
 	    }
-	    return  (df < MINDF) ?  0 : add(key);
+	    return  (df < MINDF) ?  0 : add(name,word);
 	}
 
 	void save(File f) throws IOException {
@@ -115,15 +122,15 @@ class DocumentExporter {
 	    w.close();
 	}
 
-	double idf(String term) {
-	    try {
-		return  1+ Math.log(numdocs*fields.length / (1.0 + totalDF(term)));
-	    } catch(IOException ex) { 
-		// not likely to happen, as df is normally already cached
-		return 1;
-	    }
+	private double computeIdf(String name, String t) throws IOException {
+	    //try {
+		Term term = new Term(name, t);
+		int df = reader.docFreq(term);
+		return  1+ Math.log(numdocs*fields.length / (1.0 + df));
+		//} catch(IOException ex) { 
+		//	return 1;
+		//}
 	}
-
 
     }
 
@@ -165,13 +172,17 @@ class DocumentExporter {
     private final IndexReader reader = Common.newReader2();
     final Dictionary dic;
     private final boolean normalize;
+    private final boolean useIdf;
 
-    /** @param The exitsting dictionary file to be read in. Null means there
+    /** @paramoldDicFile  The exitsting dictionary file to be read in. Null means there
 	isn't one.
      */
-    DocumentExporter(File oldDicFile, boolean _normalize) throws IOException {
+    DocumentExporter(File oldDicFile, boolean _normalize, boolean _idf) throws IOException {
 	normalize = _normalize;
+	useIdf = _idf;
+	System.out.println("Document Exporter: idf=" +useIdf +", normalize=" +normalize);
 	dic=new Dictionary(oldDicFile);
+
     }
 
     /*
