@@ -7,7 +7,7 @@
 <h1>Applying multiclass SVM to our clustering schemes
 </h1>
 
-<center><em>Updated: 2013-10-24</em></center>
+<center><em>Updated: 2013-10-31</em></center>
 
 <h2>Overview</h2>
 
@@ -170,6 +170,8 @@ end
 
 <p>
 <table border=1>
+<tr><th colspan=6>No IDF, no normalization
+</tr>
 <tr><th>Major category
 <th>Number of clusters
 <th>Size of the training set
@@ -234,8 +236,8 @@ end
 <tr><th> math
 <td align=right>13
 <td align=right>17039
-<td>?
-<td>?
+<td align=right>67.87%
+<td align=right>36.17%
 <td align=right>30.65%
 </tr>
 <tr><th> math-ph
@@ -353,11 +355,15 @@ and minor categories).
 
 <h4>With normalized document vectors</h4>
 
-<p>As an experiment, we also carried out a series of SVM runs with normalized document vectors.
-
+<p>As an experiment, we also carried out a series of SVM runs with
+normalized document vectors. The learning process converged much
+faster, but the resulting models were very poor (often worse than the
+baseline).
 
 <p>
 <table border=1>
+<tr><th colspan=6>No IDF, use normalization
+</tr>
 <tr><th>Major category
 <th>Number of clusters
 <th>Size of the training set
@@ -489,6 +495,7 @@ and minor categories).
 <td align=right>55.81%
 <td align=right>50.85%
 </tr>
+<tr><th colspan=6>Controls</tr>
 <tr><th> testA
 <td align=right>4
 <td align=right>1678
@@ -501,6 +508,325 @@ and minor categories).
 <td align=right>1227
 <td align=right>95.60%
 <td align=right>94.79%
+<td align=right>59.51%
+</tr>
+</table>
+
+<h3>Using IDF, no normalization</h3>
+
+<p>Using TF-IDF (<em>x(t,d) = f(t,d) * (1 + log(numdocs*5 / (1.0 + df(t))))</em>
+allowed the SVM model to perfectly separate practically all training examples, but did not notieceably change the model's performance on the test examples. 
+
+<p>(The factor "5" in the above formula does not really make much
+sense; it was inherited from a not very wise code reuse from
+another My.ArXiv module. I will re-run without it).
+
+<p>
+<table border=1>
+<tr><th colspan=6>Use IDF, no normalization
+</tr>
+<tr><th>Major category
+<th>Number of clusters
+<th>Size of the training set
+<th>% correct on the training set <th>% correct on the test set
+<th>Relative size of the largest cluster
+<!-- /home/vm293/arxiv/runs/svm-halves-idf -->
+<tr><th> astro-ph
+<td align=right>10
+<td align=right>11779
+<td align=right>99.66%
+<td align=right>47.69%
+<td align=right>28.39%
+</tr>
+<tr><th> cond-mat
+<td align=right>10
+<td align=right>11456
+<td align=right>99.30%
+<td align=right>43.90%
+<td align=right>34.19%
+</tr>
+<tr><th> cs
+<td align=right>8
+<td align=right>6905
+<td align=right>99.84%
+<td align=right>41.19%
+<td align=right>32.95%
+</tr>
+<tr><th> gr-qc
+<td align=right>4
+<td align=right>2079
+<td align=right>100.00%
+<td align=right>55.32%
+<td align=right>40.64%
+</tr>
+<tr><th> hep-ex
+<td align=right>3
+<td align=right>903
+<td align=right>100.00%
+<td align=right>99.34%
+<td align=right>94.35%
+</tr>
+<tr><th> hep-lat
+<td align=right>2
+<td align=right>582
+<td align=right>100.00%
+<td align=right>69.64%
+<td align=right>60.43%
+</tr>
+<tr><th> hep-ph
+<td align=right>6
+<td align=right>4415
+<td align=right>99.95%
+<td align=right>54.09%
+<td align=right>35.54%
+</tr>
+<tr><th> hep-th
+<td align=right>5
+<td align=right>3350
+<td align=right>100.00%
+<td align=right>54.39%
+<td align=right>37.58%
+</tr>
+<tr><th> math
+<td align=right>13
+<td align=right>17039
+<td align=right>98.56%
+<td align=right>34.88%
+<td align=right>30.65%
+</tr>
+<tr><th> math-ph
+<td align=right>4
+<td align=right>1676
+<td align=right>100.00%
+<td align=right>41.09%
+<td align=right>34.83%
+</tr>
+<tr><th> nlin
+<td align=right>2
+<td align=right>750
+<td align=right>100.00%
+<td align=right>56.19%
+<td align=right>51.17%
+</tr>
+<tr><th> nucl-ex
+<td align=right>2
+<td align=right>497
+<td align=right>100.00%
+<td align=right>99.80%
+<td align=right>99.80%
+</tr>
+<tr><th> nucl-th
+<td align=right>3
+<td align=right>1221
+<td align=right>100.00%
+<td align=right>84.53%
+<td align=right>65.98%
+</tr>
+<tr><th> physics
+<td align=right>7
+<td align=right>5242
+<td align=right>99.94%
+<td align=right>50.30%
+<td align=right>39.56%
+</tr>
+<tr><th> q-bio
+<td align=right>2
+<td align=right>730
+<td align=right>100.00%
+<td align=right>56.44%
+<td align=right>52.19%
+</tr>
+<tr><th> q-fin
+<td align=right>2
+<td align=right>451
+<td align=right>100.00%
+<td align=right>55.21%
+<td align=right>51.22%
+</tr>
+<tr><th> quant-ph
+<td align=right>5
+<td align=right>3478
+<td align=right>100.00%
+<td align=right>50.93%
+<td align=right>36.34%
+</tr>
+<tr><th> stat
+<td align=right>2
+<td align=right>791
+<td align=right>100.00%
+<td align=right>57.83%
+<td align=right>50.85%
+</tr>
+<tr><th colspan=6>Controls</tr>
+<tr><th> testA
+<td align=right>4
+<td align=right>1678
+<td align=right>100.00%
+<td align=right>99.52%
+<td align=right>43.58%
+</tr>
+<tr><th> testB
+<td align=right>3
+<td align=right>1227
+<td align=right>100.00%
+<td align=right>97.48%
+<td align=right>59.51%
+</tr>
+</table>
+
+<h3>Using IDF, use normalization</h3>
+
+<p>Adding normalization on top of IDF was just as harmful for the
+model quality as in the no-IDF version.
+
+<p>
+<table border=1>
+<tr><th colspan=6>Use IDF, use normalization
+</tr>
+<tr><th>Major category
+<th>Number of clusters
+<th>Size of the training set
+<th>% correct on the training set <th>% correct on the test set
+<th>Relative size of the largest cluster
+<!-- /home/vm293/arxiv/runs/svm-halves-idf-normalize -->
+<tr><th> astro-ph
+<td align=right>10
+<td align=right>11779
+<td align=right>36.95%
+<td align=right>35.42%
+<td align=right>28.39%
+</tr>
+<tr><th> cond-mat
+<td align=right>10
+<td align=right>11456
+<td align=right>23.37%
+<td align=right>22.31%
+<td align=right>34.19%
+</tr>
+<tr><th> cs
+<td align=right>8
+<td align=right>6905
+<td align=right>14.71%
+<td align=right>11.98%
+<td align=right>32.95%
+</tr>
+<tr><th> gr-qc
+<td align=right>4
+<td align=right>2079
+<td align=right>31.17%
+<td align=right>26.89%
+<td align=right>40.64%
+</tr>
+<tr><th> hep-ex
+<td align=right>3
+<td align=right>903
+<td align=right>93.58%
+<td align=right>95.13%
+<td align=right>94.35%
+</tr>
+<tr><th> hep-lat
+<td align=right>2
+<td align=right>582
+<td align=right>61.00%
+<td align=right>60.21%
+<td align=right>60.43%
+</tr>
+<tr><th> hep-ph
+<td align=right>6
+<td align=right>4415
+<td align=right>37.15%
+<td align=right>36.17%
+<td align=right>35.54%
+</tr>
+<tr><th> hep-th
+<td align=right>5
+<td align=right>3350
+<td align=right>39.70%
+<td align=right>37.40%
+<td align=right>37.58%
+</tr>
+<tr><th> math
+<td align=right>13
+<td align=right>17039
+<td align=right>16.18%
+<td align=right>15.45%
+<td align=right>30.65%
+</tr>
+<tr><th> math-ph
+<td align=right>4
+<td align=right>1676
+<td align=right>55.61%
+<td align=right>34.76%
+<td align=right>34.83%
+</tr>
+<tr><th> nlin
+<td align=right>2
+<td align=right>750
+<td align=right>84.93%
+<td align=right>55.79%
+<td align=right>51.17%
+</tr>
+<tr><th> nucl-ex
+<td align=right>2
+<td align=right>497
+<td align=right>99.80%
+<td align=right>99.80%
+<td align=right>99.80%
+</tr>
+<tr><th> nucl-th
+<td align=right>3
+<td align=right>1221
+<td align=right>71.74%
+<td align=right>70.79%
+<td align=right>65.98%
+</tr>
+<tr><th> physics
+<td align=right>7
+<td align=right>5242
+<td align=right>47.90%
+<td align=right>44.61%
+<td align=right>39.56%
+</tr>
+<tr><th> q-bio
+<td align=right>2
+<td align=right>730
+<td align=right>76.16%
+<td align=right>55.34%
+<td align=right>52.19%
+</tr>
+<tr><th> q-fin
+<td align=right>2
+<td align=right>451
+<td align=right>77.83%
+<td align=right>54.10%
+<td align=right>51.22%
+</tr>
+<tr><th> quant-ph
+<td align=right>5
+<td align=right>3478
+<td align=right>45.40%
+<td align=right>40.44%
+<td align=right>36.34%
+</tr>
+<tr><th> stat
+<td align=right>2
+<td align=right>791
+<td align=right>80.40%
+<td align=right>57.45%
+<td align=right>50.85%
+</tr>
+<tr><th colspan=6>Controls</tr>
+<tr><th> testA
+<td align=right>4
+<td align=right>1678
+<td align=right>99.17%
+<td align=right>99.29%<td align=right>43.58%
+</tr>
+<tr><th> testB
+<td align=right>3
+<td align=right>1227
+<td align=right>95.60%
+<td align=right>94.87%
 <td align=right>59.51%
 </tr>
 </table>

@@ -125,7 +125,8 @@ class DocumentExporter {
 	private double computeIdf(String name, String t) throws IOException {
 	    Term term = new Term(name, t);
 	    int df = reader.docFreq(term);
-	    return  1+ Math.log(numdocs*fields.length / (1.0 + df));
+	    //	    return  1+ Math.log(numdocs*fields.length / (1.0 + df));
+	    return  1+ Math.log(numdocs / (1.0 + df));
 	}
 
     }
