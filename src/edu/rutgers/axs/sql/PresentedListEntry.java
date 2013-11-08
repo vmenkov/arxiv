@@ -28,16 +28,6 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setId(long x) {        id = x;    }
     public long getId() {        return id;    }
 
-    /** Link back to the suggestion list of which this entry is a part */
-    /*
-    @ManyToOne
-    @Column(nullable=false)
-    @Display(editable=false, order=2) 
-	private DataFile df;
-    public void setDf(DataFile x) {        df = x;    }
-    public DataFile getDf() {        return df;    }
-    */
-
     /** 0-based position of this entry in the list */
     @Basic  @Column(nullable=false)
 	int rank;
@@ -51,13 +41,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public String getAid() { return aid; }
     public void setAid(String x) { aid=x;}
 
-
-
-
     /** This constructor does nothing. It has been added to avoid
 	Enhancer's warning. */
     public PresentedListEntry() {};
-
 
     public boolean validate(EntityManager em, StringBuffer errmsg) { 
 	return true; 
@@ -70,6 +56,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     PresentedListEntry(ArticleEntry e)    {
 	setRank(e.i);
 	setAid(e.id);
+	setScore(e.score);
 	ArticleEntry.Provenance prov = e.getProv();
 	if (prov!=null) {
 	    setArank(prov.arank);
@@ -81,7 +68,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     /** Returns a "dummy" ArticleEntry based on this PresentedListEntry
      */
     ArticleEntry toArticleEntry() {
-	return new ArticleEntry(getRank(), getAid());
+	ArticleEntry ae = new ArticleEntry(getRank(), getAid());
+	ae.setScore( getScore());
+	return ae;
     }
  
     /** Applies in case of team-draft interleaving. Represents the
@@ -104,6 +93,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	boolean fromA;
     public void setFromA(boolean x) {        fromA = x;    }
     public boolean getFromA() {        return fromA;    }
-  
 
+    /** The article score, as shown to the user in the web page */
+   @Basic  @Column(nullable=false)
+       double score;
+    public void setScore(double x) {        score = x;    }
+    public double getScore() {        return score;    }
+ 
 }

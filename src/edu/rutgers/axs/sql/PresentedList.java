@@ -34,30 +34,16 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setId(long val) {        id = val;    }
     public long getId() {        return id;    }
 
-
-   @ManyToOne
+    
+    /** Link to the JPA entity for the user to whom the list was  presented. 
+    */
+  @ManyToOne
     @Column(nullable=false)
 	@Display(editable=false, order=1, link="viewUser.jsp") 
 	User user;
 
     public User getUser() {	return user;    }
     private void setUser(User c) {	user=c;    }
-
-
-    /** Name of the user to whom the list was presented. (It would have been
-	more efficient to store the numeric user id...). Null is stored for anon
-	users.
-     */
-    /*
-    //@ManyToOne
-    @Column(nullable=true)
-    @Display(editable=false, order=2) 
-    //User user;
-	@Basic String user;
-
-    public String getUser() { return user;}
-    public void setUser(String x) { user=x;}
-    */
 
     /** When was this list (first) presented? */
     @Display(editable=false, order=3) 
@@ -140,7 +126,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void fillArticleList(Vector<ArticleEntry> entries) {
 	docs.setSize(0);
 	for(int rank=0; rank<entries.size(); rank++) {
-	    PresentedListEntry le =  new PresentedListEntry(entries.elementAt(rank));
+	    PresentedListEntry le=new PresentedListEntry(entries.elementAt(rank));
 	    docs.add( le ); // FIXME: should not we use get/set?
 	}
     }

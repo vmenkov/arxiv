@@ -104,7 +104,7 @@ select li.id, le  from PresentedList li, in(li.docs) le where li.id=5
 
 <tr>
 <td>
-select li.id, count(d) from PresentedList li, in(li.docs) d group by li.id -
+select li.id, count(d) from PresentedList li, in(li.docs) d group by li.id 
 <td>
 select li.id, (select count(*) from PresentedList_PresentedListEntry where PRESENTEDLIST_ID=li.id) from PresentedList li
 <td>How many articles were in each presented list? (Only show list ID for each list)
@@ -131,7 +131,17 @@ Link user actions with presented lists. This shows for each user action (a) the 
 
 <tr>
 <td>
-select a, le from Action a, PresentedList li, in(li.docs) le where   li.user='vmenkov'  and li.id=a.presentedListId and a.article.aid=le.aid
+select a, le from Action a, PresentedList li, in(li.docs) le
+where li.user.user_name='tjtest1'  
+and li.id=a.presentedListId and a.article.aid=le.aid
+<td> -
+<td>View all actions by a specific named user, together with some information about the article associated with the action (specifically, its position in the oresented list etc)
+
+<tr>
+<td>
+select a, le from Action a, PresentedList li, in(li.docs) le 
+where li.user.user_name='vmenkov' 
+and li.id=a.presentedListId and a.article.aid=le.aid
 and a.src = edu.rutgers.axs.sql.Action$Source.MAIN_MIX
 <td>
 <td>View all actions of a particular user that were effected from a MAIN_MIX

@@ -167,6 +167,7 @@ public class HistoryClustering {
 
 	int id0 = 1;
 
+	// Path to the file into which the assignment map is to be saved
 	String asgPath = ht.getOption("asgPath", null);
 	if (asgPath=="null") asgPath = null;
 	AsgMap.saveAsg( clu.asg, no2aid, majorCat, id0, asgPath);

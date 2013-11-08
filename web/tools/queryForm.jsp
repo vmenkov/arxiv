@@ -47,8 +47,7 @@ equivalent sample queries in the two langauges. Note that table names are case-s
 <tr><th>JPQL <th>SQL <th>comments
 <tr><td>select x from User x <td> select x.* from arxiv_users x
 <tr><td>select x from Action x <td> select x.* from Action x
-<tr><td> -
-select x from Action x where x.user.id=1 
+<tr><td>select x from Action x where x.user.id=1 
 <td> select x.* from Action x where x.USER_ID=1 
 <tr>
 <td>select x from Action x where x.user.user_name='vmenkov' 

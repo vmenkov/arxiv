@@ -108,8 +108,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	EntityManager em = sd.getEM();
 	try {
 	    
-	    // A special mode used for  accessing the (possibly dated) main
-	    // page from an email message
+	    // A special mode used for accessing the (possibly dated) main
+	    // page mentioned in an email message
 	    plid = Tools.getLong(request, "plid", 0);
 	    if (plid != 0) {
 		PresentedList plist=(PresentedList)em.find(PresentedList.class, plid);
@@ -526,13 +526,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	back then, without any exclusions (due to User Folder  
 	
     */
-    private void presentOldList(//DataFile df, 
-			     EntityManager em,
-			     //boolean mainPage,
-			     PresentedList plist) 
+    private void presentOldList( EntityManager em, PresentedList plist) 
 	throws IOException, WebException {
 	
-
 	IndexReader reader=Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 	sr = new SearchResults(plist, searcher);
@@ -545,8 +541,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
 	asrc= new ActionSource(mpType, plid);
 	Logging.info("Set asrc=" + asrc);
-
-
     }
 
     private SearchResults catSearch(IndexSearcher searcher, Date since) throws IOException 
