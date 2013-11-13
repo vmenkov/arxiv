@@ -81,6 +81,15 @@ order by x.id desc
 <td>
 <td>Shows all actions for a named user which originated from a "presented list" of some kind (typically, a suggestion list or a search list), linking them to the PresentedListEntry objects that give additional information about the position etc. of the article in the PresentedList. This is particularly useful on Evaluation Days, when you want to see if a page came from the baseline list (fromA=false) or the treatment list (fromA=true).
 
+<tr>
+<td>select count( distinct a.session) from Action a
+<td>select count( distinct a.session) from Action a
+<td>How many sessions have we had (since session recording has been introduced)
+
+<tr>
+<td>select a.session, count(a) from Action a where a.time between '2013-11-08' and '2013-11-09' group by a.session having count(a)>1
+<td> 
+<td>Show all non-trivial sessions with actions within a particular day
 
 <tr>
 <th colspan=3>The <tt>PresentedList</tt> table

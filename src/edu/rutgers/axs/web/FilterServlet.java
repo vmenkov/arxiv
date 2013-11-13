@@ -120,8 +120,11 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    //em.persist(u);
 		} else { // anon 
 		    Action r = User.addNewAction(null, em, sd, actionable.aid, actionable.op, asrc);
-
+		    sd.sbCheck(em);
 		}
+
+
+
 		em.getTransaction().commit(); 
 		em.close();
 	    }
@@ -565,6 +568,7 @@ public class FilterServlet extends  BaseArxivServlet  {
      */
     private class LineConverter {
 	
+	final SessionData sd;
 	User user=null;
 	final String cp = getContextPath();
 	final String fs = cp +  FS;
@@ -579,10 +583,11 @@ public class FilterServlet extends  BaseArxivServlet  {
 	   Otherwise, this must be null.
 	 */
 	LineConverter(HttpServletRequest request, User _user, ArticleEntry _ae,
-		      ActionSource _asrc      )  {
+		      ActionSource _asrc) throws WebException, IOException {
 	    skeletonAE = _ae;
 	    asrc = _asrc;
 	    user = _user;
+	    sd =  SessionData.getSessionData(request);
 	}
 
 
@@ -663,9 +668,10 @@ public class FilterServlet extends  BaseArxivServlet  {
 	}
 
 	//Pattern pIcon = Pattern.compile("href=\"/favicon.ico\"");
-	Pattern pBody = Pattern.compile("<body\\b.*?>");
+	private final Pattern pBody = Pattern.compile("<body\\b.*?>");
+	private final Pattern pEndHead = Pattern.compile("</head>");
 	
-	Pattern pHref = Pattern.compile("(href|action|src)=\"(.*?)\"");
+	private final Pattern pHref = Pattern.compile("(href|action|src)=\"(.*?)\"");
 
 	//if (m.matches()) {
 	//	String charsetName = charsetName=m.group(1);
@@ -700,11 +706,13 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    m.appendTail(sb);
 	    s = sb.toString();
 	    
+	    // Display an additional DIV right after the opening
+	    // <body ...> element 
 	    if (willAddNote) {
 		m = pBody.matcher(s);
 		if (m.find()) {
 		    sb = new StringBuffer();
-		    s = sb.toString();
+		    s = sb.toString();		    
 		    m.appendReplacement(sb, m.group(0));
 		    String msg = "<div style=\"border:1px;color:#00FF00;position:fixed\">" + 
 			"Please note: You are now browsing arxiv.org via My.arXiv, "+
@@ -717,10 +725,26 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    s = sb.toString();
 		}
 	    }
+
+	    // insert JS for the Moving Panel inside the HEAD, if needed
+	    if (sd.needSBNow) {
+		m = pEndHead.matcher(s);
+		if (m.find()) {
+		    sb = new StringBuffer();
+		    s = s.substring(0,m.start()) + "\n" +
+			RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
+			"<script type=\"text/javascript\">\n" +
+			"window.onload=openSBMovingPanel('"+cp+"');\n" + 
+			"</script>\n" + 
+			s.substring(m.start());
+		}
+	    }
+
 	    return s;
 	}
 
-	/** Any additional HTML needs to be inserted before line s? 
+	/** Any additional HTML needs to be inserted before the specified
+	    line of HTML? 
 	    E.g., in FilterServlet/abs/1110.3154 we'd insert rating
 	    buttons for the article 1110.3154.
 	*/
@@ -746,6 +770,24 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 	    return null;
 	}
+
+
+	/** If needed, inserts an onload attribute with a JS snippet used
+	    `to open the moving panel window.
+
+	    @param s "&lt;BODY ....&gt;"
+	 */
+	/*
+	private String rewriteBodyElement(String s) {
+	    if (!sd.needSBNow) return s;
+	    final js = 
+
+	    s = s.substring(0, s.length-1) + " onload='" + js + "'>";
+	    return s;
+	}
+	*/
+
+
     }
 
 

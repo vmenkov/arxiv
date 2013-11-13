@@ -11,6 +11,7 @@ import javax.servlet.jsp.PageContext;
 import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.sb.SBRGenerator;
 
 /** A single instance of this class is associated with a particular
     session of the My.ArXiv web application.
@@ -27,6 +28,14 @@ public class SessionData {
     final private long sqlSessionId;
 
     public  long getSqlSessionId() { return sqlSessionId;}
+
+    /** Whether this session needs a "moving panel" with session-based 
+	recommendations (aka "session buddy") */
+    boolean allowedSB = false; 
+    boolean needSBNow = false;
+
+    /** The session-based recommendation generator; created when needed. */
+    SBRGenerator sbrg=null;
 
     /** Generates proper link URLs */
     //final public Link link;
@@ -224,15 +233,17 @@ public class SessionData {
 	them in a set of "security-constraint" elements in web.xml
 
 	<p>
-	Note that the URL of the form "index.jsp?..." requires login;
-	this is for the benefit of EmailSug.jsp.
+	Note that the URLs of the form "index.jsp?..." requires login;
+	this is for the benefit of EmailSug.jsp. An exception is 
+	index.jsp?sb=true, used to activate Session-Based Recommendations
 
 	@return null if no restriction is imposed, or a list of
 	allowed roles (may be empty) otherwise
      */
     static Role.Name[] authorizedRoles(String sp, String qs) {
 	if (sp.startsWith("/personal")  ||
-	    sp.equals("/index.jsp") && qs!=null && qs.length()>0) 
+	    sp.equals("/index.jsp") && qs!=null && qs.length()>0  &&
+	    !qs.equals("sb=true")) 
 	    return new Role.Name[] 
 		{Role.Name.subscriber,
 		 Role.Name.researcher,
@@ -250,7 +261,8 @@ public class SessionData {
 	return isAuthorized(request, getRemoteUser(request));
     }
 
-    /** Is the specified user authorized to access this url?
+    /** Is the specified user authorized to access the url requested
+	in the given request?
     */
     boolean isAuthorized(HttpServletRequest request, String user) {
 	String sp = request.getServletPath();
@@ -263,6 +275,22 @@ public class SessionData {
 	boolean b = u!=null && u.hasAnyRole(ar);
 	//	Logging.info("isAuthorized("+user+", " + sp + ")=" + b);
 	return b;
+    }
+
+    /** Turns the flag on to activate the moving panel for the
+	Session-Based recommendations. Requests the suggestion
+	list generation.
+     */
+    synchronized void sbCheck(EntityManager em) {
+	if (allowedSB) {
+	    // count the actions in this session...
+	    int actionCnt = Action.actionCntForSession( em,  sqlSessionId);
+	    needSBNow = 	     (actionCnt>=2);
+	    if (needSBNow) {
+		if (sbrg==null) sbrg = new SBRGenerator(this);
+		sbrg.requestRun(actionCnt);
+	    }
+	}
     }
 
 }

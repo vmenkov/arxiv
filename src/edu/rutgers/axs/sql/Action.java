@@ -210,6 +210,10 @@ import  edu.rutgers.axs.web.SessionData;
 
 	    /** Body of the email messages */
 	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4, EMAIL_EE4_MIX,
+	    
+	    /** Session-based recommendation list (typically, offered
+		to anon users) */
+	    SB,
 	    /** An action from a "research page". Regular users won't have it. */
 	    RESEARCH;
 
@@ -533,5 +537,24 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
 	Logging.info("Persisted vote " + vote);
     }
 
+    /** How many actions has been recorded in a particular session? */
+    static public int actionCntForSession( EntityManager em, long sid) {
+	String qtext = "select count(a) from Action a where a.session = :s";
+	Query q = em.createQuery(qtext);
+	q.setParameter("s", sid);
+	return ((Long)q.getSingleResult()).intValue();
+    }
 
+    /** Retrieves all actions for a given session */
+    static public Vector<Action> actionsForSession( EntityManager em, long sid) {
+	String qtext = "select a from Action a where a.session = :s";
+	Query q = em.createQuery(qtext);
+	q.setParameter("s", sid);
+	List list =q.getResultList();
+	Vector<Action> v = new Vector<Action>();
+	for(Object o: list) {
+	    v.add((Action)o);
+	}
+	return v;
+    }
 }

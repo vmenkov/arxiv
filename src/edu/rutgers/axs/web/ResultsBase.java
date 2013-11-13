@@ -162,6 +162,9 @@ public class ResultsBase {
 	    // call it again later, once they have set their own params
 	    customizeSrc(); 
 
+	    // Do we need a "moving panel"? Once requested, it will stay on
+	    boolean sb = getBoolean("sb", false);
+	    if (sb) sd.allowedSB = true;
 
 	}  catch (Exception _e) {
 	    setEx(_e);

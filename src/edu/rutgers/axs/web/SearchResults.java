@@ -134,7 +134,17 @@ public class  SearchResults {
 	needNext = false;
     }
 
-
+    /** Wraps a pre-computed Vector<ArticleEntry> into a SearchResults object.
+	This is used only in session-based recommendations.
+     */
+    public SearchResults( Vector<ArticleEntry> _entries) //throws IOException 
+{
+       entries = _entries;
+       reportedLength = entries.size();
+       nextstart = new ResultsBase.StartAt(reportedLength , null);
+       needPrev = false;
+       needNext = false;
+   }
 
     /** Auxiliary for teamDraft */
     private static int adjustPos(ScoreDoc[] a, int nexta, HashSet<Integer> saved) {
