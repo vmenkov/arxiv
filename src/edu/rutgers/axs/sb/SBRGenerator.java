@@ -17,7 +17,11 @@ import edu.rutgers.axs.web.*;
 
 /** The sesion-based recommendation generator. We have an SBRGenerator instance
     in every web.SessionData object.
-*/
+
+    Recommndation list computation for this class is carried out in the run()
+    method of a SBRGThread object (a thread). At most one SBRGThread may have
+    its thread running at any time.
+ */
 public class SBRGenerator {
 
     /** Already compiled recommendations */
@@ -30,9 +34,24 @@ public class SBRGenerator {
 	return sbrReady==null? null : sbrReady.sr;
     }
 
+    public String description() {
+	String s = sbrReady==null? "n/a" : sbrReady.description();
+	s += "<br>Per-article result list sizes:\n";
+	for(String aid: articleBasedSR.keySet()) {
+	    s += "<br>* "+aid+" : "+articleBasedSR.get(aid).scoreDocs.length+"\n";
+	}
+	return s;
+	
+    }
+
     final SessionData sd;
 
     private int requestedActionCount=0, lastThreadRequestedActionCount=0;
+
+    /** Pre-computed suggestion lists based on individual articles. Keys are
+	ArXiv article IDs.
+     */
+    HashMap<String, SearchResults> articleBasedSR = new HashMap<String, SearchResults>();
 
     public SBRGenerator(SessionData _sd) {
 	sd = _sd;
@@ -44,7 +63,7 @@ public class SBRGenerator {
 	    Logging.info("SBRG: ignoring redundant request with actionCount=" + actionCount);
 	} else if (sbrRunning != null) {
 	    requestedActionCount = Math.max(requestedActionCount,actionCount);
-	    Logging.info("SBRG: recording request with actionCount=" + actionCount);
+	    Logging.info("SBRG: recording request with actionCount=" + actionCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
 	} else {
 	    sbrRunning = new SBRGThread(this);
 	    lastThreadRequestedActionCount=requestedActionCount=actionCount;
@@ -71,7 +90,7 @@ public class SBRGenerator {
 	    sbrRunning = new SBRGThread(this);
 	    lastThreadRequestedActionCount=requestedActionCount;
 	    sbrRunning.start();
-	    Logging.info("SBRG: Starting a new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
+	    Logging.info("SBRG: Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
 	}
     }
 }

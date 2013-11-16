@@ -143,14 +143,13 @@ public class Search extends ResultsBase {
 
 	    PresentedList plist = null;
 	    // Save the presented search results in the database
-	    plist = sr.saveAsPresentedList(em, Action.Source.SEARCH, u, null, eq);
+	    plist=sr.saveAsPresentedList(em, Action.Source.SEARCH, u, null,eq);
 	
 	    if (em!=null) em.close();
 
 	    long plid = (plist==null? 0: plist.getId());
 	    // ActionSource, for use in the web page 
 	    asrc = new ActionSource(Action.Source.SEARCH,plid);
-
 
 	}  catch (WebException _e) {
 	    error=true;

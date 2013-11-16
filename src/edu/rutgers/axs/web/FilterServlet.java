@@ -410,7 +410,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	    PrintWriter w = new PrintWriter(aout);
 
-	    System.out.println("FS: do parsing for "+lURL+". Top:\n[");
+	    //System.out.println("FS: do parsing for "+lURL+". Top:\n[");
 	    int loglen = 0;
 	    final int MAXLOG = 1024;
 	    String logInput="", logOutput="";

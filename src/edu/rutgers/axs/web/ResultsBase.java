@@ -164,7 +164,10 @@ public class ResultsBase {
 
 	    // Do we need a "moving panel"? Once requested, it will stay on
 	    boolean sb = getBoolean("sb", false);
-	    if (sb) sd.allowedSB = true;
+	    if (sb) {
+		sd.allowedSB = true;
+		sd.researcherSB = true;
+	    }
 
 	}  catch (Exception _e) {
 	    setEx(_e);
@@ -388,10 +391,16 @@ public class ResultsBase {
 	return x;
     }
 
-    /** Formats the specified text as a visible "span" element, or as
+     /** Formats the specified text as a visible "span" element, or as
 	a comment, based on the user's status. */
     public String researcherSpan(String s) {
-	if (runByResearcher()) {
+	return researcherSpan(s,runByResearcher()); 
+    }
+
+   /** Formats the specified text as a visible "span" element, or as
+	a comment, based on the user's status. */
+    static public String researcherSpan(String s, boolean isResearcher) {
+	if (isResearcher) {
 	    return "<span class=\"researcher\">" + s + "</span>\n";
 	} else return "<!-- "+s+"-->\n";
     }
@@ -485,7 +494,7 @@ public class ResultsBase {
 	*/
 	String startArticle = null;
 	
-	StartAt() {
+	public StartAt() {
 	    reset();
 	}
 

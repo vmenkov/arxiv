@@ -28,7 +28,14 @@ public class SessionBased  extends ResultsBase {
 
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
-	sr = (sd.sbrg==null) ? null : sd.sbrg.getSR();
+	sr = null;
+	if 	(sd.sbrg!=null) {
+	    sr = sd.sbrg.getSR();
+	    infomsg += "<br>" + sd.sbrg.description() + "\n";
+	}
+	infomsg += "<br>List presented at " + (new Date()) +  "\n";
+
+	
     }
 
     public String resultsDivHTMLLite(ArticleEntry e) {
@@ -46,7 +53,7 @@ public class SessionBased  extends ResultsBase {
 	    "<div class=\"document\">\n" +
 	    "<a name=\""+ aName +"\">\n" +
 	    e.i + ".</a>" + 
-	    researcherSpan(rt)+ 
+	    researcherSpan(rt, sd.researcherSB)+ 
 	    "<a onclick=\"javascript:window.opener.location.href = '"  +urlAbstract(e.id) + "';\">" + 
 	    e.idline + "; " +e.formatDate()+"\n" +
 	    //	    "<input type=\"button\" value=\"View\" onclick=\"javascript:window.opener.location.href = '"   +urlAbstract(e.id) + "';\">\n" +	

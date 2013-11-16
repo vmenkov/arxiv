@@ -1,7 +1,5 @@
 package edu.rutgers.axs.web;
 
-import java.net.*;
-
 import java.io.*;
 import java.util.*;
 
@@ -10,11 +8,13 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
-import edu.rutgers.axs.sql.*;
-//import edu.rutgers.axs.ParseConfig;
 
 /** Our interface for Lucene searches: Full-text search */
 public class TextSearchResults extends SearchResults {
+
+    /** Does nothing. Only is used (implicitly) by the derived classes.  */
+    protected TextSearchResults() {} 
+
     /**Parses the user's text query, creates a Lucene query based on it,
        and obtains the results.
 
@@ -23,10 +23,9 @@ public class TextSearchResults extends SearchResults {
        (\p{L}) and decimal digits (\p{Nd}). For details on Unicode character 
        categories, see http://www.unicode.org/reports/tr18/
 
-       <p>
-       FIXME: we need to strip from the query words that occur in 
-       StandardAnalyzer.STOP_WORDS_SET, because those aren't stored
-       in our Lucene index.
+       <p> Before feeding the query to Lucene, we strip from the query
+       words that occur in StandardAnalyzer.STOP_WORDS_SET, because
+       those aren't stored in our Lucene index.
 
        @param query Text that the user typed into the Search box
     */
@@ -61,7 +60,7 @@ public class TextSearchResults extends SearchResults {
 	    int tcnt=0;
 	    for(String t: terms) {
 		if (t.trim().length()==0) continue;
-		org.apache.lucene.search.Query zq= mkWordClause(t);
+		org.apache.lucene.search.Query zq= mkWordClause(t,searchFields);
 		if (zq == null) continue;
 		q.add( zq,  BooleanClause.Occur.MUST);
 		tcnt++;
@@ -70,19 +69,15 @@ public class TextSearchResults extends SearchResults {
 	}	
 	
 	numdocs = searcher.getIndexReader().numDocs();
-	System.out.println("index has "+numdocs +" documents");
+	//System.out.println("index has "+numdocs +" documents");
 	
 	reportedLuceneQuery=q;
 	TopDocs 	 top = searcher.search(q, maxlen + 1);
 	scoreDocs = top.scoreDocs;
 	mayHaveBeenTruncated= (scoreDocs.length >= maxlen+1);
-    
-
     }
 
-
-    static private org.apache.lucene.search.Query mkWordClause(String t) {
-	
+    static org.apache.lucene.search.Query mkWordClause(String t, String [] onlySearchInTheseFields) {
 	String f0 = ArxivFields.CATEGORY;
 	String prefix = f0 + ":";
 	if (t.startsWith(prefix)) {
@@ -95,7 +90,7 @@ public class TextSearchResults extends SearchResults {
 	    if (t.startsWith(prefix)) {
 		String w = t.substring(prefix.length());
 		return mkTermOrPrefixQuery(f, w.toLowerCase());
-		}
+	    }
 	}
 	
 	f0 = Search.DAYS;
@@ -109,7 +104,7 @@ public class TextSearchResults extends SearchResults {
 	    } catch (Exception ex) { return null; }
 	} else {
 	    BooleanQuery b = new BooleanQuery(); 
-	    for(String f: searchFields) {
+	    for(String f:  onlySearchInTheseFields) {
 		b.add(  mkTermOrPrefixQuery(f, t.toLowerCase()),
 			BooleanClause.Occur.SHOULD);		
 	    }
@@ -117,17 +112,16 @@ public class TextSearchResults extends SearchResults {
 	}
     }
 
-
     /** The set of words that are known to be never stored in our Lucene index,
 	because they are the stop words of StandardAnalyzer.
     */
-    static private HashSet<String> stopWordsSet = fillStopWordsSet();
+    private static HashSet<String> stopWordsSet = fillStopWordsSet();
 
     /** Converts StandardAnalyzer's stop word list (where words are
-	represented as of arrays of chars, as it happens) into a more
+	represented as arrays of chars, as it happens) into a more
 	convenient set of Strings.
      */
-    static private HashSet<String> fillStopWordsSet() {
+    private static HashSet<String> fillStopWordsSet() {
 	HashSet<String> q = new HashSet <String>();
 	for(Object o: org.apache.lucene.analysis.standard.StandardAnalyzer.STOP_WORDS_SET) {
 	    q.add(new String( (char[]) o));
@@ -144,7 +138,6 @@ public class TextSearchResults extends SearchResults {
 	}
 	return (rmCnt>0) ? v.toArray(new String[v.size()]) : terms;
     }
-
 
 
 

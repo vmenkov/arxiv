@@ -46,11 +46,12 @@
 <%= main.resultsDivHTMLLite(e) %>	
  <%  }  %>
 
-<!-- p>
-<form method=post>
-<input type="button" value="Home"
-onclick="javascript:window.opener.location.href = 'http://my.arxiv.org';">
-</form> </p -->
+<hr>
+
+<p><small>
+<%= main.researcherSpan(main.infomsg, main.sd.researcherSB) %>
+</small>
+</p>
 
 
 <%   }   %>

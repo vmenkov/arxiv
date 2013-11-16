@@ -214,10 +214,9 @@ public class  SearchResults {
 
     static org.apache.lucene.search.Query mkTermOrPrefixQuery(String field, String t) {
 	int pos = t.indexOf('*');
-	if (pos<0) return new TermQuery(new Term(field, t)); 
-	else {
-	    return new PrefixQuery(new Term(field, t.substring(0,pos))); 
-	}
+	return (pos<0) ? 
+	    new TermQuery(new Term(field, t)) :
+	    new PrefixQuery(new Term(field, t.substring(0,pos))); 
 	
     }
 

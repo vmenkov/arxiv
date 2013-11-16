@@ -34,6 +34,13 @@ public class SessionData {
     boolean allowedSB = false; 
     boolean needSBNow = false;
 
+    /** If true, the SB moving panel will be displayed in "researcher mode".
+	Since SB is only shown to users who have not logged in, we can't
+	use the usual researcher flag, but rather set this flag via a 
+	"secret" query string parameter.
+     */
+    public boolean researcherSB = false; 
+
     /** The session-based recommendation generator; created when needed. */
     SBRGenerator sbrg=null;
 
