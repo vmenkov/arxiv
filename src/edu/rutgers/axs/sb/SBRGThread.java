@@ -94,7 +94,6 @@ class SBRGThread extends Thread {
 
     /** For ascending-order sort, i.e. rank 1 before rank 2 etc */
     private static class ArticleRanks implements Comparable<ArticleRanks> {
-	//String aid;
 	int docno;
 	/** This is *not* used for sorting */
 	double score=0;
@@ -106,9 +105,8 @@ class SBRGThread extends Thread {
 	    }
 	    return o.ranks.size() - ranks.size();
 	}
-	//	ArticleRanks(String _aid) { aid = _aid; }
 	ArticleRanks(int _docno) { docno = _docno; }
-	/** Should be called in order on non-decreasing r */
+	/** Should be called in order of non-decreasing r */
 	void add(int r, double deltaScore) {
 	    if (ranks.size()>0 && r<ranks.elementAt(ranks.size()-1).intValue()){
 		throw new IllegalArgumentException("ArticleRanks.add() calls must be made in order");
@@ -117,6 +115,8 @@ class SBRGThread extends Thread {
 	    score +=  deltaScore;
 	}
     }
+
+    String excludedList = "";
  
     private void computeRecList(IndexSearcher searcher) {
 	EntityManager em=null;
@@ -124,21 +124,24 @@ class SBRGThread extends Thread {
 	    em = parent.sd.getEM();       
 	    Vector<String> viewedArticles = listViewedArticles(em);
 
+	    HashSet<String> exclusions = parent.linkedAids;
+	    exclusions.addAll(viewedArticles);
+
 	    // abstract match, separately for each article
 	    final int maxlen = 100;
-	    final int maxreclen = 25;
-	    SearchResults[] asr  = new SearchResults[viewedArticles.size()];
+	    final int maxRecLenTop = 25;
+	    final int maxRecLen = Math.min(3*viewedArticles.size(), maxRecLenTop);
+	    ScoreDoc[][] asr  = new ScoreDoc[viewedArticles.size()][];
 	    int k=0;
 	    for(String aid: viewedArticles) {
-		SearchResults z = parent.articleBasedSR.get(aid);
+		ScoreDoc[] z = parent.articleBasedSD.get(aid);
 		if (z==null) {
 		    int docno= Common.find(searcher, aid);
 		    Document doc = searcher.doc(docno);
 		    String abst = doc.get(ArxivFields.ABSTRACT);
 		    abst = abst.replaceAll("\"", " ").replaceAll("\\s+", " ").trim();
-		    z = new LongTextSearchResults(searcher, abst, maxlen);
-		    //z.setWindow( searcher,new ResultsBase.StartAt(), maxlen, null);
-		    parent.articleBasedSR.put(aid,z);
+		    z = (new LongTextSearchResults(searcher, abst, maxlen)).scoreDocs;
+		    parent.articleBasedSD.put(aid,z);
 		}
 		asr[k++] = z;
 	    }
@@ -147,24 +150,15 @@ class SBRGThread extends Thread {
 	    //	    HashMap<String,ArticleRanks> hr= new HashMap<String,ArticleRanks>();
 	    HashMap<Integer,ArticleRanks> hr= new HashMap<Integer,ArticleRanks>();
 	    for(int j=0; j<maxlen; j++) {
-		for(SearchResults z: asr) {
-		    if (j<z.scoreDocs.length) {
-			/*
-			String aid = z.entries.elementAt(j).id;
-			ArticleRanks r= hr.get(aid);
-			if (r==null) { 
-			    hr.put(aid, r=new ArticleRanks(aid));
-			}
-			r.add(j, z.entries.elementAt(j).score);		      
-			*/
-
-			int docno = z.scoreDocs[j].doc;
+		for(ScoreDoc[] z: asr) {
+		    if (j<z.length) {
+			int docno = z[j].doc;
 			Integer key = new Integer(docno);
 			ArticleRanks r= hr.get(key);
 			if (r==null) { 
 			    hr.put(key, r=new ArticleRanks(docno));
 			}
-			r.add(j, z.scoreDocs[j].score);		      
+			r.add(j, z[j].score);		      
 		    }
 		}
 	    }
@@ -172,16 +166,21 @@ class SBRGThread extends Thread {
 	    Arrays.sort(ranked);
 
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
-	    k=0;
+	    k=1;
 	    for(ArticleRanks r: ranked) {
 		/*
 		ArticleEntry ae = new ArticleEntry(++k, r.aid);
 		ae.setScore(r.score);
 		*/
-		ArticleEntry ae= new ArticleEntry(++k, searcher.doc(r.docno),
+		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno),
 						  new ScoreDoc(r.docno, (float)r.score));
+		if (exclusions.contains(ae.id)) {
+		    excludedList += " " + ae.id;
+		    continue;
+		}
 		entries.add(ae);
-		if (entries.size()>=maxreclen) break;
+		k++;
+		if (entries.size()>=maxRecLen) break;
 	    }
 	    sr = new SearchResults(entries); 
 	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);

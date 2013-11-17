@@ -41,12 +41,19 @@ public class SessionData {
      */
     public boolean researcherSB = false; 
 
-    /** The session-based recommendation generator; created when needed. */
-    SBRGenerator sbrg=null;
+    /** The session-based recommendation generator. It's created together
+	with the session, but is not actually used until the needSBNow flag 
+	is set.
+    */
+    final SBRGenerator sbrg=new SBRGenerator(this);
 
-    /** Generates proper link URLs */
-    //final public Link link;
-    
+    void recordLinkedAid(String aid) {
+	sbrg.recordLinkedAid(aid);
+    }
+    void recordLinkedAids(Vector<ArticleEntry> entries) {
+	sbrg.recordLinkedAids(entries);
+    }
+
     private SessionData( HttpSession _session,HttpServletRequest request )
 	throws WebException, IOException {
 	session = _session;
@@ -111,8 +118,6 @@ public class SessionData {
 	    if (sd == null) {
 		sd = new SessionData(session,request);
 		session.setAttribute(ATTRIBUTE_SD, sd);
-		
-
 	    }
 	    //sd.update(request);
 
@@ -294,7 +299,6 @@ public class SessionData {
 	    int actionCnt = Action.actionCntForSession( em,  sqlSessionId);
 	    needSBNow = 	     (actionCnt>=2);
 	    if (needSBNow) {
-		if (sbrg==null) sbrg = new SBRGenerator(this);
 		sbrg.requestRun(actionCnt);
 	    }
 	}

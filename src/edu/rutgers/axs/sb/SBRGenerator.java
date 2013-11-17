@@ -11,6 +11,8 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.persistence.*;
 
+import org.apache.lucene.search.ScoreDoc;
+
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.web.*;
@@ -30,15 +32,34 @@ public class SBRGenerator {
     /** Currrently being computed */
     private SBRGThread sbrRunning = null;
     
+    /** List of all article IDs that have been mentioned anywhere in pages
+	shown to the user during this session. This can be used an 
+	exclusion list for the session-based recommendations.
+     */
+    HashSet<String> linkedAids = new HashSet<String>();
+    public void recordLinkedAid(String aid) {
+	linkedAids.add(aid);
+    }
+    public void recordLinkedAids(Vector<ArticleEntry> entries) {
+       for(ArticleEntry ae: entries) {
+	   linkedAids.add(ae.id);
+       }
+    }
+
+
     public SearchResults getSR() {
 	return sbrReady==null? null : sbrReady.sr;
     }
 
-    public String description() {
+    synchronized public String description() {
 	String s = sbrReady==null? "n/a" : sbrReady.description();
 	s += "<br>Per-article result list sizes:\n";
-	for(String aid: articleBasedSR.keySet()) {
-	    s += "<br>* "+aid+" : "+articleBasedSR.get(aid).scoreDocs.length+"\n";
+	for(String aid: articleBasedSD.keySet()) {
+	    s += "<br>* "+aid+" : "+articleBasedSD.get(aid).length+"\n";
+	}
+	s += "<br>Excludable articles count: " + linkedAids.size()+"\n";
+	if (sbrReady!=null) {
+	    s += "<br>Actually excluded: " + sbrReady.excludedList+"\n";
 	}
 	return s;
 	
@@ -51,7 +72,8 @@ public class SBRGenerator {
     /** Pre-computed suggestion lists based on individual articles. Keys are
 	ArXiv article IDs.
      */
-    HashMap<String, SearchResults> articleBasedSR = new HashMap<String, SearchResults>();
+    //HashMap<String, SearchResults> articleBasedSR = new HashMap<String, SearchResults>();
+    HashMap<String,ScoreDoc[]> articleBasedSD= new HashMap<String,ScoreDoc[]>();
 
     public SBRGenerator(SessionData _sd) {
 	sd = _sd;

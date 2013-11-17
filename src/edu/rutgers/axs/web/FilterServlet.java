@@ -587,30 +587,46 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    skeletonAE = _ae;
 	    asrc = _asrc;
 	    user = _user;
-	    sd =  SessionData.getSessionData(request);
+	    sd = SessionData.getSessionData(request);
 	}
 
 
-    /**
+    /** Given a relative or absolute URL found in the processed
+	document, this method returns a URL with which it has to be
+	replaced. URLs can be found in various parts of the document,
+	e.g. in "A HREF=...", "IMG SRC=...", etc. The replacement
+	process only affects URLs (absolute or relative) into
+	arxiv.org; depending on the context, these URLs may be
+	re-written to point to our FilterServlet. Even when this kind
+	or re-writing is not needed, relative URLs may need to be
+	converted to absolute.
+
+	<p>
      Typical HTML elements' attributes that need to be converted:
 
+     <ol>
+     <li>
      Replace:
      link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"
      
+     <li>
      Add ARXIV_BASE host:
      link rel="stylesheet" (etc) ... href="/relative" ...
      img ... src="/relative"
 
-
+     <li>
      Rewrite with a link to FilterServlet
      a ... href="/relative"
 
+     <li>
      Rewrite with a link to FilterServlet, and "hidden" sp:
      form ... (method="post")  action="/relative"
+     </ol>
 
-
+     @param link The URL (absolute or relative) to process
+     @return The replacement URL
+     
     */    
-
 	String convertLink(String link, boolean mayRewrite) {
 
 	    // some heuristics: never need to proxy some file types
@@ -636,6 +652,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		// absolute link with a host name
 		if (mayRewrite && link.startsWith( ARXIV_BASE )) {
 		    // abs link to a rewriteable target on arxiv.org
+		    recordLink(link);
 		    return link.replace( ARXIV_BASE , effectiveFs);
 		} else {
 		    // abs link to eslewhere, or to a non-rewriteable
@@ -645,6 +662,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    } else if (link.startsWith("/")) {
 		// absolute URL on the same host
 		if (mayRewrite) {
+		    recordLink(link);
 		    return effectiveFs + link;
 		} else {
 		    // CSS files, like PDF, should be always read from arxiv.org
@@ -666,6 +684,23 @@ public class FilterServlet extends  BaseArxivServlet  {
 		return link;
 	    }
 	}
+
+	/** This method is applied to detected links to arxiv.org
+	    pages.  It checks if the URL is an article abstract URL (
+	    e.g., ..../abs/1009.5718, ..../abs/q-bio/0511026 ), and if
+	    it is, it records it in the SessionData. This cumulative
+	    list of "displayed links" is used (as an exclusion list)
+	    when generating Session Based Recommendations.
+	 */
+	private void recordLink(String link) {
+	    final String z= "/abs/";
+	    int pos = link.indexOf(z);
+	    if (pos>=0) {
+		String aid = link.substring(pos + z.length());
+		sd.recordLinkedAid(aid);
+	    }
+	}
+
 
 	//Pattern pIcon = Pattern.compile("href=\"/favicon.ico\"");
 	private final Pattern pBody = Pattern.compile("<body\\b.*?>");
@@ -770,22 +805,6 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 	    return null;
 	}
-
-
-	/** If needed, inserts an onload attribute with a JS snippet used
-	    `to open the moving panel window.
-
-	    @param s "&lt;BODY ....&gt;"
-	 */
-	/*
-	private String rewriteBodyElement(String s) {
-	    if (!sd.needSBNow) return s;
-	    final js = 
-
-	    s = s.substring(0, s.length-1) + " onload='" + js + "'>";
-	    return s;
-	}
-	*/
 
 
     }
