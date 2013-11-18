@@ -1,0 +1,197 @@
+<html>
+<head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<title>My.arXiv: notes on setting up one's development environment</title>
+</head>
+<body>
+
+<h1>My.arXiv: notes on setting up one's development environment</h1>
+
+<p>This document is based on notes written in February 2013 for a new developer.
+
+<h2>Where to develop?</h2>
+
+<p>
+Since you need to do actual work on the system, our first
+order of business may be to decide what environment you set up, and
+where. Presently, the organization is as follows.
+There is the "production" server, such as there is, on
+cactuar.rutgers.edu ; it runs the application that you see at
+http://my.arxiv.org/arxiv  . For a number of reasons, that server is
+not particularly suitable for development work, although I do use it
+sometimes as a test environment (sharing the same database with the
+production environment, though!). I have a complete development
+environment (web server, MySQL database, Lucene data store, etc) on my
+Rutgers-issued laptop, and do the entire development cycle there,
+until pushing an updated version of the application to cactuar.
+
+<p>So there are at least two options for you at the moment. If you have a
+decent desktop computer, with, say 100 - 150 GB of space to spare,
+fast internet connection, access to an SMTP server (to actually send
+email) and a week of time, you could set up a complete operational
+MyArXiv site of your own, with your own MySQL database, Lucene data
+store and everything else. I'll provide instructions. (If disk space
+is a concern, we may build it with a smaller article library, or
+something.) This way you could do all development on that platform,
+and not be concerned with any cactuar issues at all, at least not
+until the moment of finally adding your code into the production
+server. While it obviously will take quite a bit of time and effort to
+get started this way, a side effect of this procedure will be that
+you'll train yourself to be the Cornell's expert on setting and
+maintaining the site in the future. (Thorsten may have told you about
+his plans to buy quite a bit of new hardware for the project, to run
+at Cornell).
+
+<p>
+An easier option may be for you to just do editing and compiling of
+your code on a computer of your own at Cornell, and then moving it to
+cactuar to do the actual testing. For this, you only will need to have
+various Java tools (JDK, Apache Ant) and libraries (Open JPA and
+others; you can just copy them from cactuar) on your host.  Of course,
+running things on cactuar is non-trivial (e.g. you cannot just deploy
+your web application and have it run right away: you'll have to wait
+for up to an hour!). But there are ways to get things done. In
+particular, Thorsten's specs for the email notification tool seem to
+make it possible to implement it as a separate command-line
+application (which, eventually, will be run nightly from cron),
+instead of trying to incorporate it into the web server. So testing on
+cactuar probably will be doable.
+
+<h2>Setup - first stage</h2>
+<p>
+Now that you have a cactuar account, you should be able to ssh to it,
+and take a look at the files in the directory
+/mnt/cactext/home/SCILSNET/vmenkov/arxiv
+
+<p>
+On your "development machine" (whatever computer at Rutgers you end up
+using to edit and compile your java code) you'll need to reproduce
+(partially) that structure. Let's begin with these several things
+(below, I assume that you use Linux/Unix on your development machine;
+if not, you'll have to perform similar operations in the OS you use):
+
+<pre>
+1)  start with your home directory, and create there the arxiv subdir:
+   cd ~
+   mkdir arxiv
+   cd arxiv
+
+2)  create a library dir
+
+   mkdir lib
+
+3) Copy all *.jar files from
+/mnt/cactext/home/SCILSNET/vmenkov/arxiv/lib  to the "lib" directory
+you've just created.
+
+3a) A few jar files for ant:
+cd ~
+mkdir .ant
+cd .ant
+mkdir lib
+ln -s ~/arxiv/tomcat-lib/catalina-ant.jar .
+ln -s /usr/local/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar .
+
+4) See if you have access to the source code at the Cornell
+SourceForge repository:
+   https://forge.cornell.edu/sf/projects/my_arxiv_org
+I believe you do.
+
+5) Get the current version of the MyArXiv source code from the Cornell
+SourceForge repository:
+
+    cd ~/arxiv
+    svn co https://forge.cornell.edu/svn/repos/arxiv
+
+This will create subdirectory "arxiv" under ~/arxiv  (i.e.,
+~/arxiv/arxiv),  and will copy all the source tree into it.
+
+6) Check if you have Apache ant on your development machine. If not, install it.
+
+7) Try to compile the application
+   cd ~/arxiv/arxiv
+   ant jar
+
+(The "ant" command   will use the build file build.xml, which comes
+together with the source code distribution).
+
+8) Try to explicitly create the directory
+/usr/local/tomcat/webapps/arxiv   (I assume that your tomcat lives in
+/usr/local/tomcat ), and making to readable and writeable to yourself.
+
+9) Deploy the application to tomcat
+   ant deploy
+
+</pre>
+<p>
+
+Once you have the code and can compile it, we can start talking about
+how you can do development and testing.
+
+<h2>Trying to run an application</h2>
+<p>
+Now that you have been able to fully compile the MyArXiv code on your
+machine (i.e., you have axs.jar generated), we can try to go to the
+next stage: actually running some MyArXiv application. There are
+basically two types of MyArXiv applications: there is the web
+application (the code that serves our web site,
+http://my.arxiv.org/arxiv )
+
+<p>
+To run the former, you deploy the application to your Tomcat server's
+webapps/arxiv directory, using the command
+<pre>
+   ant deploy
+</pre>
+After this, you could access the application  via   http://localhost:8080/arxiv
+(this assumes that your Tomcat is configured to use port 8080)
+
+<p>
+The latter (the command line scripts) are represented by  a number of
+shell scripts (*.sh) that you have in    ~/arxiv/arxiv ,  which have
+come with the MyArXiv source code from the Cornell Source Forge.
+Theoretically speaking, you can now run any of them from the command
+line. For example
+   ./cmd.sh showcoef cs/0605035
+will show the indexed body of the specified article.
+
+<p>
+Of course, neither of this will actually work in any sensible way at
+the moment, because both the web application and the command-line
+tools rely on 3 external resources:
+
+<ol>
+<li>The Lucene data store: a few really big local files that contain
+the metadata and text of some 800,000 ArXiv articles. As I understand,
+ the email notification application you are going to design won't need
+these data for its core logic, but it will need to  get some data from
+the Lucene data store (such as the article titles etc) when generating
+the actual email messages.
+
+<li> The database in the MySQL server. It stores most of the
+"operational" information about users, their activity, and our plans
+for them. Your application will access it heavily.
+
+<li> Local data files, stored in ~vmenkv/arxiv/arXiv-data on cactuar.
+MyArXiv's recommendation engines store user profiles, suggestion
+lists, etc. there. I sort of hope your application can do without
+them, getting sufficient information just from the SQL database; but
+this is yet to be seen.
+
+<p>
+It seems at the moment that the most useful thing for us would be
+enabling remote access from your machine to the MySQL server at
+cactuar. However, this is not allowed for security reasons.
+
+<p>
+Regarding the Lucene data store. If you happen to have plenty of disk
+space available on your machine (as in, "17 GB is no big deal"), and
+really good internet bandwidth, you may choose to copy the entire
+directory ~vmenkov/arxiv/arXiv-index from cactuar to the corresponding
+location on your machine. Otherwise, you can run the ArxivImporter
+utility to create a smaller dataset (say, a few weeks' most recent
+articles) on your machine; however, you can't do it right now yet,
+because ArxivImporter needs to talk to the SQL server.
+
+</body>
+</html>

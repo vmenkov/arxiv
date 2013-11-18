@@ -53,9 +53,11 @@
 
 <ul>
 
-<li><A href="../doc/html/api/">API documentation</a> - for maintenance programmers, or those who want to reuse some of my.arxiv.code
+<li><A href="../doc/html/api/">API documentation</a> - for developers / maintenance programmers, or those who want to reuse some of my.arxiv.code
 
-<li><A href="../admin/install.html">Deployment Guide</a> - for maintenance programmers and system administrators
+<li><A href="install.html">Deployment Guide</a> - for developers / maintenance programmers and system administrators
+
+<li><A href="setup.html">Setting up your environment</a> - for developers / maintenance programmers 
 
 <li><A href="svd.html">SVD + k-Means clustering</a>
 
