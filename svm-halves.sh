@@ -26,12 +26,12 @@ set opt="-cp ${cp} ${opt}"
 echo "opt=$opt"
 
 
-#set logbase=../runs/svm-halves
-set logbase=../runs/svm-halves-idf
+set logbase=../runs/svm-halves-normalize-c100
+#set logbase=../runs/svm-halves-idf-normalize
 mkdir $logbase
 
-#set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
-set cats=(all)
+set cats=`(cd ../arXiv-data/tmp/hc; /bin/ls)`
+#set cats=(math)
 date
 
 foreach cat ($cats) 
@@ -57,9 +57,10 @@ foreach cat ($cats)
     #-- split doc list
  ./split-set.pl $d/asg.dat 0.50 $d/asg-part1.dat $d/asg-part2.dat
 
-#set zopt="$opt -Dnormalize=true"
-set zopt="$opt -Didf=true"
- set log=$logs/svm-prepare-${cat}.log
+set zopt="$opt"
+set zopt="$zopt -Dnormalize=true"
+#set zopt="$zopt -Didf=true"
+set log=$logs/svm-prepare-${cat}.log
    #-- convert each part into an SVM input file
  time java $zopt -DasgPath=$d/asg-part1.dat edu.rutgers.axs.ee4.HistoryClustering svm $cat >& $log
  mv $d/exported.asg $d/exported-part1.asg
@@ -74,7 +75,8 @@ set zopt="$opt -Didf=true"
    #-- train model on section 1
  set model=$d/model-part1.dat
  set log=$logs/svm-${cat}-learn.log
- $svm/svm_multiclass_learn -c 10 -f 2 $d/train-part1.dat $model >& $log
+ set dat=$d/train-part1.dat
+ $svm/svm_multiclass_learn -c 100 -f 2 $dat $model >& $log
 
  set failed=0
  if ($status) then

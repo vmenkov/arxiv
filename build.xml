@@ -349,6 +349,7 @@ Building a JAR file
     <fileset dir="doc/"/>
   </copy>
 
+
   <!-- copy todir="${arxiv.doc}/html">
     <fileset dir="sample-data/" includes="sample.xml,sample-suite-out.xml,eg-learner-param-1.xml"/>
   </copy -->
@@ -370,6 +371,14 @@ Building a JAR file
 
 </target>
 
+
+<!-- Copies Javadoc API files and other similar docs to the web server -->
+<target name="deploy-javadoc" depends="javadoc">     
+  <echo message="Copying files from web/ to ${deploy.home}" />
+  <copy todir="${deploy.home}/doc">
+    <fileset dir="${arxiv.doc}" />
+  </copy>
+</target>
 
 <!-- Deletes the class directory -->
 <target name="clean">
