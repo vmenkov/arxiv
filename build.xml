@@ -1,11 +1,18 @@
 <!-- This is the main build file for use with Apache Ant. It tells Ant
-    how to compile our application from the source code, how to build
-    Javadoc documentation, etc.
+     how to compile our application (My.ArXiv) from the source code, 
+     how to deploy it, how to build Javadoc documentation, etc.
 
     To carry out a particular operation with Ant, you provide the name of the
     appropriate target. E.g., to compile the code, you type 
 
-      and compile
+      ant compile
+
+     Some of the other targets are:
+
+     jar : "compile" + create a jar file
+     deploy : "jar" + deploy the code to the Tomcat webapps directory
+     reload : "deploy" + cause Tomcat to reload the application
+     javadoc : "compile" + create Javadoc API documentation
 
      Apache Ant is available for most modern operating systems.
      You can read more about Apache Ant at http://ant.apache.org/manual/index.html
@@ -27,6 +34,7 @@
       cactuar and scils
    -->
  <property name="tomcat.lib.copy2" location="../tomcat-lib-to-copy"/>
+ <!-- A local directory where Java API docs will be put -->
  <property name="arxiv.doc" location="../doc"/>
  <property name="arxiv.api" location="${arxiv.doc}/html/api"/>
 
