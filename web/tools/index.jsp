@@ -61,9 +61,8 @@
 
 <li><A href="svd.html">SVD + k-Means clustering</a>
 
-<li><A href="../javadoc/">API documentation</a>
-
 <!--
+
 <li><A href="manual.html">User's Guide</a> - for interviewers and data researchers
 
 -->

@@ -36,9 +36,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
     
     /** Link to the JPA entity for the user to whom the list was  presented. 
+	Since 2013-11-19, this is nullable, so that we can record  SB lists
+	for anonymous users.
     */
   @ManyToOne
-    @Column(nullable=false)
+    @Column(nullable=true)
 	@Display(editable=false, order=1, link="viewUser.jsp") 
 	User user;
 

@@ -29,15 +29,25 @@ public class SessionBased  extends ResultsBase {
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	sr = null;
-	if 	(sd.sbrg!=null) {
+	long plid=0;
+	if (sd.sbrg!=null) {
+	    // get the pre-computed rec list
 	    sr = sd.sbrg.getSR();
-	    infomsg += "<br>" + sd.sbrg.description() + "\n";
+	    if (sr!=null) {
+		infomsg += "<br>" + sd.sbrg.description() + "\n";
+		plid = sd.sbrg.getPlid();
+	    }
 	}
 	infomsg += "<br>List presented at " + (new Date()) +  "\n";
 
+	// setting this page's "action source" information, which is used
+	// to form FilterServlet URLs
+	Action.Source srcType =	 Action.Source.SB;
+	asrc= new ActionSource(srcType, plid);
 	
     }
 
+    /** Creates a snippet  of HTML describing one article entry. */
     public String resultsDivHTMLLite(ArticleEntry e) {
 
 	String rt = "[score="+e.score+ "]";
@@ -48,13 +58,16 @@ public class SessionBased  extends ResultsBase {
 
 	String aName = "article_" + e.id;
 
+	String js = "javascript:window.opener.location.href = '" +
+	    urlAbstract(e.id) + "';";
+
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
 	    "<a name=\""+ aName +"\">\n" +
 	    e.i + ".</a>" + 
 	    researcherSpan(rt, sd.researcherSB)+ 
-	    "<a onclick=\"javascript:window.opener.location.href = '"  +urlAbstract(e.id) + "';\">" + 
+	    "<a onclick=\""  + js + "\">" + 
 	    e.idline + "; " +e.formatDate()+"\n" +
 	    //	    "<input type=\"button\" value=\"View\" onclick=\"javascript:window.opener.location.href = '"   +urlAbstract(e.id) + "';\">\n" +	
     //"[" + a( urlAbstract(e.id), "View") + "]\n" +

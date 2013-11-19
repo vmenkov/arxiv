@@ -40,7 +40,7 @@
 
  <property name="build.tmp" location="/tmp"/>
 
-
+<!-- The place where Tomcat lives, on various machines where we run -->
 <property name="tomcat.home.orie"  value="/usr/share/tomcat6" />
 <property name="tomcat.home.scils"  value="/www/icd.rutgers.edu" />
 <property name="tomcat.home.cactuar"  value="/www/my.arxiv.org" />

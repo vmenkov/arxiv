@@ -50,6 +50,9 @@ public class SBRGenerator {
     public SearchResults getSR() {
 	return sbrReady==null? null : sbrReady.sr;
     }
+    public long getPlid() {
+	return sbrReady==null? 0 : sbrReady.plid;
+    }
 
     synchronized public String description() {
 	String s = sbrReady==null? "n/a" : sbrReady.description();
