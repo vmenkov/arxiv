@@ -86,7 +86,10 @@ public class SBRGenerator {
 	Logging.info("SBRG: requested computations for actionCnt="+actionCount);
 	if (sbrReady != null && sbrReady.actionCount >= actionCount) {
 	    Logging.info("SBRG: ignoring redundant request with actionCount=" + actionCount);
+	    //	} else if (sbrRunning != null && sbrRunning.getState()==Thread.State.TERMINATED) {
+	    
 	} else if (sbrRunning != null) {
+
 	    requestedActionCount = Math.max(requestedActionCount,actionCount);
 	    Logging.info("SBRG: recording request with actionCount=" + actionCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
 	} else {

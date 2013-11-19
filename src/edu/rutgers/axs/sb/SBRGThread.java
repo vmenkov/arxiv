@@ -55,7 +55,7 @@ class SBRGThread extends Thread {
 		computeRecList(em,searcher);
 	    }
 	    plid = saveAsPresentedList(em).getId();
-	} catch(IOException ex) {
+	} catch(Exception ex) {
 	    error = true;
 	    errmsg = ex.getMessage();
 	    System.out.println("Exception for SBRG thread " + getId());
