@@ -47,6 +47,18 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public User getUser() {	return user;    }
     private void setUser(User c) {	user=c;    }
 
+    /** Session id. Especially useful for anon users' activity. 
+	Introduced 2013-11-19. */
+    @Column(nullable=false)
+    @Display(editable=false, order=1.1) 
+	long session;
+    public long getSession() {
+	return session;
+    }
+
+    private void setSession(long  c) {
+	session=c;
+    }
     /** When was this list (first) presented? */
     @Display(editable=false, order=3) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
@@ -115,10 +127,11 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	methods for the data list source (data file or query), and
 	filling the actual list. 
      */
-    public PresentedList(Action.Source type, User u) {
+    public PresentedList(Action.Source type, User u, long sid) {
 	setType(type);
 	setUser(u);
 	setTime( new Date());
+	setSession(sid);
     }
 
 

@@ -152,7 +152,15 @@ class SBRGThread extends Thread {
 	    for(String aid: viewedArticles) {
 		ScoreDoc[] z = parent.articleBasedSD.get(aid);
 		if (z==null) {
-		    int docno= Common.find(searcher, aid);
+		    int docno=0;
+		    try {
+			docno= Common.find(searcher, aid);
+		    } catch(IOException ex) {
+			// this may happen if the article is too new,
+			// and is not in our Lucene datastore yet
+			Logging.warning("SBRGThread " + getId() + ": skip unavailabel page " + aid);
+			continue;
+		    }
 		    Document doc = searcher.doc(docno);
 		    String abst = doc.get(ArxivFields.ABSTRACT);
 		    abst = abst.replaceAll("\"", " ").replaceAll("\\s+", " ").trim();
@@ -167,7 +175,7 @@ class SBRGThread extends Thread {
 	    HashMap<Integer,ArticleRanks> hr= new HashMap<Integer,ArticleRanks>();
 	    for(int j=0; j<maxlen; j++) {
 		for(ScoreDoc[] z: asr) {
-		    if (j<z.length) {
+		    if (z!=null && j<z.length) {
 			int docno = z[j].doc;
 			Integer key = new Integer(docno);
 			ArticleRanks r= hr.get(key);
@@ -245,7 +253,7 @@ class SBRGThread extends Thread {
 
 
     private PresentedList saveAsPresentedList(EntityManager em) {
-	PresentedList plist = new PresentedList(Action.Source.SB, null);
+	PresentedList plist = new PresentedList(Action.Source.SB, null,  parent.sd.getSqlSessionId());
 	plist.fillArticleList(sr.entries);	
 	em.getTransaction().begin();
 	em.persist(plist);

@@ -511,8 +511,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// if it's a mail page. There is also a way to explicitly
 	// prevent the recording of a PL (the dryRun option)
 	if ((isSelf || isMail) && !dryRun) {
+	    long sid = sd!=null? sd.getSqlSessionId() : 0;
 	    PresentedList plist=sr.saveAsPresentedList(em,srcType,actor,
-						       df, null);
+						       df, null, sid);
 	    plid =  plist.getId();
 	}
 	asrc= new ActionSource(srcType, plid);

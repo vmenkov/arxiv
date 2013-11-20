@@ -501,8 +501,8 @@ public class  SearchResults {
 	if applicable (e.g. on search results lists). It is only used
 	to record its ID in the PresentedList.
     */
-    PresentedList saveAsPresentedList(EntityManager em, Action.Source type, User u, DataFile df,  EnteredQuery eq) {
-	PresentedList plist = new PresentedList(type, u);
+    PresentedList saveAsPresentedList(EntityManager em, Action.Source type, User u, DataFile df,  EnteredQuery eq, long session) {
+	PresentedList plist = new PresentedList(type, u, session);
 	plist.fillArticleList(entries);	
 	if (df!=null) plist.setDataFileId( df.getId());
 	if (eq!=null) plist.setQueryId( eq.getId());
@@ -512,8 +512,8 @@ public class  SearchResults {
 	return plist;
     }
 
-    PresentedList saveAsPresentedList(EntityManager em, Action.Source type, User u) {
-	return saveAsPresentedList(em,  type, u, null, null); 
+    PresentedList saveAsPresentedList(EntityManager em, Action.Source type, User u, long sid) {
+	return saveAsPresentedList(em,  type, u, null, null, sid); 
     }
 
 

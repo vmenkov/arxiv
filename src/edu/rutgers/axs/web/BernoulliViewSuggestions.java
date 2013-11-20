@@ -109,7 +109,8 @@ public class BernoulliViewSuggestions extends ViewSuggestionsBase {
 	    Action.Source.BERNOULLI_EXPLOITATION :
 	    Action.Source.BERNOULLI_EXPLORATION;	   
 
-	PresentedList plist=sr.saveAsPresentedList(em, srcType, actor);
+	PresentedList plist=sr.saveAsPresentedList(em, srcType, actor,
+						   sd.getSqlSessionId());
 	asrc= new ActionSource(srcType, plist.getId());
     }
 		    
