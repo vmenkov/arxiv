@@ -18,9 +18,10 @@ import  edu.rutgers.axs.web.SessionData;
     public void setId(long val) {        id = val;    }
     public long getId() {        return id;    }
 
-    // Link to the user whose action this is
+    /** Link to the user whose action this is. For anonymous users'
+	activity, this is null. */
     @ManyToOne
-    @Column(nullable=false)
+    @Column(nullable=true)
 	@Display(editable=false, order=1, link="viewUser.jsp") 
 	User user;
     public User getUser() {	return user;    }

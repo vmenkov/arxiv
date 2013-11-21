@@ -242,16 +242,12 @@ public class ResultsBase {
 	return Util.ago(d);
     }
 
-    /** Prints time, along with the "... ago" message */
-    //static public String timeAndAgo(Date d) {
-    //	return d==null? "never" : Reflect.compactFormat(d) + " " + Util.ago(d);
-    //}
-
-    /** This can be put into every "finally" clause ... */
+    /** A hygienic way to close a connection, if it is open. This can be put into every "finally" clause. */
     public static void ensureClosed(EntityManager em) {
 	ensureClosed( em, true);
     }
 
+    /** A hygienic way to close a connection, if it is open. This can be put into every "finally" clause. */
     public static void ensureClosed(EntityManager em, boolean commit ) {
 	if (em==null) return;
 	if (!em.isOpen()) return;

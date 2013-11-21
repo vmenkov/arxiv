@@ -28,7 +28,7 @@ import  edu.rutgers.axs.web.SessionData;
     /** Link to the user whose action this is. This can be null for anon users */
 
     @ManyToOne
-    @Column(nullable=false)
+    @Column(nullable=true)
 	@Display(editable=false, order=1, link="viewUser.jsp") 
 	User user;
 
