@@ -72,7 +72,7 @@ public class SessionData {
 	    //	    ex.printStackTrace(System.out); // just for debugging
 	    //	    throw ex;
 	} finally {
-	    if (em!=null) em.close();
+	    ResultsBase.ensureClosed( em, true);
 	}
     }
 
@@ -211,8 +211,8 @@ public class SessionData {
 			    storeUserInfoInSQL(em, user);
 			}
 		    } finally {
-			em.close();
-		    }
+			ResultsBase.ensureClosed( em, true);
+ 		    }
 		}
 	    }
 	}

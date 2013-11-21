@@ -421,11 +421,16 @@ public class ResultsBase {
     }
 
     public String stackTrace() {
+	return stackTrace(e);
+    }
+
+    static public String stackTrace(Exception e) {
 	if (e==null)   return "";
 	StringWriter sw=new StringWriter();
 	e.printStackTrace(new PrintWriter(sw));
 	return sw.toString();
     }
+
 
     /** Checks if a parameter value was empty, or equiavalent to empty */
     static boolean isBlank(String code) {

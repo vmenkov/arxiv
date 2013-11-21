@@ -41,7 +41,9 @@ public class YouAreTag extends TagSupport {
         } catch (Exception ex) {
 	    System.out.println(ex);
 	    ex.printStackTrace(System.out);
-            throw new JspException("IO problems");
+	    String trace= ResultsBase.stackTrace(ex).replaceAll("\n", "<br>\n");
+            throw new JspException("IO problems: " + ex.getMessage() + 
+				   "<br>\n" + trace);
         }
         return SKIP_BODY;
     }
