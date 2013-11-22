@@ -276,9 +276,9 @@ class Json {
 	    //user_hash article_id date downloaded_y/n
 	    boolean down =  !(type.equals("abs") || type.equals("abstract"));
 	    w.println(user + " " + aid + " " + utc + " " + (down?1:0));
-
-	    
 	}
+	w.flush();
+	w.close();
     }
 
 
