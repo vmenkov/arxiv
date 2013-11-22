@@ -1,6 +1,7 @@
 #!/bin/csh
 
-#-- Converts JSON files as per David Blei's request (2013-10-11)
+#-- Converts JSON files to space-separated files for use by David
+#-- Blei's team, as per David Blei's request (2013-10-11)
 
 set opt="-Xmx4096m -DOSMOT_CONFIG=."
 
@@ -30,12 +31,14 @@ set outdir=/data/arxiv/blei/usage
 
 foreach d (/data/json/usage) 
 echo "Directory $d"
-set files=`(cd $d; ls 200?/*.json.gz)` 
+set files=`(cd $d; ls 20??/*.json.gz)` 
 
 foreach g ($files)
     set f="$d/$g"
-    set g0=`echo $g|perl -pe 's/\.gz$//'`
-    set h="$outdir/$g0"
+    set g0=`echo $g|perl -pe 's/\.gz$// ; s/\.json$//'`
+
+    set h="$outdir/${g0}.dat"
+    
     date
     echo "Converting file $f to $h"
     time java $opt edu.rutgers.axs.ee4.HistoryClustering blei $f $h

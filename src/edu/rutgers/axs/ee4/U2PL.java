@@ -12,12 +12,19 @@ import edu.rutgers.axs.indexer.*;
 
 
 /** An auxiliary class used when reading in and preprocessing the
-    (user,page) matrix in HistoryClustering. For each user id, we
-    store a vector of pages he's accessed. 
+    coaccess matrix (the matrix of {user,page} pairs) in
+    HistoryClustering. For each user id, we store a vector of pages
+    he's accessed.
+
+    <p>
+    Since the matrices are very big, memory use is of a major concern in 
+    this class, and it is optimized accordingly.
 */
 class U2PL  {
 
-    /** This is meant to be, on average, more memory-efficient than HashSet<Integer>
+    /** This is meant to be, on average, a more memory-efficient way
+	to store a list of integers than HashSet<Integer>. The data 
+	are stored as sorted arrays of int.
      */
     static private class IntStore {
 
@@ -34,7 +41,7 @@ class U2PL  {
 	    store[n++] = q.intValue();
 	}
 
-	/** Resizes the array to specified new  length, sorts values,
+	/** Resizes the array to specified new length, sorts values,
 	    and removes duplicates
 	    @param newLen The desired array length. If 0, it means use 
 	    just as much memory as needed to fit what's there
@@ -63,12 +70,14 @@ class U2PL  {
 	    if (dirty || n!=store.length) clean(n);	    
 	}
 	
+	/** Gets the data out, as an int[] */
 	synchronized int[] getStore() {
 	    clean();
 	    return store;
 	}
     }
 
+    /** For each user, we store a list of pages he's accessed. */
     private HashMap<String, IntStore> map = new HashMap<String, IntStore>();
     
     /** This map is used during the table-building process only: add(), registerPage() */
@@ -90,7 +99,7 @@ class U2PL  {
     final private static FieldSelector fieldSelectorDate = 
 	new OneFieldSelector(ArxivFields.DATE);
 
-    /** Only articles with submission dates in this range are accepted */
+    /** Only articles with submission dates in this range (date1 to date2) are accepted */
     private  Date date1, date2;
     /** 0-based month, 1-based day */
     /*
@@ -109,7 +118,6 @@ class U2PL  {
 	    throw new IllegalArgumentException("Only one of the articleDateFrom  and articleDateTo dates have been provided. You must provide either both, or neither");
 	}
     }
-
 
 
     int ignoreCnt = 0;
@@ -153,7 +161,7 @@ class U2PL  {
 	    }
 	}
 
-
+	// Validate the article ID
 	int docno = Common.find(searcher, aid);
 	if (docno<=0) return false;
 	Document doc = reader.document(docno, fieldSelectorDate);
@@ -210,8 +218,8 @@ class U2PL  {
     /** Removes "low activity" users and papers; converts the rest
 	into a SparseDoubleMatrix2Dx object, for use with SVD.
     */
-    SparseDoubleMatrix2Dx toMatrix() {
-	final int user_thresh=2,  paper_thresh=2;
+    SparseDoubleMatrix2Dx toMatrix(int user_thresh, int paper_thresh) {
+	//	final int user_thresh=2,  paper_thresh=2;
 	
 	long origCnt = 0;
 	final int origMapSize = map.size();
