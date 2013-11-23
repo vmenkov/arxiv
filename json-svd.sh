@@ -34,6 +34,9 @@ date
 # -DarticleDateFrom=20100101 -DarticleDateTo=20120101 : article submission dates
 # -Dk_svd=5 : the number of singular vectors to keep
 # -Dk_kmeans=0 : the number of clusters to create. (0 means setting the number adaptively, based on the set size)
+# -Duser_thresh=2 : users who viewed fewer than this number of pages are dropped
+# -Dpaper_thresh=2 : papers viewed by fewer than this number of (retained) users are dropped
+
 set opt="$baseopt -DusageFrom=20100101 -DusageTo=20130101 -DarticleDateFrom=20100101 -DarticleDateTo=20120101 -Dk_svd=5 -Dk_kmeans=0"
 
 
