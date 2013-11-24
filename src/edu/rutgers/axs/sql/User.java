@@ -32,7 +32,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 
    
     //@Id 
-	@Display(editable=false, order=1.1) 	@Column(length=15) 
+	@Display(editable=false, order=1.2) 	@Column(length=15) 
 	String user_name; 
     /** user_name is used as the primary key and is not editable.
      */
@@ -265,13 +265,13 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     }
 
     @Column(nullable=true,length=6) @Enumerated(EnumType.STRING) 
-	@Display(editable=false, order=11.1) 
+	@Display(editable=false, order=11.3) 
     private User.Day day;
     
     public User.Day getDay() { return day; }
     void setDay(User.Day x) { day = x; }
 	
-    @Display(editable=false, order=11.2) 
+    @Display(editable=false, order=11.4) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
        Date dayStart;
     Date getDayStart() { return dayStart; }
@@ -858,8 +858,9 @@ throws Exception
     public boolean ignores(String fieldName) {
 	if (fieldName.equals("days") ||
 	    fieldName.equals("day") ||
-	    fieldName.equals("excludeViewedArticles")) {
-	    return getProgram()!=Program.SET_BASED;
+	    fieldName.equals("excludeViewedArticles")) {	    
+	    return getProgram()!=Program.SET_BASED &&
+		getProgram()!=Program.PPP;
 	} else if  (fieldName.equals("cluster")) {
 	    return !getProgram().needBernoulli();
 	}
