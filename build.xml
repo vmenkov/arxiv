@@ -182,16 +182,16 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 </target>
 
 
-<!-- This target tells Ant how to compile AXS. We set
-target="1.5", to make it easier for people elsewhere to use our
-code. -->
+<!-- This target tells Ant how to compile AXS. We used to have the argument 
+     target="1.5"
+in the javac command, to make it easier for people elsewhere to use our
+code; but not anymore. -->
 <target name="compile" depends="init"
         description="Compile the source" >
   <!-- Compile the java code from ${src} into ${build} -->
   <javac srcdir="${src}" destdir="${build}"
 	 includes="edu/**,org/**"  optimize="on"
 	 debug="on" debuglevel="lines,vars,source"
-	 target="1.5"
 	 includeantruntime="false" >
     <classpath refid="classpath"/>
   </javac>

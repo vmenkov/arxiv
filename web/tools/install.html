@@ -5,6 +5,13 @@
 <body>
 <h1>My.ArXiv server installation notes</h1>
 
+<p>These notes were mostly written in June-July 2013, when I waqs
+migrating the main my.arxiv.org server from cactuar to a server at
+Cornell. The target server was running RedHat Enterprise Linux, and
+therefore the commands are geared to that system. If installing on a
+server running another flavor of Linux (e.g. Ubuntu), you'd be using
+(e.g.) apt-get instead of yum, and some paths my be different.
+
 <h2>Tools</h2>
 
 <p>Tools you need to have on the server.</p>
@@ -19,7 +26,7 @@
 
 <h2>Java libraries</h2>
 
-<p>Important third-party libraries.
+<p>Some important third-party libraries (JAR files) used by my.arxiv's web application or command-line applications are listed here. You can find more details on the JARs we use by perusing build.xml and various shell scripts.
 </p>
 
 <ul>
@@ -27,10 +34,19 @@
 Lucene. The data store.
 
 <li>
-Java Mail. The web application uses it for sending "reset password" messages. Among the crontab-driven scripts, EmailSug uses it, to send recommendation lists to users.
+Java Mail. The web application uses Jav Mail when a user wants to reset his password and a "reset password" needs to be sent. Among the crontab-driven scripts, EmailSug uses Java Mail, to send daily ecommendation lists to users.
 
 <li>
-<A href="http://acs.lbl.gov/software/colt/">Colt</a>. It is a large math library. It is used for singular value deocmposition (SVD) in EE4.
+<A href="http://acs.lbl.gov/software/colt/">Colt</a>. It is a large
+math library. It was used for singular value deocmposition (SVD) in
+EE4. (Update: now it is probably not needed anymore, as I have my own SVD
+code... still there may be an occasional "import" in some Java files
+referring the Colt library).
+
+<li>Xerces, used for parsing XML files.
+
+<li>Various jars that come with Apache Tomcat; they include e.g. Tomcat's implementation of the Servlet and JSP protocols.
+
 
 </ul>
 
@@ -39,7 +55,7 @@ Java Mail. The web application uses it for sending "reset password" messages. Am
 <p></P>
 
 <ul>
-<li>JQuery, part of the web site.
+<li>JQuery (a JavaScript library), part of the web site. It is used in all those "Dynamic HTML" things we have around the site, e.g. when users click on article rating buttons.
 </ul>
 
 <h3>Server migration notes</h3>
@@ -47,7 +63,7 @@ Java Mail. The web application uses it for sending "reset password" messages. Am
 <p>How do we move My.ArXiv - the web server, data base server, and all, to a new host?
 
 <p>
-Below, <tt>$ARXIV</tt> stands for the main arxiv directory (such as <tt>~vmenkov/arxiv</tt>).
+Below, <tt>$ARXIV</tt> stands for the main arxiv directory (such as <tt>~vmenkov/arxiv</tt> on cactuar).
 
 <h4>Standard software</h4>
 
@@ -103,10 +119,9 @@ http://openjdk.java.net/install/
 https://access.redhat.com/site/documentation/en-US/JBoss_Enterprise_SOA_Platform/4.3/html/Getting_Started_Guide/appe-install_jdk_rhel.html 
 </ol>
 
-<h4>Install Mysql server (on RHEL)</h4>
+<h4><a name="mysql.install">Install Mysql server (on RHEL)</a></h4>
 <p>
-Install mysql, as per
-http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html
+Install mysql, as per the instructions at <a href="http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html">http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html</a> . On a RedHat Enterprise host, that would look like this: 
 <pre>
 sudo yum install mysql mysql-server mysql-libs mysql-server
 sudo service mysqld start
@@ -114,12 +129,11 @@ sudo chkconfig --levels 235 mysqld on
 </pre>
 
 <p>
-As per,
-http://docs.oracle.com/cd/E17952_01/refman-5.5-en/mysql-secure-installation.html
+As per <a href="http://docs.oracle.com/cd/E17952_01/refman-5.5-en/mysql-secure-installation.html">http://docs.oracle.com/cd/E17952_01/refman-5.5-en/mysql-secure-installation.html</a>, run
 <pre>
 mysql_secure_installation
 </pre>
-Setting our usual MySQL root password.
+During this process, you will set the  usual MySQL server root password for the new server.
 
 <p>
 (Note: After reboot, mysqld apparently automatically restarts).
@@ -146,7 +160,7 @@ sudo mkdir arXiv-cache arXiv-data arXiv-index arXiv-metadata-cache arXiv-text
 
 <ul>
 <li>
-Copy the entire $ARXIV/arXiv-index.
+Copy the entire $ARXIV/arXiv-index from the old server (cactuar) to the new server. (Note: it is very desireable that the copying of this directory be done on the same day on which you have exported the arxiv_xs database from the old server. In this way, the article-related information in the MySQL server'd database and in the Lucene server will be in synch).
 
 <li>
 Soft link from /home/SCILSNET/vmenkov to /home/vmenkov (for compatibility with the layout on cactuar)
@@ -154,7 +168,7 @@ Soft link from /home/SCILSNET/vmenkov to /home/vmenkov (for compatibility with t
 </ul>
 
 
-<h4>MySQL</h4>
+<h4><a name="mysql.data">MySQL</a></h4>
 <p>
 Before starting any Java applications, we copy the entire MySQL database from the old host. The export and import process is carried out along the lines of the <a href="http://dev.mysql.com/doc/refman/5.0/en/copying-databases.html">official instructions ("Copying MySQL Databases to Another Machine")</a>, but we only copy the database <tt>arxiv_xs</tt>; we are not trying to copy the <tt>mysql</tt> database, as doing that my hose database logins etc.
 
