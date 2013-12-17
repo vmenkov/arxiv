@@ -10,10 +10,10 @@ import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 
-/** This class lists the default (trivial) transformations for the
-    content of the fields. Methods may be overriden for some fields that
-    need special treatment.
-*/
+/** This is an auxiliary class for processing XML data obtained with
+    ArXiv's OAI2 interface. It lists the default (trivial)
+    transformations for the content of the fields. Methods may be
+    overriden for some fields that need special treatment.  */
 class FieldHandler {
     String convertText(String s) { return s; }
     String convertElement(Element e) throws IOException { 
@@ -24,8 +24,8 @@ class FieldHandler {
 		if (text.length() > 0) text += "; ";
 		text += n.getNodeValue();
 	    } else {
-		throw new IOException("Expected that element '" + e.getNodeName()+ 
-				      "' will only have a TEXT child; found " + n);
+		throw new IOException("Expected element '"+e.getNodeName()+ 
+				      "' to only have a TEXT child; found "+n);
 		}
 	}
 	return text;

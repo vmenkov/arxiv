@@ -17,19 +17,24 @@ import org.xml.sax.SAXException;
 <author><keyname>Balázs</keyname><forenames>C.</forenames></author>
 <author><keyname>Berger</keyname><forenames>E. L.</forenames></author>
 <author><keyname>Nadolsky</keyname><forenames>P.M.</forenames></author>
-<author><keyname>Yuan</keyname><forenames>C. -P.</forenames></author>
+<author><keyname>Yuan</keyname><forenames>C. -P.</forenames>
+<affiliation>IRISA - UBS</affiliation>
+</author>
 </authors>
 */
 class AuthorsHandler extends FieldHandler {
 
-    static XMLtoHash processAuthorTool = new XMLtoHash();
-    static {
+    private XMLtoHash processAuthorTool = new XMLtoHash();
+    AuthorsHandler(boolean doAffiliations) {
 	processAuthorTool.recurse("author");
 	processAuthorTool.add("keyname");
 	processAuthorTool.add("forenames");
 	processAuthorTool.add("suffix");
-	processAuthorTool.ignore("affiliation");
-
+	if (doAffiliations) {
+	    processAuthorTool.add("affiliation");
+	} else {
+	    processAuthorTool.ignore("affiliation");
+	}
     }
 
     String convertElement(Element e) throws IOException { 
@@ -48,6 +53,8 @@ class AuthorsHandler extends FieldHandler {
 	    if (first!=null) s+= first + " ";
 	    if (last!=null) s += last;
 	    if (suffix!=null) s+= ", "+suffix;
+	    String affiliation = map.get("affiliation");
+	    if (affiliation!=null) s+= " (" + affiliation + ")";
 	}
 	return s;
     }

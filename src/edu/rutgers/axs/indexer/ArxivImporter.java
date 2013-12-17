@@ -461,7 +461,7 @@ public class ArxivImporter {
     }
 
     /** Reads the content of a URL into an XML element */
-    private static Element getPage(String urlString ) throws IOException,  org.xml.sax.SAXException {
+    static Element getPage(String urlString ) throws IOException,  org.xml.sax.SAXException {
 	URL url = new URL(urlString);
 
 	HttpURLConnection conn;
@@ -493,7 +493,7 @@ public class ArxivImporter {
 
 http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:0901.4014
     */
-    private static String makeURL(String tok, String from) {
+    static String makeURL(String tok, String from) {
 	String base="http://export.arxiv.org/oai2?verb=ListRecords";
 	if  (tok!=null) {
  	    return base + "&resumptionToken="+tok;
@@ -610,7 +610,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	@return The value of the -Dfrom=YYYY-MM-DD, or its equivalent
 	computed from -Ddays=nnn (as today-days). Null if neither
 	option is supplied.*/
-    private static String getFrom(ParseConfig ht) {
+    static String getFrom(ParseConfig ht) {
 	final String FROM="from", DAYS="days";
 	String from=ht.getOption(FROM, null);
 	if (ht.getOption(DAYS,null)==null) return from;
@@ -732,9 +732,6 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    fw.println(s);
 	}
 	fw.close();
-
     }
-
-
 }
 

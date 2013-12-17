@@ -47,7 +47,7 @@ class XMLtoLucene {
 	String xmlName;
 	/** The name under which we want to store the field in Lucene */
 	String luceneName;
-	Xml2Lucene(String xml,String lu,int  _flags) {
+	Xml2Lucene(String xml,String lu,int _flags) {
 	    xmlName = xml;
 	    luceneName=lu;
 	    flags=_flags;	
@@ -161,7 +161,7 @@ class XMLtoLucene {
 			return s;
 		    }});
 	map.add(ArxivFields.AUTHORS).
-	    setHandler(new AuthorsHandler());
+	    setHandler(new AuthorsHandler(false));
 	map.add(ArxivFields.TITLE);
 	map.add(ArxivFields.COMMENTS);
 	map.add("journal-ref");
