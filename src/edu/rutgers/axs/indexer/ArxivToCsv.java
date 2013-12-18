@@ -51,13 +51,13 @@ public class ArxivToCsv {
 	@param max if max non-negative, then ...; -1 means "all"
 	@param from "YYYY-MM-DD", passed to OAI2 from=... option
      */
-    public void importAll(String tok, int max,  String from, PrintWriter w)  throws IOException,  org.xml.sax.SAXException {
+    public void importAll(String tok, int max,  String from, String until, PrintWriter w)  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;
 
 	try {
 
 	    while( max<0 || pagecnt < max) 	 {
-		String us = ArxivImporter.makeURL( tok, from);
+		String us = ArxivImporter.makeURL( tok, from, until);
 		System.out.println("At "+new Date()+", requesting: " + us);
 		Element e = ArxivImporter.getPage(us);	    
 		tok = parseResponse(e,w);
@@ -65,11 +65,6 @@ public class ArxivToCsv {
 		pagecnt++;
 		System.out.println("done "+pagecnt+" pages, token =  " + tok);
 		if (tok==null || tok.trim().equals("")) break;
-
-		if (pagecnt % 1 == 0) {
-		    System.out.println("At "+new Date()+", re-opening index... ");
-		}
-
 	    }
 
 	} finally {
@@ -77,7 +72,16 @@ public class ArxivToCsv {
     }
 
   /** Parses an OAI-PMH element, and triggers appropriate operations.
-	@return the resumption token
+      
+      <p>The XML element bein parsed is "OAI-PMH". It typically has child 
+      elements "responseDate", "request", and "ListRecords"; it is the latter
+      which contains all the data we need (as a sequence of "record" elements,
+      followed by a "resumptionToken" element).
+
+      <p>In case of an error, an "error" element is found instea of
+      "ListRecords".
+
+      @return the resumption token
     */
     private String parseResponse(Element e, PrintWriter w)  throws IOException {
 	//org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
@@ -89,6 +93,10 @@ public class ArxivToCsv {
 		break;
 	    } else if (n instanceof Element && n.getNodeName().equals("GetRecord")) {
 		getRecordE = ( Element )n;
+		break;
+	    } else if (n instanceof Element && n.getNodeName().equals("error")) {
+		Element err = ( Element )n;
+		System.out.println("Received an error response: " + err);
 		break;
 	    }
 	}
@@ -208,6 +216,7 @@ public class ArxivToCsv {
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
 	String from=ArxivImporter.getFrom(ht); // based on "from" and "days"
+	String until=ArxivImporter.getUntil(ht); // based on "until"
 
 	ArxivToCsv imp =new  ArxivToCsv();
 
@@ -225,8 +234,8 @@ public class ArxivToCsv {
 		    max	=Integer.parseInt(argv[1]);
 		} catch(Exception ex) {}
 	    }
-	    System.out.println("Processing web data, up to "+max + " pages; from=" + from);
-	    imp.importAll(tok, max, from, fw);
+	    System.out.println("Processing web data, up to "+max + " pages; from=" + from +  " until=" + until);
+	    imp.importAll(tok, max, from, until, fw);
 	} else {
 	    System.out.println("Unrecognized command: " + cmd);
 	}

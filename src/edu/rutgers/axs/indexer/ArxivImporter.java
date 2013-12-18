@@ -427,6 +427,7 @@ public class ArxivImporter {
 	//conn.close();
 	System.out.println("got code "+code+", Retry-After="+ra);
 	int interval=-1; // in seconds
+	int padding=5; // pad the interval with so many seconds
 	Date d = null;
 	   
 	try {
@@ -436,7 +437,7 @@ public class ArxivImporter {
 	long msec2=msec1;
 	
 	if (interval>=0) {
-	    msec2=msec1+ 1000 * interval;
+	    msec2=msec1+ 1000 * (interval+padding);
 	} else {
 	    try {
 		SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
@@ -486,20 +487,21 @@ public class ArxivImporter {
 
     /** pulls in all pages */
     public void importAll()  throws IOException,  org.xml.sax.SAXException {
-	importAll(null, -1, true, null);
+	importAll(null, -1, true, null, null);
     }
 
     /** As per http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm
 
 http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:0901.4014
     */
-    static String makeURL(String tok, String from) {
+    static String makeURL(String tok, String from, String until) {
 	String base="http://export.arxiv.org/oai2?verb=ListRecords";
 	if  (tok!=null) {
  	    return base + "&resumptionToken="+tok;
 	}
 	String s = base + "&metadataPrefix=arXiv";
-	if (from !=null) s +=  "&from="+from;
+	if (from  !=null) s += "&from=" +from;
+	if (until !=null) s += "&until="+until;
 	return s;
     }
 
@@ -508,18 +510,17 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	@param max if max non-negative, then ...; -1 means "all"
 	@param from "YYYY-MM-DD", passed to OAI2 from=... option
      */
-    public void importAll(String tok, int max, boolean rewrite, String from)  throws IOException,  org.xml.sax.SAXException {
+    public void importAll(String tok, int max, boolean rewrite, String from, String until)  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;
 
 	IndexWriter writer =  makeWriter(); 
 	// FIXME: is there an easier way?
 	IndexReader reader = IndexReader.open(writer, false);
 
-
 	try {
 
 	    while( max<0 || pagecnt < max) 	 {
-		String us = makeURL( tok, from);
+		String us = makeURL( tok, from, until);
 		System.out.println("At "+new Date()+", requesting: " + us);
 		Element e = getPage(us);	    
 		tok = parseResponse(e, writer, reader, rewrite);
@@ -626,6 +627,12 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	return from;
     }
 
+    static String getUntil(ParseConfig ht) {
+	final String UNTIL="until";
+	String until=ht.getOption(UNTIL, null);
+	return until;
+    }
+
     static boolean  optimize=true;
     static boolean fixCatsOnly = false;
 
@@ -645,6 +652,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	String tok=ht.getOption("token", null);
 	boolean rewrite =ht.getOption("rewrite", true);
 	String from=getFrom(ht); // based on "from" and "days"
+	String until=getUntil(ht); // based on "until"
 	optimize =ht.getOption("optimize", optimize);
 	fixCatsOnly = ht.getOption("fixCatsOnly", false);
 
@@ -665,7 +673,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		} catch(Exception ex) {}
 	    }
 	    System.out.println("Processing web data, up to "+max + " pages; from=" + from);
-	    imp.importAll(tok, max, rewrite, from);
+	    imp.importAll(tok, max, rewrite, from, until);
 	} else if (cmd.equals("allmeta")) {
 	    if (!rewrite) throw new IllegalArgumentException("For a reload from metachache, ought to use -Drewrite=true");
 	    imp.readingMetacache=true;
