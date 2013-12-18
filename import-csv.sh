@@ -16,8 +16,8 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 
-#set opt="-cp ${cp} ${opt} -Drewrite=false"
-set opt="-cp ${cp} ${opt} -Drewrite=false -Doptimize=false -Ddays=7"
+set opt="-cp ${cp} ${opt}"
+#set opt="-cp ${cp} ${opt} -Ddays=7"
 # -Dfrom=2012-01-16
 
 echo "opt=$opt"
