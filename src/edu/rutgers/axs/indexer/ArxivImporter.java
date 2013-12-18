@@ -461,12 +461,30 @@ public class ArxivImporter {
 	return true;
     }
 
+    static Date lastRequestTime = null;
+
     /** Reads the content of a URL into an XML element */
     static Element getPage(String urlString ) throws IOException,  org.xml.sax.SAXException {
 	URL url = new URL(urlString);
 
+	// space requests by at least 21 sec (to avoid the "wait" response)
+	final long necessaryIntervalMsec = 1000 * 21L;
+
 	HttpURLConnection conn;
 	do {
+
+	    Date now = new Date();	    
+	    if (lastRequestTime!=null && 
+		now.getTime()-lastRequestTime.getTime()<necessaryIntervalMsec) {
+		long mustWait = necessaryIntervalMsec - (now.getTime()-lastRequestTime.getTime());
+		try {
+		    System.out.println("sleep "+mustWait+" msec...");    
+		    Thread.sleep(mustWait);
+		} catch( InterruptedException ex) {}
+		now = new Date();
+	    }
+
+	    lastRequestTime = now;
 	    conn = (HttpURLConnection)url.openConnection();  
 	    conn.setFollowRedirects(true) ;
 	    conn.setRequestProperty("User-Agent", "arXiv_xs-Importer/0.1");
