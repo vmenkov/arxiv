@@ -16,7 +16,6 @@ import javax.mail.internet.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.ParseConfig;
 
-
 /** Sends the user's current suggestion list to the user by email.
 
   @author Vladimir Menkov, Ziyu Fan
@@ -24,7 +23,6 @@ import edu.rutgers.axs.ParseConfig;
 
 
 public class EmailSug extends ResultsBase {
-    //public String email;
     /** The name of the user to whom we send email */
     public String uname=null;
 
@@ -205,6 +203,12 @@ public class EmailSug extends ResultsBase {
 	
 	text += "<p>These are some of the papers posted on My.ArXiv within the last " + vs.estimateEffectiveDays() +
 	    " days. The list is ordered based on your My.ArXiv profile and preferences.</p>\n";
+
+	String message = (vs.df==null) ? null : vs.df.getMessage();
+
+	if (message!=null && message.length()>0) {
+	    text += "<p>Note: " + message + "</p>";
+	}
 
 	text += "<p><b>"
 	    + "<a href=" + link + ">" + "Click here to view the most up-to-date recommendations in My.ArXiv." + "</a></b></p>";

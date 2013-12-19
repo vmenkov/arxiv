@@ -667,6 +667,12 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		    Html.a( viewProfileLink(df.getInputFile().getThisFile()), df.getInputFile().getThisFile())+
 		    " to these articles.";
 		s += researcherSpan(q);
+
+		String msg = df.getMessage();
+		if (msg!=null && msg.length()>0) {
+		    s += "<p>Note: " + msg + "</p>";
+		}
+
 	    }
 
 	    String q = "Merge=" + teamDraft;
@@ -740,13 +746,13 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	return s;
     }
 
-    /** This constructor is used only to allow one to view a
-	suggestion list by running a command-line application, without
-	having the web application involved. It produces a similar
-	suggestion list to what would be shown to the specified user
-	in the main page. It is only used for use in command-line
-	applications (for sending email, or for testing), rather than
-	inside the web application.
+    /** A special-purpose constructor which is used to allow one to
+	view a suggestion list by running a command-line application,
+	without having the web application involved. It produces a
+	similar suggestion list to what would be shown to the
+	specified user in the main page. It is only used in
+	command-line applications (for sending email, or for testing),
+	rather than inside the web application.
 
 	@param uname The user for whom we want to view suggestions.
 

@@ -15,7 +15,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.Common;
 
-/** The nightly updater for Thorsten's 3PR (a.k.a. PPP) plan.
+/** The nightly updater for Thorsten's 3PR (a.k.a. PPP) experiment plan.
  */
 public class DailyPPP {
  
@@ -150,6 +150,7 @@ public class DailyPPP {
      */
     private static void makeP3Sug(EntityManager em,  CompactArticleStatsArray casa, IndexSearcher searcher, User u) 
     throws IOException {
+	String msg="";
 	Vector<DataFile> ptr = new  Vector<DataFile>(0);
 
 	// The list (possibly empty) of pages that the user does
@@ -165,6 +166,8 @@ public class DailyPPP {
 	// restricting the scope by category and date,
 	// as per Thorsten 2012-06-18
 	String[] cats = u.getCats().toArray(new String[0]);
+	if (cats.length==0) msg += " User "+u.getUser_name()+" has not chosen any categories of interest. ";
+
 	Date since = Scheduler.chooseSince( em, u);
 
 	int maxlen = 10000;
@@ -173,6 +176,9 @@ public class DailyPPP {
 	
 	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
 	Logging.info("since="+since+", cat search got " +sd.length+ " results");
+	if (sd.length==0) msg += " No matching articles in the specified categories were posted within the specified date range ("+since+ " to " + new Date()+")";
+	else msg += " At least " +sd.length+ " articles in the specified categories were posted within the specified date range ("+since+ " to " + new Date()+")";
+
 	//searcher.close();
 	TjAlgorithm1 algo = new TjAlgorithm1();
 	// rank by TJ Algo 1
@@ -199,6 +205,9 @@ public class DailyPPP {
 	String uname = u.getUser_name();
 		
 	DataFile outputFile=new DataFile(uname, 0, DataFile.Type.PPP_SUGGESTIONS);	    
+	if (msg!=null && msg.length()>0) {
+	    outputFile.setMessage(msg);
+	}
   
 	//	outputFile.setDays(0);
 	if (since!=null) outputFile.setSince(since);
@@ -206,6 +215,7 @@ public class DailyPPP {
 	if (inputFile!=null) {
 	    outputFile.setInputFile(inputFile);
 	}
+
 
 	// is the pairing {(1),(2,3)...} or {(1,2),(3,4),...}?
 	boolean topOrphan = gen.nextBoolean();

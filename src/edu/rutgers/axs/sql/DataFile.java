@@ -113,7 +113,7 @@ import edu.rutgers.axs.ParseConfig;
 	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
 	}
 
-	/** Helps to form data file name for various file types.
+	/** Helps to form the data file name for various file types.
 	   
 	   @return "profile", "linsug1", etc when files are needed;
 	   null on errors
@@ -188,8 +188,6 @@ import edu.rutgers.axs.ParseConfig;
     public boolean getPppTopOrphan() { return pppTopOrphan; }
     public void setPppTopOrphan( boolean x) {pppTopOrphan  = x; }
 
-
-
     /** Has the physical file been deleted? */
     @Basic  @Display(editable=false, order=6.4)    boolean deleted = false;
     public boolean getDeleted() { return deleted; }
@@ -218,8 +216,6 @@ import edu.rutgers.axs.ParseConfig;
     public DataFile getInputFile() { return inputFile; }
     public void setInputFile( DataFile x) { inputFile = x; }
 
-
-
     /** This file's path name, relative to $DATAFILE_DIRECTORY/$user_ */
     @Basic      @Column(length=64) @Display(order=9, editable=false)
 	String thisFile;
@@ -237,6 +233,18 @@ import edu.rutgers.axs.ParseConfig;
     public Vector<ListEntry> getDocs() {
         return docs;
     }
+
+
+  /** An information message that may be associated with the
+      file. This is primarily used to pass additional information
+      (such as an error message) from the file generating process
+      (e.g., a recommender of some kind) to the display procedure.
+  */
+    @Basic  @Column(length=128,nullable=true) @Display(order=11, editable=true)
+	String message;
+    public String getMessage() { return message; }
+    public void setMessage( String x) { message = x; }
+
 
     /** Fills this DataFile's list of ListEntries based on the specified list of
 	ArticleEntries.
