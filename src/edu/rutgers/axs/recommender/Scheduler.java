@@ -218,7 +218,20 @@ public class Scheduler {
 	return createdCnt;
     }
 
-    /** The proper "since" date for suggestion list generation. */
+    /** Determines the starting point (the "since" date) of the date
+	range the for suggestion list generation for a particular
+	user. The date range is choosen according to the following
+	rule: since the point C, when the most recent suggestion list
+	viewed by the user was created, or since H days ago (where H
+	is the user-set time horizon parameter), whichever is
+	earlier. If the user has never viewed a suggestion list in a
+	non-trivial way (meaning, actually looked at any suggested
+	pages), point C is chosen Search.DEFAULT_DAYS ago (which is
+	presently set at 30 days).
+
+	@param u The user for whom we want to find the range.
+	@return The "since" date, i.e. the starting point of the date range.	
+    */
     static Date chooseSince( EntityManager em, User u) {
 	String uname = u.getUser_name();
 	//  Date lastViewed = dateOfLastSeenSugList( em, uname);

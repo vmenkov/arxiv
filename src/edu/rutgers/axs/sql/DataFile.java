@@ -240,7 +240,7 @@ import edu.rutgers.axs.ParseConfig;
       (such as an error message) from the file generating process
       (e.g., a recommender of some kind) to the display procedure.
   */
-    @Basic  @Column(length=128,nullable=true) @Display(order=11, editable=true)
+    @Basic  @Column(length=256,nullable=true) @Display(order=11, editable=true)
 	String message;
     public String getMessage() { return message; }
     public void setMessage( String x) { message = x; }

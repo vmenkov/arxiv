@@ -145,8 +145,16 @@ public class DailyPPP {
     /** Max size of the sugg list to generate */
     private static final int maxDocs=200;
 
-    /** Generates a suggestion list for the specified user, using 3PR (PPP),
-	based on the most recent available 3PR profile.
+    /** Generates a suggestion list for the specified user, using the
+	3PR (PPP) algorithm, based on the most recent available 3PR
+	profile. The process involves:
+	<ul>
+	<li> Looking up the user's categories of interest and appropriate 
+	     date range;
+	<li> Lucene search based on these criteria;
+	<li> Ranking based on TJ's Algorithm 1 (in practice, simply
+	     the dot product with the user profile)
+	</ul>
      */
     private static void makeP3Sug(EntityManager em,  CompactArticleStatsArray casa, IndexSearcher searcher, User u) 
     throws IOException {
@@ -168,6 +176,7 @@ public class DailyPPP {
 	String[] cats = u.getCats().toArray(new String[0]);
 	if (cats.length==0) msg += " User "+u.getUser_name()+" has not chosen any categories of interest. ";
 
+	// Set the appropriate date range
 	Date since = Scheduler.chooseSince( em, u);
 
 	int maxlen = 10000;

@@ -164,7 +164,7 @@ public class  SearchResults {
 
 	@param seed Random number generator seed. The caller can make
 	it a function of the user name and calendar date, to ensure
-	that during same-day page reload the user will see the same
+	that during same-day page reloads the user will see the same
 	list. (Thorsten's suggestion, 2012-06)
 
 	@return A wrapper around the "merged" ScoreDoc array. The

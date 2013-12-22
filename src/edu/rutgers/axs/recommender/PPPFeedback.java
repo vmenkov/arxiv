@@ -13,14 +13,14 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.ArticleEntry;
 
 /** Part of the 3PR (aka PPP) algorithm, as per TJ's Coactive Learning paper,
- * with additional provisions for document promotions and demotions.
+    with additional provisions for document promotions and demotions.
  */
-class PPPFeedback extends  HashMap<String,PPPActionSummary> {	
+class PPPFeedback extends HashMap<String,PPPActionSummary> {	
      private long lastActionId = 0;
      long getLastActionId() { return lastActionId; }
      
 
-/** Analyzes feedback on a particular suggestion list
+     /** Analyzes feedback on a particular suggestion list
 	 @param  sugListId DataFile.getId() for the appropriate sugg list
      */
      PPPFeedback(EntityManager em, User actor, int sugListId) {
@@ -87,15 +87,26 @@ class PPPFeedback extends  HashMap<String,PPPActionSummary> {
 	    return val.booleanValue();
 	}
     }
-    
+
+     static class CoMap extends HashMap<String,Double> { 
+	 synchronized void addCo(String aid, double inc) {
+	     Double z=get(aid);
+	     z = new Double(z==null? inc : inc + z.doubleValue());
+	     put(aid, new Double(z));
+	 }
+     }
+
  
     /** Converts the user feedback summary into a list of coefficients
-     * for a Rocchio-style update
+	for a Rocchio-style update.
 
-	@param entries The original suggestion list
+	@param entries0 The original suggestion list
 	@param actionSummary Summary of user feedback on that list
      */
     HashMap<String,Double> getRocchioUpdateCoeff( boolean topOrphan, final Vector<ArticleEntry> entries0) {
+
+	CoMap updateCo = new CoMap();
+
 	Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 	for(ArticleEntry ae: entries0) { entries.add(ae); }
 	// 1. feedback from VIEWED
@@ -106,6 +117,13 @@ class PPPFeedback extends  HashMap<String,PPPActionSummary> {
 		// swap
 		entries.set(j, entries0.elementAt(j+1));
 		entries.set(j+1, entries0.elementAt(j));
+	    } else if (wasViewedOrPromoted(aid1)&& !wasViewedOrPromoted(aid2)){
+		// positive feedback, as proposed by TJ 2013-06-26
+		// Here, we can't work via reordering, so we
+		// compute additions immediately
+		double inc = UserProfile.getGamma(j)-UserProfile.getGamma(j+1);
+		updateCo.addCo( aid1, inc);
+		updateCo.addCo( aid2, inc);
 	    }
 	}
 	// 2. promotions
@@ -157,12 +175,13 @@ class PPPFeedback extends  HashMap<String,PPPActionSummary> {
 	    }
 	    aid2newrank.put(aid, new Integer(j));	    
 	}	
-	HashMap<String,Double> updateCo = new HashMap<String,Double>();
+
  	for(int j=0; j<entries0.size(); j++) {
 	    String aid = entries0.elementAt(j).id;
 	    int jNew = aid2newrank.get(aid).intValue();
 	    if (jNew != j) {
-		updateCo.put(aid, new Double(UserProfile.getGamma(jNew) -UserProfile.getGamma(j)));
+		double inc =UserProfile.getGamma(jNew)-UserProfile.getGamma(j);
+		updateCo.addCo( aid, inc);
 	    }
 	}
 	return updateCo;
