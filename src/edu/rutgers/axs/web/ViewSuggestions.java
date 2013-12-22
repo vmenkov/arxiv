@@ -739,9 +739,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	} else if (actor.catCnt()==0) {
 	    s +=		"<p>" +
 		"It appears that you have not specified any subject categories of interest. Please <a href=\"personal/editUserFormSelf.jsp\">modify your user profile</a>, adding some categories!</p>\n";
+	} else if (df!=null && df.getMessage()!=null &&df.getMessage().length()>0 ) {
+	    s += 	"<p>Note: " +  df.getMessage() + "</p>\n";
 	} else {
 	    s +=		"<p>" +
-		"Perhaps you need to wait for a while for a recommendation list to be generated, and then reload this page.";
+		"Perhaps you need to wait for a while for a recommendation list to be generated, and then reload this page.</p>\n";
 	}
 	return s;
     }
