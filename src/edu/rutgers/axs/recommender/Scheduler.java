@@ -220,14 +220,16 @@ public class Scheduler {
 
     /** Determines the starting point (the "since" date) of the date
 	range the for suggestion list generation for a particular
-	user. The date range is choosen according to the following
+	user. 
+	
+	<p>
+	The date range is choosen according to the following
 	rule: since the point C, when the most recent suggestion list
 	viewed by the user was created, or since H days ago (where H
 	is the user-set time horizon parameter), whichever is
 	earlier. If the user has never viewed a suggestion list in a
-	non-trivial way (meaning, actually looked at any suggested
-	pages), point C is chosen Search.DEFAULT_DAYS ago (which is
-	presently set at 30 days).
+	non-trivial way, the date range is set to be
+	Search.DEFAULT_DAYS long (which is presently set at 30 days).
 
 	@param u The user for whom we want to find the range.
 	@return The "since" date, i.e. the starting point of the date range.	

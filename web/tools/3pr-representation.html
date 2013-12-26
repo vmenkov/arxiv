@@ -1,0 +1,147 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Document and user profile representation for 3PR: original version</title>
+</head>
+<body>
+
+<h1>Document and user profile representation for 3PR: original version</h1>
+
+<p align=center><em>Updated: 2013-12-24</em></p>
+
+<p>This is an overview of the document representation and related
+calculations currently used for the 3PR scheme. This approach
+originates from the approach that was used for the SET_BASED scheme
+since the late 2011, but is much simpler, since the utility function
+used with 3PR has no non-linear part.
+
+<p><strong>Notation:</strong>
+<br>F : field (F='title', 'abstract', 'authors', 'article')
+<br>d : document (represented as ArXiv document aid)
+<br>t : term (word), e.g. 'rabbit'
+
+<p>
+<strong>Raw term frequency</strong> (an integer value):
+<br>
+f(t,F,d) = the number of occurrences of term t in field F of document d
+
+<p>
+<strong>Field boost</strong>, boost(F,d) : a value associated with the
+field F of document d. The field boosts have been computed
+individually for all fields of each document according to a certain
+heuristic, intended to give higher values to more important but short
+fields (such as titles). They vary both between fields and between
+documents. For example if article d1 has 1000 authors (some papers
+from CERN do!), and d2 has 2 authors, then
+<center>
+	 boost('authors',d1) <	 boost('authors',d2).
+</center>
+
+<p>
+<strong>IDF</strong> 
+<center>
+idf(t) =  1+ log(numdocs* nf / (1 + totalDF(t))), 
+</center>
+where 
+<br>
+&nbsp;  numdocs = size of the collection (around 900,000),
+<br>  
+&nbsp;   nf = 4 = number of fields
+<br>
+&nbsp;   totaldDF(t) = the number of pair {d,F} where term t is found in field F of document d. (Thus,  0 < totalDF(t) <= numdocs* nf ).
+<br>
+(This is a somewhat unorthodox adaptation of the traditional IDF concept;
+this particular design was motivated mainly by the efficiency of operation
+on our index).
+
+<p>
+A <strong>"flattened document"</strong> is a linear combination of a document's
+field. It's represented as a vector <strong>c</strong>(d) in term space, with elements
+<center>
+c(t,d) = &Sigma;<sub>F</sub> (   f(t,F,d) * boost(F,d) )
+</center>
+
+<p>Conceptually, all computations are based on sqrt(idf)-weighted and normalized document vectors 
+<strong>ĉ</strong>(d)/norm(d), where
+<center>
+ĉ(t,d) = c(t,d) * sqrt(idf(t)) =
+&Sigma;<sub>F</sub> (   f(t,F,d) * boost(F,d) ) * sqrt(idf(t))
+</center>
+and the <strong>document norm</strong> norm(d) is a Euclidean norm of <strong>ĉ</strong>(d) (i.e., the norm of the document vector in idf-weighted space):
+<center>
+norm(d) = |<strong>ĉ</strong>(d)| = sqrt( &Sigma;<sub>t</sub>  ( c(t,d)<sup>2</sup> * idf(t) ) )
+</center>
+
+<p>
+The  <strong>user profile</strong>, <strong>w&#x0302;</strong>, is computed as a linear combination of normalized documents (a bit like a Rocchio classifier):
+<center>
+<strong>w&#x0302;</strong> = &Sigma;<sub>{d in D}</sub> ( &rho;(d) * <strong>ĉ</strong>(d) / norm(d))
+</center>
+i.e.
+<center>
+w&#x0302;(t) = &Sigma;<sub>{d in D}</sub>( &rho;(d) * &Sigma;<sub>F</sub> f(t,F,d) * boost(t,d) *  sqrt(idf(t)) / norm(d))
+</center>
+
+<p>
+Here, D is the set of documents on which we have explicit or implicit user feedback. &rho;(d) is the coefficient controlling the total contribution
+of document d to the user profile <strong>w&#x0302;</strong>. It
+comes from the daily updates, as set forth in 3PR
+specifications. E.g., if a day's feedback involves comparative value
+for the user of the documents in the <em>j</em>-th and
+(<em>j</em>+1)-th positions on the suggestion list, then this day's
+update's contributions to the &rho;(d) for the two documents involved
+are &pm;(&gamma;(j) - &gamma;(j+1)).
+
+<p>
+For computation purposes, we  factor w&#x0302;(t) as
+<center>
+w&#x0302;(t) = w(t) * sqrt(idf(t)),
+</center>
+and actually compute and store <strong>w</strong> rather
+than <strong>w&#x0302;</strong>.
+
+<p><strong>Ranking documents.</strong> Since the utility function used
+in 3PR is linear, the problem of finding the optimal
+ordering <em>y</em> for a given user profile
+vector <strong>w&#x0302;</strong> is reduced to that of ranking
+normalized document vectors <strong>ĉ</strong>(d)/norm(d) with respect
+to their dot product with  <strong>w&#x0302;</strong>. 
+The score of the document d is
+<center>
+Score(d,w) = ( <strong>ĉ</strong>(d)  / norm(d)) <strong>&#x00B7; w&#x0302;</strong> =
+   &Sigma;<sub>t</sub>  ( c(t,d) * w(t,d) * idf(t) ) / norm(d)
+</center>
+
+
+<h3>Notes on the practical implementation</h3>
+
+<ul>
+<li>Raw frequencies are stored in the Lucene data store
+<li>totalDF(t) is easily obtained from Lucene (this is why we have the peculiar formula for IDF)
+<li>c(t,d) is computed on-demand by ArticleAnalyzer.getCoef(), by summing the numbers for individual fields retrived from the Lucene data store
+<li>The boost values, and document norms are usually computed just once (when a document is first added to the collection), and are stored in the MySQL database for later use. This technique is not strictly correct, since it does not take into account a gradual change of idf values as more documents are added to the collection.
+</ul>
+
+We don't actually compute sqrt(idf). Instead:
+<ul>
+<li>For the user profile, we store not <strong>w&#x0302;</strong>, but
+a similar vector <strong>w</strong> which does not have sqrt(idf) factored in;
+<li>When documents are scored for the creation of the new suggestion
+list, components of c(t,d)/norm(d) are obtained (using the raw freqency values
+from the Lucene data store, and the boost and norm values from the
+MySQL database), and then the sum
+<center>
+Score(d,w) =   &Sigma;<sub>t</sub>  ( (c(t,d)/norm(d)) * w(t,d) * idf(t) )
+</center>
+is computed.
+</ul>
+
+<p>In reality, the document-ranking code and the user-profile-updating
+still maintains all the complicated parts for dealing with the
+non-linear scores, and the "non-linear" components of the user profile
+vector and document representation vector, as those were outlined in
+the original SET_BASED paper in 2011. However, all those non-linear
+components are kept as zeros, and thus don't affect anything.
+
+</body>
+</html>

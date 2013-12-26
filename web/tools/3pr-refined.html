@@ -1,0 +1,188 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Document and user profile representation for 3PR: "refined"</title>
+</head>
+<body>
+
+<p>This is a proposal for handling the "refined" representation for 3PR.
+
+<h2>Document and user profile representation for 3PR: "refined"</h2>
+
+<p align=center><em>Updated: 2013-12-24</em></p>
+
+<p>This approach is to replace
+the <a href="3pr-representation.html">original representation</a>. The
+main difference is that terms are now field-specific; that is, the
+same word (say, "rabbit") appearing in different fields (title vs abstract vs author name vs the article body) is treated as a different term.
+
+<p><strong>Notation:</strong>
+<br>F : field (F='title', 'abstract', 'authors', 'article')
+<br>d : document (represented as ArXiv document aid)
+<br>t : a word from the text, e.g. 'rabbit'
+<br>T: a fully qualified term, i.e. a (F,t) tuple, e.g. ("abstract", "rabbit").
+
+<p>
+<strong>Raw term frequency</strong> (an integer value):
+<br>
+f(T,d) = f(t,F,d) = the number of occurrences of term T=(t,F) in document d. This is the same as the number occurrences of word t  in field F of document d
+
+<!--
+<p>
+<strong>Field boost</strong>, boost(F,d) : a value associated with the
+field F of document d. The field boosts have been computed
+individually for all fields of each document according to a certain
+heuristic, intended to give higher values to more important but short
+fields (such as titles). They vary both between fields and between
+documents. For example if article d1 has 1000 authors (some papers
+from CERN do!), and d2 has 2 authors, then
+<center>
+	 boost('authors',d1) <	 boost('authors',d2).
+</center>
+-->
+
+<p>
+<strong>IDF</strong> is now based on qualified terms T=(F,t):
+<center>
+idf(T) =  1+ log(numdocs / (1 + df(T))), 
+</center>
+where 
+<br>
+&nbsp;  numdocs = size of the collection (around 900,000),
+<br>
+&nbsp;   df(T) = the number of document pair {d,F} where term t is found in field F of document d. (Thus,  0 < totalDF(t) <= numdocs* nf ).
+<br>
+
+<p>Conceptually, all computations are based on sqrt(idf)-weighted and normalized document vectors 
+<strong>ĉ</strong>(d)/norm(d), where 
+<center>
+ĉ(T,d) = f(T,d) * sqrt(idf(T))
+</center>
+and the <strong>document norm</strong> norm(d) is a Euclidean norm of <strong>ĉ</strong>(d) (i.e., the norm of the document vector in idf-weighted space):
+<center>
+norm(d) = |<strong>ĉ</strong>(d)| = sqrt( &Sigma;<sub>T</sub>  ( f(T,d)<sup>2</sup> * idf(T) ) )
+</center>
+
+<p>
+The  <strong>user profile</strong>, <strong>w&#x0302;</strong>, is computed as a linear combination of normalized document vectors (a bit like a Rocchio classifier):
+<center>
+<strong>w&#x0302;</strong> = &Sigma;<sub>{d in D}</sub>( (&rho;(d)/norm(d)) * <strong>ĉ</strong>(d))
+</center>
+i.e.
+<center>
+w&#x0302;(T) = &Sigma;<sub>{d in D}</sub>( &rho;(d) * f(T,d) * sqrt(idf(T)) / norm(d))
+</center>
+
+<p>
+Here, D is the set of documents on which we have explicit or implicit user feedback. &rho;(d) is the coefficient controlling the total contribution
+of document d to the user profile <strong>w&#x0302;</strong>. It
+comes from the daily updates, as set forth in 3PR
+specifications. E.g., if a day's feedback involves comparative value
+for the user of the documents in the <em>j</em>-th and
+(<em>j</em>+1)-th positions on the suggestion list, then this day's
+update's contributions to the &rho;(d) for the two documents involved
+are &pm;(&gamma;(j) - &gamma;(j+1)).
+
+<p>
+For computation purposes, we  factor w&#x0302;(t) as
+<center>
+w&#x0302;(T) = w(T) * sqrt(idf(T)),
+</center>
+and actually compute and store w rather than  w&#x0302;.
+
+<p><strong>Ranking documents.</strong> Since the utility function used in 3PR is
+linear, the problem of finding the optimal ordering <em>y</em> for a
+given user profile vector <strong>w&#x0302;</strong> is reduced to
+that of ranking document vectors <strong>ĉ</strong>(d) with respect to
+their dot product with the user profile
+vector <strong>w&#x0302;</strong>. The score of the document d is
+<center>
+Score(d,w) =  (<strong>ĉ</strong>(d)/norm(d)) <strong>&#x00B7; w&#x0302;</strong> =
+   &Sigma;<sub>T</sub>  ( f(T,d) * w(T,d) * idf(T) ) / norm(d)
+</center>
+
+
+<h3>Notes on the practical implementation</h3>
+
+<ul>
+<li>Raw frequencies are stored in the Lucene data store
+<li>DF(T) is easily obtained from Lucene 
+<li>The document norms are usually computed just once (when a document is first added to the collection), and are stored in the MySQL database for later use. This technique is not strictly correct, since it does not take into account a gradual change of idf values as more documents are added to the collection.
+</ul>
+
+We don't actually compute sqrt(idf). Instead:
+<ul>
+<li>For the user profile, we store not <strong>w&#x0302;</strong>, but
+a similar vector <strong>w</strong> which does not have sqrt(idf) factored in;
+
+<li>When documents are scored for the creation of the new suggestion
+list, the raw freqency values f(T,d) are retrived from the Lucene data
+store, and the norm values from the MySQL database, and then the sum
+
+<center>
+Score(d,w) =   &Sigma;<sub>T</sub>  ( f(T,d) * w(T,d) * idf(T) )
+</center>
+is computed.
+</ul>
+
+<p>Until now, we have been pulling along all the complicated parts for
+dealing with the non-linear scores, and the "non-linear" components of
+the user profile vector and document representation vector, as those
+were outlined in the original SET_BASED paper in 2011. These parts
+have been maintained even though all those non-linear components have
+been kept as zeros, since the introduction of 3PR, with its linear
+utility function. Now, I think, it's high time we drop those
+non-linear parts from our computations! That certainly will make the
+retroactive computation of the user profiles a lot easier (see below).
+
+<h2>Re-generating user profiles</h2>
+
+<p>
+The user profiles for the users currently enrolled in the PPP (3PR)
+experiment plan have a complicated history. They had been originally
+created as SET_BASED profiles, with a non-linear parts and the user
+profile updates as per Throsten's original "two-pager" paper. At the
+end of 2012, we have converted those profiles to the 3PR experiment
+plan, essentially disregarding the non-linear part, but preserving the
+linear part as it was.
+
+<p>Now when we switch to a very different representation of the
+underlying documents, simply "inheriting" the user profiles would make
+no sense.  Now, the plan is to "re-generate" the user profiles based
+on <em>all</em> eligible user actions from each user's entire history,
+under the following rules:
+
+<ul>
+<li>Only look at user's actions on "eligible" presented lists. Those
+include suggestion lists presented to the user by the SET_BASED or 3PR
+recommendation systems on its "Learning" days (not on "evaluation" days).
+
+<li>If the presented list came from a 3PR recommender, use its
+original division into pairs (i.e., "A (B C) (D E) ..." or "(A B) (C
+D) (E F) ..." as the case actually was. 
+
+<li>With older presented lists, generated by the original
+SET_BASED algoriuthm, divide them into pairs as follows:  "(A B) (C
+D) (E F) ...".
+
+<li>Once we have the set of user's actions on a particular presented
+list, interpret that more or less as we do in the current 3PR approach:
+<ul> 
+<li>The "swap" or "reverse swap" updates when the user views only one article in a pair - A or B in the pair (A B).
+<li>"Absolute promotion" to the top of the entire suggestion list (top of the first page) when the the user provides an explicit positive judgment for an article (clicks on a "positive" rating button, or copies/moves the article into his folder). All articles below the "absolutely promoted" article are demoted by one position. 
+<li>"Absolute demotion", to the top of the current <em>page</em> of the suggestion list (i.e., up to 10 positions down) when the user provides explicit negative feedback (the "Don't show again" button). The rest of the suggested articles on the page are moved up by one position.
+</ul>
+In all of these updates, all that we actually need to compute are the Rocchio coefficients &rho;(d), rather than the entire user profil vectors <strong>w</strong>.
+
+<li>After the above has been done for the entire user history, and the
+cumulative Rocchio coefficients have been computed for all pages that
+have explicitly or implicitly appeared in the user's interaction
+history, we can compute the user profile as 
+<center>
+<strong>w&#x0302;</strong> = &Sigma;<sub>{d in D}</sub>( (&rho;(d)/norm(d)) * <strong>ĉ</strong>(d))
+</center>
+</ul>
+
+</body>
+
+</html>

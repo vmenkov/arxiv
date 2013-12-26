@@ -61,6 +61,8 @@
 
 <li><A href="svd.html">SVD + k-Means clustering</a>
 
+<li><a href="3pr-representation.html">Document representation for 3PR</a>
+
 <!--
 
 <li><A href="manual.html">User's Guide</a> - for interviewers and data researchers
