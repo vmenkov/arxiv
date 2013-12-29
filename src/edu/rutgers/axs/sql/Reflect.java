@@ -10,6 +10,7 @@ import java.lang.reflect.*;
 /** A bunch of methods to figure what fields a class has, and how to
  * print them out in a more or less sensible way.
  */
+@SuppressWarnings("unchecked")
 public class Reflect {
 
     public static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

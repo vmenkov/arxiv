@@ -12,6 +12,7 @@ import javax.persistence.*;
 
 /** A tool for modifying named fields of an object
  */
+@SuppressWarnings("unchecked")
 public class Edit {
 
     /** Sets certain fields of the specified object to the values sent

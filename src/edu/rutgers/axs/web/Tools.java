@@ -16,6 +16,7 @@ import edu.rutgers.axs.sql.*;
     components, and processing requests sent by the web browser when
     those forms are filled
  */
+@SuppressWarnings("unchecked")
 public class Tools {
 
     final static String NONE = "none";

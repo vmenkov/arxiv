@@ -13,7 +13,7 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 
-
+@SuppressWarnings("unchecked")
 public class ListUsers extends ResultsBase {
 
     public Vector<User> list = new Vector<User>();

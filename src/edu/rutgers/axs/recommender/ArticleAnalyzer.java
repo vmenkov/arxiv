@@ -175,15 +175,16 @@ public class ArticleAnalyzer {
 	    TermFreqVector tfv= tfvs[j]=reader.getTermFreqVector(docno, name);
 	    Profiler.profiler.pop(Profiler.Code.AA_getTVF);
 	    if (tfv==null) continue;
-
+	    
 	    int[] freqs=tfv.getTermFrequencies();
 	    String[] terms=tfv.getTerms();	    
 	    for(int i=0; i<terms.length; i++) {	
 		Profiler.profiler.push(Profiler.Code.AA_df);
 		int df = totalDF(terms[i]);
 		Profiler.profiler.pop(Profiler.Code.AA_df);
-		if (df < minDf || UserProfile.isUseless(terms[i])) {
-		    continue; // skip nonce-words and stop words
+		Term term = new Term(name, terms[i]);
+		if (df < minDf || UserProfile.isUseless(term)) {
+		    continue; // skip very rare words, non-words, and stop words
 		}
 		// create a dummy entry for each real word
 		h.put(terms[i],zero);

@@ -86,42 +86,31 @@ public class UserProfile {
 	}
     }
 
+    //    public static boolean isUseless(String t) {}
 
 
     /** Is this term to be excluded from the user profile?
      */
-    public static boolean isUseless(String t) {
-	if (t.length() <= 2) return true;
+    public static boolean isUseless(Term term) {
+	String t = term.text();
+	final int L = term.field().equals(ArxivFields.AUTHORS) ? 1 : 2;
+	if (t.length() <= L) return true;
 	if (Character.isDigit( t.charAt(0))) return true;
 	if (stoplist!=null && stoplist.contains(t)) return true;
 
 	// Presently only allow words starting with an English letter,
-	// and including only alphanumeric letters and dots.
+	// and including only alphanumeric letters, apostrophes and dots.
 	if (!Character.isJavaIdentifierStart(t.charAt(0))) return true;
 	for(int i=1; i<t.length(); i++) {
 	    char c= t.charAt(i);
-	    if (!Character.isJavaIdentifierPart(c) &&
-		c!='.') return true;
+	    if (!Character.isJavaIdentifierPart(c) && c!='.' && c!='\'') return true;
 	}
 
 	return false;
     }
 
 
-    /** This is not used anymore, as useless terms are removed earlier on. */
-    private void purgeUselessTerms() {
-	Set<String> keys = hq.keySet();
-	for( Iterator<String> it=keys.iterator(); it.hasNext(); ) {
-	    String t = it.next();
-	    // removal from the key set is supposed to remove the element
-	    // the underlying HashMap, as per the API
-	    if (isUseless(t)) {
-		it.remove();
-	    }
-	}
-    }
-
-
+  
     /** Discount factor for lower-ranking docs in constructing user profiles.
 	@param i Page rank, 0-based*/
     static double getGamma(int i) {
@@ -189,7 +178,6 @@ public class UserProfile {
 	}
 	int size0 = hq.size();
 	
-	//purgeUselessTerms();
 	if (TjAlgorithm1.approach2) {
 	    computeSqrt();
 	}

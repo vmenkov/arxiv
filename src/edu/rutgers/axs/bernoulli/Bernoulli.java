@@ -127,7 +127,8 @@ public class Bernoulli {
 	String[] terms=tfv.getTerms();	    
 	double sum = 0;
 	for(int i=0; i<terms.length; i++) {
-	    if (UserProfile.isUseless(terms[i])) continue;
+	    Term term = new Term(field, terms[i]);	
+	    if (UserProfile.isUseless(term)) continue;
 	    sum += freqs[i] *  freqs[i] * analyzer.idf(terms[i]);
 	}
 	return Math.sqrt(sum);

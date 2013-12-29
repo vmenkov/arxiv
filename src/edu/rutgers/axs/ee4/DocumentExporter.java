@@ -99,13 +99,13 @@ class DocumentExporter {
 	    ignorable; 0 otherwise.
 	 */
 	synchronized int get1(String name, String word) throws IOException {
+	    Term term = new Term(name, word);
 	    String key = name + ":" + word;
 	    if (name==ArxivFields.CATEGORY) return get0(name, word);
 	    Integer has = map.get(key);
 	    if (has!=null) return has.intValue();
-	    if (UserProfile.isUseless(word) ||
+	    if (UserProfile.isUseless(term) ||
 		moreStopWords.contains(key)) return 0;
-	    Term term = new Term(name, word);
 	    int df = reader.docFreq(term);
 	    if (df > MAXDF) {
 		moreStopWords.add(key);
@@ -193,9 +193,9 @@ class DocumentExporter {
 	String key = name + ":" + word;
 	if (name==ArxivFields.CATEGORY ||
 	    dic.contains(key)) return false;
-	if (UserProfile.isUseless(word) ||
-	    moreStopWords.contains(key)) return true;
 	Term term = new Term(name, word);
+	if (UserProfile.isUseless(term) ||
+	    moreStopWords.contains(key)) return true;
     	int df = reader.docFreq(term);
 	if (df > MAXDF) {
 	    moreStopWords.add(key);

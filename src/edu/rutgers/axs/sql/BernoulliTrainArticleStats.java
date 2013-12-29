@@ -80,6 +80,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 
   /** Find the matching record.
      @return The ArticleStats object with  the matching name, or null if none is found */
+@SuppressWarnings("unchecked")
     public static BernoulliTrainArticleStats findByAidAndCluster( EntityManager em, String _aid, int _cluster) {
 	Query q = em.createQuery("select m from BernoulliTrainArticleStats m where m.aid=:a and m.cluster=:c");
 	q.setParameter("a", _aid);
@@ -92,7 +93,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }    
 
-
+@SuppressWarnings("unchecked")
     public static List<BernoulliTrainArticleStats> findAllByCluster( EntityManager em, int _cluster) {
 	Query q = em.createQuery("select m from BernoulliTrainArticleStats m where m.cluster=:c");
 	q.setParameter("c", _cluster);

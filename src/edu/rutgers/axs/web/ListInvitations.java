@@ -10,6 +10,7 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 
+@SuppressWarnings("unchecked")
 public class ListInvitations extends ResultsBase {
 
     public Vector<Invitation> list = new Vector<Invitation>();

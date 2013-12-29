@@ -13,6 +13,7 @@ import edu.rutgers.axs.sql.*;
 
 /** Retrieves an object such as a historical presented list
  */
+@SuppressWarnings("unchecked")
 public class ViewObject extends ResultsBase {
      
     public OurTable li=null;

@@ -17,6 +17,7 @@ import javax.persistence.*;
  * members of a specified class. The class must have a
  * system-assigned integer id. 
  */
+@SuppressWarnings("unchecked")
 public class EntryFormTag extends TagSupport {
 
     static final String ID="id";
