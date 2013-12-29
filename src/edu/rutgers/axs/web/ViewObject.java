@@ -40,7 +40,7 @@ public class ViewObject extends ResultsBase {
 	    }
 
 	    if (listId > 0) {
-		li = (OurTable)em.find(c, listId);
+		li = (OurTable)em.find((Class<? extends OurTable>)c, listId);
 		if (li==null)  throw new WebException("No object of the type "+c+
 						  " with id=" + listId + " has been found");
 	    } else if (c.equals(User.class)) {

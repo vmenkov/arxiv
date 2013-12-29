@@ -3,6 +3,7 @@ package edu.rutgers.axs.recommender;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
+import org.apache.commons.lang.mutable.*;
 
 import java.io.*;
 import java.util.*;
@@ -117,7 +118,7 @@ public class DailyPPP {
 	    boolean topOrphan = df.getPppTopOrphan();
 	    File f = df.getFile();
 	    Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
-	    HashMap<String,Double> updateCo = actionSummary.getRocchioUpdateCoeff(topOrphan, entries);
+	    HashMap<String,MutableDouble> updateCo = actionSummary.getRocchioUpdateCoeff(topOrphan, entries);
 	    System.out.println("The update will be a linear combination of " + updateCo.size() + " documents:");
 	    for(String aid: updateCo.keySet()) {
 		System.out.println("w["+aid + "]=" +  updateCo.get(aid));

@@ -8,63 +8,90 @@ import javax.persistence.*;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
+import org.apache.commons.lang.mutable.*;
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.ArticleEntry;
 
 /** Part of the 3PR (aka PPP) algorithm, as per TJ's Coactive Learning paper,
     with additional provisions for document promotions and demotions.
+
+    <p> A PPPFeedback instance is a hash map which stores, for each
+    relevant article ID, a PPPActionSummary object that contains the
+    summary of relevant user actions on the article in question.
  */
 class PPPFeedback extends HashMap<String,PPPActionSummary> {	
-     private long lastActionId = 0;
-     long getLastActionId() { return lastActionId; }
+    final int sugListId;
+    private long lastActionId = 0;
+    long getLastActionId() { return lastActionId; }
      
+    /** Creates an object that describes a user's feedback on a
+	particular suggestion list. A valid  PPPFeedback is always created
+	by this constructor, but if the user did not carry out any
+	"useful" actions on the particular suggestion list, the 
+	produced PPPFeedback will be an empty hash map.
 
-     /** Analyzes feedback on a particular suggestion list
-	 @param  sugListId DataFile.getId() for the appropriate sugg list
+	@param actor The user whose actions we study
+	@param  sugListId DataFile.getId() for the appropriate sugg list
+    */
+    PPPFeedback(EntityManager em, User actor, int _sugListId) {
+	super();
+	sugListId =  _sugListId;
+	User.ActionListTable alTable = new User.ActionListTable();
+	
+	Set<Action> actions = actor.getActions();
+	AcceptMap plid2accept= new AcceptMap(sugListId);
+	for(Action a: actions) {
+	    lastActionId = Math.max( a.getId(), lastActionId);
+	    String aid = a.getAid();
+	    if (aid==null) continue; // skip PREV_PAGE etc
+	    if (!plid2accept.accept(em, a))  continue; // wrong sug list
+	    alTable.add(aid,a);
+	}
+	fillMap(alTable);
+    }
+
+    private PPPFeedback(int _sugListId,User.ActionListTable alTable ) {
+	super();
+	sugListId =  _sugListId;
+	fillMap(alTable);
+	lastActionId = alTable.getLastActionId();
+    }
+ 
+    private void fillMap(User.ActionListTable alTable) {
+ 	for(String aid: alTable.keySet()) {
+	    PPPActionSummary q = PPPActionSummary.summarize(alTable.get(aid));
+	    if (q==null) {
+		Logging.warning("No useful actions found for page " + aid);
+	    } else {
+		put( aid, q);
+	    }
+	}
+    }
+   
+    boolean wasViewed(String aid) {
+	PPPActionSummary q = get(aid);
+	return q!=null && q==PPPActionSummary.VIEWED;
+    }
+    boolean wasViewedOrPromoted(String aid) {
+	PPPActionSummary q = get(aid);
+	return q!=null && (q==PPPActionSummary.VIEWED || q==PPPActionSummary.PROMOTED);
+    }
+    boolean wasPromoted(String aid) {
+	PPPActionSummary q = get(aid);
+	return q!=null &&  q==PPPActionSummary.PROMOTED;
+    }
+    boolean wasDemoted(String aid) {
+	PPPActionSummary q = get(aid);
+	return q!=null &&  q==PPPActionSummary.DEMOTED;
+    }
+
+     /** An AcceptMap is used to hash information as to whether a
+	 particular Action belongs with a given suggestion list.
+	 The underlying structure for an AcceptMap is a HashMap that
+	 maps PresentedList ids to booleans that indicated
+	 whteher the PresentedList belongs to the given suggestion list.
      */
-     PPPFeedback(EntityManager em, User actor, int sugListId) {
-	 super();
-	 User.ActionListTable alTable = new User.ActionListTable();
-	 
-	 Set<Action> actions = actor.getActions();
-	 AcceptMap plid2accept= new AcceptMap(sugListId);
-	 for(Action a: actions) {
-	     lastActionId = Math.max( a.getId(), lastActionId);
-	     String aid = a.getAid();
-	     if (aid==null) continue; // skip PREV_PAGE etc
-	     if (!plid2accept.accept(em, a))  continue; // wrong sug list
-	     alTable.add(aid,a);
-	 }
-	 for(String aid: alTable.keySet()) {
-	     PPPActionSummary q = PPPActionSummary.summarize(alTable.get(aid));
-	     if (q==null) {
-		 Logging.warning("No useful actions found for page " + aid);
-	     } else {
-		 put( aid, q);
-	     }
-	 }
-     }
-     
-     boolean wasViewed(String aid) {
-	 PPPActionSummary q = get(aid);
-	 return q!=null && q==PPPActionSummary.VIEWED;
-     }
-     boolean wasViewedOrPromoted(String aid) {
-	 PPPActionSummary q = get(aid);
-	 return q!=null && (q==PPPActionSummary.VIEWED || q==PPPActionSummary.PROMOTED);
-     }
-     boolean wasPromoted(String aid) {
-	 PPPActionSummary q = get(aid);
-	 return q!=null &&  q==PPPActionSummary.PROMOTED;
-     }
-     boolean wasDemoted(String aid) {
-	 PPPActionSummary q = get(aid);
-	 return q!=null &&  q==PPPActionSummary.DEMOTED;
-     }
-
-     /** Is used to hash information as to whether a particular Action
-	 belongs with a given suggestion list */
      private static class AcceptMap extends HashMap<Long, Boolean> {
 	 private final int  sugListId;
 	 AcceptMap(int  _sugListId) {
@@ -86,13 +113,17 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	    }
 	    return val.booleanValue();
 	}
-    }
+     }
 
-     static class CoMap extends HashMap<String,Double> { 
+     /** A mutable aid-to-real-value map */
+     static class CoMap extends HashMap<String,MutableDouble> { 
 	 synchronized void addCo(String aid, double inc) {
-	     Double z=get(aid);
-	     z = new Double(z==null? inc : inc + z.doubleValue());
-	     put(aid, new Double(z));
+	     MutableDouble z=get(aid);
+	     if (z==null) {
+		 put(aid,  new MutableDouble(inc));
+	     } else {
+		 z.add(inc);
+	     }
 	 }
      }
 
@@ -103,7 +134,7 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	@param entries0 The original suggestion list
 	@param actionSummary Summary of user feedback on that list
      */
-    HashMap<String,Double> getRocchioUpdateCoeff( boolean topOrphan, final Vector<ArticleEntry> entries0) {
+    HashMap<String,MutableDouble> getRocchioUpdateCoeff( boolean topOrphan, final Vector<ArticleEntry> entries0) {
 
 	CoMap updateCo = new CoMap();
 
@@ -186,5 +217,58 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	}
 	return updateCo;
    }
+
+    /** Scans the entire history of the user's interaction with the
+	system; selects usable feedback, and splits it by suggestion
+	list id. This method is used in retroactive profile generation.
+	
+       @return An array of PPPFeedback objects, one per suggestion list,
+       ordered chronologically (actually, by suggestion list DataFile id)
+     */
+    static PPPFeedback[] allFeedbacks(EntityManager em, User actor) {
+	// 0 is stored to mean "presented list is no good"
+	HashMap<Long,Long> plid2dfid = new HashMap<Long,Long>();
+	final Long zero = new Long(0);
+
+	// sug list ID to ActionListTable
+	HashMap<Long,User.ActionListTable> alTables = new HashMap<Long,User.ActionListTable>();
+	
+	Set<Action> actions = actor.getActions();
+	for(Action a: actions) {
+	    //lastActionId = Math.max( a.getId(), lastActionId);
+	    String aid = a.getAid();
+	    if (aid==null) continue; // skip PREV_PAGE etc
+
+	    long plid = a.getPresentedListId();
+	    if (plid==0) continue;
+	    Long key = new Long(plid);
+	    Long df = plid2dfid.get(key);
+	    if (df==null) {
+		PresentedList pl=(PresentedList)em.find(PresentedList.class,plid);
+		if (pl.getType()== Action.Source.MAIN_SL ||
+		    pl.getType()== Action.Source.EMAIL_SL) {
+		    df = new Long( pl.getDataFileId());
+		} else {
+		    df=zero;
+		}
+		plid2dfid.put(key, df);
+	    } 
+	    if (df.intValue()==0) continue; // wrong type of sug list
+	    
+	    User.ActionListTable alTable = alTables.get(df);
+	    if (alTable==null) alTables.put(df, alTable=new User.ActionListTable());
+	    alTable.add(aid,a);
+	}
+
+	Long[] sugListIds = (Long[])alTables.keySet().toArray(new Long[0]);
+	Arrays.sort(sugListIds);
+	PPPFeedback[] results = new PPPFeedback[sugListIds.length];
+	int cnt=0;
+	for(Long df:  sugListIds) {
+	    results[cnt++] = new PPPFeedback(df.intValue(), alTables.get(df));
+	}
+	return results;
+    }
+   
 
 }

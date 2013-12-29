@@ -17,6 +17,11 @@ enum PPPActionSummary {
 	DEMOTED), more recent operations supersede preceding ones. If
 	no such operations took place, but the user viewed the
 	document, that's treated as VIEWED.
+
+	@param v The list of actions ro summarize.
+
+	@return The operation code for the "most important" action,
+	or null, if no relevant action was found in the list.
     */
     static PPPActionSummary summarize( Vector<Action> v) {
 	PPPActionSummary result = null;

@@ -296,7 +296,7 @@ public class UserProfile {
 	}
     }
     
-    Comparator getByDescVal() {
+    Comparator<String> getByDescVal() {
 	return new  TermsByDescVal();
     }
 
@@ -731,13 +731,13 @@ public class UserProfile {
 	return ups;
     }
 
-    /** Updating user profile in the PPP framework: adds a linear
+    /** Updates this user profile in the PPP (3PR) framework: adds a linear
 	combination of document vectors, Rocchio-style. (Isn't it nice
 	to have a linear model?)
 
 	@param updateCo Rocchio-type update: weights for documents
      */ 
-    void rocchioUpdate(HashMap<String,Double> updateCo ) throws IOException {
+    void rocchioUpdate(HashMap<String,? extends Number> updateCo ) throws IOException {
 
 	int cnt=0;
 	for(String aid: updateCo.keySet()) {

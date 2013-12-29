@@ -101,6 +101,13 @@ public class ArticleAnalyzer {
 	}
     }
 
+    /** For a single term */
+    //    public double idf1(double df) {
+    //	return  1+ Math.log(numdocs / (1.0 + df));
+    //    }
+
+
+
     /** Gets a TF vector for a document from the Lucene data store. This is
 	used e.g. when initializing and updating user profiles. 
 	@param aid Arxiv article ID.
@@ -133,10 +140,12 @@ public class ArticleAnalyzer {
     static public int getMinDf() { return minDf; }
 
     /** Computes a (weighted) term frequency vector for a specified document.
+	Also computes the document's stats (norms etc), if an ArticleStats
+	object is supplied.
 
 	@param docno Lucene's internal integer ID for the document,
-	@param as This is an output parameter. If non-null, update
-	this object with the feature vector's statistics
+	@param as This is an output parameter. If non-null, the method
+	updates this object with the feature vector's statistics
 
 	@return The frequency vector, which incorporates boost factors
 	for different fields, but no idf.

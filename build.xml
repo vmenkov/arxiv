@@ -193,6 +193,7 @@ code; but not anymore. -->
 	 includes="edu/**,org/**"  optimize="on"
 	 debug="on" debuglevel="lines,vars,source"
 	 includeantruntime="false" >
+    <compilerarg value="-Xlint:unchecked"/>
     <classpath refid="classpath"/>
   </javac>
 

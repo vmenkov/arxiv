@@ -604,6 +604,16 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 		b.insertElementAt(a, pos);
 	    }
 	}
+
+	public long getLastActionId() {
+	    long lid=0;
+	    for(Vector<Action> v: values()) {
+		for(Action a: v) {
+		    lid = Math.max(lid, a.getId());
+		}
+	    }
+	    return lid;
+	}
     }
 
     /** Checks if the day type d is among the listed types
@@ -839,6 +849,7 @@ throws Exception
 	return h;
     }
 
+    @SuppressWarnings("unchecked")
     /** Returns the list of users enrolled in a specified research program. 
      */
     static public List<Integer> selectByProgram(EntityManager em, User.Program program) {

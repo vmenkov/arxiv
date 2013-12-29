@@ -329,7 +329,7 @@ public class Daily {
 	 Arrays.sort(tmp);
 	 // randomly reorder docs within each cluster
 	 randomlyBreakTies(tmp);
-	 entries = new Vector();
+	 entries = new Vector<ArticleEntry>();
 	 for(ArticleEntry ae: tmp) {	 entries.add(ae);}
 
 	 Logging.info("Daily.USL: |entries|=" + entries.size());
