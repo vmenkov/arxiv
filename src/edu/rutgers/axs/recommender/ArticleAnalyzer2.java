@@ -103,7 +103,7 @@ public class ArticleAnalyzer2 {
 		if (cnt==0 || q>maxNorm[i]) maxNorm[i]=q;
 		if (cnt==0 || q<minNorm[i]) minNorm[i]=q;
 		if (q==0) {
-		    if (verbose && emptyFieldCnt[i]<30) {
+		    if (verbose && emptyFieldCnt[i]<printMissing) {
 			Logging.info("Empty field " + f + " in doc["+docno+" -> " +aid+"]");
 		    }
 		    emptyFieldCnt[i]++;
@@ -120,7 +120,12 @@ public class ArticleAnalyzer2 {
 
     }
     
+    private static int printMissing = 0;
+
     static public void main(String[] argv) throws IOException {
+	ParseConfig ht = new ParseConfig();
+	printMissing =	ht.getOption("printMissing", printMissing);
+
 	IndexReader reader = Common.newReader();
 	computeAllNorms(reader);
     }

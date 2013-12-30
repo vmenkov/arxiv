@@ -474,8 +474,9 @@ public class ArxivImporter {
 	do {
 	    Date now = new Date();	    
 	    if (lastRequestTime!=null) {
-		long mustWait = necessaryIntervalMsec - 
-		    (now.getTime()-lastRequestTime.getTime());
+		//		long mustWait = necessaryIntervalMsec - 
+		//		    (now.getTime()-lastRequestTime.getTime());
+		long mustWait = 0;
 		if (mustWait>0) {
 		    try {
 			System.out.println("sleep "+mustWait+" msec...");    
@@ -567,6 +568,22 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    writer.close();
 	}
     }
+
+    /** This is used when we specifically want to import a single page */
+    public void importOnePage( String aid, boolean rewrite, IndexReader reader,
+			       IndexWriter writer)  throws IOException,  org.xml.sax.SAXException {
+	int pagecnt=0;
+
+	    String us = 
+	    "http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:" + aid;
+
+	    System.out.println("At "+new Date()+", requesting: " + us);
+	    Element e = getPage(us);	    
+	    parseResponse(e, writer, reader, rewrite);
+	    pagecnt++;
+
+    }
+
 
     /** A flag that tells the importer not to try to rewrite the
 	metadata cache, because we are reading from the metadata cache
@@ -750,6 +767,21 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    System.out.println( a + " --> " + b1 + " --> "+ b + " --> "
  +c + " --> " +d);
 
+	} else if (cmd.equals("articles")) {
+	    // Get specified articles
+	    IndexReader reader = Common.newReader();
+	    IndexWriter writer =  imp.makeWriter(); 
+	    for(ArgvIterator it=new ArgvIterator(argv,1); it.hasNext();){
+		String aid = it.next();
+		if (aid.trim().equals("")) continue;
+		imp.importOnePage(  aid, rewrite, reader, writer);
+	    }
+	    if (optimize) {
+		System.out.println("Optimizing index... ");
+		writer.optimize();
+	    }
+	    reader.close();
+	    writer.close();
 	} else {
 	    System.out.println("Unrecognized command: " + cmd);
 	}

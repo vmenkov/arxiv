@@ -89,14 +89,23 @@ public class UserProfile {
     //    public static boolean isUseless(String t) {}
 
 
-    /** Is this term to be excluded from the user profile?
+    /** Is this term to be excluded from the user profile? 
+
+	<p>Note that the criteria for the author field are different
+	than for other fields. This is because we have authors
+	surnamesd Li, Ma, Yi, Du, etc, as well as Z. Was and H. Then.
+
+	(FIXME: Note, however, that the stopwords have already been excluded
+	during indexing, so we need to re-index the whole thing to bring
+	Mr. Then back. 2013-12-29)
      */
     public static boolean isUseless(Term term) {
 	String t = term.text();
-	final int L = term.field().equals(ArxivFields.AUTHORS) ? 1 : 2;
+	final boolean isAuthors = term.field().equals(ArxivFields.AUTHORS);
+	final int L = isAuthors ? 1 : 2;
 	if (t.length() <= L) return true;
 	if (Character.isDigit( t.charAt(0))) return true;
-	if (stoplist!=null && stoplist.contains(t)) return true;
+	if (!isAuthors && stoplist!=null && stoplist.contains(t)) return true;
 
 	// Presently only allow words starting with an English letter,
 	// and including only alphanumeric letters, apostrophes and dots.

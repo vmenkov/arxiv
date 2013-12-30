@@ -31,12 +31,18 @@ class Show {
     private IndexReader reader;
     
     public Show()  throws IOException {
-	this(true);
+	this(null, true);
 
     }
     public Show(boolean verbose)  throws IOException {
-	Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
-	reader =  IndexReader.open( indexDirectory);  
+	this(null, verbose);
+    }
+    public Show(IndexReader _reader, boolean verbose)  throws IOException {
+	reader = _reader;
+	if (reader==null) {
+	    Directory indexDirectory =  FSDirectory.open(new File(Options.get("INDEX_DIRECTORY")));
+	    reader =  IndexReader.open( indexDirectory);  
+	}
 	if (verbose) {
 	    int numdocs = reader.numDocs();
 	    int maxdoc = reader.maxDoc();
