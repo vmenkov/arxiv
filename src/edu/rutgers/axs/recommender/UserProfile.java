@@ -99,6 +99,7 @@ public class UserProfile {
 	during indexing, so we need to re-index the whole thing to bring
 	Mr. Then back. 2013-12-29)
      */
+
     public static boolean isUseless(Term term) {
 	String t = term.text();
 	final boolean isAuthors = term.field().equals(ArxivFields.AUTHORS);

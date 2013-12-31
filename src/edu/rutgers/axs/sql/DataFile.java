@@ -15,6 +15,7 @@ import edu.rutgers.axs.ParseConfig;
     data file. Such data file may store e.g. a user profile, or a
     suggestion list.
  */
+@SuppressWarnings("unchecked")
 @Entity
     public class DataFile extends OurTable implements Serializable  {
 
@@ -161,13 +162,22 @@ import edu.rutgers.axs.ParseConfig;
     public Type getType() { return type; }
     public void setType(Type x) { type = x; }
 
+    /** The version of the generating algorithm (if available). 
+     */
+    @Display(editable=false, order=6.1) 
+    	private int version;   
+
+    public int getVersion() { return version; }
+    public void setVersion(int x) { version = x; }
+
+
    /** The time range, in days, is used on certain suggestion list files,
        as when suggestions need to be generated only from the recently
 	added articles (with dates in this ranged). 0 means "unlimited".
 	Mostly superseded by the "since" field in suggestion lists, and is
 	always ignored in other file types.
     */
-    @Basic @Display(editable=false, order=6.1)     @Column(nullable=false)
+    @Basic @Display(editable=false, order=6.3)     @Column(nullable=false)
     	private int days;   
     public int getDays() { return days; }
     public void setDays(int x) { days = x; }
@@ -175,7 +185,7 @@ import edu.rutgers.axs.ParseConfig;
    /** Includes articles selected among those added since that
        date. (Only applies to suggestion lists).
     */
-    @Display(editable=false, order=6.2) 
+    @Display(editable=false, order=6.4) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
 	Date since;
     public  Date getSince() { return since; }
@@ -184,19 +194,19 @@ import edu.rutgers.axs.ParseConfig;
     /** This flag is only applicable to PPP suggestion lists. If it is true, the
 	top "pair" is (1), rather than (1,2).
      */
-    @Basic  @Display(editable=false, order=6.3)    boolean pppTopOrphan = false;
+    @Basic  @Display(editable=false, order=6.5)    boolean pppTopOrphan = false;
     public boolean getPppTopOrphan() { return pppTopOrphan; }
     public void setPppTopOrphan( boolean x) {pppTopOrphan  = x; }
 
     /** Has the physical file been deleted? */
-    @Basic  @Display(editable=false, order=6.4)    boolean deleted = false;
+    @Basic  @Display(editable=false, order=6.6)    boolean deleted = false;
     public boolean getDeleted() { return deleted; }
     public void setDeleted( boolean x) {  deleted = x; }
 
    /** Has the physical file not been created yet? In this case, we read the
        data from the ListEntry array. */
     /*
-    @Basic  @Display(editable=false, order=6.4)    boolean nofile = false;
+    @Basic  @Display(editable=false, order=6.7)    boolean nofile = false;
     public boolean getNofile() { return nofile; }
     public void setNofile( boolean x) {  nofile = x; }
     */

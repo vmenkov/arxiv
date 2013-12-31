@@ -35,6 +35,36 @@ import edu.rutgers.axs.sql.Main;
  /** The application for pulling data from the main arxiv server using
      the OAI interface, and importing them into our server's Lucene
      datastore.
+
+     <p>This application is quite flexible with respect to the sources
+     of data and the list of documents to be imported. Some useful
+     modes are listed below:
+
+     <p>Metadata:
+     <ul>
+     <li>From the export.arxiv.org server, via the OAI2 interface
+     <li>From preloaded XML files
+     </ul>
+
+     <p>Document bodies:
+     <ul>
+
+     <li>From search.arxiv.org (where, on our request, they have
+     sym-linked their article cache directory into their web server
+     document directory
+
+     <li>From preloaded text files
+     </ul>
+
+     <p>List of documents to import:
+     <ul>
+     <li>From the export.arxiv.org server, via the OAI2 interface; restricted
+     by date range, if desired
+     <li>All files for which there are metadata XML files in a specified
+     directory tree
+     <li>From the command line or a document list file
+     </ul>
+  
  */
 public class ArxivImporter {
 
@@ -209,7 +239,8 @@ public class ArxivImporter {
     }
 
     /** Sets the root for the input directory from which file bodies 
-	(earlier transferred by FTP from Cornell) can be found.
+	(earlier transferred by FTP from osmot, or kindly uploaded
+	by Paul Ginsparg) can be found.
      */
     public void setBodySrcRoot(String _bodySrcRoot)  {
 	bodySrcRoot=_bodySrcRoot;
@@ -591,6 +622,8 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
      */
     private boolean readingMetacache=false;
     
+    /** Imports data from pre-read XML files in a specified directory.
+     */
     private void processDir( File root,IndexWriter writer, IndexReader reader, boolean rewrite)
 	throws IOException   {
 	System.out.println("Processing directory " + root);
@@ -696,7 +729,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
 	ArxivImporter imp =new  ArxivImporter();
 
-	imp.setBodySrcRoot( "../arXiv-text/");
+	imp.setBodySrcRoot( ht.getOption("bodies", "../arXiv-text/"));
 
 	if (argv.length==0) return;
 	final String cmd =argv[0];
@@ -723,7 +756,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    reader.close();
 	    writer.close();
 	} else if (cmd.equals("files")) {
-	    // processing files
+	    // processing XML files with metadata
 	    IndexWriter writer =  imp.makeWriter(); 
 	    IndexReader reader = IndexReader.open(writer, false);
 	    for(int i=1; i<argv.length; i++) {

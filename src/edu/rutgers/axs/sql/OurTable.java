@@ -24,6 +24,7 @@ public abstract class OurTable {
 
     /** A very cludgy way to call getId() regardless of whether it's
 	returning int or long */
+    @SuppressWarnings("unchecked")
     public long getLongId() {
 	Class c = getClass();
 	try {
