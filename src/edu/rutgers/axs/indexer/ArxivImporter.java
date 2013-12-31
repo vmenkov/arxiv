@@ -729,6 +729,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
 	ArxivImporter imp =new  ArxivImporter();
 
+	imp.metaCacheRoot=  ht.getOption("meta", imp.metaCacheRoot);
 	imp.setBodySrcRoot( ht.getOption("bodies", "../arXiv-text/"));
 
 	if (argv.length==0) return;
