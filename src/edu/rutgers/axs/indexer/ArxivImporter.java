@@ -641,8 +641,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 			//tok = imp.parseResponse(e, writer , rewrite);
 			//System.out.println("resumptionToken =  " + tok);
 		    }
-		} catch(Exception ex) {
+		} catch(Exception ex) {		    
 		    System.out.println("Failure on file: " + f);
+		    ex.printStackTrace(System.out);
 		    System.out.println(ex);			
 		}
 		

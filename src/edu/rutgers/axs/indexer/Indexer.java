@@ -21,6 +21,8 @@ import java.util.zip.*;
 import java.text.*;
 import java.io.*;
 
+import edu.rutgers.axs.sql.Logging;
+
 /**
  * This class implements adding documents to the index, and updating them. It is
  * very collection specific, so you certainly don't want to use it. It is
@@ -206,19 +208,22 @@ public class Indexer {
 	GZipped text file.
      */
     static String parseDocFile(String doc_file) throws IOException {
-	
-	char chars[] = new char[Options.getInt("INDEXER_MAX_LENGTH")];
+
+	final int M=Options.getInt("INDEXER_MAX_LENGTH");
+	char chars[] = new char[M];
 
 	InputStreamReader fr = 
 	    isGZipped(doc_file) ?
 	    new InputStreamReader(new GZIPInputStream(new FileInputStream(doc_file))) :
 	    new FileReader(doc_file);
 
-	int i = fr.read(chars, 0, Options.getInt("INDEXER_MAX_LENGTH"));
+	int len = fr.read(chars, 0, M);
 	fr.close();
-	String s = new String(chars);
-	s = s.substring(0, i);		
-	
+	if (len==-1) {
+	    Logging.warning("Apparently empty file: " + doc_file);
+	    len=0;
+	}
+	String s = new String(chars, 0, len);
 	return s;
     }
 
