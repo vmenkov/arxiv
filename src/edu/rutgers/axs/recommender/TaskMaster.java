@@ -153,14 +153,9 @@ public class TaskMaster {
 	Runtime.getRuntime().addShutdownHook(shutDown);	
 
 	IndexReader reader =  Common.newReader();
-	//	AllStatsReader asr = new  AllStatsReader(reader);
-	Main.memory("main:calling CASA");
-	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(reader);
-	//CompactArticleStatsArray casa = null;
-	asr.start(); CompactArticleStatsArray casa = asr.getResults();
 
-	// Use run() instead of start() for single-threading
-	//asr.run();	
+	ArticleAnalyzer aa=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	aa.readCasa();
 
 	int oneTaskId = ht.getOption("task", 0);
 	if (oneTaskId != 0) {
@@ -169,7 +164,7 @@ public class TaskMaster {
 	    Task task = (Task)em.find(Task.class, oneTaskId);
 	    if (task==null) throw new IllegalArgumentException("task " + oneTaskId + " does not exist");
 	    if (task.getStartTime()!=null ||task.getCompleteTime()!=null)  throw new IllegalArgumentException("task " + oneTaskId + " already has been, or is, worked on!");
-	    doTask(em, reader, casa, task);	    
+	    doTask(em, aa, task);	    
 	    //em.close();
 	    return;
 	}
@@ -234,7 +229,7 @@ public class TaskMaster {
 	    noneCnt=0;
 	    taskCnt++;
 	    Logging.info("task["+taskCnt+"]: " + task);
-	    doTask(em, reader, casa, task);
+	    doTask(em, aa, task);
 	}
 	reader.close();
 	Logging.info("Finished");
@@ -242,17 +237,19 @@ public class TaskMaster {
 
     /** Processes one task.
      @param em Will use it, and then close it. */
-    private static void doTask(EntityManager em, IndexReader reader, CompactArticleStatsArray casa, Task task) {
+    private static void doTask(EntityManager em, 
+			       ArticleAnalyzer aa,
+			       Task task) {
 	boolean success = false;
 	DataFile outputFile=null;
 	DataFile inputFile = null;
 	try {
 	    final Task.Op op = task.getOp();
 	    String user = task.getUser();
-	    
+
 	    if (op == Task.Op.HISTORY_TO_PROFILE) {	
 		//Logging.info("");
-		UserProfile upro=new UserProfile(user, em,reader);
+		UserProfile upro=new UserProfile(user, em, aa);
 		outputFile=upro.saveToFile(task,op.outputFor());
 	    } else if (op == Task.Op.LINEAR_SUGGESTIONS_1
 		       || op == Task.Op.LOG_SUGGESTIONS_1
@@ -266,14 +263,11 @@ public class TaskMaster {
 		}
 		
 		UserProfile upro = 
-		    getSuitableUserProfile(task, ptr, em, reader,
+		    getSuitableUserProfile(task, ptr, em, aa,
 					   op == Task.Op.TJ_ALGO_1_SUGGESTIONS_1 ?  DataFile.Type.TJ_ALGO_2_USER_PROFILE : DataFile.Type.USER_PROFILE);
 		
 		inputFile = ptr.elementAt(0);
 		final boolean raw=true;
-		//ArticleStats[] allStats = asr.getResults();
-		//		    CompactArticleStatsArray casa = asr.getResults();
-		//Logging.info("Read CASA, size=" + casa.size());
 		
 		boolean useLog = (op == Task.Op.LOG_SUGGESTIONS_1);
 		int days = task.getDays();		    
@@ -287,7 +281,7 @@ public class TaskMaster {
 		    String[] cats = u.getCats().toArray(new String[0]);
 		    since = task.getSince();
 		    if (since==null) since = SearchResults.daysAgo( days );
-		    IndexSearcher searcher = new IndexSearcher(reader);	
+		    IndexSearcher searcher = new IndexSearcher(aa.reader);	
 		    // Lucene search + set scores for use in tie-breaking
 		    int maxlen = 10000;
 		    SearchResults sr = 
@@ -297,7 +291,7 @@ public class TaskMaster {
 		    searcher.close();
 		    // rank by TJ Algo 1
 		    TjAlgorithm1 algo = new TjAlgorithm1();
-		    sd = algo.rank( upro, sd, casa, em, maxDocs, true);
+		    sd = algo.rank( upro, sd, em, maxDocs, true);
 		    
 		    // FIXME: is there a better place for the day-setting?
 		    boolean isTrivial = (upro.terms.length==0);
@@ -309,7 +303,7 @@ public class TaskMaster {
 		    em.persist(u);
 		    
 		} else {
-		    sd =  upro.catAndDateSearch(maxDocs,casa,em,u,days, useLog);
+		    sd =  upro.catAndDateSearch(maxDocs, em,u,days, useLog);
 		    //   luceneRawSearch(maxDocs,casa,em,days, useLog):
 		    //	 upro.luceneQuerySearch(maxDocs, days);
 		}
@@ -353,16 +347,16 @@ public class TaskMaster {
 		if (inputFile==null) {
 		    System.out.println("Found no inputFile");
 		    // and empty sugg list!
-		    upro = new UserProfile(reader);
+		    upro = new UserProfile(aa);
 		    sd = new ArxivScoreDoc[0];
 		} else {
 		    System.out.println("Found inputFile: " + inputFile.getId());
 		    DataFile uproInputFile = inputFile.getInputFile();
 		    //DataFile.findFileByName(em,user, inputFile.getInputFile());
-		    upro = new UserProfile(uproInputFile, reader);
+		    upro = new UserProfile(uproInputFile, aa);
 		    File f = inputFile.getFile();
 		    Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
-		    IndexSearcher searcher = new IndexSearcher(reader);	
+		    IndexSearcher searcher = new IndexSearcher(aa.reader);	
 		    sd = ArxivScoreDoc.toArxivScoreDoc(entries,searcher);
 		    searcher.close();
 		}
@@ -437,12 +431,12 @@ public class TaskMaster {
      */
     private static UserProfile 
 	getSuitableUserProfile(Task task, Vector<DataFile> ptr, 
-			       EntityManager em, IndexReader reader,
+			       EntityManager em, ArticleAnalyzer aa,
 			       DataFile.Type ptype)
 	throws IOException {
 
 	if (ptr.size()>0) { //explicitly specified input file
-	    return new UserProfile(ptr.elementAt(0), reader);
+	    return new UserProfile(ptr.elementAt(0), aa);
 	}
 	
 	DataFile inputFile = 
@@ -451,15 +445,15 @@ public class TaskMaster {
 	UserProfile upro;
 	if (inputFile != null) {
 	    // read it
-	    upro = new UserProfile(inputFile, reader);
+	    upro = new UserProfile(inputFile, aa);
 	} else {
 	    // generate it
 	    if (ptype== DataFile.Type.USER_PROFILE) {
 		// based on user activity, in a linear way (obsolete)
-		upro = new UserProfile(task.getUser(), em, reader);
+		upro = new UserProfile(task.getUser(), em, aa);
 	    } else if (ptype==  DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
 		// empty profile, as TJ wants (06-2012)
-		upro = new UserProfile(reader);
+		upro = new UserProfile(aa);
 	    } else {
 		throw new AssertionError("TM.getSuitableUserProfile(): unsupported type=" + ptype);
 	    }

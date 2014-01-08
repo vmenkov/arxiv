@@ -17,27 +17,40 @@ import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.Common;
 
 /** The nightly updater for Thorsten's 3PR (a.k.a. PPP) experiment plan.
+    
+    <p> The underlying code (hidden in ArticleAnalyzer and its
+    subclass ArticleAnalyzer2) supports two different document
+    representations: the original "flattened" (2011) and "refined" (2013-14).
+    The choice is controlled with the flag called "refined".
  */
 public class DailyPPP {
  
     static private Random gen = new  Random();
 
+    /** Controls document representation (via the choice of
+	ArticleAnalyzer class and DocumentFile.version)
+     */
+    static private boolean refined=false;
+
+    public static int[] allowedFileVersions() {
+	return allowedFileVersions(refined);
+    }
+
+    public static int[] allowedFileVersions(boolean refined) {
+	return refined? new int[] {2} : new int[] {0, 1};
+    }
+
     static void updates() throws Exception {
 
 	//ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	IndexReader reader = Common.newReader();
 
-	ArticleAnalyzer z = new ArticleAnalyzer();
-	IndexReader reader = z.reader;
+	ArticleAnalyzer z = refined? 
+	    new ArticleAnalyzer2( reader) :
+	    new ArticleAnalyzer( reader, ArticleAnalyzer.upFields);
 
-	// Read article stats stored in the SQL database
-	Main.memory("main:calling CASA");
-	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(reader);
-	//CompactArticleStatsArray casa = null;
-	asr.start(); CompactArticleStatsArray casa = asr.getResults();
-
-	// Use run() instead of start() for single-threading
-	//asr.run();	
+	if (!refined) z.readCasa();
 
 	EntityManager em  = Main.getEM();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -48,14 +61,14 @@ public class DailyPPP {
 	    User user = User.findByName( em, onlyUser);
 	    if (user==null) throw new IllegalArgumentException("User " + onlyUser + " does not exist");
 	    if (!user.getProgram().equals(program)) throw new IllegalArgumentException("User " + onlyUser + " is not enrolled in program " + program);
-	    oneUser(em, casa, searcher, user);
+	    oneUser(em, z, searcher, user);
 	} else {
 	    List<Integer> lu = User.selectByProgram( em, program);
 	    
 	    for(int uid: lu) {
 		try {
 		    User user = (User)em.find(User.class, uid);
-		    oneUser(em, casa, searcher, user);
+		    oneUser(em, z, searcher, user);
 		} catch(Exception ex) {
 		    Logging.error(ex.toString());
 		    System.out.println(ex);
@@ -67,33 +80,34 @@ public class DailyPPP {
     }
 
     /** Just a wrapper around 2 function calls */
-    private static void oneUser(EntityManager em,  CompactArticleStatsArray casa, IndexSearcher searcher, User user) 
+    private static void oneUser(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User user) 
 	throws IOException {
 	Logging.info("Updating profile for user " + user);
-	updateP3Profile(em,  searcher, user);
+	updateP3Profile(em, aa, searcher, user);
 	Logging.info("Updating suggestions for user " + user);
-	makeP3Sug(em, casa, searcher, user);
+	makeP3Sug(em, aa, searcher, user);
     }
 
-    /** Updates and saved the user profile for the specified user, as
+    /** Updates and saves the user profile for the specified user, as
 	long as it makes sense to do it (i.e., there is no profile yet,
 	or there has been some usable activity since the existing profile
 	has been created)
      */
-    private static void updateP3Profile(EntityManager em,  
-				      IndexSearcher searcher, 
-				      User u)  throws IOException {
+    private static void updateP3Profile(EntityManager em, 
+					ArticleAnalyzer aa,
+					IndexSearcher searcher, 
+					User u)  throws IOException {
 
 	IndexReader reader =searcher.getIndexReader();
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE, 
 	    stype =  DataFile.Type.PPP_SUGGESTIONS;
 	final String uname = u.getUser_name();
 	// the latest profile
-	DataFile oldProfileFile = DataFile.getLatestFile(em, uname, ptype);
+	DataFile oldProfileFile = DataFile.getLatestFileByVersion(em, uname, ptype, allowedFileVersions());
 	System.out.println("Old user profile = " + oldProfileFile);
 
 	UserProfile upro = (oldProfileFile == null)?
-	    new UserProfile(reader) :  new UserProfile(oldProfileFile, reader);
+	    new UserProfile(aa) :  new UserProfile(oldProfileFile, aa);
 	
 	List<DataFile> sugLists = DataFile.getAllFilesBasedOn(em, uname, stype, oldProfileFile);
 
@@ -118,7 +132,7 @@ public class DailyPPP {
 	    boolean topOrphan = df.getPppTopOrphan();
 	    File f = df.getFile();
 	    Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
-	    HashMap<String,MutableDouble> updateCo = actionSummary.getRocchioUpdateCoeff(topOrphan, entries);
+	    HashMap<String,?extends Number> updateCo = actionSummary.getRocchioUpdateCoeff(topOrphan, entries);
 	    System.out.println("The update will be a linear combination of " + updateCo.size() + " documents:");
 	    for(String aid: updateCo.keySet()) {
 		System.out.println("w["+aid + "]=" +  updateCo.get(aid));
@@ -157,7 +171,7 @@ public class DailyPPP {
 	     the dot product with the user profile)
 	</ul>
      */
-    private static void makeP3Sug(EntityManager em,  CompactArticleStatsArray casa, IndexSearcher searcher, User u) 
+    private static void makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u) 
     throws IOException {
 	String msg="";
 	Vector<DataFile> ptr = new  Vector<DataFile>(0);
@@ -169,7 +183,7 @@ public class DailyPPP {
 	HashMap<String, Action> exclusions = u.listExclusions();
 
 	UserProfile upro = 
-	    getSuitableUserProfile(u, ptr, em, searcher.getIndexReader());
+	    getSuitableUserProfile(u, ptr, em, aa);
 	DataFile inputFile = ptr.elementAt(0);
 
 	// restricting the scope by category and date,
@@ -192,7 +206,7 @@ public class DailyPPP {
 	//searcher.close();
 	TjAlgorithm1 algo = new TjAlgorithm1();
 	// rank by TJ Algo 1
-	sd = algo.rank( upro, sd, casa, em, maxDocs, false);
+	sd = algo.rank( upro, sd,  em, maxDocs, false);
 		
 	Vector<ArticleEntry> entries = upro.packageEntries(sd);
 
@@ -263,36 +277,26 @@ public class DailyPPP {
 
     private static UserProfile 
 	getSuitableUserProfile(User user, Vector<DataFile> ptr, 
-			       EntityManager em, IndexReader reader)
+			       EntityManager em, ArticleAnalyzer aa)
 	throws IOException {
 
 	if (ptr.size()>0) { //explicitly specified input file
-	    return new UserProfile(ptr.elementAt(0), reader);
+	    return new UserProfile(ptr.elementAt(0), aa);
 	}
 
 	DataFile.Type ptype =  DataFile.Type.PPP_USER_PROFILE;
-	DataFile.Type ptype2 =  DataFile.Type.TJ_ALGO_2_USER_PROFILE;
 	
 	String uname = user.getUser_name();
-	DataFile inputFile = DataFile.getLatestFile(em, uname, ptype);
+	DataFile inputFile = DataFile.getLatestFileByVersion(em, uname, ptype, allowedFileVersions());
 	
-	final boolean compatibilityMode = false;
-
 	UserProfile upro;
 	if (inputFile != null) {
 	    // read it
-	    upro = new UserProfile(inputFile, reader);
-	} else if ( compatibilityMode &&
-		    (inputFile = 
-		    DataFile.getLatestFile(em, uname, ptype2))!=null) {
-	    // Compatibility mode: may be used at the moment when the user 
-	    // is switched from SET_BASED to PPP. This has been nixed on TJ's
-	    // request (2013-04-03)
-	    upro = new UserProfile(inputFile, reader);
+	    upro = new UserProfile(inputFile, aa);
 	} else {
 	    // Generate it.
 	    // empty profile, as TJ wants (2012-06; 2013-04-03)
-	    upro = new UserProfile(reader);
+	    upro = new UserProfile(aa);
 	    DataFile uproFile=upro.saveToFile(uname, 0, ptype);
 
 	    em.persist(uproFile);
@@ -312,6 +316,7 @@ public class DailyPPP {
 	}
 
 	onlyUser = ht.getOption("user", null);
+	refined = ht.getOption("refined", refined);
 
 	String cmd = argv[0];
 	if (cmd.equals("init")) {

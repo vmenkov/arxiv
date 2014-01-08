@@ -3,17 +3,12 @@ package edu.rutgers.axs.recommender;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
+import org.apache.commons.lang.mutable.*;
 
 import java.util.*;
 import java.io.*;
 
 import javax.persistence.*;
-
-import edu.cornell.cs.osmot.options.Options;
-
 
 import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
@@ -50,11 +45,12 @@ public class ArticleAnalyzer {
     
     /** Stores DF for terms */
     private HashMap<String, Integer> h = new HashMap<String, Integer>();
+
     /** Document friequency for a term. When a term occurs in multiple 
 	fields of a doc, it is counted multiple times, because it's easier
 	to do it this way in Lucene.
-    */
-    int totalDF(String t) throws IOException {
+    */ 
+    private int totalDF(String t) throws IOException {
 	Integer val = h.get(t);
 	if (val!=null) return val.intValue();
 	
@@ -91,8 +87,11 @@ public class ArticleAnalyzer {
     
     /** Computes <em>idf = 1 + log ( numDocs/docFreq+1)</em>, much
 	like it is done in Lucene's own searcher as well.
+
+	<p>This method is overridden in ArticleAnalyzer2.
      */
-    public double idf(String term) {
+    public double idf(String term) throws IOException  {
+	if (term.indexOf(':')>=0) throw new IllegalArgumentException("Calling AA.idf() for a qualified term ("+term+")");
 	try {
 	    return  1+ Math.log(numdocs*fields.length / (1.0 + totalDF(term)));
 	} catch(IOException ex) { 
@@ -101,18 +100,13 @@ public class ArticleAnalyzer {
 	}
     }
 
-    /** For a single term */
-    //    public double idf1(double df) {
-    //	return  1+ Math.log(numdocs / (1.0 + df));
-    //    }
-
-
-
+   
     /** Gets a TF vector for a document from the Lucene data store. This is
-	used e.g. when initializing and updating user profiles. 
+	used e.g. when initializing and updating user profiles. The vector
+	does not include IDF, but is divided by the doc norm.
 	@param aid Arxiv article ID.
     */
-    HashMap<String, Double> getCoef(String aid) throws IOException {
+    HashMap<String, ?extends Number> getCoef(String aid) throws IOException {
 	int docno = -1;
 	try {
 	    docno = find(aid);
@@ -134,7 +128,7 @@ public class ArticleAnalyzer {
     /** Minimum DF needed for a term not to be ignored. My original
      default was to only ignore nonce words (df&lt;2), but Paul
      Ginsparg suggests ignoring terms with DF&lt;10 (2013-02-06). */
-    static private int minDf = 2;
+    static int minDf = 10;
 
     static public void setMinDf(int x) { minDf = x; }
     static public int getMinDf() { return minDf; }
@@ -150,7 +144,7 @@ public class ArticleAnalyzer {
 	@return The frequency vector, which incorporates boost factors
 	for different fields, but no idf.
     */
-    public HashMap<String, Double> getCoef(int docno, ArticleStats as) 
+    public HashMap<String, MutableDouble> getCoef(int docno, ArticleStats as) 
 	throws IOException {
 
 	Profiler.profiler.push(Profiler.Code.AA_getCoef);
@@ -160,14 +154,12 @@ public class ArticleAnalyzer {
 	//long utc = sur.getUniqueTermCount();
 	//System.out.println("subindex has "+utc +" unique terms");
 	
-	HashMap<String, Double> h = new HashMap<String, Double>();
-	final Double zero = new Double(0);
+	HashMap<String, MutableDouble> h = new HashMap<String, MutableDouble>();
 
 	final int nf =fields.length;
 	TermFreqVector [] tfvs = new TermFreqVector[nf];
 	int length=0;
 	int lengths[] = new int[nf];
-
 
 	for(int j=0; j<nf;  j++) {	    
 	    String name= fields[j];
@@ -187,7 +179,7 @@ public class ArticleAnalyzer {
 		    continue; // skip very rare words, non-words, and stop words
 		}
 		// create a dummy entry for each real word
-		h.put(terms[i],zero);
+		h.put(terms[i],new MutableDouble(0));
 		length += freqs[i];
 		lengths[j] += freqs[i];
 	    }	
@@ -225,31 +217,37 @@ public class ArticleAnalyzer {
 		int df = totalDF(terms[i]);
 		Profiler.profiler.pop(Profiler.Code.AA_df);
 		
-		Double val = h.get( terms[i]);
+		MutableDouble val = h.get( terms[i]);
 		// Non-words don't have table entries
 		if (val==null) continue;
 		double z = useSqrt? Math.sqrt(freqs[i]) : freqs[i];
-		z =  val.doubleValue() + z * boost[j];
-		h.put( terms[i], new Double(z));
+		val.add( z * boost[j] );
 		//Term term = new Term(name, terms[i]);		
 		//System.out.println(" " + terms[i] + " : " + freqs[i] + "; df=" +sur.docFreq(term) );
 	    }
 	}
+	
+	double norm=tfNorm(h);
 
 	if (mustUpdate) { 
-	    double norm=tfNorm(h);
 	    as.setNorm(norm);
 	    for(int j=0; j<nf; j++)  {
 		as.setRawBoost(j,boost[j]);
 	    }
 	}
 
+	for( MutableDouble q: h.values()) {
+	    q.setValue( q.doubleValue()/norm);
+	}
+
 	//System.out.println("Document info for id=" + id +", doc no.=" + docno + " : " + h.size() + " terms");
+
 	Profiler.profiler.pop(Profiler.Code.AA_getCoef);
+
 	return h;
     }
 
-
+    
     /** Computes (u*d)/|d|, where u=user profile (specified by hq),
 	d=document(docno) with field boosts, (u*d)=idf-weighted dot
 	product, |d|=idf-weighted two-norm of d. 
@@ -403,7 +401,7 @@ public class ArticleAnalyzer {
 
     /** Computes the idf-weighted 2-norm of a term frequency vector.
      @param h Represents the term frequency vector. */
-    public double tfNorm(HashMap<String, Double> h) {
+    public double tfNorm(HashMap<String, ?extends Number> h) throws IOException {
 	double sum=0;
 	for(String t: h.keySet()) {
 	    double q= h.get(t).doubleValue();
@@ -415,7 +413,7 @@ public class ArticleAnalyzer {
     /** This is the idf-weighted 2-norm of a vector composed of SQUARE
      ROOTS of term frequencies.
      @param h Represents the term frequency vector. */ 
-    double normOfSqrtTf(HashMap<String, Double> h) {
+    double normOfSqrtTf(HashMap<String, Double> h) throws IOException {
 	double sum=0;
 	for(String t: h.keySet()) {
 	    double q= h.get(t).doubleValue();
@@ -586,7 +584,7 @@ public class ArticleAnalyzer {
 
 	@param cat If not null, restrict matches to docs from the specified category
      */
-    void simToAll( HashMap<String, Double> doc1, ArticleStats[] allStats, EntityManager em, String cat) throws IOException {
+    void simToAll( HashMap<String, ?extends Number> doc1, ArticleStats[] allStats, EntityManager em, String cat) throws IOException {
 
 	final double threshold[] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
 
@@ -671,6 +669,85 @@ public class ArticleAnalyzer {
 	//return tops;
     }
 
+    /** A structure used to access precomputed normalized field
+	boosts. It is only used by the "flattened" (not "refined")
+	version (AA only, and not AA2). */
+    private CompactArticleStatsArray casa;
+    void readCasa() throws IOException {
+	if (this instanceof ArticleAnalyzer2) throw new IllegalArgumentException("AA2 does not need CompactArticleStatsArray!");
+	Main.memory("main:calling CASA");
+	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(reader);
+	//CompactArticleStatsArray casa = null;
+	asr.start(); 
+	try {
+	    casa = asr.getResults();
+	} catch(IOException ex) {
+	    throw ex;
+	} catch(Exception ex) {
+	    Logging.error(ex.getMessage());
+	    throw new IOException(ex.getMessage());
+	}
+
+	// Use run() instead of start() for single-threading
+	//asr.run();	
+    }
+ 
+    CompactArticleStatsArray getCasa() {
+  	if (this instanceof ArticleAnalyzer2) throw new IllegalArgumentException("AA2 does not need CompactArticleStatsArray!");
+	return casa;
+    }
+ 
+    /** An auxiliary structure in which data are packed for TjA1Entry */
+    static class TjA1EntryData {
+	double sum1 = 0;
+	double[] w2plus, w2minus;
+	TjA1EntryData(int nt) {
+	    w2plus =  new double[nt];
+	    w2minus =  new double[nt];
+	}
+    }
+
+    /**
+       @param hq  User profile vector (UserProfile.hq)
+     */
+    TjA1EntryData prepareTjA1EntryData(int docno,
+				       HashMap<String, UserProfile.TwoVal> hq,
+				       Map<String,Integer> termMapper)
+	throws IOException {
+
+	final int nt=termMapper.size();
+	TjA1EntryData tj = new TjA1EntryData(nt);
+
+	for(int j=0; j< fields.length;  j++) {	
+	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
+	    if (tfv==null) {
+		Logging.warning("No tfv for docno="+docno+", field="+fields[j]);
+		continue;
+	    }
+
+	    double boost = getCasa().getNormalizedBoost(docno, j);
+
+	    //System.out.println("--Terms--");
+	    int[] freqs=tfv.getTermFrequencies();
+	    String[] terms=tfv.getTerms();	    
+
+	    for(int i=0; i<terms.length; i++) {
+		UserProfile.TwoVal q= hq.get(terms[i]);
+		if (q==null) continue;
+		// term position in upro.terms[]
+		int iterm = termMapper.get(terms[i]).intValue();
+		double z = freqs[i] * boost;
+		double idf = idf(terms[i]);	       
+		tj.sum1 += z * q.w1 *idf;
+		double w2q =  z * idf * q.w2 * q.w2 ;
+		if (w2q<0) throw new AssertionError("w2q<0: this is impossible!");
+		(q.w2 >= 0 ? tj.w2plus: tj.w2minus)[iterm] += w2q;
+	    }
+	}
+	return tj;
+    }
+
+
     /** -DmaxDocs=-1 -Drecompute=false
      */
     static public void main(String[] argv) throws IOException {
@@ -708,7 +785,7 @@ public class ArticleAnalyzer {
 		    Logging.warning("No document found in Lucene data store for id=" + aid +"; skipping");
 		    continue;
 		}
-		HashMap<String, Double> doc1 = z.getCoef(docno, null);		
+		HashMap<String,MutableDouble> doc1 = z.getCoef(docno, null);
 		Document doc = z.reader.document(docno);
 		String cat =doc.get(ArxivFields.CATEGORY);
 		Logging.info("Doing " + aid +", cat=" + cat);

@@ -17,10 +17,7 @@ import edu.rutgers.axs.web.ArticleEntry;
 
 /** Thorsten's Algorithm 1 */
 class TjAlgorithm1 {
-    /** This flag is on when using the alternative approach to the
-      initialization of w'', viz. w'' = sqrt(phi) */
-    static final boolean approach2=true;
-
+   
     TjA1Entry [] tjEntries;
 
     TjAlgorithm1() {}
@@ -37,8 +34,6 @@ class TjAlgorithm1 {
      */
     ArxivScoreDoc[] 
 	rank( UserProfile upro,    ArxivScoreDoc[] sd,
-	     //ArticleStats[] allStats, 
-	      CompactArticleStatsArray allStats, 
 	      EntityManager em, int maxDocs,
 	      boolean nonlinear)  throws IOException{
 
@@ -51,13 +46,8 @@ class TjAlgorithm1 {
 	tjEntries = new TjA1Entry[sd.length];
 
 	for(int i=0; i<sd.length; i++) {
-	    /*	    ArticleStats as=upro.dfc.getAS(allStats, sd[i].doc, em);
-	    if (as==null) {
-		missingStatsCnt ++;
-		continue;
-	    }	    */
-	    if (sd[i].doc > allStats.size()) continue;
-	    TjA1Entry tje=new TjA1Entry(sd[i],allStats,upro,termMapper,nonlinear);
+	    if (sd[i].doc > upro.dfc.getCasa().size()) continue;
+	    TjA1Entry tje=new TjA1Entry(sd[i],upro,termMapper,nonlinear);
 	    tjEntries[storedCnt++] = tje;
 	}
 

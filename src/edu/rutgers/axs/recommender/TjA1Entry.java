@@ -71,12 +71,12 @@ class TjA1Entry   {
 	implementation), also by IDF. (Conceptually, IDF does not
 	figure here explicitly, as IDF^{1/2} is conceptually already
 	factored into phi and w1, and IDF^{1/4}, into w2.)  For any
-	feature t, the wplus[t] values over multiple TjAentry objects
+	feature t, the wplus[t] values over multiple TjA1Entry objects
 	(corresponding to multiple docs) need to be later summed over
 	the documents involved, and then the sqrt computed, to produce
 	t's contribution to the utility.
 
-	The vectors vplus and vminus are for the coefficients
+	The vectors qplus and qminus are for the coefficients
 	corresponding to the positive and negative values in w2,
 	respectively.
     */
@@ -107,64 +107,23 @@ class TjA1Entry   {
 	}
     }
 
-
     /** Initializes the linear part of the utility (sum1) as the
 	idf-weighted dot product of the user profile and the
 	(idf-weight-)normalized document vector.  In the non-linear
-	moder, initializes building blocks for the non-linear
+	mode, initializes building blocks for the non-linear
 	part of the utility as well.
      */
     TjA1Entry(ArxivScoreDoc _sd, 
-	      CompactArticleStatsArray casa, //ArticleStats as, 
 	      UserProfile upro, Map<String,Integer> termMapper,
 	      boolean _hasNonlinear)
 	throws IOException {
 	hasNonlinear =  _hasNonlinear;
 	sd = _sd;
-	sum1 = 0;
 
-	int docno=sd.doc;
+	ArticleAnalyzer.TjA1EntryData tj = 
+	    upro.dfc.prepareTjA1EntryData(sd.doc, upro.hq, termMapper);
 
-	double[] w2plus =  new double[upro.terms.length],
-	    w2minus =  new double[upro.terms.length];	
-
-	for(int j=0; j<upro.dfc.fields.length;  j++) {	
-	    TermFreqVector tfv=upro.dfc.reader.getTermFreqVector(docno, upro.dfc.fields[j]);
-	    if (tfv==null) {
-		Logging.warning("No tfv for docno=" + docno + ", field=" + upro.dfc.fields[j]);
-		continue;
-	    }
-	    //double boost =  as.getNormalizedBoost(j);
-	    double boost =  casa.getNormalizedBoost(docno, j);
-
-	    //System.out.println("--Terms--");
-	    int[] freqs=tfv.getTermFrequencies();
-	    String[] terms=tfv.getTerms();	    
-
-	    for(int i=0; i<terms.length; i++) {
-		UserProfile.TwoVal q=upro.hq.get(terms[i]);
-		if (q==null) continue;
-		// term position in upro.terms[]
-		int iterm = termMapper.get(terms[i]).intValue();
-
-		double z = freqs[i] * boost;
-		double idf = upro.dfc.idf(terms[i]);	       
-
-		sum1 += z *  q.w1 *idf;
-
-		double r = idf*q.w2;
-		double w2q = 		    TjAlgorithm1.approach2? 
-		    z * idf * q.w2 * q.w2 :
-		    z * idf * idf * q.w2 * q.w2;
-		if (w2q<0) throw new AssertionError("w2q<0: this is impossible!");
-		if (q.w2 >= 0) {
-		    w2plus[iterm] += w2q;
-		} else {
-		    w2minus[iterm] += w2q;
-		}
-	    }
-	}
-
+	sum1 = tj.sum1;
 	mcPlus =  mcMinus = 0;
 
 	Vector<Coef> vplus = new Vector<Coef> (upro.terms.length),
@@ -172,15 +131,15 @@ class TjA1Entry   {
 	
 	double gamma= upro.getGamma(0);
 	for(int i=0; i<upro.terms.length; i++) {
-	    if (w2plus[i]!=0) {
-		vplus.add(new Coef(i, w2plus[i]));
+	    if (tj.w2plus[i]!=0) {
+		vplus.add(new Coef(i, tj.w2plus[i]));
 		if (hasNonlinear) {
-		    mcPlus += Math.sqrt(gamma * w2plus[i]);
+		    mcPlus += Math.sqrt(gamma * tj.w2plus[i]);
 		}
-	    } else if (w2minus[i]!=0) {
-		vminus.add(new Coef(i, w2minus[i]));
+	    } else if (tj.w2minus[i]!=0) {
+		vminus.add(new Coef(i, tj.w2minus[i]));
 		if (hasNonlinear) {
-		    mcMinus += Math.sqrt(gamma * w2minus[i]);
+		    mcMinus += Math.sqrt(gamma * tj.w2minus[i]);
 		}
 	    } 
 	} 
@@ -189,7 +148,7 @@ class TjA1Entry   {
 	lastGamma=gamma;
     }
 
-    void addToPhi(	double[] phi, double gamma) {
+    void addToPhi(double[] phi, double gamma) {
 	for(Coef c: qplus) {
 	    phi[ c.i ] += c.value * gamma;
 	}

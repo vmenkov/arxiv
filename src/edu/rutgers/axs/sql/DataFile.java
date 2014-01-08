@@ -162,7 +162,9 @@ import edu.rutgers.axs.ParseConfig;
     public Type getType() { return type; }
     public void setType(Type x) { type = x; }
 
-    /** The version of the generating algorithm (if available). 
+    /** The version of the generating algorithm (if available). This is
+	used, e.g. to distinguish different versions of 3PR user profiles
+	(using different document representations)
      */
     @Display(editable=false, order=6.1) 
     	private int version;   
@@ -277,7 +279,7 @@ import edu.rutgers.axs.ParseConfig;
     }
 
     public String toString() {
-	return getThisFile() + " (no. "+getId()+")";
+	return getThisFile() + " (no. "+getId()+", type="+getType()+", ver="+getVersion()+")";
     }
 
     /** Gets the most recently generated non-deleted file by a given
@@ -301,14 +303,7 @@ import edu.rutgers.axs.ParseConfig;
 	q.setParameter("u", username);
 	q.setParameter("t", t);
 	if (days>=0) 	q.setParameter("d", days);
-
-	q.setMaxResults(1);
-	List<DataFile> res = (List<DataFile>)q.getResultList();
-	if (res.size() != 0) {
-	    return  res.iterator().next();
-	} else {
-	    return null;
-	}
+	return glf(q);
     }
 
     /** This version is used in Algo 2: looking not just for any old
@@ -327,16 +322,29 @@ import edu.rutgers.axs.ParseConfig;
 	q.setParameter("t", t);
 	q.setParameter("p", parentType);
 	if (days>=0) 	q.setParameter("d", days);
-
-	q.setMaxResults(1);
-	List<DataFile> res = (List<DataFile>)q.getResultList();
-	if (res.size() != 0) {
-	    return  res.iterator().next();
-	} else {
-	    return null;
+	return glf(q);
+     }
+    
+    static public DataFile getLatestFileByVersion(EntityManager em, String  username, Type t,  int[] versions) {
+	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
+	String verClause="";
+	for(int ver: versions) {
+	    if (verClause.length()>0) verClause += " or ";
+	    if (ver==0) {
+		verClause += "m.version is null or ";
+	    }
+	    verClause += "m.version="+ver;
 	}
-    }
+	qs += " and (" + verClause + ")";
 
+	qs += " order by  m.lastActionId desc, m.time desc";
+	Query q = em.createQuery(qs);
+
+	q.setParameter("u", username);
+	q.setParameter("t", t);
+	return glf(q);
+    }
+    
     /** Finds the latest file of a given type (probably, sugg list)
 	that's based on a particular input file (probably, a user profile file)
 
@@ -360,14 +368,7 @@ import edu.rutgers.axs.ParseConfig;
 	q.setParameter("t", t);
 	q.setParameter("i", inputFile);
 	if (days>=0) 	q.setParameter("d", days);
-
-	q.setMaxResults(1);
-	List<DataFile> res = (List<DataFile>)q.getResultList();
-	if (res.size() != 0) {
-	    return  res.iterator().next();
-	} else {
-	    return null;
-	}
+	return glf(q);
     }
 
     /** Finds the latest file of a given type (probably, sugg list)
@@ -391,11 +392,15 @@ import edu.rutgers.axs.ParseConfig;
 	q.setParameter("t", t);
 	q.setParameter("st", sourceType);
 	if (days>=0) 	q.setParameter("d", days);
+	return glf(q);
+    }
 
+    /** Returns the result of a single-result query */
+    static private DataFile glf(Query q) {
 	q.setMaxResults(1);
 	List<DataFile> res = (List<DataFile>)q.getResultList();
 
-	Logging.info("DataFile.getLatestFileBasedOn(user="+username+", t=" + t+", days=" + days+", sourceType=" + sourceType +") gives " + res.size() + " results");
+	//	Logging.info("DataFile.getLatestFileBasedOn(user="+username+", t=" + t+", days=" + days+", sourceType=" + sourceType +") gives " + res.size() + " results");
 
 	if (res.size() != 0) {
 	    return  res.iterator().next();
@@ -414,14 +419,11 @@ import edu.rutgers.axs.ParseConfig;
 						    Type t, DataFile srcFile) {
 	String qs = "select m from DataFile m " +
 	    "where m.user=:u and m.type=:t and m.deleted=FALSE";
-	if (srcFile==null)  {
-	    qs += " and m.inputFile is null";
-	} else {
-	    qs += " and m.inputFile=:sf";
-	}
+	qs += (srcFile==null) ?
+	    " and m.inputFile is null" :
+	    " and m.inputFile=:sf";
 
 	Query q = em.createQuery(qs);
-
 	q.setParameter("u", username);
 	q.setParameter("t", t);
 	if (srcFile != null) { q.setParameter("sf", srcFile); }
@@ -432,19 +434,11 @@ import edu.rutgers.axs.ParseConfig;
 
     /** Finds the DataFile entry with a matching name */
     static public DataFile findFileByName(EntityManager em, String  username, String file) {
-	String qs = "select m from DataFile m where m.user=:u and m.thisFile=:f";
+	String qs= "select m from DataFile m where m.user=:u and m.thisFile=:f";
 	Query q = em.createQuery(qs);
-
 	q.setParameter("u", username);
 	q.setParameter("f", file);
-
-	q.setMaxResults(1);
-	List<DataFile> res = (List<DataFile>)q.getResultList();
-	if (res.size() != 0) {
-	    return  res.iterator().next();
-	} else {
-	    return null;
-	}
+	return glf(q);
     }
 
 

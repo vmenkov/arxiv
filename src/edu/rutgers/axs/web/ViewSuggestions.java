@@ -18,6 +18,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.recommender.Scheduler;
+import edu.rutgers.axs.recommender.DailyPPP;
 import edu.rutgers.axs.ee4.Daily;
 
 /** This class is responsible for the retrieval, formatting, and
@@ -381,9 +382,16 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	if (df==null) {
 	    /** Disregard source type (the initial file, created "on the fly",
 		has no source at all!) */
-	    df = DataFile.getLatestFile(em, actorUserName, mode);
+
+	    if (mode==DataFile.Type.PPP_SUGGESTIONS) {
+		// which document representation is "in favor" now?
+		int[] versions=DailyPPP.allowedFileVersions();
+		df = DataFile.getLatestFileByVersion(em, actorUserName, mode, versions);
+	    } else {
+		df = DataFile.getLatestFile(em, actorUserName, mode);
+	    }
 	}
-	infomsg += "main: df=" + df+"<br>\n";
+	infomsg += "main: DataFile: " + df+",<br>\n";
 
 	onTheFly = (df==null);
        

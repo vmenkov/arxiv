@@ -51,7 +51,7 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	fillMap(alTable);
     }
 
-    private PPPFeedback(int _sugListId,User.ActionListTable alTable ) {
+    private PPPFeedback(int _sugListId, User.ActionListTable alTable ) {
 	super();
 	sugListId =  _sugListId;
 	fillMap(alTable);
@@ -128,6 +128,7 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
      }
 
  
+
     /** Converts the user feedback summary into a list of coefficients
 	for a Rocchio-style update.
 

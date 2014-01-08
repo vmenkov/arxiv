@@ -46,26 +46,23 @@ public class Test {
 	UserProfile.setDebug(x.reader, ht);
 
 	EntityManager em = Main.getEM();
-
-	CompactArticleStatsArray.CASReader asr = new CompactArticleStatsArray.CASReader(x.reader);
-	asr.start();    
-	CompactArticleStatsArray casa = asr.getResults();
-		
-
+	
 	//	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, x.reader);	    
+	ArticleAnalyzer aa=new ArticleAnalyzer(x.reader,ArticleAnalyzer.upFields);
+	aa.readCasa();
 
 	for(String uname: argv) {
 	    System.out.println("User=" + uname);
-	    UserProfile upro = new UserProfile(uname, em, x.reader);	   
+	    UserProfile upro = new UserProfile(uname, em, aa);	   
 
 	    ArxivScoreDoc[] sd =
-		raw ? upro.luceneRawSearch(maxDocs *10, casa, em, 0 , false):
+		raw ? upro.luceneRawSearch(maxDocs *10, em, 0 , false):
 		upro.luceneQuerySearch(maxDocs * 10, 0);
 
 	    ArticleEntry.save(upro.packageEntries(sd), new File("linsug.txt"));
 
 	    TjAlgorithm1 algo = new TjAlgorithm1();
-	    sd = algo.rank( upro, sd, casa, em, maxDocs,true);
+	    sd = algo.rank( upro, sd, em, maxDocs,true);
 	    Vector<ArticleEntry> entries = upro.packageEntries(sd);
 
 	    ArticleEntry.save(entries, new File("algo1.txt"));

@@ -136,7 +136,8 @@ public class ViewUserProfile extends PersonalResultsBase {
 
 	    if (df!=null) {
 		reader = Common.newReader();
-		upro = new UserProfile(df, reader);
+		ArticleAnalyzer aa=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+		upro = new UserProfile(df, aa);
 
 		if (df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
 		    ancestor =  df.getInputFile();

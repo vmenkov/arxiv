@@ -53,7 +53,7 @@ public class SimRow implements Serializable {
     */
     public SimRow( int docno, ArticleStats[] allStats, EntityManager em,ArticleAnalyzer z) throws IOException {
 	entries =new Vector<SimRowEntry>();
-	HashMap<String, Double> doc1 = z.getCoef(docno, null);		
+	HashMap<String, ?extends Number> doc1 = z.getCoef(docno, null);		
 	Document doc = z.reader.document(docno);
 	String cats =doc.get(ArxivFields.CATEGORY);
 	CatInfo catInfo=new CatInfo(cats, true);
@@ -61,8 +61,6 @@ public class SimRow implements Serializable {
 
 	final double threshold = 0.1;
 	final double thresholds[] = {threshold};
-
-	double norm1=z.tfNorm(doc1);
 
 	int maxdoc = z.reader.maxDoc() ;
 	double scores[] = new double[maxdoc];	
@@ -105,7 +103,7 @@ public class SimRow implements Serializable {
 		boolean catMatch = catInfo.match(cat2);
 
 		if (catMatch) {
-		    double q = scores[k]/norm1;
+		    double q = scores[k];
 		    for(int j=0; j<thresholds.length; j++) {
 			if (q>= thresholds[j]) abovecnt[j]++;
 		    }

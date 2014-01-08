@@ -25,7 +25,7 @@ class SparseDataPoint extends DataPoint {
 	terms (strings) to integer term id.
 	@param z Is used to get certain document stats from the SQL database
      */
-    SparseDataPoint(HashMap<String, Double> h, DocSet s, ArticleAnalyzer z) {
+    SparseDataPoint(HashMap<String, ?extends Number> h, DocSet s, ArticleAnalyzer z)  throws IOException{
 	int n = h.size();
 	features = new int[n];
 	values = new double[n];

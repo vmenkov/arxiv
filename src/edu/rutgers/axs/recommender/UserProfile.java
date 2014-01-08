@@ -3,6 +3,7 @@ package edu.rutgers.axs.recommender;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
+import org.apache.commons.lang.mutable.*;
 
 import java.util.*;
 import java.io.*;
@@ -15,7 +16,11 @@ import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 
-/** Used to maintain a variety of used profiles for TJ's methods, in particular SET_BASED and PPP.
+/** Used to maintain a variety of used profiles for TJ's methods, in
+    particular SET_BASED and PPP (aka 3PR). A user profile is stored
+    in a HashMap, keyed by the term. The stored values are based on
+    linear combinations of document vectors, normalized, but *not*
+    including sqrt(idf).     
  */
 public class UserProfile {
     /** 0 means "all" */
@@ -41,8 +46,7 @@ public class UserProfile {
     private long lastActionId=0;
     long getLastActionId() {  return lastActionId;}
     
-
-    public ArticleAnalyzer dfc;
+    ArticleAnalyzer dfc;
 
     /** Ordered list by importance, in descending order. */
     public String[] terms = {};
@@ -55,10 +59,11 @@ public class UserProfile {
 	}
     }
 
-    /** Maps term to value (cumulative tf) */
+    /** The vector w, stored as a hash maps that maps each feature to
+	the pair of values (cumulative tf) */
     public HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
 
-    /** Used with Approach 2 */
+    /** Used with the (currently used) Approach 2 */
     private void add1(String key, double inc1) {
 	TwoVal val = hq.get(key);
 	if (val==null) {
@@ -68,7 +73,7 @@ public class UserProfile {
 	}
     }
 
-    /** Used on initalization with Algo 1 Approach 1, and in updates in Algo 2. */
+    /** Used in updates in Algo 2. */
     void add(String key, double inc1, double inc2) {
 	TwoVal val = hq.get(key);
 	if (val==null) {
@@ -79,24 +84,21 @@ public class UserProfile {
 	}
     }
     
-    /** Computes w'' := sqrt(w'). This is used with Approach 2 */
+    /** Computes w'' := sqrt(w').  */
     private void computeSqrt() {
 	for( TwoVal val:  hq.values()) {
 	    val.w2 = Math.sqrt(val.w1);
 	}
     }
 
-    //    public static boolean isUseless(String t) {}
-
-
-    /** Is this term to be excluded from the user profile? 
+     /** Is this term to be excluded from the user profile? 
 
 	<p>Note that the criteria for the author field are different
 	than for other fields. This is because we have authors
-	surnamesd Li, Ma, Yi, Du, etc, as well as Z. Was and H. Then.
+	surnamed Li, Ma, Yi, Du, etc, as well as Z. Was and H. Then.
 
 	(FIXME: Note, however, that the stopwords have already been excluded
-	during indexing, so we need to re-index the whole thing to bring
+	during indexing, so we'll need to re-index the whole thing to bring
 	Mr. Then back. 2013-12-29)
      */
 
@@ -105,20 +107,19 @@ public class UserProfile {
 	final boolean isAuthors = term.field().equals(ArxivFields.AUTHORS);
 	final int L = isAuthors ? 1 : 2;
 	if (t.length() <= L) return true;
-	if (Character.isDigit( t.charAt(0))) return true;
+	char c = t.charAt(0);
+	if (Character.isDigit(c) || c=='_') return true;
 	if (!isAuthors && stoplist!=null && stoplist.contains(t)) return true;
 
 	// Presently only allow words starting with an English letter,
 	// and including only alphanumeric letters, apostrophes and dots.
-	if (!Character.isJavaIdentifierStart(t.charAt(0))) return true;
+	if (!Character.isJavaIdentifierStart(c)) return true;
 	for(int i=1; i<t.length(); i++) {
-	    char c= t.charAt(i);
+	    c= t.charAt(i);
 	    if (!Character.isJavaIdentifierPart(c) && c!='.' && c!='\'') return true;
 	}
-
 	return false;
     }
-
 
   
     /** Discount factor for lower-ranking docs in constructing user profiles.
@@ -128,10 +129,11 @@ public class UserProfile {
     }
     
     /** Empty-profile constructor */
-    UserProfile(IndexReader reader) throws IOException {
+    //    UserProfile(IndexReader reader) throws IOException {
+    UserProfile(ArticleAnalyzer aa) throws IOException {
 	lastActionId = 0;
-
-	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	dfc = aa;
+	//dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 	terms = new String[0];
 	Logging.info( "Created an empty user profile");
     }
@@ -147,7 +149,8 @@ public class UserProfile {
 	IDF and sqrt(IDF) are brought in when the utility is actually
 	computed in Algo 1.
      */
-    UserProfile(String uname, EntityManager em, IndexReader reader) throws IOException {
+    //    UserProfile(String uname, EntityManager em, IndexReader reader) throws IOException {
+    UserProfile(String uname, EntityManager em, ArticleAnalyzer aa) throws IOException {
 	User actor = User.findByName(em, uname);
 	if (actor == null) {
 	    throw new IllegalArgumentException( "No user with user_name="+ uname+" has been registered");
@@ -155,42 +158,29 @@ public class UserProfile {
 
 	lastActionId = actor.getLastActionId();
 
-	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	//dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	dfc=aa;
 	// descending score order
 	UserPageScore[]  ups =  UserPageScore.rankPagesForUser(actor);
 	int cnt=0;
 	for(UserPageScore up : ups) {
 	    if (up.getScore() <=0) break; // don't include "negative" pages
 	    String aid = up.getArticle();
-	    HashMap<String, Double> h = dfc.getCoef(aid);
+	    HashMap<String, ?extends Number> h = dfc.getCoef(aid);
 	    double gamma = getGamma(cnt); 	    // discount factor
-	    // FIXME: can we use stored norm instead?
-	    double norm = dfc.tfNorm(h);
-	    double f = gamma / norm;
-	    if (TjAlgorithm1.approach2) {
-		// For Approach 2, w2 will be initialized  later
-		for(Map.Entry<String,Double> e: h.entrySet()) {
-		    double q = e.getValue().doubleValue();
-		    add1( e.getKey(), f * q);
-		}
-	    } else { // the original, abandoned, approach
-		// for the "sqrt(phi)" part
-		double norm2 = dfc.normOfSqrtTf(h);
-		double f2 = gamma/norm2;
-		// For Approach 1, w2 is initialized right here
-		for(Map.Entry<String,Double> e: h.entrySet()) {
-		    double q = e.getValue().doubleValue();
-		    add( e.getKey(), f * q, f2 * Math.sqrt(q));
-		}
-	    } 
+
+	    // w2 will be initialized  later
+	    for(Map.Entry<String,?extends Number> e: h.entrySet()) {
+		double q = e.getValue().doubleValue();
+		add1( e.getKey(), gamma * q);
+	    }
 
 	    cnt++;
 	}
 	int size0 = hq.size();
 	
-	if (TjAlgorithm1.approach2) {
-	    computeSqrt();
-	}
+	computeSqrt();
+
 	setTermsFromHQ();
 	Logging.info( "User profile has " + terms.length + " terms");
 	//save(new File("profile.tmp"));
@@ -205,15 +195,22 @@ public class UserProfile {
 
     /** Reads the profile from a file, and set the lastActionId from the 
      DataFile structure. */
-    public UserProfile(DataFile df, IndexReader reader) throws IOException {
-	this(df.getFile(), reader);
+    //    public UserProfile(DataFile df, IndexReader reader) throws IOException {
+    public UserProfile(DataFile df, ArticleAnalyzer aa) throws IOException {
+	this(df.getVersion(), df.getFile(), aa);
 	lastActionId = df.getLastActionId();
     }
 
     /** Reads the profile from a file. Does not set lastActionId, so that
      has to be done separately. */
-    private UserProfile(File f, IndexReader reader) throws IOException {
-	dfc=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+    //    private UserProfile(int version, File f, IndexReader reader) throws IOException {
+    private UserProfile(int version, File f, ArticleAnalyzer aa) throws IOException {
+	if ((version==2) ^ (aa instanceof ArticleAnalyzer2)) throw new IllegalArgumentException("DF.version=" + version +", AA type=" + aa.getClass());
+
+	//	    new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	dfc=aa;
+
+
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
 	String s;
@@ -244,10 +241,19 @@ public class UserProfile {
 	return saveToFile(task.getUser(), task.getId(), type);
     }
 
+    /** Creates a disk file and a matching DataFile object to store this
+	UserProfile.
+
+	<p>FIXME: the file version is chosen based on the class of the
+	ArticleAnalyzer dfc. This may need to be finessed once we have more
+	than 2 versions.
+    */
     DataFile saveToFile(String user, long taskId, DataFile.Type type) 
 	throws IOException {
 	DataFile uproFile=  new DataFile(user, taskId, type);
+	int version = (dfc instanceof ArticleAnalyzer2) ? 2 : 1;
 	uproFile.setLastActionId( lastActionId);
+	uproFile.setVersion(version);
 	this.save(uproFile.getFile());
 	return uproFile;
     }
@@ -270,7 +276,7 @@ public class UserProfile {
 	w.close();
     }
 
-    public void save(PrintWriter w) {
+    public void save(PrintWriter w) throws IOException {
 	w.println("#--- Entries are ordered by w(t)*idf(t)");
 	w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
 	for(int i=0; i<terms.length; i++) {
@@ -288,9 +294,11 @@ public class UserProfile {
     */
     private class TermsByDescVal implements  Comparator<String> {
 	public int compare(String o1,String o2) {
-	    double d = hq.get(o2).w1 * dfc.idf(o2)- 
-		hq.get(o1).w1 * dfc.idf(o1);
-	    return (d<0)? -1 : (d>0) ? 1 : 0;
+	    try {
+		double d = hq.get(o2).w1 * dfc.idf(o2)- 
+		    hq.get(o1).w1 * dfc.idf(o1);
+		return (d<0)? -1 : (d>0) ? 1 : 0;
+	    } catch(IOException ex) { return 0; }
 	}
     }
     
@@ -384,18 +392,18 @@ public class UserProfile {
     //    Vector<ArticleEntry>
     ArxivScoreDoc[] 
 	luceneRawSearch(int maxDocs, 
-			//ArticleStats[] allStats, 
-			CompactArticleStatsArray   allStats, 
 			EntityManager em, int days, boolean useLog) throws IOException {
 
 	if (days>0) {
-	    return luceneRawSearchDateRange(maxDocs, allStats, em, days, useLog);
+	    return luceneRawSearchDateRange(maxDocs, em, days, useLog);
 	}
 
 	int numdocs0 = dfc.reader.numDocs(), maxdoc=dfc.reader.maxDoc() ;
 	Logging.info("UP: numdocs=" + numdocs0 + ", maxdoc=" + maxdoc);
 	double scores[] = new double[maxdoc];	
-		
+	CompactArticleStatsArray   allStats = dfc.getCasa();
+	if (allStats ==null) throw new IllegalArgumentException();
+
 	int tcnt=0,	missingStatsCnt=0;
 	for(String t: terms) {
 	    double idf = dfc.idf(t);
@@ -452,9 +460,11 @@ public class UserProfile {
      */
     ArxivScoreDoc[] 
 	catAndDateSearch(int maxDocs, 
-			 CompactArticleStatsArray   allStats, 
 			 EntityManager em, User u, int days,
 			 boolean useLog) throws IOException {
+
+	if (dfc.getCasa()==null) throw new IllegalArgumentException("AA.catAndDateSearch() called without initializing AA.CASA first!");
+
 	Date since = SearchResults.daysAgo( days );
 	final int M = 10000; // well, the range is supposed to be narrow...
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
@@ -472,15 +482,15 @@ public class UserProfile {
 	for(int i=0; i< scoreDocs.length ; i++) {
 	    int docno = scoreDocs[i].doc;
 
-	    if (docno > allStats.size()) {
+	    if (docno > dfc.getCasa().size()) {
 		Logging.warning("linSim: no stats for docno=" + docno + " (out of range)");
 		missingStatsCnt ++;
 		continue;
 	    } 
 
 	    double sim = useLog? 
-		dfc.logSim(docno, allStats, hq) :
-		dfc.linSim(docno, allStats, hq);
+		dfc.logSim(docno, dfc.getCasa(), hq) :
+		dfc.linSim(docno, dfc.getCasa(), hq);
 
 	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
 	}
@@ -500,8 +510,7 @@ public class UserProfile {
      */
    ArxivScoreDoc[] 
 	luceneRawSearchDateRange(int maxDocs, 
-				 //ArticleStats[] allStats, 
-				 CompactArticleStatsArray   allStats, 
+				 //CompactArticleStatsArray   allStats, 
 				 EntityManager em, int days,
 				 boolean useLog) throws IOException {
 	Date since = SearchResults.daysAgo( days );
@@ -523,6 +532,9 @@ public class UserProfile {
 	ArxivScoreDoc[] scores = new ArxivScoreDoc[scoreDocs.length];
 	int  nnzc=0;
 	int missingStatsCnt =0;
+
+	CompactArticleStatsArray   allStats = dfc.getCasa();
+	if (allStats ==null) throw new IllegalArgumentException();
 
 	for(int i=0; i< scoreDocs.length ; i++) {
 	    int docno = scoreDocs[i].doc;
@@ -689,10 +701,6 @@ public class UserProfile {
 	return h;
     }
 
-
-
-   
-
     /** Modifies this existing profile by adding to it, with 0
 	coefficients, all terms present in the current user activity
 	log. (So this blows up the profile's vocabulary, but does
@@ -716,9 +724,9 @@ public class UserProfile {
 	for(UserPageScore up : ups) {
 	    if (up.getScore() <=0) break; // don't include "negative" pages
 	    String aid = up.getArticle();
-	    HashMap<String, Double> h = dfc.getCoef(aid);
-	    for(Map.Entry<String,Double> e: h.entrySet()) {
-		add1( e.getKey(),0);
+	    HashMap<String, ?extends Number> h = dfc.getCoef(aid);
+	    for(String key: h.keySet()) {
+		add1( key, 0);
 	    }
 	    cnt++;
 	}
@@ -740,10 +748,8 @@ public class UserProfile {
 	int cnt=0;
 	for(String aid: updateCo.keySet()) {
 	    double w =  updateCo.get(aid).doubleValue();
-	    HashMap<String, Double> h = dfc.getCoef(aid);
-	    double norm = dfc.tfNorm(h);
-	    w /= norm;
-	    for(Map.Entry<String,Double> e: h.entrySet()) {
+	    HashMap<String, ?extends Number> h = dfc.getCoef(aid);
+	    for(Map.Entry<String, ?extends Number> e: h.entrySet()) {
 		double q = e.getValue().doubleValue();
 		add1( e.getKey(), w*q);
 	    }
@@ -754,8 +760,7 @@ public class UserProfile {
 	terms = hq.keySet().toArray(new String[0]);
 	Arrays.sort(terms, getByDescVal());
 	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
-  }
-
+    }
 
     /** Stuff used to control debugging and additional verbose reporting. */
     static class Debug {
@@ -801,13 +806,14 @@ public class UserProfile {
 
 	EntityManager em = Main.getEM();
 	IndexReader reader =  Common.newReader();
+	ArticleAnalyzer aa=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 
 	for(int j=2; j<argv.length; j++) {
 	    String aid = argv[j];
 
 	    DataFile df = DataFile.findFileByName( em,  username,  file);
 	    
-	    UserProfile up = new UserProfile( df, reader);
+	    UserProfile up = new UserProfile( df, aa);
 
 	    System.out.println("Doc="+aid);
 	    int docno = up.dfc.find(aid);

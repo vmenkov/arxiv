@@ -13,7 +13,6 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
-//import edu.rutgers.axs.web.ArticleEntry;
 
 class TjAlgorithm2 {
     private UserProfile upro;
@@ -36,12 +35,11 @@ class TjAlgorithm2 {
     private void addToPhi(double [] phi, double gamma,  ArxivScoreDoc sd) 
 	throws IOException
     {
-	HashMap<String, Double> h = upro.dfc.getCoef(sd.doc, null);
+	HashMap<String, ?extends Number> h = upro.dfc.getCoef(sd.doc, null);
 
-	double norm = upro.dfc.tfNorm(h);
-	double f = gamma / norm;
+	double f = gamma;
 
-	for(Map.Entry<String,Double> e: h.entrySet()) {
+	for(Map.Entry<String, ?extends Number> e: h.entrySet()) {
 	    double q = e.getValue().doubleValue();
 	    String term = e.getKey();
 	    if (termMapper.get(term)==null) {
