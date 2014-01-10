@@ -127,7 +127,16 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	 }
      }
 
- 
+     private static boolean areUnique(Vector<ArticleEntry> entries) {     
+	 HashSet<String> h=new  HashSet<String>();
+	 for(ArticleEntry e: entries) {
+	     if (e==null) continue;
+	     String aid = e.id;
+	     if (h.contains(aid)) return false;
+	     h.add(aid);
+	 }
+	 return true;
+     }
 
     /** Converts the user feedback summary into a list of coefficients
 	for a Rocchio-style update.
@@ -140,15 +149,19 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	CoMap updateCo = new CoMap();
 
 	Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
-	for(ArticleEntry ae: entries0) { entries.add(ae); }
+	for(ArticleEntry ae: entries0) { 
+	    entries.add(ae); 
+	}
+	if (!areUnique(entries)) throw new IllegalArgumentException("Not unique A");
 	// 1. feedback from VIEWED
 	for(int j=( topOrphan? 1 : 0); j+1 < entries.size(); j+=2) {
 	    String aid1 = entries.elementAt(j).id;
 	    String aid2 = entries.elementAt(j+1).id;
 	    if  (wasViewedOrPromoted(aid2) && !wasViewedOrPromoted(aid1)) {
 		// swap
-		entries.set(j, entries0.elementAt(j+1));
-		entries.set(j+1, entries0.elementAt(j));
+		ArticleEntry q =  entries.elementAt(j);
+		entries.set(j, entries.elementAt(j+1));
+		entries.set(j+1, q);
 	    } else if (wasViewedOrPromoted(aid1)&& !wasViewedOrPromoted(aid2)){
 		// positive feedback, as proposed by TJ 2013-06-26
 		// Here, we can't work via reordering, so we
@@ -158,6 +171,8 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 		updateCo.addCo( aid2, inc);
 	    }
 	}
+
+	if (!areUnique(entries)) throw new IllegalArgumentException("Not unique B");
 	// 2. promotions
 	// entries2 will contain the promoted articles, and entries2b, the rest
 	Vector<ArticleEntry> entries2 =  new Vector<ArticleEntry>(),
@@ -166,8 +181,14 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	    String aid = ae.id;
 	    (wasPromoted(aid) ? entries2 : entries2b).add(ae);
 	}
+
+	if (!areUnique(entries2)) throw new IllegalArgumentException("Not unique C");
+
+	if (!areUnique(entries2b)) throw new IllegalArgumentException("Not unique D");
+
+
 	// 3. demotions
-	int Q = 10; // how far down do we move demote articles
+	int Q = 10; // how far down do we move demoted articles
 	// rev2 will contain all non-promoted articles, in reverse order, with the demoted ones moved appropriately
 	Vector<ArticleEntry> rev2 =  new Vector<ArticleEntry>();
 
@@ -192,10 +213,12 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 		rev2.add(ae);
 	    }
 	}
+	if (!areUnique(rev2)) throw new IllegalArgumentException("Not unique E");
 	// merge (in reverse), into entries2
 	for(int j=rev2.size()-1; j>=0; j--) {	    
 	    entries2.add(rev2.elementAt(j));
 	}
+	if (!areUnique(entries2)) throw new IllegalArgumentException("Not unique F");
 	if (entries2.size() != entries0.size()) {
 	    throw new AssertionError("Error in list reordering: size " +entries2.size()+ " != " + entries0.size());
 	}

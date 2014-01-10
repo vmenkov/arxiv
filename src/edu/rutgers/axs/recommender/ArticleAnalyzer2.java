@@ -398,7 +398,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 		String key = mkKey(term);
 		//double idf = computeIdf( numdocs, df);
 
-		double z =  freqs[i] / norms[i][docno];
+		double z =  freqs[i] / norms[j][docno];
 		h.put( key, new MutableDouble(z));
 
 		key = mkKey(CONCAT, terms[i]);

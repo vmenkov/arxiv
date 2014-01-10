@@ -63,7 +63,14 @@ public class PPPConversion {
 
 	    File f = df.getFile();
 	    Vector<ArticleEntry> entries = ArticleEntry.readFile(f);
-	    HashMap<String,MutableDouble> updateCo = actionSummary.getRocchioUpdateCoeff(topOrphan, entries);
+
+	    
+	    Vector<ArticleEntry> v = unique(entries);
+	    if (v.size()!=entries.size()) {
+		Logging.warning("Duplicates found: out of " + entries.size() + " sug list entries, only kept " + v.size());
+	    }
+
+	    HashMap<String,MutableDouble> updateCo = actionSummary.getRocchioUpdateCoeff(topOrphan, v);
 	    Logging.info("The update will be a linear combination of " + updateCo.size() + " documents:");
 	    for(String aid: updateCo.keySet()) {
 		System.out.println("w["+aid + "]=" +  updateCo.get(aid));
@@ -87,6 +94,25 @@ public class PPPConversion {
 	Logging.info("Saved profile: " + outputFile);
     }
     
+    /** Strips non-unique elements from an entry list. This is only
+	needed with very old (2012) lists, which may have been
+	composed slightly incorrectly.
+    */
+    private static Vector<ArticleEntry> unique(Vector<ArticleEntry> entries) {
+	Vector<ArticleEntry> v= new Vector<ArticleEntry>();
+	 HashSet<String> h=new  HashSet<String>();
+	 for(ArticleEntry e: entries) {
+	     if (e==null) continue;
+	     String aid = e.id;
+	     if (h.contains(aid)) {
+		 continue;
+	     } else {
+		 h.add(aid);
+		 v.add(e);
+	     }
+	 }
+	 return v;
+     }
 
     static void conversions() throws IOException {
 

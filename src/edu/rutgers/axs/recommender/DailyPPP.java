@@ -32,6 +32,12 @@ public class DailyPPP {
      */
     static private boolean refined=false;
 
+    public static int myVersion() {
+	return refined? 2:1;
+    }
+
+    /** Figure which DataFile versions you need for the current document
+	representation. */
     public static int[] allowedFileVersions() {
 	return allowedFileVersions(refined);
     }
@@ -42,6 +48,7 @@ public class DailyPPP {
 
     static void updates() throws Exception {
 
+	Logging.info("refined=" + refined);
 	//ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 	IndexReader reader = Common.newReader();
@@ -91,7 +98,12 @@ public class DailyPPP {
     /** Updates and saves the user profile for the specified user, as
 	long as it makes sense to do it (i.e., there is no profile yet,
 	or there has been some usable activity since the existing profile
-	has been created)
+	has been created).
+
+	<p>Since Jan 2014, multiple document representations are
+	supported, with two entirely different (independent) series of
+	user profiles.  In order to only look at the relevant
+	profiles, selection is done by DataFile.version.
      */
     private static void updateP3Profile(EntityManager em, 
 					ArticleAnalyzer aa,
@@ -102,13 +114,14 @@ public class DailyPPP {
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE, 
 	    stype =  DataFile.Type.PPP_SUGGESTIONS;
 	final String uname = u.getUser_name();
-	// the latest profile
+	// the latest profile (with the right version)
 	DataFile oldProfileFile = DataFile.getLatestFileByVersion(em, uname, ptype, allowedFileVersions());
 	System.out.println("Old user profile = " + oldProfileFile);
 
 	UserProfile upro = (oldProfileFile == null)?
 	    new UserProfile(aa) :  new UserProfile(oldProfileFile, aa);
-	
+
+	// the sug lists based on the old profile
 	List<DataFile> sugLists = DataFile.getAllFilesBasedOn(em, uname, stype, oldProfileFile);
 
 	System.out.println("Found " +sugLists.size() + " applicable suggestion lists");
@@ -141,7 +154,7 @@ public class DailyPPP {
  	    upro.setTermsFromHQ();
 	}
 	if (rocchioCnt==0 && oldProfileFile!=null) {
-	    System.out.println("There is no need to update the existing profile " + oldProfileFile +", because there no important actions based on it have been recorded");
+	    System.out.println("There is no need to update the existing profile " + oldProfileFile +", because no important action based on it has been recorded");
 	    return;
 	}
 	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
@@ -251,6 +264,7 @@ public class DailyPPP {
 	ArticleEntry.save(entries, outputFile.getFile());
 	// Save the sugg list to the SQL database
 	outputFile.fillArticleList(entries,  em);
+	outputFile.setVersion(myVersion());
 	em.getTransaction().begin(); 
 	em.persist(outputFile);
 	em.getTransaction().commit();
@@ -274,7 +288,12 @@ public class DailyPPP {
 	}
     }
 
-
+    /** Retrieves the appropriate user profile to use for suggestion list 
+	generation. This is the most recent profile for the specified user,
+	with the right DataFile type and version number. If no appropriate
+	user profile DataFile exists, an empty user profile is created on
+	the fly.
+    */
     private static UserProfile 
 	getSuitableUserProfile(User user, Vector<DataFile> ptr, 
 			       EntityManager em, ArticleAnalyzer aa)

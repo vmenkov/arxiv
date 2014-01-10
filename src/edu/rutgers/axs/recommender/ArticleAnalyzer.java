@@ -114,7 +114,11 @@ public class ArticleAnalyzer {
 	    Logging.warning("No document found in Lucene data store for id=" + aid +"; skipping");
 	    return new HashMap<String, Double>();
 	}
-	return getCoef(docno,null);
+	return getCoef(docno);
+    }
+
+    HashMap<String, ?extends Number> getCoef(int docno) throws IOException {
+	return getCoef(docno, null);
     }
 
     /** This flag controls whether TF or sqrt(TF) is used to compute
