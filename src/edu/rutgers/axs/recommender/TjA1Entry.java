@@ -95,7 +95,13 @@ class TjA1Entry   {
 
     /** Upper bound (possibly, no longer "tight") on this document's
      * contribution to the utility function */
-    double ub(double gamma) { return sum1*gamma + mcPlus; }
+    double ub(double gamma) { 
+	if (Double.isInfinite(gamma)) throw new AssertionError("gamma=inf");
+	if (Double.isInfinite(sum1)) throw new AssertionError("sum1=inf");
+	if (Double.isInfinite(mcPlus)) throw new AssertionError("mcPlus=inf");
+
+	return sum1*gamma + mcPlus; 
+    }
   
     /** Descending order with respect to the max possible contribution. */
     static class DescendingUBComparator implements Comparator<TjA1Entry> {
@@ -124,6 +130,10 @@ class TjA1Entry   {
 	    upro.dfc.prepareTjA1EntryData(sd.doc, upro.hq, termMapper);
 
 	sum1 = tj.sum1;
+	if (Double.isInfinite(sum1)) throw new AssertionError("sum1=inf, doc=" + _sd.doc);
+
+
+
 	mcPlus =  mcMinus = 0;
 
 	Vector<Coef> vplus = new Vector<Coef> (upro.terms.length),

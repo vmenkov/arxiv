@@ -22,6 +22,10 @@ import edu.rutgers.axs.web.Search;
  */
 public class ArticleAnalyzer {
 
+    /** A pseudo-field name, to be used as an argument where a field
+	name is needed.      */
+    private static final String 	ANYWHERE = "anywhere";
+
     public IndexReader reader;
     final String [] fields;
     /** Collection size */
@@ -749,6 +753,13 @@ public class ArticleAnalyzer {
 	    }
 	}
 	return tj;
+    }
+
+    /** This is overridden in AA2 */
+    Term keyToTerm(String key) //throws IOException 
+    {
+	if (key.indexOf(":")>=0)  throw new IllegalArgumentException("Unexpected semicolon in key=" + key);
+	return new Term(ANYWHERE, key);
     }
 
 

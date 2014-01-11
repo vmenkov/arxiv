@@ -23,7 +23,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
     /** Norms of all real and concatenated fields of all documents */
     private final double[][] norms;
     private final int numdocs, maxdoc;
-    private static String 	CONCAT = "concat";
+    private static final String 	CONCAT = "concat";
 
     /** Contains df values of all terms accepted for the
 	"concatenated" field". The absence of a term in the table
@@ -364,6 +364,14 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	return mkKey(t.field(), t.text());
     }
 
+    Term keyToTerm(String key) //throws IOException 
+    {
+	String[] q = key.split(":");
+	if (q.length != 2) throw new IllegalArgumentException("Calling AA2.idf() expects a qualified term (f:t); received "+key);
+	return new Term(q[0], q[1]);
+    }
+
+
     /** Computes a (weighted) term frequency vector for a specified document.
 
 	@param docno Lucene's internal integer ID for the document,
@@ -411,7 +419,19 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	return h;
     }
 
- /**
+    /** Computes various dot products that are used to initialize
+	a TjA1Entry structure for Algorithm 1. 
+
+	<p>FIXME: Strictly speaking, we should verify for each term
+	that it is not a stopword or excludable term. However, for
+	efficiency's sake, we don't do it, in the expectation that the
+	user profile (which should have been computed the same day or
+	a few days ago, using the appropriate stopword list and
+	"useless term" exclusion rules) will not contain such terms.
+	This aproach will break, however, if the stopword list changes,
+	and the user profile ends up dragging in terms that were
+	"useful" in the past, but are considered useless now.
+
        @param hq  User profile vector (UserProfile.hq)
      */
     TjA1EntryData prepareTjA1EntryData(int docno,
@@ -435,16 +455,20 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	    int[] freqs=tfv.getTermFrequencies();
 	    String[] terms=tfv.getTerms();	    
 
+
 	    double boost = 1.0 / norms[j][docno];
+
 
 	    for(int i=0; i<terms.length; i++) {
 		String key=mkKey(fields[j], terms[i]);	       
 		UserProfile.TwoVal q= hq.get(key);
-		if (q!=null) {
+		if (q!=null && norms[j][docno]>0) {
 		    // term position in upro.terms[]
 		    int iterm = termMapper.get(key).intValue();		    
+
 		    double z = freqs[i] * boost;
 		    double idf = idf(fields[j], terms[i]);	       
+
 		    tj.sum1 += z * q.w1 *idf;
 		    double w2q =  z * idf * q.w2 * q.w2 ;
 		    if (w2q<0) throw new AssertionError("w2q<0: this is impossible!");
@@ -454,7 +478,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 		//-- the concat field
 		key=mkKey(CONCAT, terms[i]);	       
 		q= hq.get(key);
-		if (q!=null) {
+		if (q!=null && norms[fields.length][docno]>0 ) {
 		    int iterm = termMapper.get(key).intValue();
 		    double z = freqs[i] * boostConcat;
 		    double idf = idf(CONCAT, terms[i]);	       

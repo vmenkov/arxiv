@@ -69,6 +69,10 @@ class TjAlgorithm1 {
 	    if (imax<0 || u>utility || (u==utility && tje.compareTieTo(tjEntries[imax])>0)) {
 		imax = i;
 		utility=u;
+
+		//if (Double.isInfinite(utility)) throw new AssertionError("utility=inf: imax="+imax); // here
+
+
 	    }
 	}
 
@@ -93,12 +97,12 @@ class TjAlgorithm1 {
 	    gamma = upro.getGamma(results.size());
 	    imax=usedCnt;
 	    double maxdu = tjEntries[usedCnt].wouldContributeNow(phi, gamma);
-	    
+
 	    int i;
 	    for(i=usedCnt+1; i<storedCnt && tjEntries[i].ub(gamma)>=maxdu; i++){
 		tje = tjEntries[i];
 		double du= tje.wouldContributeNow(phi, gamma);		
-		// includes date-based tie-breaking clause
+	// includes date-based tie-breaking clause
 		if ( du>maxdu ||
 		    (du==maxdu && tje.compareTieTo(tjEntries[imax])>0)) {
 		    imax = i;

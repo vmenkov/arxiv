@@ -760,6 +760,7 @@ public class Indexer {
 	System.err.println("\tIndexer fields                     Print the list of fields in the index.");
 	System.err.println("\nAdditional:");
 	System.err.println("\tshow docid                         View a particular document's indexed data");
+	System.err.println("\tshowcoef docid                     View a particular document's indexed data");
 	System.exit(-1);
 			
     }

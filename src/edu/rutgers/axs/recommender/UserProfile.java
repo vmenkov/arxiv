@@ -85,11 +85,35 @@ public class UserProfile {
     }
     
     /** Computes w'' := sqrt(w').  */
+    
     private void computeSqrt() {
 	for( TwoVal val:  hq.values()) {
 	    val.w2 = Math.sqrt(val.w1);
 	}
     }
+    
+
+    /** Use this in the version with no nonlinear part (as in the standard 3PR)
+     */
+    private void zeroNonlinear() {
+	for( TwoVal val:  hq.values()) {
+	    val.w2 = 0;
+	}
+    }
+
+    /** Checks if there are any "useless" terms among the features, and
+	removes them. Normally, there shouldn't be any. But there could
+	be excpetional situations, e.g. a change in the composition of the
+	stopword list.
+    */
+    private void removeUselessTerms()  {
+	for(String key: hq.keySet()) {
+	    if (isUseless( dfc.keyToTerm(key))) {
+		hq.remove(key);
+	    }			    
+	}
+    }
+
 
      /** Is this term to be excluded from the user profile? 
 
@@ -148,6 +172,8 @@ public class UserProfile {
 	IDF^{1/4}, for w2) is factored into the stored weights. Instead,
 	IDF and sqrt(IDF) are brought in when the utility is actually
 	computed in Algo 1.
+
+	This really should be deprecated, because we initialize from 0 now.
      */
     //    UserProfile(String uname, EntityManager em, IndexReader reader) throws IOException {
     UserProfile(String uname, EntityManager em, ArticleAnalyzer aa) throws IOException {
@@ -755,6 +781,12 @@ public class UserProfile {
 	    }
 	    cnt++;
 	}
+
+	removeUselessTerms(); // just in case
+
+	// Rocchio type update (rather than Delta Psi) is only used in methods
+	// with no non-linear part       
+	zeroNonlinear();
 
 	// updates terms[]
 	terms = hq.keySet().toArray(new String[0]);
