@@ -30,7 +30,7 @@ public class DailyPPP {
     /** Controls document representation (via the choice of
 	ArticleAnalyzer class and DocumentFile.version)
      */
-    static private boolean refined=false;
+    static private boolean refined=true;
 
     public static int myVersion() {
 	return refined? 2:1;

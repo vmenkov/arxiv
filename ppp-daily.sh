@@ -1,7 +1,7 @@
 #!/bin/csh
 
-# Usage examples:
-# ./import.sh files 'http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:1211.0003'
+#-- This script runs nightly, updating user profiles and sugg lists for all users  in the PPP experiment plan
+
 
 
 set opt="-DOSMOT_CONFIG=."
@@ -16,7 +16,7 @@ set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 
-set opt="-cp ${cp} ${opt} -Drefined=true -Duser=vmenkov"
+set opt="-cp ${cp} ${opt} -Drefined=true"
 
 echo "opt=$opt"
 

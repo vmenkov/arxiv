@@ -1,6 +1,6 @@
 #!/bin/csh
 
-# Usage examples:
+#-- A one-off script
 
 set opt="-DOSMOT_CONFIG=."
 
@@ -11,11 +11,18 @@ set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/co
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
-set opt="-cp ${cp} ${opt} -Duser=vmenkov -Drefined=true"
+#set opt="-cp ${cp} ${opt} -Duser=vmenkov -Drefined=false"
+set opt="-cp ${cp} ${opt}  -Drefined=false"
 
 echo "opt=$opt"
 
-/usr/bin/time  java $opt edu.rutgers.axs.recommender.PPPConversion
+/usr/bin/time  java $opt edu.rutgers.axs.recommender.PPPConversion  >& conv1.log 
+
+set opt="-cp ${cp} ${opt}  -Drefined=true"
+
+echo "opt=$opt"
+
+/usr/bin/time  java $opt edu.rutgers.axs.recommender.PPPConversion  >& conv2.log 
  
 
 
