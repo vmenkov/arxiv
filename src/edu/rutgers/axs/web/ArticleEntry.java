@@ -27,7 +27,7 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
     /** Article id, same as in the arXiv database and arXiv URLs */
     public String id;
     /** Various metadata, in a printable form. */
-    public String idline, titline, authline, commline, subjline;
+    public String idline, titline, authline, commline, subj, subjline;
     /** The article abstract */
     public String abst;
     /** A line that our own server may add in some circumstances (for rendering with additional info) */
@@ -102,7 +102,8 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
 	authline=doc.get(ArxivFields.AUTHORS);
 	String c= doc.get(ArxivFields.COMMENTS);
 	commline=(c==null? "": "Comments:" + c);
-	subjline="Subjects:" + doc.get((ArxivFields.CATEGORY));
+	subj = doc.get((ArxivFields.CATEGORY));
+	subjline="Subjects:" + subj;
 	date = doc.get(ArxivFields.DATE);
 	dateIndexed = doc.get(ArxivFields.DATE_INDEXED);
 	abst = doc.get(ArxivFields.ABSTRACT);

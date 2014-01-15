@@ -47,10 +47,18 @@ public class SessionBased  extends ResultsBase {
 	
     }
 
-    /** Creates a snippet  of HTML describing one article entry. */
+    /** Creates a snippet  of HTML describing one article entry. 
+
+	<ul>
+	<li> title
+	<li> subject
+	<li> first 2 authors, ..., last
+	</ul>
+    */
     public String resultsDivHTMLLite(ArticleEntry e) {
 
-	String rt = "[score="+e.score+ "]";
+	String rt = "[" + e.idline + "; score="+e.score+ "; "+
+	    e.formatDate()+"]";
 	if (e.researcherCommline!=null && e.researcherCommline.length()>0) {
 	    rt += "["+e.researcherCommline+"]";
 	}
@@ -58,25 +66,20 @@ public class SessionBased  extends ResultsBase {
 
 	String aName = "article_" + e.id;
 
+	// JavaScript used to load the article in question into the main
+	// window
 	String js = "javascript:window.opener.location.href = '" +
 	    urlAbstract(e.id) + "';";
 
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
-	    "<a name=\""+ aName +"\">\n" +
-	    e.i + ".</a>" + 
-	    researcherSpan(rt, sd.researcherSB)+ 
-	    "<a onclick=\""  + js + "\">" + 
-	    e.idline + "; " +e.formatDate()+"\n" +
-	    //	    "<input type=\"button\" value=\"View\" onclick=\"javascript:window.opener.location.href = '"   +urlAbstract(e.id) + "';\">\n" +	
-    //"[" + a( urlAbstract(e.id), "View") + "]\n" +
-	    //	    "[" + a( urlPDF(e.id), "PDF/PS/etc") + "]\n" +
-	    "<br>\n" +
-	    e.titline + "</a><br>\n" +
-	    e.authline+ "<br>\n" +
-	    e.subjline+ "<br>\n";
-	    
+	    "<a name=\""+ aName +"\" title=\""+ rt +
+	    "\" onclick=\""  + js + "\">\n" +
+	    e.i + ". " + e.titline + "</a><br>\n"+
+	    abbreviateAuthline(e.authline)+ " &mdash; "+e.subj+ "\n";
+	    //researcherSpan(rt, sd.researcherSB)+  	    "<br>\n" +
+
 	s += 
 	    (!e.ourCommline.equals("") ? "<strong>"  + e.ourCommline + "</strong><br>" : "") +
 	    "</div>\n" +
@@ -84,7 +87,12 @@ public class SessionBased  extends ResultsBase {
 	return s;
     }
 
-    
+    /** A,B,C,D ---&gt;  A,D,...,D */
+    private static String abbreviateAuthline(String auth) {
+	String[] q = auth.split(",");
+	return (q.length<=3) ? auth :
+	    q[0] + ", " + q[1] +",... ," + q[q.length-1];
+    }
 
 
 }

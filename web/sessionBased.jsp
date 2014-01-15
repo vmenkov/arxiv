@@ -32,7 +32,7 @@
 <h1>Session-based recommendations</h1>
 
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
-<%   } else if (sr==null) {      %>
+<%   } else if (sr==null || sr.entries.size()==0) {      %>
 <p>No recommendations available yet.
 <%   } else {      %>
 <p>
