@@ -15,7 +15,7 @@ import edu.rutgers.axs.sql.*;
 /** An ARticleEntry instance contains data for a single search result
     (an article). This is used primarily for rendering the article
     entry in the search results page, suggestions page, or user folder page.  */
-public class ArticleEntry implements Comparable<ArticleEntry> {
+public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
     /** Sequence number in the overall search result
      * sequence. (1-based, for human readers' convenience) */
     public int i;
@@ -415,6 +415,10 @@ public class ArticleEntry implements Comparable<ArticleEntry> {
     public int compareTo(ArticleEntry  other) {
 	double d = other.score - score; 
 	return (d<0) ? -1 : (d>0) ? 1: 0;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+	return super.clone();
     }
 
 }

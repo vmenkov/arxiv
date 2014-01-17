@@ -20,7 +20,7 @@ import edu.rutgers.axs.web.*;
 /** The sesion-based recommendation generator. We have an SBRGenerator instance
     in every web.SessionData object.
 
-    Recommndation list computation for this class is carried out in the run()
+    Recommendation list computation for this class is carried out in the run()
     method of a SBRGThread object (a thread). At most one SBRGThread may have
     its thread running at any time.
  */
@@ -37,19 +37,30 @@ public class SBRGenerator {
 	exclusion list for the session-based recommendations.
      */
     HashSet<String> linkedAids = new HashSet<String>();
+    /** This method can be called to record the fact that a link of a
+	particular article has appeared in some page shown to the user.
+     */
     public void recordLinkedAid(String aid) {
 	linkedAids.add(aid);
     }
+   /** This method can be called to record the fact that links to a number
+       of articles have appeared in some page shown to the user.
+     */
     public void recordLinkedAids(Vector<ArticleEntry> entries) {
        for(ArticleEntry ae: entries) {
 	   linkedAids.add(ae.id);
        }
     }
 
-
+    /** Retrieves the SearchResults structure encapsulating the most recently
+	generated session-based recommendation list.
+    */
     public SearchResults getSR() {
-	return sbrReady==null? null : sbrReady.sr;
+	return sbrReady==null? null : sbrReady.sr;       
     }
+    /** Retrieves the PresentedList id associated with  the most recently
+	generated session-based recommendation list.
+     */
     public long getPlid() {
 	return sbrReady==null? 0 : sbrReady.plid;
     }
@@ -75,7 +86,6 @@ public class SBRGenerator {
     /** Pre-computed suggestion lists based on individual articles. Keys are
 	ArXiv article IDs.
      */
-    //HashMap<String, SearchResults> articleBasedSR = new HashMap<String, SearchResults>();
     HashMap<String,ScoreDoc[]> articleBasedSD= new HashMap<String,ScoreDoc[]>();
 
     public SBRGenerator(SessionData _sd) {

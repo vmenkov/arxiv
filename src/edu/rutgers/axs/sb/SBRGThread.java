@@ -15,6 +15,9 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.*;
 
+/** This classes encapsulates most of the activity involved in the
+    creation of session-based recommendation lists.
+ */
 class SBRGThread extends Thread {
     private final SBRGenerator parent;
 
@@ -83,7 +86,10 @@ class SBRGThread extends Thread {
     String errmsg = "";
 
     /** Retrieves the list of articles viewed by the user in this session 
-	so far. */
+	so far. 
+	FIXME: one can save on this one SQL call by storing the list in the
+	SessionData object; but we already make so many SQL calls anyway...
+    */
     private Vector<String> listViewedArticles(EntityManager em) {
 	Vector<Action> va = Action.actionsForSession( em, parent.sd.getSqlSessionId());
 	actionCount = va.size();
@@ -101,7 +107,8 @@ class SBRGThread extends Thread {
 	return viewedArticles;
     }
 
-    /** For ascending-order sort, i.e. rank 1 before rank 2 etc */
+    /** An auxiliary object for ascending-order sort (i.e. rank 1
+	before rank 2, etc) */
     private static class ArticleRanks implements Comparable<ArticleRanks> {
 	int docno;
 	/** This is *not* used for sorting */
@@ -109,7 +116,7 @@ class SBRGThread extends Thread {
 	Vector<Integer> ranks=new Vector<Integer>();
 	public int compareTo(ArticleRanks o) {
 	    for(int i=0; i<ranks.size() && i<o.ranks.size(); i++) {
-		int z=ranks.elementAt(i).intValue() - o.ranks.elementAt(i).intValue();
+		int z=ranks.elementAt(i).intValue()-o.ranks.elementAt(i).intValue();
 		if (z!=0) return z;
 	    }
 	    return o.ranks.size() - ranks.size();
@@ -132,11 +139,14 @@ class SBRGThread extends Thread {
     */
     String excludedList = "";
  
+    static final boolean stableOrder = true;
+
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
 	articles viewed by the user in this session.
      */
     private void computeRecList(EntityManager em, IndexSearcher searcher) {
+	
 	try {
 	    Vector<String> viewedArticles = listViewedArticles(em);
 
@@ -158,7 +168,7 @@ class SBRGThread extends Thread {
 		    } catch(IOException ex) {
 			// this may happen if the article is too new,
 			// and is not in our Lucene datastore yet
-			Logging.warning("SBRGThread " + getId() + ": skip unavailabel page " + aid);
+			Logging.warning("SBRGThread " + getId() + ": skip unavailable page " + aid);
 			continue;
 		    }
 		    Document doc = searcher.doc(docno);
@@ -206,6 +216,12 @@ class SBRGThread extends Thread {
 		k++;
 		if (entries.size()>=maxRecLen) break;
 	    }
+
+	    if (stableOrder) {
+		entries = maintainStableOrder( entries, maxRecLen);
+	    }
+
+
 	    sr = new SearchResults(entries); 
 	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);
 	}  catch (Exception ex) {
@@ -215,6 +231,54 @@ class SBRGThread extends Thread {
 	    System.out.println("Exception for SBRG thread " + getId());
 	    ex.printStackTrace(System.out);
 	}
+    }
+
+    /** Reorders the new suggestion list (entries) so that it includes
+	all (or almost all) elements from the previously displayed
+	list, in their original order
+     */
+    private Vector<ArticleEntry> maintainStableOrder( Vector<ArticleEntry> entries, int maxRecLen) {
+
+	if (parent.getSR()==null) return entries;
+	Vector<ArticleEntry> previouslyDisplayedEntries =
+	    parent.getSR().entries;
+	if (previouslyDisplayedEntries==null) return entries;
+	HashSet<String> exclusions = parent.linkedAids;
+
+	HashSet<String> old=new HashSet<String>();
+	// Old elements (not excluded)
+	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
+	for(ArticleEntry e: previouslyDisplayedEntries) {
+	    if (exclusions.contains(e.id)) continue;
+	    try {  // We use clone() because we're going to modify e.i
+		a.add((ArticleEntry)e.clone());
+	    }  catch (CloneNotSupportedException ex) {}
+	    old.add(e.id);
+	}
+	// new elements not found in the old list
+	Vector<ArticleEntry> b = new 	Vector<ArticleEntry>();
+	for(ArticleEntry e: entries) {
+	    if (!old.contains(e.id)) b.add(e);
+	}
+	double bRatio = b.size() / (double)(b.size() + a.size());
+	
+	Vector<ArticleEntry> v = new 	Vector<ArticleEntry>();
+	int na=0, nb=0;
+	while( v.size() <  maxRecLen &&
+	       (na < a.size() || nb < b.size())) {
+	    boolean useB = 
+		(na == a.size()) ||
+		(nb < b.size() &&  (nb+1) <= (na+nb+1)*bRatio );
+	    
+	    v.add( useB ? b.elementAt(nb++) : a.elementAt(na++));   	    
+	}
+	// Adjust positions
+	int k=1;
+	for(ArticleEntry e: v) {
+	    e.i = k++;
+	}	
+
+	return  v;
     }
 
     /** Generates the trivial recommendation list: 

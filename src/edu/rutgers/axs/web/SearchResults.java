@@ -135,7 +135,7 @@ public class  SearchResults {
     }
 
     /** Wraps a pre-computed Vector<ArticleEntry> into a SearchResults object.
-	This is used only in session-based recommendations.
+	This constructor is used only in session-based recommendations.
      */
     public SearchResults( Vector<ArticleEntry> _entries) //throws IOException 
 {
