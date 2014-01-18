@@ -20,10 +20,12 @@ import edu.rutgers.axs.indexer.*;
  */
 class SBRGThread extends Thread {
     private final SBRGenerator parent;
+    private final int id;
 
     /** Creates a thread. You must call its start() next */
-    SBRGThread(SBRGenerator _parent) {
+    SBRGThread(SBRGenerator _parent, int _id) {
 	parent = _parent;
+	id = _id;
     }
 
     /** The number of actions in the session so far      */
@@ -212,6 +214,9 @@ class SBRGThread extends Thread {
 		    excludedList += " " + ae.id;
 		    continue;
 		}
+				ae.ourCommline= 
+		ae.researcherCommline= "L" + id + ":" + k;
+
 		entries.add(ae);
 		k++;
 		if (entries.size()>=maxRecLen) break;

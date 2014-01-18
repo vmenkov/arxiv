@@ -77,7 +77,7 @@ public class SessionBased  extends ResultsBase {
 	    "<a name=\""+ aName +"\" title=\""+ rt +
 	    "\" onclick=\""  + js + "\">\n" +
 	    e.i + ". " + e.titline + "</a><br>\n"+
-	    abbreviateAuthline(e.authline)+ " &mdash; "+e.subj+ "\n";
+	    abbreviateAuthline(e.authline)+ " &mdash; "+ abbreviateSubj(e.subj)+ "\n";
 	    //researcherSpan(rt, sd.researcherSB)+  	    "<br>\n" +
 
 	s += 
@@ -92,6 +92,11 @@ public class SessionBased  extends ResultsBase {
 	String[] q = auth.split(",");
 	return (q.length<=3) ? auth :
 	    q[0] + ", " + q[1] +",... ," + q[q.length-1];
+    }
+
+    private static String abbreviateSubj(String subj) {
+	String[] q = subj.split(" ");
+	return (q.length<=3) ? subj :    q[0] + " " + q[1] +" ...";
     }
 
 

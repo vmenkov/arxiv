@@ -32,6 +32,9 @@ public class SBRGenerator {
     /** Currrently being computed */
     private SBRGThread sbrRunning = null;
     
+    /** Used to keep track of the number of SBRG runs we've done */
+    private int runCnt=0;
+
     /** List of all article IDs that have been mentioned anywhere in pages
 	shown to the user during this session. This can be used an 
 	exclusion list for the session-based recommendations.
@@ -103,7 +106,7 @@ public class SBRGenerator {
 	    requestedActionCount = Math.max(requestedActionCount,actionCount);
 	    Logging.info("SBRG: recording request with actionCount=" + actionCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
 	} else {
-	    sbrRunning = new SBRGThread(this);
+	    sbrRunning = new SBRGThread(this, runCnt++);
 	    lastThreadRequestedActionCount=requestedActionCount=actionCount;
 	    Logging.info("SBRG: Immediately starting a new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
 	    sbrRunning.start();
@@ -125,7 +128,7 @@ public class SBRGenerator {
 	}
 	sbrRunning = null;
 	if (requestedActionCount > lastThreadRequestedActionCount) {
-	    sbrRunning = new SBRGThread(this);
+	    sbrRunning = new SBRGThread(this, runCnt++);
 	    lastThreadRequestedActionCount=requestedActionCount;
 	    sbrRunning.start();
 	    Logging.info("SBRG: Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
