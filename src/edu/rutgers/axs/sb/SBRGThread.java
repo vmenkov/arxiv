@@ -214,7 +214,7 @@ class SBRGThread extends Thread {
 		    excludedList += " " + ae.id;
 		    continue;
 		}
-				ae.ourCommline= 
+		//		ae.ourCommline= 
 		ae.researcherCommline= "L" + id + ":" + k;
 
 		entries.add(ae);
