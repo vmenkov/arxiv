@@ -34,6 +34,14 @@ public class SessionData {
     boolean allowedSB = false; 
     boolean needSBNow = false;
 
+    /** Additional mode parameters for the SB generator */
+    public boolean sbDebug = false;
+    public int sbMergeMode = 1;
+
+    void validateSbMergeMode() throws WebException {
+	if (sbMergeMode<0 || sbMergeMode>2) throw new WebException("Illegal SB merge mode = " + sbMergeMode);
+    }
+
     /** If true, the SB moving panel will be displayed in "researcher mode".
 	Since SB is only shown to users who have not logged in, we can't
 	use the usual researcher flag, but rather set this flag via a 
@@ -255,7 +263,7 @@ public class SessionData {
     static Role.Name[] authorizedRoles(String sp, String qs) {
 	if (sp.startsWith("/personal")  ||
 	    sp.equals("/index.jsp") && qs!=null && qs.length()>0  &&
-	    !qs.equals("sb=true")) 
+	    !qs.startsWith("sb=true")) 
 	    return new Role.Name[] 
 		{Role.Name.subscriber,
 		 Role.Name.researcher,

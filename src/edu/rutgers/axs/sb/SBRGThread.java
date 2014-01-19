@@ -141,8 +141,6 @@ class SBRGThread extends Thread {
     */
     String excludedList = "";
  
-    static final boolean stableOrder = true;
-
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
 	articles viewed by the user in this session.
@@ -214,16 +212,19 @@ class SBRGThread extends Thread {
 		    excludedList += " " + ae.id;
 		    continue;
 		}
-		//		ae.ourCommline= 
+		
 		ae.researcherCommline= "L" + id + ":" + k;
-
+		if (parent.sd.sbDebug) ae.ourCommline= ae.researcherCommline;
+	 
 		entries.add(ae);
 		k++;
 		if (entries.size()>=maxRecLen) break;
 	    }
 
-	    if (stableOrder) {
-		entries = maintainStableOrder( entries, maxRecLen);
+	    if (parent.sd.sbMergeMode==1) {
+		entries = maintainStableOrder1( entries, maxRecLen);
+	    } else   if (parent.sd.sbMergeMode==2) {
+		entries = maintainStableOrder2( entries, maxRecLen);
 	    }
 
 
@@ -242,7 +243,7 @@ class SBRGThread extends Thread {
 	all (or almost all) elements from the previously displayed
 	list, in their original order
      */
-    private Vector<ArticleEntry> maintainStableOrder( Vector<ArticleEntry> entries, int maxRecLen) {
+    private Vector<ArticleEntry> maintainStableOrder2( Vector<ArticleEntry> entries, int maxRecLen) {
 
 	if (parent.getSR()==null) return entries;
 	Vector<ArticleEntry> previouslyDisplayedEntries =
@@ -282,7 +283,6 @@ class SBRGThread extends Thread {
 	for(ArticleEntry e: v) {
 	    e.i = k++;
 	}	
-
 	return  v;
     }
 
@@ -313,6 +313,48 @@ class SBRGThread extends Thread {
 	}
     }
 
+
+  private Vector<ArticleEntry> maintainStableOrder1( Vector<ArticleEntry> entries, int maxRecLen) {
+
+	if (parent.getSR()==null) return entries;
+	Vector<ArticleEntry> previouslyDisplayedEntries =
+	    parent.getSR().entries;
+	if (previouslyDisplayedEntries==null) return entries;
+	HashSet<String> exclusions = parent.linkedAids;
+
+	HashSet<String> old=new HashSet<String>();
+	// Old elements (not excluded)
+	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
+	for(ArticleEntry e: previouslyDisplayedEntries) {
+	    if (exclusions.contains(e.id)) continue;
+	    try {  // We use clone() because we're going to modify e.i
+		a.add((ArticleEntry)e.clone());
+	    }  catch (CloneNotSupportedException ex) {}
+	    old.add(e.id);
+	}
+
+	Vector<ArticleEntry> v = new 	Vector<ArticleEntry>();
+	
+	int na=0;
+	for(ArticleEntry e: entries) {
+	    if (old.contains(e.id)) {
+		if (na>=a.size()) { // this should not happen
+		    throw new AssertionError("List merge error; na=" + na);
+		}
+		v.add(a.elementAt(na++));
+	    } else {
+		v.add(e);
+	    }
+	}
+
+	// Adjust positions
+	int k=1;
+	for(ArticleEntry e: v) {
+	    e.i = k++;
+	}	
+	return  v;
+    }
+
     /** Adds article title etc to each entry in sr.entries */
     private void addArticleDetails(IndexSearcher searcher) throws IOException { 
 	for(ArticleEntry ae: sr.entries) {
@@ -329,6 +371,8 @@ class SBRGThread extends Thread {
 	em.getTransaction().commit();
 	return plist;
     }
+
+
 
     /** A human-readable description of what this thread had done. */
     public String description() {

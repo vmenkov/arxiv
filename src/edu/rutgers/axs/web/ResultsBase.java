@@ -167,6 +167,9 @@ public class ResultsBase {
 	    if (sb) {
 		sd.allowedSB = true;
 		sd.researcherSB = true;
+		sd.sbMergeMode = getInt("sbMerge", sd.sbMergeMode);
+		sd.validateSbMergeMode();
+		sd.sbDebug = getBoolean("sbDebug", sd.sbDebug);
 	    }
 
 	}  catch (Exception _e) {
