@@ -105,13 +105,28 @@ public class UserProfile {
 	removes them. Normally, there shouldn't be any. But there could
 	be excpetional situations, e.g. a change in the composition of the
 	stopword list.
+
+	<P>FIXME: Do we need to also hunt for very rare terms?
     */
     private void removeUselessTerms()  {
+	/** // this triggers  java.util.ConcurrentModificationException
 	for(String key: hq.keySet()) {
 	    if (isUseless( dfc.keyToTerm(key))) {
 		hq.remove(key);
 	    }			    
 	}
+	*/
+	int rmCnt=0;
+	for(Iterator<Map.Entry<String, TwoVal>> it = 
+		hq.entrySet().iterator();   it.hasNext(); ) {	    
+	    String key = it.next().getKey();
+	    if (isUseless( dfc.keyToTerm(key))) {
+		it.remove();
+		rmCnt++;
+	    }			    
+	}
+	if (rmCnt>0) Logging.info("Removed " + rmCnt + " useless terms from the dictionary");
+
     }
 
 
