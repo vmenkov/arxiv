@@ -39,7 +39,8 @@ public class ViewUserProfile extends PersonalResultsBase {
 
     public long reflectedOpCnt=0, allOpCnt=0;
 
-    public DataFile.Type mode = DataFile.Type.USER_PROFILE;
+    public DataFile.Type mode =  DataFile.Type.PPP_USER_PROFILE;
+    //DataFile.Type.USER_PROFILE;
 
     /**
        FIXME: ought to add reader.close() code, but before that, must modify
@@ -48,6 +49,9 @@ public class ViewUserProfile extends PersonalResultsBase {
     public ViewUserProfile(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	if (error) return;
+
+	//User.Program program = actor.getProgram();
+
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 
 	if (!(mode== DataFile.Type.USER_PROFILE ||
@@ -65,7 +69,6 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    return;	    
 	}
        
-
 	EntityManager em = sd.getEM();
 	IndexReader reader = null;
 	try {
@@ -75,9 +78,9 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    actorLastActionId= actor.getLastActionId();
 	    em.getTransaction().begin();
 
-
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
+		mode = df.getType();
 	    } else if (requestedFile!=null) {
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else {
@@ -87,6 +90,54 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    allOpCnt = actor.actionCnt( em);
 	    reflectedOpCnt = actor.actionCnt( em, df.getLastActionId());
 
+	    // tasks were only used in the pre-3PR world
+	    if (mode!=DataFile.Type.PPP_USER_PROFILE) manageTasks(em);
+
+	    em.getTransaction().commit();
+
+	    if (df!=null) {
+		reader = Common.newReader();
+		//ArticleAnalyzer aa=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+		upro = new UserProfile(df, null);
+
+		if (df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
+		    ancestor =  df.getInputFile();
+		    //	DataFile.findFileByName(em,actorUserName, df.getInputFile());
+		}
+	    }
+
+	}  catch (WebException _e) {
+	    error = true;
+	    errmsg = _e.getMessage();
+	    return;
+	}  catch (Exception _e) {
+	    setEx(_e);
+	} finally {
+	    ResultsBase.ensureClosed( em, true);
+	    // Don't close the reader: it will still be used from the JSP file
+	    //	    try {
+	    //		if (reader!=null)   reader.close();
+	    //	    } catch(IOException ex) {}
+	}
+    }
+
+    /** How many operations have been recorded for a given user? */
+    /*
+    static private int actionCnt(EntityManager em, String actorUserName, long maxId) {
+	String qs= "select count(a) from Action a where a.id<=:m and a.user.user_name=:u";
+	Query q = em.createQuery(qs);
+	
+	q.setParameter("u",actorUserName );
+	q.setParameter("m",  maxId);
+
+	try {
+	    Object o = q.getSingleResult();
+	    return ((Number)o).intValue();
+	} catch(Exception ex) { return 0; }
+    }
+    */
+
+    private void manageTasks(EntityManager em) {
 	    Task.Op op = mode.producerFor();
 	    List<Task> tasks = 
 		Task.findOutstandingTasks(em, actorUserName, op);
@@ -132,47 +183,7 @@ public class ViewUserProfile extends PersonalResultsBase {
 		newTask = new Task(actorUserName, op);
 		em.persist(newTask);
 	    }	    
-	    em.getTransaction().commit();
 
-	    if (df!=null) {
-		reader = Common.newReader();
-		ArticleAnalyzer aa=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
-		upro = new UserProfile(df, aa);
-
-		if (df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE) {
-		    ancestor =  df.getInputFile();
-		    //	DataFile.findFileByName(em,actorUserName, df.getInputFile());
-		}
-	    }
-
-	}  catch (WebException _e) {
-	    error = true;
-	    errmsg = _e.getMessage();
-	    return;
-	}  catch (Exception _e) {
-	    setEx(_e);
-	} finally {
-	    ResultsBase.ensureClosed( em, true);
-	    // Don't close the reader: it will still be used from the JSP file
-	    //	    try {
-	    //		if (reader!=null)   reader.close();
-	    //	    } catch(IOException ex) {}
-	}
     }
 
-    /** How many operations have been recorded for a given user? */
-    /*
-    static private int actionCnt(EntityManager em, String actorUserName, long maxId) {
-	String qs= "select count(a) from Action a where a.id<=:m and a.user.user_name=:u";
-	Query q = em.createQuery(qs);
-	
-	q.setParameter("u",actorUserName );
-	q.setParameter("m",  maxId);
-
-	try {
-	    Object o = q.getSingleResult();
-	    return ((Number)o).intValue();
-	} catch(Exception ex) { return 0; }
-    }
-    */
 }

@@ -85,6 +85,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     */
     public long plid = 0;
 
+    public Task.Op taskOp = null;
+    
     public ViewSuggestions(HttpServletRequest _request, HttpServletResponse _response) {
 	this(_request, _response, false);
     }
@@ -220,7 +222,9 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    // main page environment
 	    teamDraft =getBoolean(TEAM_DRAFT, teamDraft);
 	
-	    Task.Op taskOp = mode.producerFor(); // producer task type
+	    taskOp =
+		(mode ==  DataFile.Type.PPP_SUGGESTIONS)? null:
+		mode.producerFor(); // producer task type
 	    
 	    final int maxDays=Scheduler.maxRange;
 	    
@@ -236,7 +240,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		infomsg += "vs: call DataFile.getLatestFile(em, actorUserName="+actorUserName+", mode="+mode+", days="+days+",requestedFile ="+requestedFile+")<br>\n";
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else if (basedon!=null) {
-		// look for the most recent sugestion list based on
+		// look for the most recent suggestion list based on
 		// the specified user profile file...
 		infomsg += "vs: call DataFile.getLatestFile(em, actorUserName="+actorUserName+", mode="+mode+", days="+days+", basedon="+basedon+")<br>\n";
 		df = DataFile.getLatestFileBasedOn(em, actorUserName, 
@@ -250,7 +254,26 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		df = DataFile.getLatestFile(em, actorUserName, mode, days);
 	    }
 
+	    if (taskOp!=null) 	    manageTasks(em);
+	    em.getTransaction().commit();
+
+	    actorLastActionId= actor.getLastActionId();
+
+	    if (df!=null) {
+		initList(df, em, false);
+	    }
+
+	}  catch (Exception _e) {
+	    setEx(_e);
+	} finally {
+	    ResultsBase.ensureClosed( em, true);
+	    //em.close(); 
+	}
+    }
+
+    private void manageTasks(EntityManager em) throws WebException{
 	    List<Task> tasks = 
+		(taskOp==null) ? null:
 		Task.findOutstandingTasks(em, actorUserName, taskOp);
 	    activeTask=queuedTask=null;
 	    if (tasks != null) {
@@ -301,20 +324,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		em.persist(newTask);
 	    }
 
-	    em.getTransaction().commit();
-
-	    actorLastActionId= actor.getLastActionId();
-
-	    if (df!=null) {
-		initList(df, em, false);
-	    }
-
-	}  catch (Exception _e) {
-	    setEx(_e);
-	} finally {
-	    ResultsBase.ensureClosed( em, true);
-	    //em.close(); 
-	}
     }
 
     /** Records a NEXT_PAGE or PREV_PAGE action if this page has

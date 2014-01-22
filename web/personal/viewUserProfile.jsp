@@ -69,13 +69,15 @@ href="<%=main.viewLatestProfileLink()%>">click here</a>.
 
 <% } else if (since>0) { %>
 
+<!--
 <p>(Is this too long ago? You can <a href="#tasks">update</a> the profile to account for your activity since this profile has been generated).
-</p>
+</p> -->
 
 <% } else { %>
 
+<!--
 <p>(This profile appears to reflect all user actions recorded so far; nonetheless, if you really want to, you may try to request an <a href="#tasks">update</a> of the profile. This probably won't result in any visible changes to it.)
-</p>
+</p> -->
 
 <% }  %>
 
@@ -88,12 +90,15 @@ href="<%=main.viewLatestProfileLink()%>">click here</a>.
 <input type="hidden" name="<%=main.BASEDON%>" value="<%=main.df.getThisFile() %>">
 <input type="hidden" name="<%=main.EXPERT%>" value="<%=main.expert %>">
 <input type="radio" name="<%=main.MODE%>" 
-value="<%=DataFile.Type.LINEAR_SUGGESTIONS_1%>" checked> - linear similarity
+value="<%=DataFile.Type.LINEAR_SUGGESTIONS_1%>"> - linear similarity
 <br>
 <input type="radio" name="<%=main.MODE%>" 
 value="<%=DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1%>"> - sublinear utility (Algo 1)
 <br>
-Apply Most recent <input type="text" name="<%=main.DAYS%>" value="<%=actor.getDays()%>"> days. (Enter a positive number for a desired range, or 0 for "all time").
+<input type="radio" name="<%=main.MODE%>" 
+value="<%=DataFile.Type.PPP_SUGGESTIONS%>" checked> - 3PR suggestions
+<br>
+Apply Most recent <input type="text" name="<%=main.DAYS%>" value="<%=actor.getDays()%>"> days. (Enter a positive number for a desired range, or 0 for "all time"). 
 <br>
 <input type="submit" value="View suggestions">
 </form>
@@ -120,7 +125,7 @@ UserProfile.TwoVal h= main.upro.hq.get(t);
 <td><%=t%></td>
 <td><%=h.w1%></td>
 <td><%=h.w2%></td>
-<td><%=main.upro.dfc.idf(t)%></td>
+<td><%=main.upro.idf(t)%></td>
 </tr>
 
 <%}%>
@@ -136,7 +141,7 @@ generated for user <em><%= main.actorUserName %></em>.</p>
 
 <% } %>
 
-<%if (main.requestedFile==null) { %>
+<%if (main.requestedFile==null &&  main.mode!=DataFile.Type.PPP_USER_PROFILE){%>
 <h2><a name="tasks">(Re-)computing the profile</a></h2>
 
 <%    if (main.activeTask!=null) {

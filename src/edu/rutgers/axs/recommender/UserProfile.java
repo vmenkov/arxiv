@@ -45,8 +45,17 @@ public class UserProfile {
     */
     private long lastActionId=0;
     long getLastActionId() {  return lastActionId;}
-    
+
+    /** An ArticleAnalyzer object is used to obtain document
+	statistics etc. In the "light" version of UserProfile - only
+	used to view pre-created user profile data files - it may be
+	null.
+     */
     ArticleAnalyzer dfc;
+
+
+    /** This is only used in "light" UserProfile, when dfc==null */
+    private HashMap<String, Double> lightIdfTable = null;
 
     /** Ordered list by importance, in descending order. */
     public String[] terms = {};
@@ -116,6 +125,7 @@ public class UserProfile {
 	    }			    
 	}
 	*/
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 	int rmCnt=0;
 	for(Iterator<Map.Entry<String, TwoVal>> it = 
 		hq.entrySet().iterator();   it.hasNext(); ) {	    
@@ -243,20 +253,28 @@ public class UserProfile {
     }
 
     /** Reads the profile from a file. Does not set lastActionId, so that
-     has to be done separately. */
+     has to be done separately. 
+
+     <p>This construction can accept aa=null; in which case, a "light"
+     UserProfile object is created, which can only be used for displaying
+     the data from an existing user profile file.
+    */
     //    private UserProfile(int version, File f, IndexReader reader) throws IOException {
     private UserProfile(int version, File f, ArticleAnalyzer aa) throws IOException {
-	if ((version==2) ^ (aa instanceof ArticleAnalyzer2)) throw new IllegalArgumentException("DF.version=" + version +", AA type=" + aa.getClass());
+
+	if (aa==null) {
+	    Logging.warning("Creating a 'light' UserProfile, only for viewing a file");
+	} else if ((version==2) ^ (aa instanceof ArticleAnalyzer2)) throw new IllegalArgumentException("DF.version=" + version +", AA type=" + aa.getClass());
 
 	//	    new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 	dfc=aa;
-
 
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
 	String s;
 	Vector<String> vterms = new 	Vector<String>();
 	int linecnt = 0;
+	lightIdfTable = new HashMap<String, Double>();
 	while((s=r.readLine())!=null) {
 	    linecnt++;
 	    s = s.trim();
@@ -268,7 +286,10 @@ public class UserProfile {
 	    String t = q[0];
 	    vterms.add(t);
 	    hq.put(t, new TwoVal(Double.parseDouble(q[1]), Double.parseDouble(q[2])));
-	    // q[3] is dfc, and can be ignored
+	    // q[3] is idf, and can be ignored, unless it's a "light" UserPrrofile
+	    if (dfc==null) {
+		lightIdfTable.put(t, new Double(q[3]));
+	    }
 	}
 	r.close();
 	terms = vterms.toArray(new String[0]);
@@ -291,6 +312,8 @@ public class UserProfile {
     */
     DataFile saveToFile(String user, long taskId, DataFile.Type type) 
 	throws IOException {
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+
 	DataFile uproFile=  new DataFile(user, taskId, type);
 	int version = (dfc instanceof ArticleAnalyzer2) ? 2 : 1;
 	uproFile.setLastActionId( lastActionId);
@@ -318,13 +341,14 @@ public class UserProfile {
     }
 
     public void save(PrintWriter w) throws IOException {
+
 	w.println("#--- Entries are ordered by w(t)*idf(t)");
 	w.println("#term\tw(t)\tw(sqrt(t))\tidf(t)");
 	for(int i=0; i<terms.length; i++) {
 	    String t=terms[i];
 	    double w1 = hq.get(t).w1;
 	    double w2 = hq.get(t).w2;
-	    double idf=	dfc.idf(t);
+	    double idf=	idf(t);
 	    w.println(t + "\t" + w1 + "\t"+w2 + "\t" + idf);
 	}
     }
@@ -435,6 +459,7 @@ public class UserProfile {
 	luceneRawSearch(int maxDocs, 
 			EntityManager em, int days, boolean useLog) throws IOException {
 
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 	if (days>0) {
 	    return luceneRawSearchDateRange(maxDocs, em, days, useLog);
 	}
@@ -504,6 +529,7 @@ public class UserProfile {
 			 EntityManager em, User u, int days,
 			 boolean useLog) throws IOException {
 
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 	if (dfc.getCasa()==null) throw new IllegalArgumentException("AA.catAndDateSearch() called without initializing AA.CASA first!");
 
 	Date since = SearchResults.daysAgo( days );
@@ -554,6 +580,8 @@ public class UserProfile {
 				 //CompactArticleStatsArray   allStats, 
 				 EntityManager em, int days,
 				 boolean useLog) throws IOException {
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+
 	Date since = SearchResults.daysAgo( days );
 	final int M = 10000; // well, the range is supposed to be narrow...
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
@@ -624,6 +652,8 @@ public class UserProfile {
      * on values (norms) stored in Lucene.
      */
     Vector<ArticleEntry> luceneRawSearchOrig(int maxDocs) throws IOException {
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+
 	String [] terms = hq.keySet().toArray(new String[0]);
 	
 	int maxdoc = dfc.reader.maxDoc() ;
@@ -705,7 +735,8 @@ public class UserProfile {
     ArxivScoreDoc[] 
 	luceneQuerySearch(int maxDocs, int days) throws IOException {
 	org.apache.lucene.search.Query q = firstQuery();
-	
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
 	TopDocs 	 top = searcher.search(q, maxDocs + 1);
 	ScoreDoc[] scoreDocs = top.scoreDocs;
@@ -785,6 +816,7 @@ public class UserProfile {
 	@param updateCo Rocchio-type update: weights for documents
      */ 
     void rocchioUpdate(HashMap<String,? extends Number> updateCo ) throws IOException {
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 
 	int cnt=0;
 	for(String aid: updateCo.keySet()) {
@@ -870,6 +902,15 @@ public class UserProfile {
 	    System.out.println("linsim="+linsim);
 	    double logsim = up.dfc.logSimReport(docno, as, up.hq);
 	    System.out.println("logsim="+logsim);
+	}
+    }
+
+    public double idf(String t) throws IOException {
+	if (dfc==null) {
+	    Double q = lightIdfTable.get(t);
+	    return q==null? 0: q.doubleValue();
+	} else {
+	    return dfc.idf(t);
 	}
     }
 
