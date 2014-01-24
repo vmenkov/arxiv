@@ -43,6 +43,47 @@ and other "cleverness".  -->
 <script type="text/javascript" src="scripts/blur.js"></script>
 <script type="text/javascript" src="scripts/buttons_control.js"></script>
 
+<!-- Code for Moveable Session Buddy -->
+
+<script src="scripts/jquery-1.9.1.js"></script>
+<script src="scripts/jquery-ui.js"></script>
+
+<script>
+function newPopup(url) {
+		popupWindow = window.open(
+		url,'popUpWindow','height=700,width=800,left=10,top=10,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no,status=yes');
+
+window.parent.document.getElementById("drag").style.display='none';
+window.parent.document.getElementById("iframe6").style.display='block';
+
+}
+</script>
+
+<IFRAME NAME="iframe6" ID="iframe6" STYLE="width:40px;height:50px;position:fixed;bottom:5px;right:5px;"
+SRC="min.html"></IFRAME>
+
+<DIV name = "drag" id = "drag" STYLE="width:295px;height:400px;position:fixed;bottom:5px;right:5px;
+background-color:#FBF2EF;border:1px solid black;z-index:99;">
+    <TABLE ID="toolbar" BORDER="0" WIDTH="100%" BGCOLOR="red" HEIGHT="10"><TR><TD>&nbsp;</TD></TR></TABLE>
+	<IFRAME NAME="iframe3" ID="iframe3" STYLE="width:80%;height:70%;position:relative;top:10px;left:27px;" 			SRC="sessionBased.jsp"></IFRAME>
+	<button onClick="JavaScript:newPopup('sessionBased.jsp');" NAME="POPOUT" 				      	STYLE="position:relative;top:30px;left:120px;"> Popout </button>
+</DIV>
+
+<SCRIPT> 
+$(function() {
+$('#drag').draggable({iframeFix:true});
+});
+
+window.document.getElementById("iframe6").style.display='none'; 
+document.getElementById("iframe6").style.zIndex="99";
+</SCRIPT>
+
+	
+
+<!-- End of Session Buddy Code -->
+
+
+
 
 <!-- #BeginEditable "Styles" -->
 <link rel="stylesheet" type="text/css" href="styles/index.css" />
