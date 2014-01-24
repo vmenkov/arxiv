@@ -291,6 +291,9 @@ import edu.rutgers.axs.ParseConfig;
 	return  getLatestFile( em, username,  t, -1);
     }
 
+    //    static final String mOrderClause = " order by  m.lastActionId desc, m.time desc";
+    static final String mOrderClause = " order by m.id desc";
+
     /** Gets the most recently generated non-deleted file by a given
 	type for a given username, with a given days range.	
 	@param days The day range. If a negative value is given, it's
@@ -299,7 +302,7 @@ import edu.rutgers.axs.ParseConfig;
     static public DataFile getLatestFile(EntityManager em, String  username, Type t, int days) {
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by  m.lastActionId desc, m.time desc";
+	qs +=  mOrderClause;
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
@@ -316,7 +319,8 @@ import edu.rutgers.axs.ParseConfig;
 					 Type t, Type parentType, int days) {
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE and m.inputFile.type=:p";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by  m.lastActionId desc, m.time desc";
+	//qs += " order by  m.lastActionId desc, m.time desc";
+	qs +=  mOrderClause;
 
 	Query q = em.createQuery(qs);
 
@@ -339,7 +343,8 @@ import edu.rutgers.axs.ParseConfig;
 	}
 	qs += " and (" + verClause + ")";
 
-	qs += " order by  m.lastActionId desc, m.time desc";
+	//qs += " order by  m.lastActionId desc, m.time desc";
+	qs +=  mOrderClause;
 	Query q = em.createQuery(qs);
 
 	q.setParameter("u", username);
@@ -362,7 +367,8 @@ import edu.rutgers.axs.ParseConfig;
 	String qs = "select m from DataFile m where m.user=:u and  m.type=:t and m.deleted=FALSE";
 	qs += " and m.inputFile.thisFile=:i";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by  m.lastActionId desc, m.time desc";
+	//qs += " order by  m.lastActionId desc, m.time desc";
+	qs +=  mOrderClause;
 
 	Query q = em.createQuery(qs);
 
@@ -386,7 +392,8 @@ import edu.rutgers.axs.ParseConfig;
 	    "where m.inputFile.type=:st " +
 	    "and m.user=:u and m.type=:t and m.deleted=FALSE";
 	if (days>=0) qs += " and m.days=:d";
-	qs += " order by  m.lastActionId desc, m.time desc";
+	//qs += " order by  m.lastActionId desc, m.time desc";
+	qs +=  mOrderClause;
 
 	Query q = em.createQuery(qs);
 
