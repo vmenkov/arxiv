@@ -19,6 +19,7 @@ import java.lang.reflect.*;
 select  IF(failed, 'true', 'false'), count(*) from Task group by failed;
     </pre>
  */
+@SuppressWarnings("unchecked")
 @Entity
     public class Task   extends OurTable implements Serializable {
 

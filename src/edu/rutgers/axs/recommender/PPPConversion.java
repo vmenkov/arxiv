@@ -35,7 +35,7 @@ public class PPPConversion {
 	//	    stype =  DataFile.Type.PPP_SUGGESTIONS;
 	final String uname = u.getUser_name();
 
-	PPPFeedback[] allFeed = PPPFeedback.allFeedbacks(em, u);
+	PPPFeedback[] allFeed = doZero? new PPPFeedback[0]: PPPFeedback.allFeedbacks(em, u);
 
 	//List<DataFile> sugLists = getAllRelevantSugLists( em, u.getId());
 
@@ -79,10 +79,7 @@ public class PPPConversion {
  	    upro.setTermsFromHQ();
 	}
 
-	if (rocchioCnt==0 ) {
-	    //	    System.out.println("There is no need to update the existing profile " + oldProfileFile +", because no important actions based on it have been recorded");
-	    return;
-	}
+	//if (rocchioCnt==0 ) {    return;	}
 
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
 	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
@@ -168,6 +165,9 @@ public class PPPConversion {
      */
     static private boolean refined=false;
 
+    /** If true, create empty profiles, instead of doing a replay */
+    static private boolean doZero=false;
+
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
 	
@@ -178,6 +178,7 @@ public class PPPConversion {
 
 	onlyUser = ht.getOption("user", null);
 	refined = ht.getOption("refined", refined);
+	doZero = ht.getOption("zero", false);
 	conversions();
 
 	/*

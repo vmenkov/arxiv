@@ -53,14 +53,7 @@ public class ViewUserProfile extends PersonalResultsBase {
 	//User.Program program = actor.getProgram();
 
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
-
-	if (!(mode== DataFile.Type.USER_PROFILE ||
-	      mode== DataFile.Type.TJ_ALGO_2_USER_PROFILE||
-	      mode== DataFile.Type.PPP_USER_PROFILE)) {
-	    error=true;
-	    errmsg="Mode " + mode + " not supported as a profile type";
-	    return;
-	}
+	if (modeIsWrong()) return;
 	   
 	id = (int)getLong(ID, 0);
 	if (id > 0 && requestedFile!=null) {
@@ -80,12 +73,14 @@ public class ViewUserProfile extends PersonalResultsBase {
 
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
-		mode = df.getType();
 	    } else if (requestedFile!=null) {
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else {
 		df = DataFile.getLatestFile(em, actorUserName, mode);
 	    }
+	    mode = df.getType();
+	    infomsg += "Determined mode=" + mode + ", file"+df.getThisFile()+"<br>\n";
+	    if (modeIsWrong()) return;
 
 	    allOpCnt = actor.actionCnt( em);
 	    reflectedOpCnt = actor.actionCnt( em, df.getLastActionId());
@@ -120,6 +115,16 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    //	    } catch(IOException ex) {}
 	}
     }
+
+    private boolean modeIsWrong() {
+	if (mode== DataFile.Type.USER_PROFILE ||
+	    mode== DataFile.Type.TJ_ALGO_2_USER_PROFILE||
+	    mode== DataFile.Type.PPP_USER_PROFILE) return false;
+	error=true;
+	errmsg="DataFile type " + mode + " is not supported as a user profile type";
+	return true;
+    }
+
 
     /** How many operations have been recorded for a given user? */
     /*

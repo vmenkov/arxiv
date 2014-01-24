@@ -24,6 +24,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     one to reconstruct the "context" ("what the user saw") within which the 
     user performed a particular action.
  */
+@SuppressWarnings("unchecked")
 @Entity
     public class PresentedList extends OurTable implements Serializable  {
 

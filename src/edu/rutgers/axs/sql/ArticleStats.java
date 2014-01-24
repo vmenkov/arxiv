@@ -18,6 +18,7 @@ import edu.rutgers.axs.indexer.*;
     ranking search results etc. The idea is we compute such info for 
     all docs in the index, store it in the SQL database, and later
     re-use as needed for individual queries. */
+@SuppressWarnings("unchecked")
 @Entity  
     public class ArticleStats extends OurTable 
 {
