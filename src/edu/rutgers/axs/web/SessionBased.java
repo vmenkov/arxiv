@@ -66,20 +66,22 @@ public class SessionBased  extends ResultsBase {
 
 	String aName = "article_" + e.id;
 
-	String re = new String();
+	// JavaScript used to load the article in question into the main
+	// window
+	String js = "javascript:window.opener.location.href = '" +
+	    urlAbstract(e.id) + "';";
 
-	switch(i) {
-	case 0: re = "<a onclick=		\"javascript:window.opener.parent.location.href = '"; break;
-	case 1: re = "<a onclick=\"javascript:window.opener.location.href = '"; break;
-	default: re = ""; //Shouldn't happen
+	if(i == 0) {
+	js = "javascript:window.parent.opener.location.href = '" + 
+	    urlAbstract(e.id) + "';";
+
 	}
-
 
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
 	    "<a name=\""+ aName +"\" title=\""+ rt +
-	    "\" onclick=\""  + re + urlAbstract(e.id) + "';"; + "\">\n" +
+	    "\" onclick=\""  + js + "\">\n" +
 	    e.i + ". " + e.titline + "</a><br>\n"+
 	    abbreviateAuthline(e.authline)+ " &mdash; "+ abbreviateSubj(e.subj)+ "\n";
 	    //researcherSpan(rt, sd.researcherSB)+  	    "<br>\n" +
