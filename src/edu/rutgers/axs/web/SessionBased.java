@@ -55,7 +55,7 @@ public class SessionBased  extends ResultsBase {
 	<li> first 2 authors, ..., last
 	</ul>
     */
-    public String resultsDivHTMLLite(ArticleEntry e) {
+    public String resultsDivHTMLLite(ArticleEntry e, int i) {
 
 	String rt = "[" + e.idline + "; score="+e.score+ "; "+
 	    e.formatDate()+"]";
