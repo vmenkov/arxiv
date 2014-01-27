@@ -72,7 +72,7 @@ public class SessionBased  extends ResultsBase {
 	    urlAbstract(e.id) + "';";
 
 	if(i == 0) {
-	js = "javascript:window.parent.opener.location.href = '" + 
+	js = "javascript:window.parent.location.href = '" + 
 	    urlAbstract(e.id) + "';";
 
 	}

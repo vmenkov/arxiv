@@ -47,6 +47,7 @@ and other "cleverness".  -->
 
 <script src="scripts/jquery-1.9.1.js"></script>
 <script src="scripts/jquery-ui.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
 
 <script>
 function newPopup(url) {
@@ -62,16 +63,21 @@ window.parent.document.getElementById("iframe6").style.display='block';
 <IFRAME NAME="iframe6" ID="iframe6" STYLE="width:40px;height:50px;position:fixed;bottom:5px;right:5px;"
 SRC="min.html"></IFRAME>
 
-<DIV name = "drag" id = "drag" STYLE="width:295px;height:400px;position:fixed;bottom:5px;right:5px;
+<DIV name = "drag" id = "drag" class = "ui-widget-content" STYLE="width:295px;height:400px;position:fixed;bottom:5px;right:5px;
 background-color:#FBF2EF;border:1px solid black;z-index:99;">
-    <TABLE ID="toolbar" BORDER="0" WIDTH="100%" BGCOLOR="red" HEIGHT="10"><TR><TD>&nbsp;</TD></TR></TABLE>
+<TABLE ID="toolbar" BORDER="0" WIDTH="100%" BGCOLOR="red" HEIGHT="10"><TR><TD>&nbsp;</TD></TR></TABLE>
 	<IFRAME NAME="iframe3" ID="iframe3" STYLE="width:80%;height:70%;position:relative;top:10px;left:27px;" 			SRC="sessionBased.jsp"></IFRAME>
-	<button onClick="JavaScript:newPopup('sessionBased.jsp');" NAME="POPOUT" 				      	STYLE="position:relative;top:30px;left:120px;"> Popout </button>
+	<button onClick="JavaScript:newPopup('sessionBased.jsp');" NAME="POPOUT" 				      	STYLE="position:relative;top:5%;left:40%;"> Popout </button>
 </DIV>
 
 <SCRIPT> 
 $(function() {
 $('#drag').draggable({iframeFix:true});
+$('#drag').resizable({
+maxWidth: 370,
+minWidth: 100,
+minHeight: 100
+});
 });
 
 window.document.getElementById("iframe6").style.display='none'; 
