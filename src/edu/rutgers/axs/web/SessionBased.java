@@ -54,6 +54,9 @@ public class SessionBased  extends ResultsBase {
 	<li> subject
 	<li> first 2 authors, ..., last
 	</ul>
+
+	@param i Is used to indicate the SB context (inner frame or a
+	separate pop-out window)
     */
     public String resultsDivHTMLLite(ArticleEntry e, int i) {
 

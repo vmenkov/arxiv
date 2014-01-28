@@ -191,6 +191,7 @@ code; but not anymore. -->
   <!-- Compile the java code from ${src} into ${build} -->
   <javac srcdir="${src}" destdir="${build}"
 	 includes="edu/**,org/**"  optimize="on"
+	 target="1.5"
 	 debug="on" debuglevel="lines,vars,source"
 	 includeantruntime="false" >
     <compilerarg value="-Xlint:unchecked"/>

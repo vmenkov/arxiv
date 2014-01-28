@@ -44,6 +44,7 @@ and other "cleverness".  -->
 <script type="text/javascript" src="scripts/buttons_control.js"></script>
 
 <!-- Code for Moveable Session Buddy -->
+<% 	    if (main.needSBNow()) { %>
 
 <script src="scripts/jquery-1.9.1.js"></script>
 <script src="scripts/jquery-ui.js"></script>
@@ -84,7 +85,7 @@ window.document.getElementById("iframe6").style.display='none';
 document.getElementById("iframe6").style.zIndex="99";
 </SCRIPT>
 
-	
+<% } %>	
 
 <!-- End of Session Buddy Code -->
 

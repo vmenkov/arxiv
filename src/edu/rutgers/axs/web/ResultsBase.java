@@ -545,5 +545,13 @@ public class ResultsBase {
 
     }
 
+    /** JS pages can use this method to check if they need to enable
+	session-based recommendation panel
+     */
+    public boolean needSBNow() {
+	return  sd.needSBNow;
+    }
+
+
 }
 
