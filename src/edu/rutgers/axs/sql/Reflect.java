@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 import java.lang.reflect.*;
 
+import edu.rutgers.axs.web.FilterServlet;
 
 /** A bunch of methods to figure what fields a class has, and how to
  * print them out in a more or less sensible way.
@@ -348,8 +349,9 @@ public class Reflect {
 		Display anDisplay = (Display)e.f.getAnnotation(Display.class);
 		if (anDisplay!=null && anDisplay.link()!=null &&
 		    !anDisplay.link().equals("")) {
-		    // FIXME: must encode id if it's not just a number...
+		    // FIXME: must encode ID if it's not just a number...
 		    String url = anDisplay.link();
+	
 		    if (!(url.endsWith("=")||url.endsWith("/"))) { 
 			url += "?id="; 
 		    }

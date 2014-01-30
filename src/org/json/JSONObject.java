@@ -92,6 +92,7 @@ import java.util.Set;
  * @author JSON.org
  * @version 2013-04-18
  */
+@SuppressWarnings("unchecked")
 public class JSONObject {
     /**
      * The maximum number of keys in the key pool.

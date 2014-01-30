@@ -15,6 +15,7 @@ import edu.cornell.cs.osmot.logger.Logger;
  * @author Filip Radlinski
  * @version 1.1, May 2005
  */
+@SuppressWarnings("unchecked")
 public class Options {
 
     private static Hashtable h;

@@ -86,12 +86,12 @@
       modified page, while registering the request
     </description>
     <servlet-class>edu.rutgers.axs.web.FilterServlet</servlet-class>
-    <init-param> 
+    <!-- init-param> 
         <description>The base URL for the underlying server we connect to
 	</description> 
         <param-name>ArxivBaseURL</param-name> 
         <param-value>http://export.arxiv.org</param-value> 
-    </init-param> 
+    </init-param --> 
     <load-on-startup>1</load-on-startup>
   </servlet>
 
@@ -101,7 +101,7 @@
   </servlet-mapping>
 
 
- <servlet>
+ <!-- servlet>
     <servlet-name>TestFilterServlet</servlet-name>
     <description>
       Pulls a page from arxiv.org, re-writes links, and serves the
@@ -115,20 +115,20 @@
         <param-value>http://export.arxiv.org</param-value> 
     </init-param> 
     <load-on-startup>1</load-on-startup>
-  </servlet>
+  </servlet -->
 
-  <servlet-mapping>
+  <!-- servlet-mapping>
     <servlet-name>TestFilterServlet</servlet-name>
     <url-pattern>/TestFilterServlet/*</url-pattern>
-  </servlet-mapping>
+  </servlet-mapping -->
   
 
   
- <servlet>
+ <!-- servlet>
     <servlet-name>FilterServletDEV</servlet-name>
     <description>
       Pulls a page from dev.arxiv.org, re-writes links, and serves the
-      modified page, while registering the request
+      modified page, while reSgistering the request
     </description>
     <servlet-class>edu.rutgers.axs.web.FilterServlet</servlet-class>
     <init-param> 
@@ -138,12 +138,12 @@
         <param-value>http://dev.arxiv.org</param-value> 
     </init-param> 
     <load-on-startup>1</load-on-startup>
-  </servlet>
+  </servlet -->
 
-  <servlet-mapping>
+  <!-- servlet-mapping>
     <servlet-name>FilterServletDEV</servlet-name>
     <url-pattern>/FilterServletDEV/*</url-pattern>
-  </servlet-mapping>
+  </servlet-mapping -->
  
 
   <servlet>

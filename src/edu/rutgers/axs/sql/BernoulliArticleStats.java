@@ -83,6 +83,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
  
   /** Find the matching record.
      @return The ArticleStats object with  the matching name, or null if none is found */
+    @SuppressWarnings("unchecked")
     public static BernoulliArticleStats findByAidAndCluster( EntityManager em, String _aid, int _cluster) {
 	Query q = em.createQuery("select m from BernoulliArticleStats m where m.aid=:a and m.cluster=:c");
 	q.setParameter("a", _aid);

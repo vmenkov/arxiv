@@ -39,7 +39,8 @@ import java.lang.annotation.*;
   
     /** Time horizon in weeks */
     public static final int T=12;
-
+ 
+    @SuppressWarnings("unchecked")
     public static List<EE4DocClass> getAll( EntityManager em) {
 	Query q = em.createQuery("select m from EE4DocClass m");
 	List<EE4DocClass> res = (List<EE4DocClass>)q.getResultList();

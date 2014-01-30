@@ -293,20 +293,6 @@ public class EmailSug extends ResultsBase {
 	email message we're producing */
     static final String cp = determineContextPath();
 
-   /** Returns true if this is a test run on a home PC. The list of
-     such machines' host names is hard-coded inside this method. */
-    static private String determineHostname() {
-	try {
-	    String hostname = InetAddress.getLocalHost().getHostName();
-	    System.out.println("running on host = " + hostname);
-	    return hostname;
-	} catch(java.net.UnknownHostException ex) {
-	    // This should not happen in any normal operation
-	    return "localhost";
-	}
-    }
-
-
     /** Returns true if this is a test run on a home PC. The list of
      such machines' host names is hard-coded inside this method. When
      such a machine is used, we can use the "localhost" URL in emails,
@@ -327,6 +313,18 @@ public class EmailSug extends ResultsBase {
 	*/
     }
 
+    /** Returns the host name this application is running on. */
+    static String determineHostname() {
+	try {
+	    String hostname = InetAddress.getLocalHost().getHostName();
+	    System.out.println("running on host = " + hostname);
+	    return hostname;
+	} catch(java.net.UnknownHostException ex) {
+	    // This should not happen in any normal operation
+	    return "localhost";
+	}
+    }
+
     /** A cludgy way to figure (from inside a standalone command-line
 	application) what the proper context path (including the host
 	name) for our server URL is. Since this code runs inside a
@@ -338,7 +336,7 @@ public class EmailSug extends ResultsBase {
 
 	<p> FIXME: There is a hard-coded assumption here that the web
 	application runs under "arxiv". This is, of course, how we
-	normally deploy it on all, but in principle we may have a test
+	normally deploy it on all hosts, but in principle we may have a test
 	deployment where it is on a different classpath.
     */
     static String determineContextPath() {
@@ -350,7 +348,7 @@ public class EmailSug extends ResultsBase {
 	    port = 8080;
 	} else {
 	    if (hostname.equals("cactuar.scilsnet.rutgers.edu")) {
-		host =  "my.arxiv.org"; // FIXME: need new address...
+		host =  "my-dev.arxiv.rutgers.edu"; // since late 2013
 	    } else if (hostname.equals("en-myarxiv02.orie.cornell.edu")) {
 		host =  "my.arxiv.org"; // since 2013-09
 	    } else {

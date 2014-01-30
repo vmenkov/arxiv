@@ -36,6 +36,14 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
+
+	String hostname =  EmailSug.determineHostname();
+	
+	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu");
+	ARXIV_BASE = weAreBlacklisted? "http://dev.arxiv.org" : 
+	    "http://export.arxiv.org";
+
+	/*
 	final String name = "ArxivBaseURL";
 	String s  = config.getInitParameter(name);
 	if (s!=null && !s.equals("")) {
@@ -44,8 +52,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	} else {
 	    Logging.info("No property value found for " + name + "; keep " + 	    ARXIV_BASE);
 	}
-
-
+	*/
     }
 
 
@@ -561,7 +568,22 @@ public class FilterServlet extends  BaseArxivServlet  {
 	return buf;
     }
 
-    final static String FS =  "/FilterServlet";
+    final public static String FS =  "/FilterServlet";
+
+    /** Picks the right servlet name based on which host we're running
+	on.  The two servlets use the same Java class; the difference
+	between the two is the name of the arxiv.org host (specified
+	in web.xml) they pull pages from. This is necessary because we
+	want to use export.arxiv.org on our best hosts, but have to use
+	dev.arxiv.org on other hosts (blacklisted by export.arxiv.org)
+    */
+    /*
+    static private String determineFSName() {
+	String hostname =  Tools.determineHostname();
+	return hostname.endsWith("orie.cornell.edu")? 
+	    "/FilterServlet" : "/FilterServletDEV";
+    }
+    */
 
     /** An auxiliary class used in modifying HTML code pulled from arxiv.org 
 	(primarily, converting links arxiv.org to "involve" our FilterServlet).
