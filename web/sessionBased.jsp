@@ -40,28 +40,10 @@
 <p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles.
 </p>
 
-
-//Location used to determine if the current instance of SessionBased is in 
-//the Session Buddy or in a pop out window
-<% int location = 0; %>
-<SCRIPT> 
-if(window.self == window.top) {
-
-	<% location = 1; %>
-
-} else {
-
-	<% location = 0; %>
-
-}
-
-</SCRIPT>
-
-
 <%
    for(ArticleEntry e: sr.entries) {
 %>
-<%= main.resultsDivHTMLLite(e, location) %>	
+<%= main.resultsDivHTMLLite(e) %>	
  <%  }  %>
 
 <hr>

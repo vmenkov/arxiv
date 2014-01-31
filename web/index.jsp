@@ -67,8 +67,8 @@ SRC="min.html"></IFRAME>
 <DIV name = "drag" id = "drag" class = "ui-widget-content" STYLE="width:295px;height:400px;position:fixed;bottom:5px;right:5px;
 background-color:#FBF2EF;border:1px solid black;z-index:99;">
 <TABLE ID="toolbar" BORDER="0" WIDTH="100%" BGCOLOR="red" HEIGHT="10"><TR><TD>&nbsp;</TD></TR></TABLE>
-	<IFRAME NAME="iframe3" ID="iframe3" STYLE="width:80%;height:70%;position:relative;top:10px;left:27px;" 			SRC="sessionBased.jsp"></IFRAME>
-	<button onClick="JavaScript:newPopup('sessionBased.jsp');" NAME="POPOUT" 				      	STYLE="position:relative;top:5%;left:40%;"> Popout </button>
+	<IFRAME NAME="iframe3" ID="iframe3" STYLE="width:80%;height:70%;position:relative;top:10px;left:27px;" 			SRC="sessionBased.jsp?popout=false"></IFRAME>
+	<button onClick="JavaScript:newPopup('sessionBased.jsp?popout=true');" NAME="POPOUT" 				      	STYLE="position:relative;top:5%;left:40%;"> Popout </button>
 </DIV>
 
 <SCRIPT> 

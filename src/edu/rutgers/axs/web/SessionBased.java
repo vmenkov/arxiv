@@ -25,9 +25,16 @@ import edu.rutgers.axs.indexer.Common;
 public class SessionBased  extends ResultsBase {
    /** the actual suggestion list to be displayed is stored here */
     public SearchResults sr;
+    
+    /** Indicates if the article list will be displayed in a separate popout
+	window or in an IFRAME
+     */
+    public final boolean popout;
 
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
+	popout = getBoolean("popout", true);
+
 	sr = null;
 	long plid=0;
 	if (sd.sbrg!=null) {
@@ -55,10 +62,8 @@ public class SessionBased  extends ResultsBase {
 	<li> first 2 authors, ..., last
 	</ul>
 
-	@param i Is used to indicate the SB context (inner frame or a
-	separate pop-out window)
     */
-    public String resultsDivHTMLLite(ArticleEntry e, int i) {
+    public String resultsDivHTMLLite(ArticleEntry e) {
 
 	String rt = "[" + e.idline + "; score="+e.score+ "; "+
 	    e.formatDate()+"]";
@@ -69,16 +74,11 @@ public class SessionBased  extends ResultsBase {
 
 	String aName = "article_" + e.id;
 
-	// JavaScript used to load the article in question into the main
-	// window
-	String js = "javascript:window.opener.location.href = '" +
-	    urlAbstract(e.id) + "';";
-
-	if(i == 0) {
-	js = "javascript:window.parent.location.href = '" + 
-	    urlAbstract(e.id) + "';";
-
-	}
+	// The JavaScript snippet used to load the article in question
+	// into the main window
+	String js = popout?
+	    "javascript:window.opener.location.href='" +urlAbstract(e.id)+ "';":
+	    "javascript:window.parent.location.href='" +urlAbstract(e.id)+ "';";
 
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
