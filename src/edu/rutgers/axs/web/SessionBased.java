@@ -83,18 +83,43 @@ public class SessionBased  extends ResultsBase {
 	String s = 
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
-	    "<a name=\""+ aName +"\" title=\""+ rt +
+	    "<table><tr><td>" +
+	    htmlRectangle(e.score) + "</td>\n" + 
+	    "<td><a name=\""+ aName +"\" title=\""+ rt +
 	    "\" onclick=\""  + js + "\">\n" +
-	    e.i + ". " + e.titline + "</a><br>\n"+
-	    abbreviateAuthline(e.authline)+ " &mdash; "+ abbreviateSubj(e.subj)+ "\n";
+	    e.i + ". " + e.titline + "</a></td></tr>\n"+
+	    "<tr><td colspan=2>" +
+	    abbreviateAuthline(e.authline)+ " &mdash; "+abbreviateSubj(e.subj)+ 
+	    "</td></tr>\n";
 	    //researcherSpan(rt, sd.researcherSB)+  	    "<br>\n" +
 
 	s += 
-	    (!e.ourCommline.equals("") ? "<strong>"  + e.ourCommline + "</strong><br>" : "") +
+	    (!e.ourCommline.equals("") ? "<tr><td colspan=2><strong>"  + e.ourCommline + "</strong></td></tr>\n" : "") +
+	    "</table>\n" +
 	    "</div>\n" +
 	    "</div>\n";
 	return s;
     }
+
+    /** Creates an HTML element that shows as a rectangle of specified length */
+    static String htmlRectangle(double score) {
+	final int h = 8;
+	final int M = 40;
+	int w = (int)(M *  score);
+	if (w < 0) w = 0;
+	if (w > M) w = M;
+	
+	int w2 = M -w;
+	return
+	    "<table><tr>" + 
+	    // empty box (for an offset)
+	    "<td><div style=\"width:"+w2 +"px;height:"+h+"px\"></div></td>" +
+	    // solid box
+	    "<td><div style=\"width:"+w+"px;height:"+h+"px;border:1px solid #111; background-color:#111;\"></div></td>" +
+	    "</tr></table>";
+
+    }
+
 
     /** A,B,C,D ---&gt;  A,D,...,D */
     private static String abbreviateAuthline(String auth) {
