@@ -268,12 +268,13 @@ public class HistoryClustering {
     private static ParseConfig ht = null;
     public static void main(String [] argv) throws IOException, java.text.ParseException, JSONException {
 
-	final String tcPath = "/data/json/usage/tc.json.gz";
+	ht = new ParseConfig();
+
+	final String tcPath = ht.getOption("tc", "/data/json/usage/tc.json.gz");
 	final boolean useCookies=true;
 
 
 
-	ht = new ParseConfig();
 	// options for SVD run
 	k_kmeans = ht.getOption("k_kmeans", k_kmeans);
 	k_svd = ht.getOption("k_svd", k_svd);

@@ -390,7 +390,27 @@ public class ResultsBase {
 	return x;
     }
 
-     /** Formats the specified text as a visible "span" element, or as
+    public String selfUrl() {
+	return selfUrlPlus(null);
+    }
+
+    /** Generates a URL that's like the URL of this page, but with an extra 
+	pair (or several pairs) of query string parameters.
+	@param pairs "key1=val1&amp;key2=val2..."
+     */
+    public String selfUrlPlus(String pairs) {
+	String s = request.getRequestURI();
+	String qs = request.getQueryString();
+	if (pairs != null && pairs.length() > 0) {
+	    if (qs.length()>0 && !pairs.startsWith("&")) qs += "&";
+	    qs += pairs;
+	}
+	if (qs.length()>0) s += "?" + qs;
+	return s;
+    }
+
+
+    /** Formats the specified text as a visible "span" element, or as
 	a comment, based on the user's status. */
     public String researcherSpan(String s) {
 	return researcherSpan(s,runByResearcher()); 

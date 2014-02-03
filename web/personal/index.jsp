@@ -46,9 +46,8 @@
 <li><a href="viewActionsSelfDetailed.jsp">Your browsing activity history</a> - detailed
 <li><a href="viewActionsSelf.jsp">Your browsing activity history</a> - raw
 <li><a href="viewRankedPages.jsp">Articles ranked based on your actions</a>
-<li><a href="viewUserProfile.jsp?mode=TJ_ALGO_2_USER_PROFILE">User profile</a> - the current "iteration" of Algorithm 2 (based on the user profile on which the last Algo 1 suggestion list was generated, with updates based on the user's activity since then.)
+<li><a href="viewUserProfile.jsp">User profile</a> - the current "iteration" of Algorithm 2 (based on the user profile on which the last Algo 1 suggestion list was generated, with updates based on the user's activity since then.)
 (This page also has a link to the sugg list based on this profile)
-<li><a href="viewUserProfile.jsp?mode=USER_PROFILE"><!--?expert=false-->User profile</a> - weighted list of terms from the articles you've interacted with. (This is directly derived from the entire history; it is <em>not</em> currently used for the main-page suggestion list.)
 
 </ul>
 </p>

@@ -114,6 +114,14 @@ import edu.rutgers.axs.ParseConfig;
 	    else throw new IllegalArgumentException("Don't know what task could produce file type=" +this);
 	}
 
+	/** What kind of suggestion list is normally produced based on this
+	    kind of user profile? */
+	public DataFile.Type profileToSug() {
+	    if (this==PPP_USER_PROFILE) return PPP_SUGGESTIONS;
+	    else if (this==TJ_ALGO_2_USER_PROFILE) return TJ_ALGO_1_SUGGESTIONS_1;
+	    else throw new IllegalArgumentException("" + this + " is not a user profile type for which we know sug list type");
+	}
+
 	/** Helps to form the data file name for various file types.
 	   
 	   @return "profile", "linsug1", etc when files are needed;

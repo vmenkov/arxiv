@@ -84,6 +84,15 @@ href="<%=main.viewLatestProfileLink()%>">click here</a>.
 <p>This profile contains <%=main.upro.terms.length%> terms. They are listed below in the descending order of f(t)*idf(t).
 </p>
 
+<h4>Suggestion list(s) based on this user profile</h4>
+
+<p>If any suggestion list(s) have been generated based on this user profile, they are listed in the table below. To view a suggestion list, click on its id (in the first column of the table).
+
+<p>
+<%=main.sugTable%>
+</p>
+
+<!--
 <p>Want to see a suggestion list based on this profile? Use the form below:
 <form action="viewSuggestions.jsp">
 <input type="hidden" name="<%=main.USER_NAME%>" value="<%=main.actorUserName%>">
@@ -104,7 +113,30 @@ Apply Most recent <input type="text" name="<%=main.DAYS%>" value="<%=actor.getDa
 </form>
 </p>
 
+-->
 
+<h4>Profile details</h4>
+
+<P>Details of this profile.</p>
+
+<p><%=main.thisUproTable %></p>
+
+<h4>Parent profile</h4>
+
+<p>If this user profile has been created based on an older profile, information about the latter should be shown below.</p>
+
+<p><%=main.prevUproTable %></p>
+
+
+<h4>Derived user profile(s)</h4>
+
+<P>If this user profile is not the most recent one, the following table will show the profile(s) created based on it. Click on the "id" link (in the first column) for more information on the profile.</p>
+
+<p><%=main.nextUproTable %></p>
+
+<h4>Profile content</h4>
+
+<p>User profile vector contains <%= main.upro.terms.length%> terms.
 
 <p>
 <table>
@@ -128,9 +160,16 @@ UserProfile.TwoVal h= main.upro.hq.get(t);
 <td><%=main.upro.idf(t)%></td>
 </tr>
 
-<%}%>
+<% if (!main.showAll && i>=100) {%>
+   <tr><td colspan=5>
+         (The list is truncated. You can <a href="<%=main.selfUrlPlus("all=true")%>">see the entire profile</a>.)
+   </td></tr>
+<%    break;
+   }
+}%>
 </table>
 </p>
+
 
 <% } else if (main.requestedFile!=null)  { %>
 <p>No profile file found with this name: <%=main.requestedFile%>

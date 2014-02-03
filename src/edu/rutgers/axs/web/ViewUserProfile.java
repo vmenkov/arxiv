@@ -18,6 +18,7 @@ import edu.rutgers.axs.indexer.Common;
 /** Retrieves and displayed a user profile file, which contains a
  * weighted list of terms.
  */
+@SuppressWarnings("unchecked")
 public class ViewUserProfile extends PersonalResultsBase {
 
     public UserProfile upro=null;
@@ -42,6 +43,13 @@ public class ViewUserProfile extends PersonalResultsBase {
     public DataFile.Type mode =  DataFile.Type.PPP_USER_PROFILE;
     //DataFile.Type.USER_PROFILE;
 
+    public String sugTable="No matching suggestions lists have been found", 
+	thisUproTable = "Description of this user profile goes here",
+	prevUproTable = "It is not know based on which older user profile this user profile has been created",
+	nextUproTable = "No user profile created based on this profile has been found";
+
+    public boolean showAll = false;
+
     /**
        FIXME: ought to add reader.close() code, but before that, must modify
        the JSPs so that they won't be using it
@@ -55,6 +63,8 @@ public class ViewUserProfile extends PersonalResultsBase {
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	if (modeIsWrong()) return;
 	   
+	showAll = getBoolean("all", showAll);
+
 	id = (int)getLong(ID, 0);
 	if (id > 0 && requestedFile!=null) {
 	    error=true;
@@ -99,6 +109,15 @@ public class ViewUserProfile extends PersonalResultsBase {
 		    ancestor =  df.getInputFile();
 		    //	DataFile.findFileByName(em,actorUserName, df.getInputFile());
 		}
+
+		DataFile.Type expectedSugType = df.getType().profileToSug();
+		sugTable = mkDerivedFilesTable(em, expectedSugType, df);
+		nextUproTable = mkDerivedFilesTable(em, mode, df);
+		DataFile parent=df.getInputFile();
+		if (parent!=null) {
+		    prevUproTable = mkTable(parent);
+		}
+		thisUproTable = mkTable(df);
 	    }
 
 	}  catch (WebException _e) {
@@ -190,5 +209,31 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    }	    
 
     }
+
+    
+    private static String mkTable(DataFile df) {
+	return "<table border=1>" +
+	    Reflect.htmlHeaderRow(df.getClass(), true) + "\n"+
+	    Reflect.htmlRow(df, true) +
+	    "</table>";
+    }
+
+
+    private String mkDerivedFilesTable(EntityManager em, DataFile.Type t, DataFile parent) {
+	String query = "select m from DataFile m where  m.user=:u and  m.type=:t and m.deleted=FALSE and m.inputFile=:sf";
+
+	Query q = em.createQuery(query);
+
+	q.setParameter("u", actorUserName);
+	q.setParameter("t", t);
+	q.setParameter("sf", parent);
+
+	List<DataFile> list = q.getResultList();
+	StringWriter sw=new StringWriter();
+	QueryServlet.printList(new PrintWriter(sw), query, list, true, true);
+	return sw.toString();
+
+    }
+
 
 }

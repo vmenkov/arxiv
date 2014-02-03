@@ -42,7 +42,7 @@ public class QueryServlet extends HttpServlet {
     };
 
 
-    private void addToRow(StringBuffer b, String name , boolean html) {
+    private static void addToRow(StringBuffer b, String name , boolean html) {
 	if (!html && b.length()>0) b.append(",");
 	if (html) b.append("<th>");
 	b.append(name);
@@ -58,7 +58,7 @@ public class QueryServlet extends HttpServlet {
     }
 
 
-    protected String makeHeader2(String[] colNames, Object rowData, boolean html) {
+    protected static String makeHeader2(String[] colNames, Object rowData, boolean html) {
 	StringBuffer b= new StringBuffer();
 
 	Object[] arr =  (rowData instanceof Object[]) ?
@@ -102,10 +102,6 @@ public class QueryServlet extends HttpServlet {
 
 	    int maxResult = (int)Tools.getLong(request, MAX_RESULT, -1);
    
-	    String p = html? "<p>":"";
-	    String ep = html? "</p>":"";
-
-
 	    SessionData sd =  SessionData.getSessionData(request);
 
 	    if (!sd.isAuthorized( request)) {
@@ -120,8 +116,6 @@ public class QueryServlet extends HttpServlet {
 	    }
 
 	    em = sd.getEM();
-
-	    String[] colNames = extractColumnNames(query);
 
 	    Query q = jpql? em.createQuery(query) :
 		em.createNativeQuery(query);
@@ -144,6 +138,9 @@ public class QueryServlet extends HttpServlet {
 	    OutputStream ostream = response.getOutputStream();
 	    PrintWriter out = new PrintWriter(ostream);
 
+	    String p = html? "<p>":"";
+	    String ep = html? "</p>":"";
+
 
 	    if (html) {
 		out.println("<html>");
@@ -159,6 +156,39 @@ public class QueryServlet extends HttpServlet {
 		else   out.print("All");
 		out.println(ep);
 	    }
+
+	    printList(out, query, list, html, header);
+
+	    out.flush();
+	    ostream.flush();
+	    ostream.close();
+
+
+	    /*
+	} catch (IllegalInputException e) {
+	    try {
+
+		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+				   "illegal input: " + e.getMessage() + 
+				   ". Please go back, correct the appropriate field, and resubmit.");		
+	    } catch(IOException ex) {};
+	    */
+	} catch (Exception e) {
+	    try {
+		e.printStackTrace(System.out);
+		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "error in SLS: " + e); //e.getMessage());
+	    } catch(IOException ex) {};
+	} finally {
+	    if (em!=null) {
+		em.close();
+	    }
+	}
+    }
+
+    static void printList(PrintWriter out, String query, List list, boolean html, boolean header) {
+	    String[] colNames = extractColumnNames(query);
+	    String p = html? "<p>":"";
+	    String ep = html? "</p>":"";
 
 
 	    if (html) out.println("<TABLE border=1>");
@@ -194,31 +224,6 @@ public class QueryServlet extends HttpServlet {
 	    }
 
 	    if (html) out.println("</body></html>");
-
-	    out.flush();
-	    ostream.flush();
-	    ostream.close();
-
-
-	    /*
-	} catch (IllegalInputException e) {
-	    try {
-
-		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-				   "illegal input: " + e.getMessage() + 
-				   ". Please go back, correct the appropriate field, and resubmit.");		
-	    } catch(IOException ex) {};
-	    */
-	} catch (Exception e) {
-	    try {
-		e.printStackTrace(System.out);
-		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "error in SLS: " + e); //e.getMessage());
-	    } catch(IOException ex) {};
-	} finally {
-	    if (em!=null) {
-		em.close();
-	    }
-	}
     }
 
     /** Prints out a single result of a SELECT */
