@@ -41,6 +41,9 @@ for user
        long since = main.allOpCnt -main.reflectedOpCnt;
 %>
 
+<h4>Details of this profile</h4>
+
+<p><%=main.thisUproTable %></p>
 
 <p>User profile <%=main.df.getThisFile() %> was generated for user  
 <%=main.df.getUser() %> at: <%=Util.ago(main.df.getTime())%>. 
@@ -48,9 +51,16 @@ for user
 <p>Profile generation method: <%=main.df.getType() %> 
 (<%=main.df.getType().description() %>)
 
-<p>This profile reflects  <%= main.reflectedOpCnt %> operations recorded in the user's 
-<a href="<%=main.viewActionsLink()%>">activity log</a> (operation id thru 
- <%= main.df.getLastActionId() %>). There have been <%= since %> user activity operations recorded since.
+<p>At the time when this profile was generated, <%=
+main.reflectedOpCnt %> operations had been recorded in the user's <a
+href="<%=main.viewActionsLink()%>">activity log</a> (operation id thru
+<%= main.df.getLastActionId() %>). The profile reflects some of
+these operations. <small>(Note: most likely, only a fraction of 
+these operations have been reflected in the profile. This is because only
+operations carried out by users while vieweing most current suggestion list, and only on "learning days", are used for profile updating. Besides, user profiles were zeroed on 2014-01-24, which means that profiles generated after that date do not reflect earlier history).</small>
+
+<p> There have been <%= since %> user activity operations recorded
+since this profile was generated.
 
 <% if (main.df.getType()== DataFile.Type.TJ_ALGO_2_USER_PROFILE && 
        main.ancestor!=null ) {
@@ -80,9 +90,6 @@ href="<%=main.viewLatestProfileLink()%>">click here</a>.
 </p> -->
 
 <% }  %>
-
-<p>This profile contains <%=main.upro.terms.length%> terms. They are listed below in the descending order of f(t)*idf(t).
-</p>
 
 <h4>Suggestion list(s) based on this user profile</h4>
 
@@ -115,18 +122,11 @@ Apply Most recent <input type="text" name="<%=main.DAYS%>" value="<%=actor.getDa
 
 -->
 
-<h4>Profile details</h4>
-
-<P>Details of this profile.</p>
-
-<p><%=main.thisUproTable %></p>
-
 <h4>Parent profile</h4>
 
 <p>If this user profile has been created based on an older profile, information about the latter should be shown below.</p>
 
 <p><%=main.prevUproTable %></p>
-
 
 <h4>Derived user profile(s)</h4>
 
@@ -136,7 +136,8 @@ Apply Most recent <input type="text" name="<%=main.DAYS%>" value="<%=actor.getDa
 
 <h4>Profile content</h4>
 
-<p>User profile vector contains <%= main.upro.terms.length%> terms.
+<p>The user profile vector contains <%=main.upro.terms.length%> terms. They are listed below in the descending order of f(t)*idf(t).
+</p>
 
 <p>
 <table>
@@ -229,8 +230,6 @@ the user profile for <em><%= main.actorUserName %></em>, click on the button bel
 <input type="submit" value="Refresh view">
 </form>
 </p>
-
-
 
 <%  }  %>
 
