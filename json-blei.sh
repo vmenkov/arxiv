@@ -19,19 +19,19 @@ set cp="${cp}:../tomcat-lib-to-copy/catalina.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 # set opt="-cp ${cp} ${opt}"
-set opt="-cp ${cp} ${opt}"
+set opt="-cp ${cp} ${opt} -Dtc=/data/json/usage/tc1.json.gz"
 
 echo "opt=$opt"
 
-set outdir=/data/arxiv/blei/usage
+set outdir=/data/arxiv/blei/usage1
 
-
+ 
 #foreach f (~/arxiv/json/user_data/11030?_user_data.json) 
-#foreach f (/data/json/usage/201[012]/*.json.gz) 
+#foreach f (/data/json/usage/2003/*.json.gz) 
 
 foreach d (/data/json/usage) 
 echo "Directory $d"
-set files=`(cd $d; ls 20??/*.json.gz)` 
+set files=`(cd $d; ls 20??/??????_usage.json.gz)` 
 
 foreach g ($files)
     set f="$d/$g"
