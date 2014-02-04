@@ -231,6 +231,27 @@ the user profile for <em><%= main.actorUserName %></em>, click on the button bel
 </form>
 </p>
 
+<hr>
+<h4>Finding other user profiles</h4>
+
+<p>You can use the following JPQL query to list all of your recent user profiles.
+
+<p>
+<form action="../tools/QueryServlet">
+<textarea name="query" rows=2 cols=120>
+select f from DataFile f where f.time > '2014-01-01' and f.user = '<%=main.actorUserName%>'
+and f.type = edu.rutgers.axs.sql.DataFile$Type.<%=main.mode%> order by f.id desc
+</textarea>
+
+<input type="hidden" name="language" value="JPQL"/>
+<input type="hidden" name="format" value="HTML"/>
+<input type="hidden" name="header" value="true"/>
+<br>
+<input type="submit" value="List user profiles">
+</form>
+</p>
+
+
 <%  }  %>
 
 
