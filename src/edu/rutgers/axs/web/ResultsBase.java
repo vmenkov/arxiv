@@ -402,6 +402,7 @@ public class ResultsBase {
 	String s = request.getRequestURI();
 	String qs = request.getQueryString();
 	if (pairs != null && pairs.length() > 0) {
+	    if (qs==null) qs="";
 	    if (qs.length()>0 && !pairs.startsWith("&")) qs += "&";
 	    qs += pairs;
 	}

@@ -239,7 +239,7 @@ the user profile for <em><%= main.actorUserName %></em>, click on the button bel
 <p>
 <form action="../tools/QueryServlet">
 <textarea name="query" rows=2 cols=120>
-select f from DataFile f where f.time > '2014-01-01' and f.user = '<%=main.actorUserName%>'
+select f from DataFile f where f.time > '2013-12-01' and f.user = '<%=main.actorUserName%>'
 and f.type = edu.rutgers.axs.sql.DataFile$Type.<%=main.mode%> order by f.id desc
 </textarea>
 
