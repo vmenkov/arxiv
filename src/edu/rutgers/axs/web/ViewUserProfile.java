@@ -58,8 +58,6 @@ public class ViewUserProfile extends PersonalResultsBase {
 	super(_request,_response);
 	if (error) return;
 
-	//User.Program program = actor.getProgram();
-
 	mode = (DataFile.Type)getEnum(DataFile.Type.class, MODE, mode);
 	if (modeIsWrong()) return;
 	   
@@ -76,13 +74,16 @@ public class ViewUserProfile extends PersonalResultsBase {
 	IndexReader reader = null;
 	try {
 
-	    if (actorUserName==null) throw new WebException("No user name specified!");
-	    actor = User.findByName(em, actorUserName);
-	    actorLastActionId= actor.getLastActionId();
+	    setActor(em);
 	    em.getTransaction().begin();
 
 	    if (id>0) {
 		df = (DataFile)em.find(DataFile.class, id);
+		String actorUserName1 = df.getUser();
+		if (!actorUserName.equals(actorUserName1)) {
+		    actorUserName = actorUserName1;
+		    setActor(em);
+		}
 	    } else if (requestedFile!=null) {
 		df = DataFile.findFileByName(em, actorUserName, requestedFile);
 	    } else {
@@ -134,6 +135,16 @@ public class ViewUserProfile extends PersonalResultsBase {
 	    //	    } catch(IOException ex) {}
 	}
     }
+
+    private void setActor(EntityManager em) throws WebException{
+	if (actorUserName==null) throw new WebException("No user name specified!");
+	if (!actorUserName.equals(user) && !runByResearcher()) {
+	    throw new WebException("Non-researcher users cannot view other users' profiles");
+	}
+	actor = User.findByName(em, actorUserName);
+	actorLastActionId= actor.getLastActionId();
+    }
+
 
     private boolean modeIsWrong() {
 	if (mode== DataFile.Type.USER_PROFILE ||
