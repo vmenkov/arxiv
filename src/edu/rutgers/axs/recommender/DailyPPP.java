@@ -25,8 +25,6 @@ import edu.rutgers.axs.indexer.Common;
  */
 public class DailyPPP {
  
-    static private Random gen = new  Random();
-
     /** Controls document representation (via the choice of
 	ArticleAnalyzer class and DocumentFile.version)
      */
@@ -199,6 +197,11 @@ public class DailyPPP {
 	    getSuitableUserProfile(u, ptr, em, aa);
 	DataFile inputFile = ptr.elementAt(0);
 
+	// Use a random generator seed that would be the same on re-run
+	long seed = (u.getUser_name().hashCode() << 16) + inputFile.getId();
+	Random gen = new  Random(seed);
+
+
 	// restricting the scope by category and date,
 	// as per Thorsten 2012-06-18
 	String[] cats = u.getCats().toArray(new String[0]);
@@ -258,7 +261,7 @@ public class DailyPPP {
 	boolean topOrphan = gen.nextBoolean();
 	outputFile.setPppTopOrphan( topOrphan);
 	double p = 0.5; // probability of swap
-	perturb( entries, p, topOrphan);
+	perturb( entries, p, topOrphan, gen);
 
 	// save the sug list to a text file
 	ArticleEntry.save(entries, outputFile.getFile());
@@ -272,7 +275,7 @@ public class DailyPPP {
  
     }
 
-    private static void perturb(Vector<ArticleEntry> entries, double p, boolean topOrphan ) {
+    private static void perturb(Vector<ArticleEntry> entries, double p, boolean topOrphan, Random gen ) {
 	for(int i=0; i< entries.size(); i ++) {
 	    entries.elementAt(i).iUnperturbed=entries.elementAt(i).i = i+1;
 	}
@@ -325,6 +328,7 @@ public class DailyPPP {
 	return upro;
     }
 
+    /** This is set if we're carrying out this run just for one user */
     static String onlyUser = null;
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
