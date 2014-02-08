@@ -87,10 +87,18 @@ public class DailyPPP {
     /** Just a wrapper around 2 function calls */
     private static void oneUser(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User user) 
 	throws IOException {
-	Logging.info("Updating profile for user " + user);
-	updateP3Profile(em, aa, searcher, user);
-	Logging.info("Updating suggestions for user " + user);
-	makeP3Sug(em, aa, searcher, user);
+	if (doProf) {
+	    Logging.info("Updating profile for user " + user);
+	    updateP3Profile(em, aa, searcher, user);
+	} else {
+	    Logging.info("Skip updating profile for user " + user);
+	}
+	if (doSug) {
+	    Logging.info("Updating suggestions for user " + user);
+	    makeP3Sug(em, aa, searcher, user);
+	} else {
+	    Logging.info("Skip updating suggestions for user " + user);
+	}
     }
 
     /** Updates and saves the user profile for the specified user, as
@@ -309,7 +317,15 @@ public class DailyPPP {
 	DataFile.Type ptype =  DataFile.Type.PPP_USER_PROFILE;
 	
 	String uname = user.getUser_name();
-	DataFile inputFile = DataFile.getLatestFileByVersion(em, uname, ptype, allowedFileVersions());
+
+	DataFile inputFile;
+	if (basedon>0) {
+	    inputFile = (DataFile)em.find(DataFile.class, basedon);
+	    if (inputFile==null) throw new IllegalArgumentException("User Profile DataFle no. " + basedon + " does not exist!");
+	    if (!inputFile.getUser().equals(uname)) throw new IllegalArgumentException("User Profile DataFle no. " + basedon + " is not for user "+uname+"!");
+	} else {
+	    inputFile = DataFile.getLatestFileByVersion(em, uname, ptype, allowedFileVersions());
+	}
 	
 	UserProfile upro;
 	if (inputFile != null) {
@@ -329,7 +345,11 @@ public class DailyPPP {
     }
 
     /** This is set if we're carrying out this run just for one user */
-    static String onlyUser = null;
+    static private String onlyUser = null;
+    static private boolean doProf = true, doSug = true;
+    /** This is supplied on command line if we want to specifically create a sug list based on a specific profile */
+    static private int basedon = 0;
+
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
 	
@@ -340,6 +360,15 @@ public class DailyPPP {
 
 	onlyUser = ht.getOption("user", null);
 	refined = ht.getOption("refined", refined);
+	doProf = ht.getOption("prof", doProf);
+	doSug  = ht.getOption("sug", doSug);
+	basedon = ht.getOption("basedon", basedon);
+
+	if (basedon>0) {
+	    if (doProf)  throw new IllegalArgumentException("-Dbasedon=... can only be used with -Dprof=false");
+	    if (onlyUser==null) throw new IllegalArgumentException("-Dbasedon=... cannot be used without -Duser=....");
+	}
+	    
 
 	String cmd = argv[0];
 	if (cmd.equals("init")) {
