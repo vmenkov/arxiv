@@ -26,6 +26,20 @@ public  class SubjectSearchResults extends SearchResults {
     public SubjectSearchResults(IndexSearcher searcher, String[] cats, 
 				Date since, int maxlen) 
     throws IOException {
+	this( searcher, cats, since, null, maxlen);
+    }
+
+    /**Performs a Lucene search. Creates an SearchResults object
+       that's a wrapper around the results array produced by Lucene (without
+       My.ArXiv's own re-ordering - that is to be done separately).
+
+       @param cats Array of categories.
+       @param since Date range start (may be null if n/a)
+       @param toDate Date range end (usually null). 
+    */
+    SubjectSearchResults(IndexSearcher searcher, String[] cats, 	
+				Date since, Date toDate, int maxlen) 
+    throws IOException {
 
 	org.apache.lucene.search.Query q;
 	if (cats.length<1) {
@@ -47,7 +61,9 @@ public  class SubjectSearchResults extends SearchResults {
 	}
 	
 	if ( since!=null) {
-	    q = andQuery( q, mkSinceDateQuery(since));
+	    q = andQuery( q, mkDateRangeQuery(since,toDate));
+	} else if (toDate!=null) {
+	    throw new IllegalArgumentException("toDate can't be set without since");
 	}
 	
 	Logging.info("Lucene query: " +q);
@@ -65,9 +81,16 @@ public  class SubjectSearchResults extends SearchResults {
     public static SubjectSearchResults 
 	orderedSearch(IndexSearcher searcher, User actor, Date since,
 		      int maxlen) throws IOException {
+	return 	orderedSearch( searcher,  actor, since, null,maxlen);
+    }
+
+    public static SubjectSearchResults 
+	orderedSearch(IndexSearcher searcher, User actor, Date since,
+		      Date toDate,
+		      int maxlen) throws IOException {
 
 	String[] cats = actor.getCats().toArray(new String[0]);
-	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, maxlen);
+	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, toDate, maxlen);
 	sr.reorderCatSearchResults(searcher.getIndexReader(), cats);
 	return sr;
     }

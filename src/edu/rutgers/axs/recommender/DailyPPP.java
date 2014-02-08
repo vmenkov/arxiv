@@ -216,11 +216,11 @@ public class DailyPPP {
 	if (cats.length==0) msg += " User "+u.getUser_name()+" has not chosen any categories of interest. ";
 
 	// Set the appropriate date range
-	Date since = Scheduler.chooseSince( em, u);
+	Date since = (forcedSince!=null)? forcedSince: Scheduler.chooseSince( em, u);
 
 	int maxlen = 10000;
 	SearchResults sr = 
-	    SubjectSearchResults.orderedSearch(searcher,u,since, maxlen);
+	    SubjectSearchResults.orderedSearch(searcher,u,since, forcedToDate, maxlen);
 	
 	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
 	Logging.info("since="+since+", cat search got " +sd.length+ " results");
@@ -349,6 +349,9 @@ public class DailyPPP {
     static private boolean doProf = true, doSug = true;
     /** This is supplied on command line if we want to specifically create a sug list based on a specific profile */
     static private int basedon = 0;
+    /** Command-line options, used to emulate the operation of the suggestion
+	generator at some earlier  date */
+    static private Date forcedSince=null, forcedToDate=null;
 
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
@@ -363,6 +366,8 @@ public class DailyPPP {
 	doProf = ht.getOption("prof", doProf);
 	doSug  = ht.getOption("sug", doSug);
 	basedon = ht.getOption("basedon", basedon);
+	forcedSince=ht.getOptionDate("since",null);
+	forcedToDate=ht.getOptionDate("until",null);
 
 	if (basedon>0) {
 	    if (doProf)  throw new IllegalArgumentException("-Dbasedon=... can only be used with -Dprof=false");

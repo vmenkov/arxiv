@@ -225,7 +225,12 @@ public class  SearchResults {
      	ArxivFields.DATE_FIRST_MY
      */
     public static  org.apache.lucene.search.Query mkSinceDateQuery(Date since) {
+	return mkDateRangeQuery(since, null);
+    }
+
+    public static  org.apache.lucene.search.Query mkDateRangeQuery(Date since, Date toDate) {
 	String lower = 	DateTools.timeToString(since.getTime(), DateTools.Resolution.MINUTE);
+	String upper = 	(toDate==null)? null: DateTools.timeToString(toDate.getTime(), DateTools.Resolution.MINUTE);
 	//System.out.println("date range: from " + lower);
 	//	return new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);
 
@@ -233,7 +238,7 @@ public class  SearchResults {
 	bq.setMinimumNumberShouldMatch(1);
 	String fields[] = {ArxivFields.DATE, ArxivFields.DATE_FIRST_MY};
 	for( String field: fields) {
-	    bq.add( new TermRangeQuery(field ,lower,null,true,false),
+	    bq.add( new TermRangeQuery(field ,lower,upper,true,false),
 		   BooleanClause.Occur.SHOULD );
 	}
 	return bq;
