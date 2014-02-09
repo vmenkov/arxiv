@@ -378,6 +378,9 @@ public class DailyPPP {
 	    if (onlyUser==null) throw new IllegalArgumentException("-Dbasedon=... cannot be used without -Duser=....");
 	}
 	    
+	if (forcedSince != null || 	forcedToDate!=null) {
+	    Logging.info("Forced date range: " + forcedSince + " to " + forcedToDate);
+	}
 
 	String cmd = argv[0];
 	if (cmd.equals("init")) {

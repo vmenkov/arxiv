@@ -242,14 +242,13 @@ public final class ParseConfig extends Hashtable<String,Object> {
 		return value;
 	}
 
-	/** Gets a date parameter, in the format YYYYMMDD
-	   @param aDefault 'YYYYMMDD' or 'YYMMDD'; the latter, for 20YY
-	 */
+	/** Gets a date parameter, in the format YYYY-MM-DD
+	   @param aDefault Default date, in format 'YYYY-MM-DD' 
+	*/
 	public Date getOptionDate(String aName, String aDefault) throws java.text.ParseException {
 	    String x= getOption(aName, aDefault);
 	    if (x==null) return null;
-	    //	date1 = new GregorianCalendar(2010, 0, 1).getTime(),
-	    final DateFormat fmt = new SimpleDateFormat("yyyyMMDD");
+	    final DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
 	    return fmt.parse(x);
 	}
 
