@@ -867,7 +867,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	suggestion list. This can be used e.g. in email messages.
 	The actual underlying value is in the variable "this.since".
      */
-    int estimateEffectiveDays() {
+    public int estimateEffectiveDays() {
 	if (since!=null) {
 	    long msec = (new Date()).getTime() - since.getTime();
 	    final long n = 24* 3600L * 1000L;

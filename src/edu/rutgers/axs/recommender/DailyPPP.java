@@ -223,9 +223,11 @@ public class DailyPPP {
 	    SubjectSearchResults.orderedSearch(searcher,u,since, forcedToDate, maxlen);
 	
 	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
+
+	Date reportedToDate = (forcedToDate!=null)? forcedToDate: new Date();
 	Logging.info("since="+since+", cat search got " +sd.length+ " results");
-	if (sd.length==0) msg += " No matching articles in the specified categories were posted within the specified date range ("+since+ " to " + new Date()+")";
-	else msg += " At least " +sd.length+ " articles in the specified categories were posted within the specified date range ("+since+ " to " + new Date()+")";
+	if (sd.length==0) msg += " No matching articles in the specified categories were posted within the specified date range ("+since+ " to " +reportedToDate +")";
+	else msg += " At least " +sd.length+ " articles in the specified categories were posted within the specified date range ("+since+ " to " + reportedToDate+")";
 
 	//searcher.close();
 	TjAlgorithm1 algo = new TjAlgorithm1();
@@ -321,10 +323,12 @@ public class DailyPPP {
 	DataFile inputFile;
 	if (basedon>0) {
 	    inputFile = (DataFile)em.find(DataFile.class, basedon);
+	    Logging.info("Directed to use profile: " + inputFile);
 	    if (inputFile==null) throw new IllegalArgumentException("User Profile DataFle no. " + basedon + " does not exist!");
 	    if (!inputFile.getUser().equals(uname)) throw new IllegalArgumentException("User Profile DataFle no. " + basedon + " is not for user "+uname+"!");
 	} else {
 	    inputFile = DataFile.getLatestFileByVersion(em, uname, ptype, allowedFileVersions());
+	    Logging.info("Choose to use profile: " + inputFile);
 	}
 	
 	UserProfile upro;
