@@ -866,6 +866,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     /** An approximate number to describe the day range of this
 	suggestion list. This can be used e.g. in email messages.
 	The actual underlying value is in the variable "this.since".
+	
+	<p>
+	FIXME: the range's end date should be based on the generation 
+	date (or the forced "until" date), and not the current date!
      */
     public int estimateEffectiveDays() {
 	if (since!=null) {

@@ -245,11 +245,15 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
     /** Scans the entire history of the user's interaction with the
 	system; selects usable feedback, and splits it by suggestion
 	list id. This method is used in retroactive profile generation.
+
+	@param minActionID Only actions with ID equal to or greater than this value are taken into account.
+
+	@param maxActionID If this param is not 0, it is interpreted as the upper bound on action ID, i.e. only actions with ID less than this value are taken into account.
 	
        @return An array of PPPFeedback objects, one per suggestion list,
        ordered chronologically (actually, by suggestion list DataFile id)
      */
-    static PPPFeedback[] allFeedbacks(EntityManager em, User actor) {
+    static PPPFeedback[] allFeedbacks(EntityManager em, User actor, long minActionID, long maxActionID) {
 	// 0 is stored to mean "presented list is no good"
 	HashMap<Long,Long> plid2dfid = new HashMap<Long,Long>();
 	final Long zero = new Long(0);
@@ -259,6 +263,9 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	
 	Set<Action> actions = actor.getActions();
 	for(Action a: actions) {
+	    if (a.getId()<minActionID) continue;
+	    if (maxActionID>0 && a.getId()>=maxActionID) continue;
+
 	    //lastActionId = Math.max( a.getId(), lastActionId);
 	    String aid = a.getAid();
 	    if (aid==null) continue; // skip PREV_PAGE etc

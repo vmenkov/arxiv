@@ -27,7 +27,7 @@ public class PPPConversion {
      */
     private static void recreateP3Profile(EntityManager em,  
 					  ArticleAnalyzer aa2,
-					  User u)  throws IOException {
+					  User u) throws IOException{
 
 	//Logging.info("Done doc norms");
 
@@ -35,7 +35,8 @@ public class PPPConversion {
 	//	    stype =  DataFile.Type.PPP_SUGGESTIONS;
 	final String uname = u.getUser_name();
 
-	PPPFeedback[] allFeed = doZero? new PPPFeedback[0]: PPPFeedback.allFeedbacks(em, u);
+
+	PPPFeedback[] allFeed = doZero? new PPPFeedback[0]: PPPFeedback.allFeedbacks(em, u, minActionID, maxActionID);
 
 	//List<DataFile> sugLists = getAllRelevantSugLists( em, u.getId());
 
@@ -168,6 +169,11 @@ public class PPPConversion {
     /** If true, create empty profiles, instead of doing a replay */
     static private boolean doZero=false;
 
+    /** Only actions starting from this one may be taken into account */
+    static private long  minActionID=0;
+    /** Only actions earlier than this one may be taken into account. The values 0 means that there is no upper limit. */
+    static private long  maxActionID=0;
+
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
 	
@@ -179,7 +185,10 @@ public class PPPConversion {
 	onlyUser = ht.getOption("user", null);
 	refined = ht.getOption("refined", refined);
 	doZero = ht.getOption("zero", false);
+	minActionID=ht.getOptionLong("minActionID", minActionID);
+	maxActionID=ht.getOptionLong("maxActionID", maxActionID);
 	conversions();
+
 
 	/*
 	String cmd = argv[0];

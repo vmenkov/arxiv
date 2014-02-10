@@ -221,6 +221,24 @@ public final class ParseConfig extends Hashtable<String,Object> {
 		return value;
 	}
 
+	public long getOptionLong(String aName, long aDefault) {
+	    long value = aDefault;
+	    Object obj = get(aName);
+	    if (obj != null) {
+		if (obj instanceof Number)
+		    value = ((Number) obj).longValue();
+		else {
+		    String msg = "Property `" + aName + "' read from the config file " + "is not a number! Ignored.";
+		    System.err.println(msg);
+		}
+	    }
+	    String property = getPropertySafe(prefix + aName);
+	    if (property != null)
+		value = Long.parseLong(property);
+	    return value;
+	}
+
+
 	/**
 	 * Gets the requested integer value from the hash table or from the Java system property aName.
 	 */
