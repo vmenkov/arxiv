@@ -155,7 +155,7 @@ class SBRGThread extends Thread {
 
 	    // abstract match, separately for each article
 	    final int maxlen = 100;
-	    final int maxRecLenTop = 25;
+	    final int maxRecLenTop = 20;
 	    final int maxRecLen = Math.min(3*viewedArticles.size(), maxRecLenTop);
 	    ScoreDoc[][] asr  = new ScoreDoc[viewedArticles.size()][];
 	    int k=0;

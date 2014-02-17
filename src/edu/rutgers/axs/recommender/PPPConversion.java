@@ -114,7 +114,7 @@ public class PPPConversion {
 
     static void conversions() throws IOException {
 
-	//	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 	IndexReader reader = Common.newReader();
 
 	Logging.info("3PR profile conversion. Refined=" + refined);

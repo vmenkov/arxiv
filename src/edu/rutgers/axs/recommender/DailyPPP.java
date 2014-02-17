@@ -199,7 +199,7 @@ public class DailyPPP {
 	// not want ever shown.
 	// FIXME: strictly speaking, a positive rating should perhaps
 	// "cancel" a "Don't show again" request
-	HashMap<String, Action> exclusions = u.listExclusions();
+	//HashMap<String, Action> exclusions = u.listExclusions();
 
 	UserProfile upro = 
 	    getSuitableUserProfile(u, ptr, em, aa);
@@ -236,12 +236,27 @@ public class DailyPPP {
 		
 	Vector<ArticleEntry> entries = upro.packageEntries(sd);
 
+	String m = "packageEntries = (";
+	for(int i=0; i<4 && i<entries.size(); i++) {
+	    m += " " + entries.elementAt(i);
+	}
+	m += ")";
+	Logging.info(m);
+
 	// FIXME: it would be nice to apply exclusions earlier, but it
 	// does not matter much in PPP, since the utility is linear
 	ArticleEntry.applyUserSpecifics(sr.entries, u);
 	ArticleEntry.refreshOrder(sr.entries);
 
 	Logging.info("since="+since+", |sd|=" +sd.length+", |entries|=" + entries.size());
+
+	m = "applyUserSpec  = (";
+	for(int i=0; i<4 && i<entries.size(); i++) {
+	    m += " " + entries.elementAt(i);
+	}
+	m += ")";
+	Logging.info(m);
+
 
 	// FIXME: is there a better place for the day-setting?
 	boolean isTrivial = (upro.terms.length==0);
