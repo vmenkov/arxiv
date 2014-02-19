@@ -81,23 +81,30 @@ public class SessionBased  extends ResultsBase {
 	    "javascript:window.parent.location.href='" +urlAbstract(e.id)+ "';";
 
 	String s = 
+	    "<table><tr><td>\n" + 
+	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\">" +
+	    htmlRectangle(e.score) + "</div>\n</td>\n" +
+            "<td style=\"width:100%\">" +
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
-	    "<table><tr><td>" +
-	    htmlRectangle(e.score) + "</td>\n" + 
-	    "<td><a name=\""+ aName +"\" title=\""+ rt +
+            "<table><tr><td>\n" +
+	    "<a name=\""+ aName +"\" title=\""+ rt +
 	    "\" onclick=\""  + js + "\">\n" +
-	    e.i + ". " + e.titline + "</a></td></tr>\n"+
+	    e.i + ". " + e.titline + "</a></td></tr>\n" +
 	    "<tr><td colspan=2>" +
 	    abbreviateAuthline(e.authline)+ " &mdash; "+abbreviateSubj(e.subj)+ 
-	    "</td></tr>\n";
+	    "</td></tr>\n" +
+            "</table>\n";
 	    //researcherSpan(rt, sd.researcherSB)+  	    "<br>\n" +
 
 	s += 
 	    (!e.ourCommline.equals("") ? "<tr><td colspan=2><strong>"  + e.ourCommline + "</strong></td></tr>\n" : "") +
-	    "</table>\n" +
+	    
 	    "</div>\n" +
-	    "</div>\n";
+	    "</div>\n" +
+            "</td>\n" +
+	    "</tr>\n" + 
+	    "</table>\n";
 	return s;
     }
 
@@ -113,9 +120,9 @@ public class SessionBased  extends ResultsBase {
 	return
 	    "<table><tr>" + 
 	    // empty box (for an offset)
-	    "<td><div style=\"width:"+w2 +"px;height:"+h+"px\"></div></td>" +
+	    "<td><div style=\"width:"+w2 +"px;height:"+h+"px;margin-top:15px;margin-left:15px;\"></div></td>" +
 	    // solid box
-	    "<td><div style=\"width:"+w+"px;height:"+h+"px;border:1px solid #111; background-color:#111;\"></div></td>" +
+	    "<td><div style=\"width:"+w+"px;height:"+h+"px;border:1px solid #36d0c3; background-color:#36d0c3;\"></div></td>" +
 	    "</tr></table>";
 
     }
