@@ -18,10 +18,22 @@ import edu.rutgers.axs.indexer.Common;
 
 /** The nightly updater for Thorsten's 3PR (a.k.a. PPP) experiment plan.
     
+    <p>This application main operation mode is the nightly update of
+    the user profiles and suggestion lists for all 3PR users who need
+    them. Besides this main mode, this application also has a variety
+    of additional functions, controlled with a number of command-line
+    options, which can be used for various experiments or for
+    problem-fixing. This includes the ability to update only user
+    profiles or only suggestion lists; updating the user profile
+    and/or suggestion list for a single user; as well as the ability to 
+    customize the process whereby the e user profile(s)
+    and/or suggestion list(s) are updated.
+
     <p> The underlying code (hidden in ArticleAnalyzer and its
     subclass ArticleAnalyzer2) supports two different document
     representations: the original "flattened" (2011) and "refined" (2013-14).
     The choice is controlled with the flag called "refined".
+
  */
 public class DailyPPP {
  
@@ -164,6 +176,8 @@ public class DailyPPP {
 	    return;
 	}
 	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
+	setDataFileId(em, outputFile, newProfID);
+
 	if (oldProfileFile!=null) {
 	    outputFile.setInputFile(oldProfileFile);
 	}
@@ -270,6 +284,8 @@ public class DailyPPP {
 	String uname = u.getUser_name();
 		
 	DataFile outputFile=new DataFile(uname, 0, DataFile.Type.PPP_SUGGESTIONS);	    
+	setDataFileId(em, outputFile, newSugID);
+
 	if (msg!=null && msg.length()>0) {
 	    outputFile.setMessage(msg);
 	}
@@ -299,6 +315,21 @@ public class DailyPPP {
 	Logging.info("Saved sug list: " + outputFile);
  
     }
+
+    /** Sets the ID of the new DataFile, if appropriate.
+	@param id The new id. If 0, it is ignored and nothing is done.
+     */
+    private static void setDataFileId(EntityManager em, DataFile outputFile, long id) {
+	if (id != 0) {
+	    if (em.find(DataFile.class,id)!=null) {
+		Logging.warning("DataFile with ID="+id +" already exists; ignore the request to set new file ID this way");
+	    } else { 
+		Logging.info("Setting new DataFile's ID=" + id +", as per command-line request");
+		outputFile.setId((int)id);
+	    }
+	}
+    }
+
 
     private static void perturb(Vector<ArticleEntry> entries, double p, boolean topOrphan, Random gen ) {
 	for(int i=0; i< entries.size(); i ++) {
@@ -365,12 +396,22 @@ public class DailyPPP {
 
     /** This is set if we're carrying out this run just for one user */
     static private String onlyUser = null;
+    /** Special modes: only computing user profiles, or only suggestion lists */
     static private boolean doProf = true, doSug = true;
-    /** This is supplied on command line if we want to specifically create a sug list based on a specific profile */
+    /** This is supplied on command line if we want to specifically
+	create a sug list based on a specific profile. This option can
+	only be used in the "onlyUser" mode; the profile specified by it
+	should belong to that user.
+    */
     static private int basedon = 0;
-    /** Command-line options, used to emulate the operation of the suggestion
-	generator at some earlier  date */
+    /** Command-line options, used to explicitly specify the document
+	date range for the suggestion generator. They are used to
+	emulate the operation of the suggestion generator at some
+	earlier date */
     static private Date forcedSince=null, forcedToDate=null;
+    /** The IDs for the new user profile  and/or suggestion list DataFiles.
+	These can only be supplied if we're in the "onlyUser" mode. */
+    static private long newProfID = 0, newSugID=0;
 
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
@@ -387,12 +428,25 @@ public class DailyPPP {
 	basedon = ht.getOption("basedon", basedon);
 	forcedSince=ht.getOptionDate("since",null);
 	forcedToDate=ht.getOptionDate("until",null);
+	newProfID=ht.getOptionLong("newProfID", 0);
+	newSugID=ht.getOptionLong("newSugID", 0);
 
 	if (basedon>0) {
 	    if (doProf)  throw new IllegalArgumentException("-Dbasedon=... can only be used with -Dprof=false");
 	    if (onlyUser==null) throw new IllegalArgumentException("-Dbasedon=... cannot be used without -Duser=....");
 	}
 	    
+	if (newProfID!=0) {
+	    if (!doProf)  throw new IllegalArgumentException("-DnewProfID=... cannot be used with -Dprof=false");
+	    if (onlyUser==null) throw new IllegalArgumentException("-DnewProfID=... cannot be used without -Duser=....");
+	}
+
+	if (newSugID!=0) {
+	    if (!doSug)  throw new IllegalArgumentException("-DnewSugID=... cannot be used with -Dsug=false");
+	    if (onlyUser==null) throw new IllegalArgumentException("-DnewSugID=... cannot be used without -Duser=....");
+	}
+
+
 	if (forcedSince != null || 	forcedToDate!=null) {
 	    Logging.info("Forced date range: " + forcedSince + " to " + forcedToDate);
 	}

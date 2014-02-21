@@ -82,6 +82,13 @@ order by x.id desc
 <td>Shows all actions for a named user which originated from a "presented list" of some kind (typically, a suggestion list or a search list), linking them to the PresentedListEntry objects that give additional information about the position etc. of the article in the PresentedList. This is particularly useful on Evaluation Days, when you want to see if a page came from the baseline list (fromA=false) or the treatment list (fromA=true).
 
 <tr>
+<td>
+select x,sl.inputFile.id from Action x, PresentedList pl, DataFile sl where x.user.id=30 and x.presentedListId = pl.id and pl.dataFileId = sl.id and sl.inputFile.id = 10353
+<td>
+-
+<td>Show all user actions carried out while viewing article lists and articles in suggestion lists generated based on a particular user profile (no. 10353)
+
+<tr>
 <td>select count( distinct a.session) from Action a
 <td>select count( distinct a.session) from Action a
 <td>How many sessions have we had (since session recording has been introduced)

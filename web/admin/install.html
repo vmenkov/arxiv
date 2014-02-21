@@ -124,6 +124,62 @@ Setting our usual MySQL root password.
 <p>
 (Note: After reboot, mysqld apparently automatically restarts).
 
+<h5>For access to mysqld from other hosts (identified by their IP)</h5>
+
+As per the avice at http://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html
+
+See also iptables tutorial here: http://wiki.centos.org/HowTos/Network/IPTables
+
+Added the following line to /etc/my.cnf:
+<pre>
+bind-address 132.236.91.38
+</pre>
+
+Take a look at the existing iptables rules:
+<pre>
+ sudo iptables -L INPUT -n
+ sudo iptables -S INPUT
+</pre>
+
+Insert a new rule into position 7 - after other ACCEPT rules, and
+before the final REJECT rule:
+<pre>
+ sudo /sbin/iptables -I INPUT 7 -p tcp -m state --state NEW -m tcp -s 132.236.91.37 --dport 3306 -j ACCEPT
+sudo service iptables save
+</pre>
+
+<p>
+We now have the table as follows:
+<pre>
+[vm293@en-myarxiv02 log]$ sudo iptables -L INPUT -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED 
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:443 
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:80 
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:22 
+ACCEPT     tcp  --  132.236.91.37        0.0.0.0/0           state NEW tcp dpt:3306 
+ACCEPT     tcp  --  128.84.96.49         0.0.0.0/0           state NEW tcp dpt:3306 
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited 
+</pre>
+
+<h5>Adding read-only database users</h5>
+
+For Paul Ginsparg's project, user named "readonly" on database <tt>json</tt>
+
+<pre>
+create user  'readonly'@'localhost' IDENTIFIED BY 'XXXXX';
+GRANT SELECT ON json.* TO 'readonly'@'localhost';
+GRANT SELECT ON arxiv_xs.* TO 'readonly'@'localhost';
+
+create user  'readonly'@'%' IDENTIFIED BY 'XXXXX';
+GRANT SELECT ON json.* TO  'readonly'@'%';
+GRANT SELECT ON  arxiv_xs.*  TO 'readonly'@'%';
+flush privileges;
+</pre>
+
 
 <h4>Create directories</h4>
 
