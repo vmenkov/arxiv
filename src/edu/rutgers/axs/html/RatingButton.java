@@ -113,8 +113,28 @@ public class RatingButton {
 
     };
 
+    /** The list of buttons shown to anonymous users in the SBRL panel
+     */
+    static final RatingButton[] sbAnonRatingButtons = {
+	new RatingButton(Action.Op.INTERESTING_BUT_KNOWN,
+			 "I have seen it already",
+			  "I am aware of this article already; remove this document from the recommendation list",
+			 "page_ok.png",  false, true),
+	new RatingButton( Action.Op.DONT_SHOW_AGAIN,
+			  "Not useful, remove",
+			  "This suggestion is not useful; remove this document from the recommendation list",
+			  "bin.png" ,  false, true)
+    };
+
+    /** Selects an appropriate list of buttons to display depending on the
+	experiment plan the user is enrolled in.
+	@param program The code for the experiment plan
+     */
     static public RatingButton[] chooseRatingButtonSet(User.Program program) {
-	return program==User.Program.EE4?   ee4RatingButtons: allRatingButtons;
+	return 
+	    program==User.Program.SB_ANON?  sbAnonRatingButtons:
+	    program==User.Program.EE4?   ee4RatingButtons: 
+	    allRatingButtons;
     }
 
     static public String att(String name, String val) {
@@ -228,19 +248,22 @@ public class RatingButton {
     }
 
    
-      /** Generates the HTML inserted into various pages where articles
-	are listed. (E.g. the search results list in search.jsp, or
-	the suggestion list in index.jsp) This HTML code includes the
-	enclosing DIV element (DIV ...  /DIV), with various rating buttons
-	etc. inside it.
+      /** Generates the HTML code which will be inserted into various
+	pages where articles are listed. (E.g. the search results list
+	in search.jsp, or the suggestion list in index.jsp) This HTML
+	code includes the enclosing DIV element (DIV ...  /DIV), with
+	various rating buttons etc. inside it.
 
 	<p>
 	Note that the "A" elements contain no "HREF" attribute, not even
 	one with the "#" value. This is in order to prevent the page from
 	scrolling needlessly when the user clicks on a link.
 
-	@param cp The context path for this application.
-	@param flags Controls the appearance of the button set. E.g.  NEED_FOLDER | NEED_HIDE
+	@param cp The context path for this application. This can be obtained from the HTTP request received by the servlet of JSP page.
+	@param e The article for which the buttons will be generated.
+	@param program This describes the experiment plan into which the user is enrolled, which in its turn controls the set of buttons she should be shown
+	@param flags Customizes the appearance of the button set (presence or absence of some "optional" buttons) for a particular environment. E.g.  NEED_FOLDER | NEED_HIDE. You can pass 0 for the default set.
+	@param asrc This describes the context in which the buttons are presented, so that it can be properly logged on the server when a button is clicked on.
      */
     static public String judgmentBarHTML(String cp, ArticleEntry e,  User.Program program,
 					 int flags, ActionSource asrc) {

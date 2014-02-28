@@ -167,7 +167,11 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    /** Peter Frazeer's Exploration Engine v4 */
 	    EE4,
 	    /** Thorsten Joachim's Perturbed Preference Perceptron */
-	    PPP;
+	    PPP,
+	    /** This is not an actual program, but simply a code to 
+		use when displaying a session-based suggestion list 
+		for an anonymous user*/
+	    SB_ANON;
 
 	/** Do we need to use the Bernoulli Exploration Engine with
 	 * this program?	 */

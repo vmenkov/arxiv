@@ -358,6 +358,14 @@ public class ResultsBase {
 					     flags, asrc);
     } 
 
+    // this is the code that will be inserted into SessionBased.resultsDivHTMLLite(ArticleEntry e) 
+    /*
+    private String judgmentBarHTML_sb(ArticleEntry entry) {
+       return RatingButton.judgmentBarHTML( cp, entry, User.Program.SB_ANON,
+					     0, asrc);
+    } 
+    */
+
     /** Generates a URL for a page similar to the currently viewed one,
 	but showing a different section of the result list.
 

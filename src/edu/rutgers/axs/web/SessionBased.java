@@ -108,6 +108,16 @@ public class SessionBased  extends ResultsBase {
 	return s;
     }
 
+    /** The bar with rating buttons, to be inserted after each
+	suggested article. David can incorporate this method into
+	resultsDivHTMLLite(e)
+     */
+   private String judgmentBarHTML_sb(ArticleEntry e) {
+       return RatingButton.judgmentBarHTML( cp, e, User.Program.SB_ANON,
+					     0, asrc);
+    } 
+  
+
     /** Creates an HTML element that shows as a rectangle of specified length */
     static String htmlRectangle(double score) {
 	final int h = 8;
