@@ -783,7 +783,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 		}
 	    }
 
-	    // insert JS for the Moving Panel inside the HEAD, if needed
+	    // insert JS for the Moving Panel inside the HEAD element, if needed
 	    if (sd.needSBNow) {
 		m = pEndHead.matcher(s);
 		if (m.find()) {
