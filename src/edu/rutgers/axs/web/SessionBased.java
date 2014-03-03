@@ -90,6 +90,7 @@ public class SessionBased  extends ResultsBase {
             "<table><tr><td>\n" +
 	    "<a name=\""+ aName +"\" title=\""+ rt +
 	    "\" onclick=\""  + js + "\">\n" +
+	    (e.recent? "* " : "") + 
 	    e.i + ". " + e.titline + "</a></td></tr>\n" +
 	    "<tr><td colspan=2>" +
 	    abbreviateAuthline(e.authline)+ " &mdash; "+abbreviateSubj(e.subj)+ 

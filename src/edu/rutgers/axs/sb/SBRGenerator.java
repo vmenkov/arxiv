@@ -18,11 +18,14 @@ import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.web.*;
 
 /** The sesion-based recommendation generator. We have an SBRGenerator instance
-    in every web.SessionData object.
+    in every web.SessionData object. 
 
-    Recommendation list computation for this class is carried out in the run()
-    method of a SBRGThread object (a thread). At most one SBRGThread may have
-    its thread running at any time.
+    <p> Recommendation list computation for this class is carried out
+    asynchronously, in the run() method of a SBRGThread object (a
+    thread). At most one SBRGThread may have its thread running at any
+    time on behalf of one SBRGenerator object. In this way some level
+    of load control is achieved, and unnecessary computations are
+    avoided.
  */
 public class SBRGenerator {
 

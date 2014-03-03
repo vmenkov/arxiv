@@ -46,6 +46,10 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
     public String date=null;
     public String dateIndexed=null;
 
+    /** This flag is only used in SB; it indicates that this article was not
+	displayed in the previous list. */
+    public boolean recent=false;
+
     static private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public String formatDate() {

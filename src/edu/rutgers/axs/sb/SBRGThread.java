@@ -39,7 +39,8 @@ class SBRGThread extends Thread {
      for statistics. */
     Date startTime, endTime;
 
-    /** The main class for the actual generation */
+    /** The main class for the actual recommendation list
+	generation. */
     public void run()  {
 	startTime = new Date();
 	
@@ -112,8 +113,12 @@ class SBRGThread extends Thread {
     /** An auxiliary object for ascending-order sort (i.e. rank 1
 	before rank 2, etc) */
     private static class ArticleRanks implements Comparable<ArticleRanks> {
+	/** Lucene internal id */
 	int docno;
-	/** This is *not* used for sorting */
+	/** This field contains the sum of scores for this article
+	    from various lists being merged. It is stored for
+	    information purposes only, and is *not* used for
+	    sorting. */
 	double score=0;
 	Vector<Integer> ranks=new Vector<Integer>();
 	public int compareTo(ArticleRanks o) {
@@ -140,10 +145,30 @@ class SBRGThread extends Thread {
 	other contexts).
     */
     String excludedList = "";
+
+    
+  /**  Paul's suggestion on list length (2014-02-26): I have been
+	thinking about how quickly the SB list grows. I would favor
+	somewhat slower growth. Perhaps start with three; then add
+	two; thereafter, add only one at a time unless there are two
+	(or even three) that suddenly outrank anything already on the
+	list. I am not at all clear on how that fact could be
+	displayed --- flashing text? twinkling lights...:) ?
+
+	@param n The number of articles viewed so far.
+     */ 
+    static private int recommendedListLength(int n) {
+ 	    final int maxRecLenTop = 20;
+	    //int m =3*n;   
+	    int m = (n<=2) ? 3: 2 + n;
+	    m = Math.min(m, maxRecLenTop);   
+	    return m;
+    }
  
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
 	articles viewed by the user in this session.
+
      */
     private void computeRecList(EntityManager em, IndexSearcher searcher) {
 	
@@ -155,8 +180,7 @@ class SBRGThread extends Thread {
 
 	    // abstract match, separately for each article
 	    final int maxlen = 100;
-	    final int maxRecLenTop = 20;
-	    final int maxRecLen = Math.min(3*viewedArticles.size(), maxRecLenTop);
+	    final int maxRecLen = recommendedListLength(viewedArticles.size());
 	    ScoreDoc[][] asr  = new ScoreDoc[viewedArticles.size()][];
 	    int k=0;
 	    for(String aid: viewedArticles) {
@@ -181,7 +205,6 @@ class SBRGThread extends Thread {
 	    }
 
 	    // merge all lists
-	    //	    HashMap<String,ArticleRanks> hr= new HashMap<String,ArticleRanks>();
 	    HashMap<Integer,ArticleRanks> hr= new HashMap<Integer,ArticleRanks>();
 	    for(int j=0; j<maxlen; j++) {
 		for(ScoreDoc[] z: asr) {
@@ -314,6 +337,44 @@ class SBRGThread extends Thread {
     }
 
 
+    /**	This methods takes the new suggestion list (the one just
+	generated) and reorders it so that it looks a bit more like
+	the "old" suggestion list (the one return by the SBR generator
+	at the previous call). The reordering is carried out in the
+	following fashion:
+
+	<ul> 
+
+	<li> The "new" elements of the new list (those that are
+	present in the new list, but were not shown in the previous
+	list) are kept at their positions
+	
+	<li> The "old" elements of the new list (those that are
+	present in the new list and also were shown in the previous
+	list) are considered as a group. The set of positions they 
+	occupy in the new list is kept unchanged, but they are moved
+	around within this set so that they appear in the same relative
+	order (with respect to each other) as they were in the old list.
+	</ul>
+
+	<p>This process is supposed to achieve the following effect
+	for the user who observe the list change: The previously
+	displayed articles maintain their relative order (although a
+	few of them may disappear from the list), while some new
+	(additional) articles became inserted at various positions
+	between them.
+
+	@param entries The new suggesion list to be reordered.
+
+	@param maxRecLen The desired length of the suggesion list to
+	be returned.
+
+	@return A suggestion list that contains the articles from
+	"entries" (and possibly also a small number of
+	additional articles from the previously displayed list), reordered
+	as per the above rules.
+
+     */
   private Vector<ArticleEntry> maintainStableOrder1( Vector<ArticleEntry> entries, int maxRecLen) {
 
 	if (parent.getSR()==null) return entries;
@@ -322,8 +383,8 @@ class SBRGThread extends Thread {
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
 
+	// Make a list and hashtable of all old elements which are excluded
 	HashSet<String> old=new HashSet<String>();
-	// Old elements (not excluded)
 	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
 	for(ArticleEntry e: previouslyDisplayedEntries) {
 	    if (exclusions.contains(e.id)) continue;
@@ -333,18 +394,29 @@ class SBRGThread extends Thread {
 	    old.add(e.id);
 	}
 
+	// create a reordered list 
 	Vector<ArticleEntry> v = new 	Vector<ArticleEntry>();
 	
 	int na=0;
 	for(ArticleEntry e: entries) {
-	    if (old.contains(e.id)) {
-		if (na>=a.size()) { // this should not happen
-		    throw new AssertionError("List merge error; na=" + na);
-		}
-		v.add(a.elementAt(na++));
-	    } else {
-		v.add(e);
-	    }
+	    boolean recent = !old.contains(e.id);
+	    ArticleEntry q = recent?
+		// keep the "new" element in place
+		e :
+		// this position was occupied by an "old" element,
+		// and we put the appropriately-ranked "old" element here
+		a.elementAt(na++);
+	    q.recent=recent;
+	    v.add(q);
+	}
+
+	// Bonus old documents: they are added if too few of them have been
+	// preserved
+	final int minOldKept=2;
+	if (na<minOldKept) {
+	    ArticleEntry q =a.elementAt(na++);
+	    q.recent=false;
+	    v.add(q);
 	}
 
 	// Adjust positions
