@@ -41,7 +41,7 @@
  <property name="build.tmp" location="/tmp"/>
 
 <!-- The place where Tomcat lives, on various machines where we run -->
-<property name="tomcat.home.orie"  value="/usr/share/tomcat6" />
+<property name="tomcat.home.orie"  value="/usr/share/tomcat7" />
 <property name="tomcat.home.scils"  value="/www/icd.rutgers.edu" />
 <property name="tomcat.home.cactuar"  value="/www/my-dev.arxiv.rutgers.edu" />
 
@@ -87,7 +87,7 @@
 
 <!-- Tomcat libraries; for Tomcat 6.* -->
 <property name="tomcat.lib.rutgers"     value="/usr/local/tomcat55/common/lib"/>
-<property name="tomcat.lib.orie"     value="/usr/share/tomcat6/lib"/>
+<property name="tomcat.lib.orie"     value="${tomcat.home.orie}/lib"/>
 
 <condition property="tomcat.lib" value="${tomcat.lib.rutgers}" else="${tomcat.lib.orie}">
   <available file="${tomcat.lib.rutgers}"/>
@@ -397,8 +397,10 @@ names to hang around. -->
 
 <!-- ======================================================================
 Causing the web server to reload our web application. For how this works, see
-http://tomcat.apache.org/tomcat-6.0-doc/manager-howto.html
+http://tomcat.apache.org/tomcat-6.0-doc/manager-howto.html or
+http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
  -->
+
 
 <property name="reloadclass" value="org.apache.catalina.ant.ReloadTask"/>
 <!-- property name="reloadclass.correct" value="org.apache.catalina.ant.ReloadTask"/>
@@ -410,7 +412,15 @@ http://tomcat.apache.org/tomcat-6.0-doc/manager-howto.html
 
 <echo message="reloadclass=${reloadclass}"/>
 
-<property name="reload.url" value="http://localhost:8080/manager"/>
+<!-- The reload URL under Tomcat7 is different from Tomcat6 and 5.5 -->
+<condition property="reload.url" 
+	   value="http://localhost:8080/manager/text"
+	   else="http://localhost:8080/manager">
+  <available file="${tomcat.home.orie}"/>
+</condition>
+
+<echo message="reloadurl=${reloadurl}"/>
+
 <!-- Or try to run ant as follows:
       ant -lib ../lib/catalina-ant.jar  , 
    or place that jar file into ~/.ant/lib

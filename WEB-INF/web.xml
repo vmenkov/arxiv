@@ -18,6 +18,7 @@
      </context-param>
      -->
 
+  <jsp-config>
   <taglib>
     <taglib-uri>
       http://my.arxiv.org/taglibs/icdtags
@@ -26,7 +27,7 @@
       /WEB-INF/icdtags.tld
     </taglib-location>
   </taglib>
-
+  </jsp-config>
 
   <!-- as per http://www.avajava.com/tutorials/lessons/how-do-i-use-form-authentication-with-tomcat.html -->
   <!--
