@@ -42,15 +42,6 @@
 
 <!-- The place where Tomcat lives, on various machines where we run -->
 <property name="tomcat.home.orie"  value="/usr/share/tomcat7" />
-<property name="tomcat.home.scils"  value="/www/icd.rutgers.edu" />
-<property name="tomcat.home.cactuar"  value="/www/my-dev.arxiv.rutgers.edu" />
-
-<condition property="tomcat.home.rutgers" 
-	   value="${tomcat.home.scils}" 
-	   else="${tomcat.home.cactuar}">
-  <available file="${tomcat.home.scils}"/>
-</condition>
-
 <property name="tomcat.home.rutgers"  value="/www/my-dev.arxiv.rutgers.edu" />
  
 <condition property="tomcat.home1" 
@@ -66,7 +57,6 @@
 </condition>
 
 
-
 <echo message="tomcat.home=${tomcat.home}"/>
 
 <!-- the location of files that will appear at the "root" of our
@@ -76,8 +66,8 @@
   <available file="${tomcat.home.rutgers}"/>
 </condition>
 
-<!-- property name="app.name"       value="arxiv"/ -->
 <property name="app.name"       value="arxiv"/>
+<!-- property name="app.name"       value="arxiv.tmp"/ -->
 <property name="deploy.home"    value="${tomcat.home}/webapps/${app.name}"/>
 <property name="dist.home"      value="${deploy.home}"/>
 <property name="dist.src"       value="${app.name}.jar"/>
