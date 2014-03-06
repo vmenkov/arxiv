@@ -1,4 +1,4 @@
-﻿/* LAYOUT */
+/* LAYOUT */
 
 html {
 /*
@@ -492,11 +492,31 @@ input:focus { border: 2px inset #C0C0C0; background:#FFFFFF; margin:2px 4px 2px 
 input.error { border: 3px solid #FF0000; background:#FFFF00; margin:1px 3px 1px 3px;}
 form.cmxform .gray * { color: gray; }
 
+.container{
+margin-bottom:10px;
+border-radius:10px;
+background:#f5f5f5;
+overflow:auto;
+}
+
+.chart{
+border:1px #888888 outset;
+float:right;
+margin-top: 16px;
+height: 30px;
+width: 70px;
+margin-bottom:25px;
+border-radius:35px;
+background:#f5f5f5;
+}
+
 .result{
 border:1px #888888 outset;
 margin-bottom:10px;
+margin-left:0px;
 border-radius:10px;
 background:#f5f5f5;	
+overflow:auto;
 }
 
 .document{

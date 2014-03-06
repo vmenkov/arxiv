@@ -63,7 +63,7 @@ public class SessionBased  extends ResultsBase {
 	</ul>
 
     */
-    public String resultsDivHTMLLite(ArticleEntry e) {
+    public String resultsDivHTMLLite(ArticleEntry e, double largest) {
 
 	String rt = "[" + e.idline + "; score="+e.score+ "; "+
 	    e.formatDate()+"]";
@@ -81,19 +81,20 @@ public class SessionBased  extends ResultsBase {
 	    "javascript:window.parent.location.href='" +urlAbstract(e.id)+ "';";
 
 	String s = 
-	    "<table><tr><td>\n" + 
+	    "<table><tr><td>\n" +  
 	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\">" +
-	    htmlRectangle(e.score) + "</div>\n</td>\n" +
+	    htmlRectangle(e.score, largest) + "</div>\n</td>\n" +
             "<td style=\"width:100%\">" +
 	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
 	    "<div class=\"document\">\n" +
-            "<table><tr><td>\n" +
+            "<table style=\"width:100%\"><tr><td>\n" +
 	    "<a name=\""+ aName +"\" title=\""+ rt +
 	    "\" onclick=\""  + js + "\">\n" +
-	    (e.recent? "* " : "") + 
 	    e.i + ". " + e.titline + "</a></td></tr>\n" +
 	    "<tr><td colspan=2>" +
-	    abbreviateAuthline(e.authline)+ " &mdash; "+abbreviateSubj(e.subj)+ 
+	    abbreviateAuthline(e.authline)+ " &mdash; "+abbreviateSubj(e.subj)+
+	    "<tr><td>" + judgmentBarHTML_sb(e) +
+	    "</td></tr>" +
 	    "</td></tr>\n" +
             "</table>\n";
 	    //researcherSpan(rt, sd.researcherSB)+  	    "<br>\n" +
@@ -120,10 +121,10 @@ public class SessionBased  extends ResultsBase {
   
 
     /** Creates an HTML element that shows as a rectangle of specified length */
-    static String htmlRectangle(double score) {
+    static String htmlRectangle(double score, double largest) {
 	final int h = 8;
 	final int M = 40;
-	int w = (int)(M *  score);
+	int w = (int)((M *  score) / largest);
 	if (w < 0) w = 0;
 	if (w > M) w = M;
 	

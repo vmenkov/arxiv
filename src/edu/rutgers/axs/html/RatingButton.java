@@ -280,7 +280,7 @@ public class RatingButton {
 
 	for(int j=0; j<buttons.length; j++) {
 	    RatingButton b = buttons[j];
-	    if (!b.isAllowed(program,flags)) continue;
+	    if (!b.isAllowed(program,flags)) continue; //As of Version 481 this line is causing problems for Session Based browsing. Doesn't insert the DONT SHOW AGAIN button correctly. 
 
 	    boolean checked= e.buttonShouldBeChecked(b.op);
 	    if (b.inGroup) {
@@ -292,6 +292,7 @@ public class RatingButton {
 	    String afterJS = b.inGroup? "ratingEntered("+e.i+ ", '" +sn +"');":
 		"flipCheckedOn('#"+sn+"');";
 	    if (b.willRemove) afterJS += e.hideJS();
+	    if (program == User.Program.SB_ANON) afterJS += "$('#chart"+ e.resultsDivId() +  "').hide();";
 
 	    afterJS += " eval(data);";
 

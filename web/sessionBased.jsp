@@ -24,6 +24,11 @@
      styles_sb.css instead -->
 <link rel="stylesheet" type="text/css" href="_technical/styles/styles_sb.css"/>
 
+<!-- Scripts needed for RatingButtons to work -->
+<script type="text/javascript" src="_technical/scripts/jquery.js"></script>
+<script type="text/javascript" src="scripts/buttons_control.js"></script>
+<!-- End Scripts -->
+
 <!-- results.css does not seem to matter -->
 <!-- link rel="stylesheet" type="text/css" href="styles/results.css" / -->
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
@@ -40,10 +45,18 @@
 <p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles.
 </p>
 
+<% double largest = 0; %>
 <%
    for(ArticleEntry e: sr.entries) {
 %>
-<%= main.resultsDivHTMLLite(e) %>	
+<%   if(e.score > largest) { largest = e.score; }   %>	
+ <%  }  %>
+
+
+<%
+   for(ArticleEntry e: sr.entries) {
+%>
+<%= main.resultsDivHTMLLite(e, largest) %>	
  <%  }  %>
 
 <hr>
