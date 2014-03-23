@@ -52,30 +52,28 @@ public class JudgmentServlet extends BaseArxivServlet {
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
 
-	    if (user!=null) {
-		em = sd.getEM();
-		// Begin a new local transaction so that we can persist a new entity
-		
-		User u = User.findByName(em, user);
-		
-		if (op!=Action.Op.NONE) {
-		    String id = request.getParameter(ID);
-		    if (id==null) throw new WebException("No aticle id supplied");
-		    em.getTransaction().begin();
-		    Action a = u.addAction(em, sd, id, op, asrc);
-		    //em.persist(u);	       
-		    em.getTransaction().commit(); 
-		}
+	    em = sd.getEM();
 
-		js= responseJS(em, u, op, asrc.presentedListId);
-
-		em.close();
+	    User u= (user!=null) ? User.findByName(em, user) : null;
+		
+	    if (op!=Action.Op.NONE) {
+		String id = request.getParameter(ID);
+		if (id==null) throw new WebException("No aticle id supplied");
+		
+		// Begin a new local transaction so that we can persist a new entity	
+		em.getTransaction().begin();
+		Action a= User.addNewAction(u, em, sd, id, op, asrc);
+		//em.persist(u);	       
+		em.getTransaction().commit(); 
 	    }
+
+	    js= (u!=null)? responseJS(em, u, op, asrc.presentedListId) : "";
+
+	    em.close();
 
 	    response.setContentType("text/plain");
 	    OutputStream aout = response.getOutputStream();
 	    PrintWriter w = new PrintWriter(aout);
-
 
 	    w.println(js);
 	    w.close();

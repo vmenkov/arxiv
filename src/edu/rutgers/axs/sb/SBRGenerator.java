@@ -89,8 +89,10 @@ public class SBRGenerator {
 
     private int requestedActionCount=0, lastThreadRequestedActionCount=0;
 
-    /** Pre-computed suggestion lists based on individual articles. Keys are
-	ArXiv article IDs.
+    /** Pre-computed suggestion lists based on individual articles. In
+	the hashmap, the keys are ArXiv article IDs; the values are
+	arrays of ScoreDoc objects of the kind that a Lucene search
+	may return.
      */
     HashMap<String,ScoreDoc[]> articleBasedSD= new HashMap<String,ScoreDoc[]>();
 
