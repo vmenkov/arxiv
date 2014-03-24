@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>Tomcat7 installation notes</title>
+</head>
+<body>
+<h1>Tomcat7 installation notes</h1>
+
+<p>Migrating from Tomcat6 to Tomcat7 on our Cornell host.
+
+<p>
+Downloaded a recent binary from http://tomcat.apache.org/download-70.cgi
+
+<pre>
+curl http://www.poolsaboveground.com/apache/tomcat/tomcat-7/v7.0.52/bin/apache-tomcat-7.0.52.zip > tmp.zip
+
+cd /usr/share unzup tmp.zip
+
+sudo ln -s apache-tomcat-7.0.52 tomcat7
+cd tomcat7/bin
+./catalina.sh start
+</pre>
+
+<p>Running tomcat7 as service (as per the advice at http://www.davidghedini.com/pg/entry/install_tomcat_7_on_centos ):
+
+<p>Create  /etc/init.d/tomcat7
+
+<pre>
+chkconfig --list tomcat6
+chkconfig tomcat6 off
+chkconfig --list tomcat6
+chkconfig tomcat7 on
+</pre>
+
+<h3>Not using yum now</h3>
+<p>
+This won't do, as yum has no access to the right repository
+<pre>
+sudo yum install tomcat7 tomcat7-webapps tomcat7-admin-webapps
+sudo  chkconfig tomcat6 off  #-- make the start automatic
+sudo  chkconfig tomcat7 on  #-- make the start automatic
+sudo service tomcat7 start   #-- start tomcat
+</pre>
+
+</pre> 
+</body>
+</html>

@@ -64,6 +64,13 @@ public class SBRGenerator {
     public SearchResults getSR() {
 	return sbrReady==null? null : sbrReady.sr;       
     }
+
+    /** Does this generator has a running thread (which is going to
+	generate a new list) in progress? */
+    public boolean hasRunning() {
+	return sbrRunning != null;
+    }
+
     /** Retrieves the PresentedList id associated with  the most recently
 	generated session-based recommendation list.
      */
@@ -102,7 +109,7 @@ public class SBRGenerator {
 
     public synchronized void requestRun(int actionCount) {
 	Logging.info("SBRG: requested computations for actionCnt="+actionCount);
-	if (sbrReady != null && sbrReady.actionCount >= actionCount) {
+	if (sbrReady != null && sbrReady.getActionCount() >= actionCount) {
 	    Logging.info("SBRG: ignoring redundant request with actionCount=" + actionCount);
 	    //	} else if (sbrRunning != null && sbrRunning.getState()==Thread.State.TERMINATED) {
 	    
@@ -122,7 +129,7 @@ public class SBRGenerator {
 	computations (right before exiting from its run() method), and
 	the results it has produced can be made available for display.
 	If there has been a non-duplicate request to re-compute the
-	list, start running a thread for it.
+	list, we will now start running a thread for it.
      */
     synchronized void completeRun() {
 	if (sbrRunning.sr!=null) {

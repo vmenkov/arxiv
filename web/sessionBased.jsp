@@ -18,6 +18,12 @@
 
 <head>
 <title>My.ArXiv quick recommendations</title>
+<%   if (main.wantReload) {      %>
+<!-- reload the page after a few seconds, hoping that the list is generated -->
+<meta http-equiv="refresh" content="5">
+<%   }  %>
+
+
 <!-- script type="text/javascript">
 </script -->
 <!-- styles_all.css controls appearance ; we use a somewhat abbreviated

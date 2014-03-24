@@ -28,7 +28,10 @@
  <property name="lib" location="../lib"/>
  <!-- Local version of standard tomcat jar files. They don't need
       to be copied to webapps/arxiv/WEB-INF, as Tomcat already will
-      have access to them in runtime -->
+      have access to them in runtime; however, on cactuar
+      we need these local versions during compile time, 
+      since Tomcat's own directory is not world-readable.
+ -->
  <property name="tomcat.lib.copy" location="../tomcat-lib"/>
  <!-- catalina.jar should be moved to this dir from tomcat-lib on
       cactuar and scils

@@ -31,6 +31,13 @@ public class SessionBased  extends ResultsBase {
      */
     public final boolean popout;
 
+    /** This will be set to true if we want the client to retry
+	loading this page in a few second. One such situation is when
+	there is no rec list available yet, but computing one is in
+	progress.
+     */
+    public boolean wantReload=false;
+
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	popout = getBoolean("popout", true);
@@ -43,8 +50,11 @@ public class SessionBased  extends ResultsBase {
 	    if (sr!=null) {
 		infomsg += "<br>" + sd.sbrg.description() + "\n";
 		plid = sd.sbrg.getPlid();
+	    } else if (sd.sbrg.hasRunning()) {
+		// tell the browser to come ask again in a few sec
+		wantReload=true;
 	    }
-	}
+	} 
 	infomsg += "<br>List presented at " + (new Date()) +  "\n";
 
 	// setting this page's "action source" information, which is used
