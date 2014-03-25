@@ -55,7 +55,7 @@ public class RatingButton {
 	(new RatingButton( Action.Op.COPY_TO_MY_FOLDER,
 			  "Copy to my folder",
 			  "Copy this document to your personal folder.",
-			   "folder_page.png",  false, true)).
+			   "folder_page.png",  false, false)).
 	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)"),	
 
 	(new RatingButton(  Action.Op.REMOVE_FROM_MY_FOLDER,
