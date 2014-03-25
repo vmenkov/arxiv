@@ -19,6 +19,15 @@ import edu.rutgers.axs.sql.Logging;
      the OAI interface, and saving them as a CSV file, for David Blei and
      Laurent (2013-12-15). This is based on ArxivImporter, but is streamlined
      into a separate, much simpler application.
+
+     <p>For details, see the email threads:
+     <ul>
+     <li>
+     "accessing the data", starting 2013-11-19
+     <li>
+     "adding meta-data to abstracts.dat",  starting 2013-12-12
+     </ul>
+
  */
 public class ArxivToCsv {
 

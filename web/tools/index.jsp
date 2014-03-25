@@ -63,6 +63,8 @@
 
 <li><a href="3pr-representation.html">Document representation for 3PR</a>
 
+<li><a href="lucene-access.html">Extracting data from My.ArXiv's Lucene index</a>
+
 <!--
 
 <li><A href="manual.html">User's Guide</a> - for interviewers and data researchers

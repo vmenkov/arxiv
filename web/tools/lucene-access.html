@@ -1,0 +1,192 @@
+<html>
+<head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<title>Getting data from our Lucene index</title>
+</head>
+<body>
+
+<h1>Getting data from our Lucene index</h1>
+
+<p align=center><em>Updated: 2014-03-25</em></p>
+
+<p>The Lucene data store at our server at Cornell
+(en-myarxiv02.orie.cornell.edu) not only serves as the repository of
+article data for My.ArXiv, but can be used as a source of data for
+our researchers.  
+
+<h2>How the data are stored</h2>
+
+<p>My.ArXiv's Lucene data store is arranged in a way similar to how a
+similar data store was set up by Thorsten's team for their earlier
+project, <tt>Osmot</tt>. The main difference is that our index is a
+full-text one, meaning that we store not only the metadata but also
+the article bodies. 
+
+<p>The directory for the Lucene data store is in <tt> /data/arxiv/arXiv-index/ </tt> . The list of field names can be found in the file <tt>
+/home/vm293/arxiv/arxiv/src/edu/rutgers/axs/indexer/ArxivFields.java </tt>
+(also 
+<a href="https://forge.cornell.edu/integration/viewcvs/viewcvs.cgi/src/edu/rutgers/axs/indexer/ArxivFields.java?root=arxiv&rev=183&system=exsy1001&view=log">available in Source Forge</a>). 
+
+<h2>pylucene</h2>
+
+<p>As per Dr. Ginsparg's advice, instead of using the shell scripts
+described in this document, you can also access Lucene structures
+directly, using a set of python tools called
+<a href="http://lucene.apache.org/pylucene/">pylucene</a> 
+
+<h2>Practicalities</h2>
+
+<p>The shell scripts described here are located in
+/home/vm293/arxiv/arxiv/ . Most of them use the shell variable $home
+to find the My.ArXiv home directory in $home/arxiv. The purpose of
+this arrangement is so that anyone who has set up the My.ArXiv
+development directory in &tilde;/arxiv under his own home
+directory. Since you probably aren't going to do that, you can do a
+simpler thing: soft-link /home/vm293/arxiv into your home directory, so that 
+ &tilde;/arxiv will resolve to the desired directory:
+<pre>
+   cd &tilde;
+   ln -s /home/vm293/arxiv .
+</pre>
+
+<p>
+Alternatively, you can simply set  the shell variable <tt> $home </tt> to point to my home directory before running a script:
+<tt>
+    set home=/home/vm293
+</tt>
+
+<p>
+The fird option is for you to modify the scripts you want to use,
+replacing <tt> $home </tt> with <tt> /home/vm293 </tt>.
+
+
+<h2>Retrieving document content as a TF-IDF vector</h2>
+
+<p>Some researchers (Xiaoting) have requested a tool for retrieving the content
+of documents in a one-term-per-line format. Tools for doing this are
+outlined in this section.
+
+<p>
+(a) If you know the ArXiv IDs of the documents you are interested in,
+this is how you can get the TD/IDF data for them:
+<pre>
+/home/vm293/arxiv/arxiv/cmd.sh  showcoef2 aid1 [aid2 ....]
+</pre>
+
+<p>
+For example:
+
+<pre>
+/home/vm293/arxiv/arxiv/cmd.sh  showcoef2 1208.3087 1303.3693 1304.0479 > tf-idf.csv
+</pre>
+
+<p>
+If the list of documents is long, you can put the documents' ArXiv IDs
+into a text file (one ID per line), e.g.  doc-ids.txt, and then use it
+as follows:
+<pre>
+cat doc-ids.txt   | /home/vm293/arxiv/arxiv/cmd.sh  showcoef2 -   > tf-idf.csv
+</pre>
+
+<p>
+The output file, tf-idf.csv, will be a CSV file in the following format:
+<pre>
+#ArxivID,FieldName,Term,DF,TF
+"1208.3087","category","q-fin.ST",1,1195
+"1208.3087","title","durations",1,27
+... ... ....
+</pre>
+
+<p>
+The meaning of the fields is as follows:
+<ul>
+<li>Column 1: ArXiv ID of the document
+
+<li>Column 2: field names. The fields whose (indexed) content is saved
+into the file are "category","title","authors","abstract", and
+"article".
+
+<li>Column 3: the term. This is the actual word occuring in the document
+(no stemming). Since the 5 fields are indexed separately, the same
+word occurring in different fields is treated as different terms;
+thus, we compute TF and IDF separately for the terms
+("title","forecasting"), ("abstract","forecasting"),
+("article","forecasting"), etc.
+
+<li>Column 4: the term frequency for the specified term (i.e., the
+(field,word) pair) in the specified document.
+
+<li>Column 5: the document frequency of the specified term (i.e., the
+(field,word) pair) in the collection.
+
+</ul><p>
+For example, the output will have the following lines
+<pre>
+"1208.3087","title","durations",1,27
+"1208.3087","abstract","durations",2,655
+"1208.3087","article","durations",116,8553
+</pre>
+
+<p>
+They mean that the word "durations" occurs 1 time in
+the <tt>title</tt> field of article "1208.3087", and that this word
+occurs in the <tt>title</tt> fields of the total of 27 documents in
+the collection.
+
+<p>
+(b) If you also need to get the list of all documents in the Lucene
+datastore satisfying certain criteria, there is a tool for it as well.
+In our web application, there is a fairly powerful search feature; to
+use it, you simply enter a query into the search box on top of the
+main My.ArXiv page, http://en-myarxiv02.orie.cornell.edu/arxiv/ .
+Click on the "search help" link next to the search box for help on
+various ways you can search.
+
+<p>
+Of course, if you want to feed a list of ArXiv IDs to the command line
+tool such as cmd.sh, you probably want to have a command-line tool to
+obtain the list of ID as well. Such a tool is available too! For
+example, you can run the following command to obtain the list of all
+articles in the 'cs.*' tree that have been submitted in the last 365
+days:
+<pre>
+echo 'cs.*' | /home/vm293/arxiv/arxiv/searchStdin.sh -Dcat=true -Ddays=365
+-Dmaxlen=1000000 -Dout=tmp.csv
+</pre>
+
+<p>
+In the above example, the list of matching ArXiv IDs will be written
+to the file specified in the "-Dout" option, i.e. <tt> tmp.csv </tt>.
+Later, you can feed the article list to cmd.sh:
+<pre>
+/home/vm293/arxiv/arxiv/cmd.sh  showcoef2 - < tmp.csv > tf-idf.csv
+</pre>
+
+<p>
+(In practice, of course, the resulting file may be too large to handle
+in a practical manner).
+
+<p>
+This is how you can test it on a smaller number of documents (first 10):
+<pre>
+ head  tmp.csv  | ~/arxiv/arxiv/cmd.sh showcoef2 - > tf-idf.csv
+</pre>
+
+<hr>
+<a href="../">[Back to the main Research Tools page]</a>
+
+<h2>Importing data directly from export.arxiv.org</h2>
+
+<p>Certain data fields stored in arxiv.org are not imported into
+my.arxiv.org. We have a customized tool to get data from
+export.arxiv.org and into csv.files. For details, see the script
+<tt>
+import-csv.sh 
+</tt> , and comments in
+the class <tt>edu.rutgers.axs.indexer.ArxivToCsv</tt>
+
+<p>The tools were developed for David Blei's team in December 2013.
+For the background, see the email thread with the subject <tt>adding meta-data to abstracts.dat</tt>, starting 2013-12-05.
+
+</body>
+</html>
