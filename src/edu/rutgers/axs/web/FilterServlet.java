@@ -60,6 +60,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 ) {
 	if (robotRequestRejected(request,response)) return;
 	reinit(request);
+	filterServletRequestCnt++;
 
 	/** For handling action source, as applicable. The default source
 	    for FilterServlet is FILTER, but it is overridden via the HTTP

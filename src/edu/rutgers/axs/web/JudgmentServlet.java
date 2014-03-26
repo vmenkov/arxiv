@@ -38,6 +38,7 @@ public class JudgmentServlet extends BaseArxivServlet {
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
 	reinit(request);
+	judgmentServletRequestCnt++;
 
 	Action.Op op = (Action.Op)Tools.getEnum(request, Action.Op.class,
 					 ACTION, Action.Op.NONE);	 

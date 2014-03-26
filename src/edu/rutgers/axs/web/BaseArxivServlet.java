@@ -12,6 +12,7 @@ import javax.servlet.http.*;
 
 import javax.persistence.*;
 
+import edu.rutgers.axs.Version;
 import edu.rutgers.axs.sql.*;
 
 
@@ -30,6 +31,7 @@ public class BaseArxivServlet extends HttpServlet {
     static private final String lock="LOCK";
     static Date startTime = null;
     static long acceptedRequestCnt=0, rejectedRobotRequestCnt=0;
+    static long filterServletRequestCnt=0, judgmentServletRequestCnt=0;
 
 
 
@@ -85,10 +87,15 @@ public class BaseArxivServlet extends HttpServlet {
 	out.println("getServletPath()=" + request.getServletPath()  );
 
 	out.println("");
-	out.println("My.ArXiv server up and running since " + startTime);
+	out.println("My.ArXiv server " + Version.getInfo() + " up and running since " + startTime);
 	out.println("Operation statistics since the restart time:");
-	out.println("Accepted requests         : " + acceptedRequestCnt);
+	out.println("Accepted requests         : " + acceptedRequestCnt + 
+		    " (including: FilterServlet: " +filterServletRequestCnt +
+		    ", JudgmentServlet: " +judgmentServletRequestCnt +")");
 	out.println("Rejected requests (robots): " + rejectedRobotRequestCnt);
+
+	out.println("");
+	out.println("Note: FilterServlet requests are page views; JudgmentServlet requests are recorded judgments");
 	out.flush();
 	ostream.flush();
 	ostream.close();
