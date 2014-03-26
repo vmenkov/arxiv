@@ -172,8 +172,26 @@ This is how you can test it on a smaller number of documents (first 10):
  head  tmp.csv  | ~/arxiv/arxiv/cmd.sh showcoef2 - > tf-idf.csv
 </pre>
 
-<hr>
-<a href="../">[Back to the main Research Tools page]</a>
+<h2>Exporting article abstracts</h2>
+
+<p>
+This feature was requested by David Blei in October 2013.
+
+<p>One request was to produce a CSV file in the following format:
+<pre>
+ <arxiv id>, <the text of the abstract in quotes>
+</pre>
+
+<p>
+This is how it was done to list <strong>all</strong> articles stored in the Lucene data store at the time:
+<pre>
+./cmd.sh list &gt; /data/arxiv/blei/aid-list.dat
+cat /data/arxiv/blei/aid-list.dat | ./cmd.sh showabstract &gt; /data/arxiv/blei/abstracts.dat &amp;
+</pre>
+
+<p>To only export the abstracts for some articles, instead of <tt>./cmd.sh list</tt> you can use <tt>searchStdin.sh</tt> with an appropriate query, as described in the previous section.
+
+<p>For an additional discussion, see the email thread with the subject <tt>"arxiv user data"</tt>, started 2013-10-11.
 
 <h2>Importing data directly from export.arxiv.org</h2>
 
@@ -187,6 +205,10 @@ the class <tt>edu.rutgers.axs.indexer.ArxivToCsv</tt>
 
 <p>The tools were developed for David Blei's team in December 2013.
 For the background, see the email thread with the subject <tt>adding meta-data to abstracts.dat</tt>, starting 2013-12-05.
+
+<hr>
+<a href="../">[Back to the main Research Tools page]</a>
+
 
 </body>
 </html>

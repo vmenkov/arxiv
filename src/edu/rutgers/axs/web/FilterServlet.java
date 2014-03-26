@@ -58,6 +58,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
+	if (robotRequestRejected(request,response)) return;
 	reinit(request);
 
 	/** For handling action source, as applicable. The default source

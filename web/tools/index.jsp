@@ -39,13 +39,14 @@
 
 <h2>Data Research Center</h2>
 <ul>
-<!--
-<li><A href="tools/listRespondentsCsv.jsp">List all respondents</a> as a CSV file
--->
+
+<li><A href="../BaseArxivServlet">Current server statistics</a>
+
 <li><A href="queryForm.jsp">Send a free-form SQL or JPQL query</a>
-<!--
-<li><A href="tools/responseSummaryQueryForm.jsp">SQL query + one-line summary of responses</a>
--->
+
+<li><A href="manual.html">JPQL and SQL query user guide</a>: explains how to use JPQL and SQL query to get the data you need. Lots of sample queries.
+
+<li><a href="lucene-access.html">Extracting data from My.ArXiv's Lucene index</a>
 </ul>
 
 
@@ -63,11 +64,9 @@
 
 <li><a href="3pr-representation.html">Document representation for 3PR</a>
 
-<li><a href="lucene-access.html">Extracting data from My.ArXiv's Lucene index</a>
-
 <!--
 
-<li><A href="manual.html">User's Guide</a> - for interviewers and data researchers
+
 
 -->
 
