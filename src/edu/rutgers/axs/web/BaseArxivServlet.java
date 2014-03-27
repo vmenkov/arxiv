@@ -32,7 +32,7 @@ public class BaseArxivServlet extends HttpServlet {
     static Date startTime = null;
     static long acceptedRequestCnt=0, rejectedRobotRequestCnt=0;
     static long filterServletRequestCnt=0, judgmentServletRequestCnt=0;
-
+    static long rejectedOverloadRequestCnt=0;
 
 
     /** This would be a good place to do <pre>
@@ -87,12 +87,20 @@ public class BaseArxivServlet extends HttpServlet {
 	out.println("getServletPath()=" + request.getServletPath()  );
 
 	out.println("");
-	out.println("My.ArXiv server " + Version.getInfo() + " up and running since " + startTime);
+	out.println("My.ArXiv server ver. " + Version.getInfo() + " up and running since " + startTime);
 	out.println("Operation statistics since the restart time:");
 	out.println("Accepted requests         : " + acceptedRequestCnt + 
 		    " (including: FilterServlet: " +filterServletRequestCnt +
 		    ", JudgmentServlet: " +judgmentServletRequestCnt +")");
-	out.println("Rejected requests (robots): " + rejectedRobotRequestCnt);
+
+	out.println("Rejected requests (robots): " +rejectedRobotRequestCnt);
+	out.println("Rejected reqs (load cntrl): " +rejectedOverloadRequestCnt);
+
+	out.println("");
+	int n1=FilterServlet.rc.recentCount(60);
+	int n10=FilterServlet.rc.recentCount(10*60);
+
+	out.println("Recent FilterServlet requests: " +n1 + " in 1 min, " + n10 + " in 10 min");
 
 	out.println("");
 	out.println("Note: FilterServlet requests are page views; JudgmentServlet requests are recorded judgments");

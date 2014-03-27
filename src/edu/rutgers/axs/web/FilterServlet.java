@@ -55,10 +55,43 @@ public class FilterServlet extends  BaseArxivServlet  {
 	*/
     }
 
+    static RunningCount rc = new RunningCount(10*60, 5);
+
+    /** Adjusts the request counter and denies some FilterServer
+	requests to prevent denial-of-service attacks against
+	arxiv.org.
+
+	<p>
+	Simeon Warner, 2014-02-26: "no more than 120 requests per
+	minute, and no more than 300 requests in each 10 minute
+	interval" would actually be a reasonable starting point.
+    */
+    public boolean overloadRequestRejected(HttpServletRequest request, HttpServletResponse response) {
+	boolean overload = false;
+	int n1=0, n10=0;
+	synchronized(rc) {
+	    n1=rc.recentCount(60);
+	    n10=rc.recentCount(10*60);
+	    //	    overload =  (n10>300) || (n1>120);
+	    overload =  (n10>=300) || (n1>=120);
+	    if (!overload) {
+		rc.inc();
+		return false;
+	    }
+	}
+
+	rejectedOverloadRequestCnt++;
+	String msg = "At the moment, My.ArXiv server load is a bit too high ("+n1+", "+n10+"); please retry a few minutes later";
+	try {
+	    response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg);
+	} catch (java.io.IOException ex) {}
+	return true;    
+   }
 
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
 	if (robotRequestRejected(request,response)) return;
+	if (overloadRequestRejected(request,response)) return;
 	reinit(request);
 	filterServletRequestCnt++;
 
