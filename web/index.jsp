@@ -43,7 +43,7 @@ and other "cleverness".  -->
 <script type="text/javascript" src="scripts/blur.js"></script>
 <script type="text/javascript" src="scripts/buttons_control.js"></script>
 
-<!-- Code for Moveable Session Buddy -->
+<!-- Code for Moveable Session Buddy
 <% 	    if (main.needSBNow()) { %>
 
 <script src="scripts/jquery-1.9.1.js"></script>
@@ -87,7 +87,7 @@ document.getElementById("iframe6").style.zIndex="99";
 
 <% } %>	
 
-<!-- End of Session Buddy Code -->
+End of Session Buddy Code -->
 
 
 

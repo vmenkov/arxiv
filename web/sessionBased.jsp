@@ -48,7 +48,7 @@
 <%   } else {      %>
 <p>
 
-<p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles.
+<p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles. If you enjoy Session-Based Recommendations, please <a href="participation.jsp">sign-up</a> to preserve your suggestions and gain additional options!.
 </p>
 
 <% double largest = 0; %>
@@ -58,6 +58,21 @@
 <%   if(e.score > largest) { largest = e.score; }   %>	
  <%  }  %>
 
+<table><tr><td>
+<div class="result" style="width:85px;"> <div class="document"><table style="width:100%;text-align:center;"><tr><td>Relevance</td></tr>
+</table>
+</div>
+</div> 
+<td style="width:100%"><div class="result" id="result">
+<div class="document">
+<table style="width:100%;text-align:center;"><tr><td>
+Article Suggestions</td></tr>
+</table>
+</div>
+</div>
+</td>
+</tr>
+</table>
 
 <%
    for(ArticleEntry e: sr.entries) {

@@ -240,6 +240,9 @@ public class RatingButton {
 	if (program==User.Program.EE4 && (flags & NEED_RM_FOLDER)!=0) {
 	    return op==Action.Op.REMOVE_FROM_MY_FOLDER;
 	}
+	if(program==User.Program.SB_ANON) {
+	    return true;
+	}
 	if ((flags & NEED_FOLDER)==0 && op.isToFolder()||
 	    (flags & NEED_RM_FOLDER)==0 && op==Action.Op.REMOVE_FROM_MY_FOLDER||
 	    (flags & NEED_HIDE)==0  && op==Action.Op.DONT_SHOW_AGAIN)
@@ -280,7 +283,7 @@ public class RatingButton {
 
 	for(int j=0; j<buttons.length; j++) {
 	    RatingButton b = buttons[j];
-	    if (!b.isAllowed(program,flags)) continue; //As of Version 481 this line is causing problems for Session Based browsing. Doesn't insert the DONT SHOW AGAIN button correctly. 
+	    //if (!b.isAllowed(program,flags)) continue; //As of Version 481 this line is causing problems for Session Based browsing. Doesn't insert the DONT SHOW AGAIN button correctly. 
 
 	    boolean checked= e.buttonShouldBeChecked(b.op);
 	    if (b.inGroup) {
@@ -292,7 +295,7 @@ public class RatingButton {
 	    String afterJS = b.inGroup? "ratingEntered("+e.i+ ", '" +sn +"');":
 		"flipCheckedOn('#"+sn+"');";
 	    if (b.willRemove) afterJS += e.hideJS();
-	    if (program == User.Program.SB_ANON) afterJS += "$('#chart"+ e.resultsDivId() +  "').hide();";
+	    if (program == User.Program.SB_ANON) afterJS += "$('#table"+ e.resultsDivId() +  "').hide();";
 
 	    afterJS += " eval(data);";
 

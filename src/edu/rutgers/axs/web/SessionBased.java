@@ -90,8 +90,9 @@ public class SessionBased  extends ResultsBase {
 	    "javascript:window.opener.location.href='" +urlAbstract(e.id)+ "';":
 	    "javascript:window.parent.location.href='" +urlAbstract(e.id)+ "';";
 
-	String s = 
-	    "<table><tr><td>\n" +  
+	String s =  
+
+	    "<table id=\"table" + e.resultsDivId() + "\"><tr><td>\n" +  
 	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\">" +
 	    htmlRectangle(e.score, largest) + "</div>\n</td>\n" +
             "<td style=\"width:100%\">" +
@@ -133,19 +134,18 @@ public class SessionBased  extends ResultsBase {
     /** Creates an HTML element that shows as a rectangle of specified length */
     static String htmlRectangle(double score, double largest) {
 	final int h = 8;
-	final int M = 40;
+	final int M = 67;
 	int w = (int)((M *  score) / largest);
 	if (w < 0) w = 0;
 	if (w > M) w = M;
 	
 	int w2 = M -w;
 	return
-	    "<table><tr>" + 
+	     
 	    // empty box (for an offset)
-	    "<td><div style=\"width:"+w2 +"px;height:"+h+"px;margin-top:15px;margin-left:15px;\"></div></td>" +
+	    "<div style=\"width:"+w2 +"px;height:"+h+"px;margin-top:2px;margin-right:3px;\"></div>" +
 	    // solid box
-	    "<td><div style=\"width:"+w+"px;height:"+h+"px;border:1px solid #36d0c3; background-color:#36d0c3;\"></div></td>" +
-	    "</tr></table>";
+	    "<div style=\"width:"+w+"px;height:"+h+"px;border:1px solid #FF0000; background-color:#FF0000;margin-left:" + w2 + "px;\"></div>";
 
     }
 
