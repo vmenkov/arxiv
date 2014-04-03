@@ -466,8 +466,8 @@ class SBRGThread extends Thread {
 	// Bonus old documents: they are added if too few of them have been
 	// preserved
 	final int minOldKept=2;
-	if (na<minOldKept) {
-	    ArticleEntry q =a.elementAt(na++);
+	if (na<minOldKept && na<a.size()) {
+	    ArticleEntry q =a.elementAt(na++); 
 	    q.recent=false;
 	    v.add(q);
 	}

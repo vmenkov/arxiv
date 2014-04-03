@@ -48,16 +48,15 @@
 <%   } else {      %>
 <p>
 
-<p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles. If you enjoy Session-Based Recommendations, please <a href="participation.jsp">sign-up</a> to preserve your suggestions and gain additional options!.
+<p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles. If you enjoy Session-Based Recommendations, please 
+<a name="register" title="Sign up with My.ArXiv!"
+onclick="javascript:window.opener.location.href='participation.jsp?code=SET_BASED_o1yaw7gslplj';">sign-up</a> to preserve your suggestions and gain additional options!
 </p>
 
-<% double largest = 0; %>
-<%
+<% double largest = 0; 
    for(ArticleEntry e: sr.entries) {
-%>
-<%   if(e.score > largest) { largest = e.score; }   %>	
- <%  }  %>
-
+      if(e.score > largest) { largest = e.score; }   
+  }  %>
 <table><tr><td>
 <div class="result" style="width:85px;"> <div class="document"><table style="width:100%;text-align:center;"><tr><td>Relevance</td></tr>
 </table>

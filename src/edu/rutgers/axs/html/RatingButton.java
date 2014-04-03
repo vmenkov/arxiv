@@ -37,6 +37,16 @@ public class RatingButton {
     private RatingButton(Action.Op _op, String _text, String _descr, String _imgSrc) {
 	this(_op,_text,  _descr, _imgSrc, true, false);
     }
+
+
+    /** Creates a RatingButton object describing the appearance and behavior of
+	a button in the rating panel.
+
+	@param op What user action gets recorded in the database when
+	the user clicks on this button
+
+	@param  _willRemove  If true, clicking on this button will cause the article entry removed from the display */
+ 
     private RatingButton(Action.Op _op, String _text, String _descr, String _imgSrc,
 			 boolean _inGroup, boolean _willRemove) {
 	op = _op;
@@ -233,13 +243,15 @@ public class RatingButton {
     }
 
     /** Should this button be displayed in this particular case? Some
-	buttons are skipped unless requested by specific flags.
+	buttons are skipped unless requested by specific flags. 
      */
     private boolean isAllowed(User.Program program, int flags) {
-	// Special case: in EE4's "View Folder", we only have 1 button
+	// Special case 1: in EE4's "View Folder", we only have 1 button
 	if (program==User.Program.EE4 && (flags & NEED_RM_FOLDER)!=0) {
 	    return op==Action.Op.REMOVE_FROM_MY_FOLDER;
 	}
+	// Special case 2: the SB button list is short, and nothing
+	// needs to be skipped
 	if(program==User.Program.SB_ANON) {
 	    return true;
 	}
@@ -283,7 +295,8 @@ public class RatingButton {
 
 	for(int j=0; j<buttons.length; j++) {
 	    RatingButton b = buttons[j];
-	    //if (!b.isAllowed(program,flags)) continue; //As of Version 481 this line is causing problems for Session Based browsing. Doesn't insert the DONT SHOW AGAIN button correctly. 
+	    if (!b.isAllowed(program,flags)) continue; 
+	    //As of Version 481 this line is causing problems for Session Based browsing. Doesn't insert the DONT SHOW AGAIN button correctly. 
 
 	    boolean checked= e.buttonShouldBeChecked(b.op);
 	    if (b.inGroup) {
