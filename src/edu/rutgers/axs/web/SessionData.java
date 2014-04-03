@@ -55,6 +55,9 @@ public class SessionData {
     */
     final SBRGenerator sbrg=new SBRGenerator(this);
 
+    /** Used to record the article ID of an article linked from a viewed page, or any other article the SB
+	user does not want to see.
+     */
     void recordLinkedAid(String aid) {
 	sbrg.recordLinkedAid(aid);
     }

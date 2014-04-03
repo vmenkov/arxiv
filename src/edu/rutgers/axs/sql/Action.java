@@ -153,6 +153,16 @@ import  edu.rutgers.axs.web.SessionData;
 	    return (this==COPY_TO_MY_FOLDER) ||
 		(this==MOVE_TO_MY_FOLDER);
 	}
+
+	/** Returns true if this operation, in the SB context,
+	    should cause the article not to be shown again
+	 */
+	public boolean isHideSB() {
+	    return this==INTERESTING_BUT_KNOWN ||
+		this==Action.Op.USELESS;	
+	}
+	
+
     };
 
 

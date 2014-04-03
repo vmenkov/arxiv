@@ -144,8 +144,7 @@ class SBRGThread extends Thread {
 		String aid = art.getAid();
 		
 		Action.Op op=a.getOp();
-		if (op==Action.Op.INTERESTING_BUT_KNOWN ||
-		    op==Action.Op.USELESS) {
+		if (op.isHideSB()) {
 		    if (!prohibitedH.contains(aid)) {
 			prohibitedH.add(aid);
 			prohibitedArticles.add(aid);
@@ -228,8 +227,10 @@ class SBRGThread extends Thread {
 	    his = new ActionHistory(em);
 
 	    HashSet<String> exclusions = parent.linkedAids;
-	    exclusions.addAll(his.viewedArticles);
-	    exclusions.addAll(his.prohibitedArticles);
+	    synchronized (exclusions) {
+		exclusions.addAll(his.viewedArticles);
+		exclusions.addAll(his.prohibitedArticles);
+	    }
 
 	    // abstract match, separately for each article
 	    final int maxlen = 100;

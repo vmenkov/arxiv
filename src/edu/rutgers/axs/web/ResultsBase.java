@@ -166,10 +166,11 @@ public class ResultsBase {
 	    boolean sb = getBoolean("sb", false);
 	    if (sb) {
 		sd.allowedSB = true;
-		sd.researcherSB = true;
 		sd.sbMergeMode = getInt("sbMerge", sd.sbMergeMode);
 		sd.validateSbMergeMode();
+		// the same param initializes both vars now
 		sd.sbDebug = getBoolean("sbDebug", sd.sbDebug);
+		sd.researcherSB = getBoolean("sbDebug",	sd.researcherSB);
 	    }
 
 	}  catch (Exception _e) {

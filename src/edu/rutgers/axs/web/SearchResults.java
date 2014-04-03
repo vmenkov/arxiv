@@ -299,6 +299,19 @@ public class  SearchResults {
 	scoreDocs =kept.toArray(new ScoreDoc[0]);
     }
 
+    /** This method, used only with SB, removes some elements from entries[],
+	without renumbering this array and without affecting scoredDocs[].
+     */
+
+    public void excludeSomeSB(HashSet<String> exclusions) {
+	for(int i=0; i<entries.size(); i++) {
+	    if (exclusions.contains(entries.elementAt(i))) {
+		excludedEntries.add(entries.elementAt(i));
+		entries.remove(i);		
+	    }
+	}
+    }
+
     /** Fills the "entries" array with a section
        scoreDocs[startat:startat+M-1] of the full search results array
        "scoreDocs". Sets "pointers" to the prev/next pages. (If before a call

@@ -41,28 +41,39 @@ public class SBRGenerator {
     /** List of all article IDs that have been mentioned anywhere in pages
 	shown to the user during this session. This can be used an 
 	exclusion list for the session-based recommendations.
+
+	<P>This set also inbcludes all other articles that we should not show to the user.
      */
     HashSet<String> linkedAids = new HashSet<String>();
     /** This method can be called to record the fact that a link of a
 	particular article has appeared in some page shown to the user.
      */
     public void recordLinkedAid(String aid) {
-	linkedAids.add(aid);
+	synchronized(	linkedAids) {
+	    linkedAids.add(aid);
+	}
     }
+
    /** This method can be called to record the fact that links to a number
        of articles have appeared in some page shown to the user.
      */
     public void recordLinkedAids(Vector<ArticleEntry> entries) {
-       for(ArticleEntry ae: entries) {
-	   linkedAids.add(ae.id);
-       }
+  	synchronized(	linkedAids) {
+	    for(ArticleEntry ae: entries) {
+		linkedAids.add(ae.id);
+	    }
+	}
     }
 
     /** Retrieves the SearchResults structure encapsulating the most recently
 	generated session-based recommendation list.
     */
     public SearchResults getSR() {
-	return sbrReady==null? null : sbrReady.sr;       
+	if (sbrReady==null) return null;
+	SearchResults sr =  sbrReady.sr;      
+	// double check if there are any new exclusions...
+	sr.excludeSomeSB(linkedAids);
+	return sr;
     }
 
     /** Does this generator has a running thread (which is going to
