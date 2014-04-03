@@ -39,7 +39,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	String hostname =  EmailSug.determineHostname();
 	
-	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu");
+	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu")
+	    && !hostname.endsWith("cactuar.rutgers.edu");
 	ARXIV_BASE = weAreBlacklisted? "http://dev.arxiv.org" : 
 	    "http://export.arxiv.org";
 
