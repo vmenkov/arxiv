@@ -301,15 +301,23 @@ public class  SearchResults {
 
     /** This method, used only with SB, removes some elements from entries[],
 	without renumbering this array and without affecting scoredDocs[].
+	
+	@return The number of newly excluded entries 
      */
 
-    public void excludeSomeSB(HashSet<String> exclusions) {
-	for(int i=0; i<entries.size(); i++) {
-	    if (exclusions.contains(entries.elementAt(i))) {
-		excludedEntries.add(entries.elementAt(i));
+    public int excludeSomeSB(HashSet<String> exclusions) {
+	int cnt=0;
+	for(int i=0; i<entries.size(); ) {
+	    ArticleEntry ae = entries.elementAt(i);
+	    if (exclusions.contains(ae.id)) {
+		excludedEntries.add(ae);
 		entries.remove(i);		
+		cnt++;
+	    } else {
+		i++;
 	    }
 	}
+	return cnt;
     }
 
     /** Fills the "entries" array with a section

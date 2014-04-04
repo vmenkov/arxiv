@@ -60,8 +60,9 @@ public class JudgmentServlet extends BaseArxivServlet {
 	    if (op!=Action.Op.NONE) {
 		String id = request.getParameter(ID);
 		if (id==null) throw new WebException("No aticle id supplied");
-		// Record user's desire not to see it page again. This is only used in SB.
+		// Record the user's desire not to see it page again. This is only used in SB.
 		if (op.isHideSB()) {
+		    Logging.info("Marking page " + id + " as one to be hidden in session " +  sd.getSqlSessionId());
 		    sd.recordLinkedAid(id);
 		}
 		

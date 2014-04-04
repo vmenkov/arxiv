@@ -72,7 +72,8 @@ public class SBRGenerator {
 	if (sbrReady==null) return null;
 	SearchResults sr =  sbrReady.sr;      
 	// double check if there are any new exclusions...
-	sr.excludeSomeSB(linkedAids);
+	int rmCnt = sr.excludeSomeSB(linkedAids);
+	Logging.info("SBRG.getSR(): Removed " + rmCnt + " additional entries from display list");
 	return sr;
     }
 
