@@ -159,6 +159,7 @@ import  edu.rutgers.axs.web.SessionData;
 	 */
 	public boolean isHideSB() {
 	    return this==INTERESTING_BUT_KNOWN ||
+		this == DONT_SHOW_AGAIN ||
 		this==Action.Op.USELESS;	
 	}
 	
