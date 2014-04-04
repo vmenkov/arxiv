@@ -29,7 +29,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     /** May be changed (e.g. to export.arxiv.org) in init(), by means
 	of parameters supplied from web.xml     */
-    private String ARXIV_BASE = "http://arxiv.org";
+    static String ARXIV_BASE = "http://arxiv.org";
     /** This one stays constant.
 	FIXME: maybe we can also make it configurable */
     private final static String ARXIV_BASE_PDF = "http://arxiv.org";
@@ -40,7 +40,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	String hostname =  EmailSug.determineHostname();
 	
 	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu")
-	    && !hostname.endsWith("cactuar.rutgers.edu");
+	    && !hostname.endsWith("cactuar.scilsnet.rutgers.edu");
 	ARXIV_BASE = weAreBlacklisted? "http://dev.arxiv.org" : 
 	    "http://export.arxiv.org";
 
