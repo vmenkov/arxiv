@@ -106,11 +106,7 @@ public class BaseArxivServlet extends HttpServlet {
 	out.println("");
 	out.println("Note: FilterServlet requests are page views; JudgmentServlet requests are recorded judgments");
 
-	if (filterServletRequestCnt > 0) {
-	    // Only print the report if we know it's been initialized
-	    out.println("");
-	    out.println("FilterServlet request involve page retrieval from " + FilterServlet.ARXIV_BASE);
-	}
+	out.println(FilterServlet.report());
 
 	out.flush();
 	ostream.flush();

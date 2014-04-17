@@ -11,6 +11,8 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.persistence.*;
 
+import org.apache.commons.lang.mutable.*;
+
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 
@@ -34,6 +36,39 @@ public class FilterServlet extends  BaseArxivServlet  {
 	FIXME: maybe we can also make it configurable */
     private final static String ARXIV_BASE_PDF = "http://arxiv.org";
 
+    /** Counts 403, 404, etc. errors we have received from arxiv.org */
+    static final TreeMap<Integer,MutableInt> errorCodeCount = new TreeMap<Integer,MutableInt>();
+
+    /** Keeps track of arxiv.org server errors */
+    private static void incErrorCodeCount(Integer code) {
+	synchronized( errorCodeCount) {
+	    MutableInt v = errorCodeCount.get(code);
+	    if (v == null) {
+		errorCodeCount.put(code, new MutableInt(1));
+	    } else {
+		v.add(1);
+	    }
+	}
+    }
+
+    /** A record used for keeping track of an "access denied" report from ArXiv
+     */
+    private static class ArxivRejection {
+	String url;
+	Date time;
+	int code;
+	ArxivRejection(String _url, Date _time, int _code) {
+	    url = _url;
+	    time = _time;
+	    code = _code;
+	}
+	public String toString() {
+	    return "" + code + " " + time + " " + url;
+	}
+    }
+
+    private static Vector<ArxivRejection> rejections=new Vector<ArxivRejection>();
+
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
 
@@ -41,6 +76,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 	
 	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu")
 	    && !hostname.endsWith("cactuar.scilsnet.rutgers.edu");
+
+	weAreBlacklisted = false; // for testing
+
 	ARXIV_BASE = weAreBlacklisted? "http://dev.arxiv.org" : 
 	    "http://export.arxiv.org";
 
@@ -320,7 +358,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	int code = lURLConnection.getResponseCode();
 	String gotResponseMsg = lURLConnection.getResponseMessage();
 
-	Logging.info("code = " + code +", msg=" + gotResponseMsg);
+	Logging.info("code = " + code +", msg=" + gotResponseMsg + "; requested url = " + lURL);
 	LineConverter conv = new LineConverter(request, u, ae, asrc);
 
 	boolean willParse=false, willAddNote=false;
@@ -357,8 +395,15 @@ public class FilterServlet extends  BaseArxivServlet  {
 		// 404; there may be error stream 
 		willParse=true;
 	    } else {
+		// 403 (the dreaded "Access denied" etc.
 		willParse = false;
+
+		if (rejections.size()<100) {
+		    rejections.add(new ArxivRejection(lURLString, new Date(),code));		    
+		}
 	    }
+	    incErrorCodeCount(code);
+	    
 	}
 
 	String foundCookie = lURLConnection.getHeaderField("Set-Cookie");
@@ -863,10 +908,34 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 	    return null;
 	}
-
-
     }
 
 
+    static String report() {
+	if (filterServletRequestCnt == 0) {
+	    return "FilterServlet has not made any page requests to the ArXiv server yet";
+	}
+	String q ="\nFilterServlet requests involve page retrieval from the ArXiv server at " + FilterServlet.ARXIV_BASE + "\n";
 
+	int sum = 0;
+	StringBuffer sb = new 	StringBuffer();
+	for(Integer code:  errorCodeCount.keySet()) {
+	    int cnt = errorCodeCount.get(code).intValue();
+	    sb.append("Error code "+code+ " : " + cnt +"\n");
+	    sum += cnt;
+	}
+	if (rejections.size()>0) {
+	    sb.append("\nArXiv error log:\n");
+	    for(ArxivRejection r: rejections) {
+		sb.append(r + "\n");
+	    }
+	}
+
+	if (sb.length() == 0) {
+	    return q + "No errors have been reported from the ArXiv server\n";
+	} else {
+	    return q + sum + " errors have been reported when accessing the ArXiv server, as follows:\n" + sb;
+	}
+    
+    }
 }
