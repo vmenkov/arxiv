@@ -86,7 +86,7 @@
 		  <icd:YouAre/>
 		</div>		  
 		<!-- div class="button_div" style="position: absolute; right: -8px; top: 0px; width: 65px; height: 15px;">
-			<a href="participation.html" target="_self">More Info</a></div -->
+			<a href="participation.jsp" target="_self">More Info</a></div -->
 
 		<!-- #EndEditable -->
 	</div>

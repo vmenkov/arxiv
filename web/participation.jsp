@@ -108,7 +108,7 @@ We invite you to participate in a research study about how people conduct search
 <p>
 
 <p>
-This experimental interface is supported in part by the National Science Foundation, and hosted at Rutgers University during development and testing. For information about the project visit:
+This experimental interface is supported in part by the National Science Foundation, and hosted at Cornell University during development and testing. For information about the project visit:
  <a href="http://arxiv_xs.rutgers.edu/">http://arxiv_xs.rutgers.edu/</a>
 </p>
 
@@ -117,7 +117,7 @@ Please note that you must be at least 18 years of age to participate.
 Please do not continue if you are not 18 or older.
 </strong></p>	
 
-<h3>Risks and benfits</h3>
+<h3>Risks and benefits</h3>
 <p>
 This research may benefit you directly, if the experimental search is more effective, and it will help to better design search systems for users of databases, and the arXiv in particular. There are no foreseeable risks to participating in this research.
 </p>
@@ -160,7 +160,7 @@ give us if you choose option B. At the end of your search we may ask
 you for some feedback, giving us this feedback is optional.
 
 <p>
-We will track your search  data every time you search in the arXiv with your same username and password, until the end of the study in July 2013.
+We will track your search  data every time you search in the arXiv with your same username and password, until the end of the study in July 2016.
 
 <p>
 If you choose option B above, we will also be able to contact you for an interview.
@@ -191,7 +191,7 @@ may contact the Principal Investigator:</p>
 			<div style="width:180px; margin:10px auto; text-align:justify; background:#eeeeee; padding:10px; border-radius:10px;">
 			<span style="font-weight:bold">Paul Kantor</span><br />
 				Principal Investigator<br />
-				+1.732.932.7500&#215;8216<br />
+				(848) 932-8811<br />
 				<a href="mailto:kantor@scils.rutgers.edu?subject=arXiv Research">paul.kantor@rutgers.edu</a><br />
 				4 Huntington St., Room 310
 				<br />New Brunswick, NJ 08901
@@ -205,12 +205,12 @@ may contact the Principal Investigator:</p>
 				<span style="font-weight:bold">Rutgers University Institutional Review Board for the Protection of Human Subjects</span><br />
 				Office of Research and Sponsored Programs<br />
 				3 Rutgers Plaza, New Brunswick, NJ 08901-8559<br />
-				+1.732.932.0150x2104<br />
+				(848) 932-4058<br />
 				humansubjects@orsp.rutgers.edu
 			</div>
 
 <p><em>
-This informed consent form was approved by the Rutgers University Institutional Review Board for the Protection of Human Subjects on (Date); on 6/14/2011; there is not any expiration on this approval.</em></p>
+This Internet Research Information Sheet was approved by the Rutgers University Institutional Review Board for the Protection of Human Subjects on 6/14/2011; there is not any expiration on this approval.</em></p>
 
 <p>
 By participating in this study you agree to be a study subject. Please

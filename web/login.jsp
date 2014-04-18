@@ -36,7 +36,7 @@ To use personalized browsing on my.arxiv.org, please login with your user name a
 	</tr>
 </table>
 
-<p>Not a subscriber? <a href="<%=main.cp%>/participation.html">Join the project now!</a>
+<p>Not a subscriber? <a href="<%=main.cp%>/participation.jsp">Join the project now!</a>
 </p>
 
 </form>

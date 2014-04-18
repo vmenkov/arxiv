@@ -266,15 +266,15 @@ Thank you for choosing to participate in the arXiv research at the confidential 
 
 <% } else  { %>
 
-<tr><td colspan="2"><h3>Optional follow-up telephone interview</h3>
+<tr><td colspan="2"><h3>Optional follow-up Skype interview</h3>
 
 <p> We are conducting a few follow-up interviews with searchers to get
 more detailed information about how to improve the arXiv system.
 
 <p> If you are willing also to be interviewed, you can give us your
-name, telephone number or email, for a follow-up telephone interview
-some time in the future.  The optional follow-up telephone interview
-is confidential, not anonymous. The telephone interview contains
+name, telephone number or email, for a follow-up interview
+some time in the future.  The optional follow-up interview
+is confidential, not anonymous. The interview contains
 questions that you may find of a personal nature such as demographic
 information.  One potential risk of participating in the follow-up
 study is that confidential information about you may be accidentally
@@ -286,11 +286,11 @@ and the data we collect will be kept to allow for follow-up to
 complete the interview and to mail the payment for completing the
 interview.
 
-<p> However, after we have processed your telephone interview we will
+<p> However, after we have processed your interview, we will
 sever the link between your personal information and the data you gave
-us. We would like to audio tape the telephone interview with you so
+us. We would like to audio tape the interview with you so
 that we can review it, and make notes. As soon as we process your
-telephone interview, we will destroy the audio record itself, keeping
+interview, we will destroy the audio record itself, keeping
 only the anonymous notes, audio taping your interview renders the data
 collection confidential not anonymous.
 
@@ -299,7 +299,7 @@ interview. If you decide to stop partway through an interview you will
 be paid for the fraction of the interview that has been completed.
 
 <p> We hope you can give us about 20 minutes of your time to help our
-study. We may do the telephone interview in one long call, or in two
+study. We may do the interview in one long call, or in two
 shorter ones in the same week if you prefer. There are no foreseeable
 risks to participating in this research.
 
@@ -311,7 +311,7 @@ interview at any time without penalty.
 with searches in the arXiv.
 
 <p> By giving you my contact information I agree to participate in the
-telephone interview portion of the study.
+interview portion of the study.
 
 </td></tr>
 		<tr>
@@ -351,7 +351,7 @@ telephone interview portion of the study.
 
 
 <tr><td colspan=2 align=left><strong> By clicking on the box below you approve
-the use of audio recording for the telephone interview</strong>
+the use of audio recording for the interview</strong>
 </td></tr>
 
 	<tr>

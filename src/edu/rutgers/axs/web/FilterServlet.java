@@ -80,7 +80,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 	weAreBlacklisted = false; // for testing
 
 	ARXIV_BASE = weAreBlacklisted? "http://dev.arxiv.org" : 
-	    "http://export.arxiv.org";
+	    //	    "http://arxiv.org";
+		    "http://export.arxiv.org";
 
 	/*
 	final String name = "ArxivBaseURL";
