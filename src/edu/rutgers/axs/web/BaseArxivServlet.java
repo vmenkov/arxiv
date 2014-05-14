@@ -15,6 +15,7 @@ import javax.persistence.*;
 import edu.rutgers.axs.Version;
 import edu.rutgers.axs.sql.*;
 
+//<link rel="icon" type="image/x-icon" href="favicon.ico" />
 
  /** The  base class for all our servlets 
  */

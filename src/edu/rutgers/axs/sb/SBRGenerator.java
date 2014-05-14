@@ -17,11 +17,12 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.web.*;
 
-/** The sesion-based recommendation generator. We have an SBRGenerator instance
-    in every web.SessionData object. 
+/** The "manager" part of the sesion-based recommendation
+    generator. We have an SBRGenerator instance in every
+    web.SessionData object.
 
     <p> Recommendation list computation for this class is carried out
-    asynchronously, in the run() method of a SBRGThread object (a
+    asynchronously, in the run() method of a SBRGThread object (a Java
     thread). At most one SBRGThread may have its thread running at any
     time on behalf of one SBRGenerator object. In this way some level
     of load control is achieved, and unnecessary computations are
@@ -29,10 +30,12 @@ import edu.rutgers.axs.web.*;
  */
 public class SBRGenerator {
 
-    /** Already compiled recommendations */
+    /** Pointer to a thread object that contains the most recently compiled
+	recommendation list ready for display. */
     private SBRGThread sbrReady = null;
 
-    /** Currrently being computed */
+    /** Pointer to a thread running right now; it will compute the
+     * next available list, but it is not ready for display yet. */
     private SBRGThread sbrRunning = null;
     
     /** Used to keep track of the number of SBRG runs we've done */
@@ -104,8 +107,21 @@ public class SBRGenerator {
 	
     }
 
+    /** Link back to the SessionData object with the information about
+	this session. In particular, we make use of the SQL session
+	ID, to retrieve the recorded user activity from the SQL
+	database.
+     */
     final SessionData sd;
 
+    /** The "action count" at a particular moment of time is the
+	number of recorded user actions in the session so far.
+	requestedActionCount is the action count at the time of the
+	last received request to recompute SBRL;
+	lastThreadRequestedActionCount is the value of the action
+	count at the time the most recent request for which 
+	we actually started a computational thread.
+     */
     private int requestedActionCount=0, lastThreadRequestedActionCount=0;
 
     /** Pre-computed suggestion lists based on individual articles. In
@@ -119,6 +135,10 @@ public class SBRGenerator {
 	sd = _sd;
     }
 
+    /** This method is invoked by front-end pages when they believe that 
+	the user has carried out a new action, and the SBRL may need
+	to be recomputed accordingly.
+     */
     public synchronized void requestRun(int actionCount) {
 	Logging.info("SBRG: requested computations for actionCnt="+actionCount);
 	if (sbrReady != null && sbrReady.getActionCount() >= actionCount) {
@@ -137,7 +157,7 @@ public class SBRGenerator {
 	}
     }
 
-    /** The running thread calls this method when it has completed all
+    /** The running SBRG thread calls this method when it has completed all
 	computations (right before exiting from its run() method), and
 	the results it has produced can be made available for display.
 	If there has been a non-duplicate request to re-compute the

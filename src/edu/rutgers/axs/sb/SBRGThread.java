@@ -216,6 +216,21 @@ class SBRGThread extends Thread {
 	    return m;
     }
  
+    /** Computes a suggestion list based on a single article */
+    static private ScoreDoc[] computeArticleBasedList(IndexSearcher searcher, String aid, int maxlen) throws Exception {
+	int docno=0;
+	try {
+	    docno= Common.find(searcher, aid);
+	} catch(IOException ex) {
+	    return null;
+	}
+	Document doc = searcher.doc(docno);
+	String abst = doc.get(ArxivFields.ABSTRACT);
+	abst = abst.replaceAll("\"", " ").replaceAll("\\s+", " ").trim();
+	ScoreDoc[] z = (new LongTextSearchResults(searcher, abst, maxlen)).scoreDocs;
+	return z;
+    }
+
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
 	articles viewed by the user in this session.
@@ -240,20 +255,13 @@ class SBRGThread extends Thread {
 	    for(String aid: his.viewedArticles) {
 		ScoreDoc[] z = parent.articleBasedSD.get(aid);
 		if (z==null) {
-		    int docno=0;
-		    try {
-			docno= Common.find(searcher, aid);
-		    } catch(IOException ex) {
+		    z = computeArticleBasedList(searcher, aid, maxlen);
+		    if (z!=null) parent.articleBasedSD.put(aid,z);
+		    else {
 			// this may happen if the article is too new,
 			// and is not in our Lucene datastore yet
-			Logging.warning("SBRGThread " + getId() + ": skip unavailable page " + aid);
-			continue;
+			Logging.warning("SBRGThread " + getId() + ": skip unavailable page " + aid);	    
 		    }
-		    Document doc = searcher.doc(docno);
-		    String abst = doc.get(ArxivFields.ABSTRACT);
-		    abst = abst.replaceAll("\"", " ").replaceAll("\\s+", " ").trim();
-		    z = (new LongTextSearchResults(searcher, abst, maxlen)).scoreDocs;
-		    parent.articleBasedSD.put(aid,z);
 		}
 		asr[k++] = z;
 	    }
@@ -513,6 +521,35 @@ class SBRGThread extends Thread {
 		his.articleCount + " viewed articles)";
 	}
 	return s;
+    }
+
+    /** This is used for testing, so that we could quickly view the list of 
+	suggestions that would be prepared for a particular article
+     */
+    public static void main(String [] argv) throws Exception {
+	IndexReader reader = Common.newReader();
+	IndexSearcher searcher = new IndexSearcher( reader );
+	final int maxlen = 100;
+	for(String aid: argv) {
+	    System.out.println("Generating suggestion for aid=" + aid);
+	    ScoreDoc[] z = SBRGThread.computeArticleBasedList(searcher, aid, maxlen);
+	    if (z!=null) {
+		//parent.articleBasedSD.put(aid,z);
+		for(int j=0; j<z.length && j<5; j++) {
+		    int docno = z[j].doc;
+		    Document doc = searcher.doc(docno);
+		    String said = doc.get(ArxivFields.PAPER);
+		    System.out.println("doc["+j+"]=" + said + " : " + z[j].score);
+		}
+				    
+
+	    }    else {
+		// this may happen if the article is too new,
+		// and is not in our Lucene datastore yet
+		System.out.println("skip unavailable page " + aid);	    
+	    }
+
+	}
     }
 
 }

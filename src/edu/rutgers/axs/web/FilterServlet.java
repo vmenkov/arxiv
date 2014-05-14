@@ -79,9 +79,14 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	weAreBlacklisted = false; // for testing
 
+	/** Martin H. Lessmeister, 2014-04-17: "Please continue to use
+	    arxiv.org instead of export.arxiv.org in the future, since
+	    future changes to the export service may make it less
+	    browse-friendly."
+	 */
 	ARXIV_BASE = weAreBlacklisted? "http://dev.arxiv.org" : 
-	    //	    "http://arxiv.org";
-		    "http://export.arxiv.org";
+	    	    "http://arxiv.org";
+	//	    "http://export.arxiv.org";
 
 	/*
 	final String name = "ArxivBaseURL";

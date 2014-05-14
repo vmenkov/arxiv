@@ -47,6 +47,9 @@
 <li><A href="manual.html">JPQL and SQL query user guide</a>: explains how to use JPQL and SQL query to get the data you need. Lots of sample queries.
 
 <li><a href="lucene-access.html">Extracting data from My.ArXiv's Lucene index</a>
+
+<li><a href="/coaccess">Coaccess data service</a>: this is the locally deployed web service that makes use of the Coaccess database (Lucene data store) set up by Akilesh and Ziyu (<tt>/data/coaccess/round5/lucene_framework</tt>)
+
 </ul>
 
 
@@ -63,6 +66,16 @@
 <li><A href="svd.html">SVD + k-Means clustering</a>
 
 <li><a href="3pr-representation.html">Document representation for 3PR</a>
+
+<h2>Source code</h2>
+
+<ul>
+
+<li><a href="https://forge.cornell.edu/sf/projects/my_arxiv_org">my.arxiv.org</a> on Cornell's Source Forge
+
+</ul>
+
+
 
 <!--
 

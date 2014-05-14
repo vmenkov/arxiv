@@ -21,6 +21,8 @@ import edu.rutgers.axs.indexer.Common;
 /** This class is responsible for the retrieval, formatting, and
     displaying of a session-based recommendation list. This is a bit
     like a "lite" version of ViewSuggestions.
+
+    <p>An instance of this class is created in sessionBased.jsp
 */
 public class SessionBased  extends ResultsBase {
    /** the actual suggestion list to be displayed is stored here */
