@@ -298,6 +298,11 @@ If you do not agree with the consent form and do not wish to participate in this
 Thank you, Paul B. Kantor (Principal Investigator)
 </p>
 
+<hr>
+<p>This informed consent form was approved by the Rutgers University Institutional Review Board for the Protection of Human Subjects on April 15, 2014. Currently, there is no expiration on the approval of this form.
+</p>
+
+
 <%}%>
 </body>
 </html>

@@ -244,7 +244,7 @@ import  edu.rutgers.axs.web.SessionData;
 	};
 
 
-	boolean isMainPage() {
+	public boolean isMainPage() {
 	    for(Source x: mainPageSources) {
 		if (this==x) return true;
 	    } 

@@ -48,9 +48,14 @@
 <%   } else {      %>
 <p>
 
-<p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles. If you enjoy Session-Based Recommendations, please 
+<p>Based on the articles you have seen so far, we think that you may be interested in some of the following <%= sr.entries.size()%> articles.
+<% if (main.user==null) { %> 
+If you enjoy Session-Based Recommendations, please 
 <a name="register" title="Sign up with My.ArXiv!"
-onclick="javascript:window.opener.location.href='participation.jsp?code=SET_BASED_o1yaw7gslplj';">sign-up</a> to preserve your suggestions and gain additional options!
+onclick="javascript:window.opener.location.href='participation.jsp?code=SET_BASED_o1yaw7gslplj';">sign-up</a> to preserve your suggestions and gain additional options! (Or <a name="register" title="Sign up with My.ArXiv!"
+onclick="javascript:window.opener.location.href='login2.jsp';">log in</a>, if
+you are already registred)
+<% } %>
 </p>
 
 <% double largest = 0; 

@@ -111,9 +111,19 @@ class SBRGThread extends Thread {
     String errmsg = "";
 
     /** Retrieves the list of articles viewed or "rated" by the user
-	in this session so far. (There is only one type of "rating"
-	collected and recorded for anon users: "Don't show again").
+	in this session so far. (Of course, if this is an anonymous
+	session, there is only one type of "ratings" collected and
+	recorded: "Don't show again").
 
+	<P>Among all viewed articles, we identify a subset of
+	"actionable" ones.  This includes those articles that have
+	been viewed in any context other than the "main page" (the
+	main suggestion list) and its derivatives. This restriction is
+	as per the conference call on 2014-05-20; its purpose it to
+	ensure the "orthogonality" of the two rec lists (the main
+	[nightly] rec list and the SBRL).
+
+	<p>
 	FIXME: one can save on this one SQL call by storing the list
 	in the SessionData object; but we already make so many SQL
 	calls anyway...
@@ -127,16 +137,22 @@ class SBRGThread extends Thread {
 	    same page multiple times). */
 	int articleCount=0;
     
-	/** lists of viewed and "prohibited" articles */
-	Vector<String> viewedArticles = new Vector<String>();
+	/** Lists  all viewed articles (both actionable and not) */
+	Vector<String> viewedArticlesAll = new Vector<String>();
+	/** Lists viewed articles that are "actionable" (i.e., based on which we
+	    will compute suggestions) */
+	Vector<String> viewedArticlesActionable = new Vector<String>();
+	/** Lists  "prohibited" articles (don't show) */
 	Vector<String> prohibitedArticles = new Vector<String>();
 
 	ActionHistory(EntityManager em) {
 	    Vector<Action> va = Action.actionsForSession( em, parent.sd.getSqlSessionId());
 	    actionCount = va.size();
 
-	    // lists of viewed and "prohibited" articles
-	    HashSet<String> viewedH = new HashSet<String>();
+	    // lists of viewed articles; a true value is stored
+	    // for "actionable" ones
+	    HashMap<String, Boolean> viewedH = new HashMap<String, Boolean>();
+	    // lists of "prohibited" articles
 	    HashSet<String> prohibitedH = new HashSet<String>();
 	    
 	    for(Action a: va) {
@@ -150,14 +166,20 @@ class SBRGThread extends Thread {
 			prohibitedArticles.add(aid);
 		    }
 		} else {
-		    if (!viewedH.contains(aid)) {
-			viewedArticles.add(aid);
-			viewedH.add(aid);
-		    }
+		    Action.Source src = a.getSrc();
+		    boolean actionable = (src!=null && !src.isMainPage());
+		    Boolean val = viewedH.get(aid);
+		    if (val!=null) actionable = actionable||val.booleanValue();
+		    viewedH.put(aid, new Boolean(actionable));
 		}
 	    }
+
+	    for(String aid:  viewedH.keySet()) {
+		viewedArticlesAll.add(aid);
+		if (viewedH.get(aid).booleanValue()) viewedArticlesActionable.add(aid);
+	    }
 	    
-	    articleCount=viewedArticles.size();
+	    articleCount=viewedArticlesActionable.size();
 	}
     }
 
@@ -243,16 +265,16 @@ class SBRGThread extends Thread {
 
 	    HashSet<String> exclusions = parent.linkedAids;
 	    synchronized (exclusions) {
-		exclusions.addAll(his.viewedArticles);
+		exclusions.addAll(his.viewedArticlesAll);
 		exclusions.addAll(his.prohibitedArticles);
 	    }
 
 	    // abstract match, separately for each article
 	    final int maxlen = 100;
-	    final int maxRecLen = recommendedListLength(his.viewedArticles.size());
-	    ScoreDoc[][] asr  = new ScoreDoc[his.viewedArticles.size()][];
+	    final int maxRecLen = recommendedListLength(his.viewedArticlesActionable.size());
+	    ScoreDoc[][] asr  = new ScoreDoc[his.viewedArticlesActionable.size()][];
 	    int k=0;
-	    for(String aid: his.viewedArticles) {
+	    for(String aid: his.viewedArticlesActionable) {
 		ScoreDoc[] z = parent.articleBasedSD.get(aid);
 		if (z==null) {
 		    z = computeArticleBasedList(searcher, aid, maxlen);
@@ -381,7 +403,7 @@ class SBRGThread extends Thread {
 	    // trivial list: out=in
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 	    int k=0;
-	    for(String aid:  his.viewedArticles) {
+	    for(String aid:  his.viewedArticlesActionable) {
 		ArticleEntry ae = new ArticleEntry(++k, aid);
 		ae.setScore(1.0);
 		entries.add(ae);

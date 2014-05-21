@@ -32,7 +32,10 @@ public class RUTag extends TagSupport {
 			 "</em> (<a href=\""+cp+"/personal/editUserFormSelf.jsp\">My account</a>) (<a href=\""+cp+"/LogoutServlet\">Log out</a>)"
 ) +
 			"</div>");
-	    out.println("<hr><div align=center>Rutgers University <a href=\""+cp+"\">My.arXiv</a>. Application ver. "+Version.getVersion()+", "+Version.date+"</div>");
+	    out.println("<hr><div align=center>Rutgers University <a href=\""+cp+"\">My.arXiv</a>. Application ver. "+
+			Version.getVersion()+", "+Version.date+"." +
+			"<small>Session "+sd.getSqlSessionId()+"</small>"+
+			"</div>");
         } catch (Exception ex) {
             throw new JspException("IO problems");
         }

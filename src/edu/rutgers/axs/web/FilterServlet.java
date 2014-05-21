@@ -77,8 +77,6 @@ public class FilterServlet extends  BaseArxivServlet  {
 	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu")
 	    && !hostname.endsWith("cactuar.scilsnet.rutgers.edu");
 
-	weAreBlacklisted = false; // for testing
-
 	/** Martin H. Lessmeister, 2014-04-17: "Please continue to use
 	    arxiv.org instead of export.arxiv.org in the future, since
 	    future changes to the export service may make it less
@@ -206,10 +204,12 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 		    //em.persist(u);
 		} else { // anon 
-		    Action r = User.addNewAction(null, em, sd, actionable.aid, actionable.op, asrc);
-		    sd.sbCheck(em);
+		    Action r = User.addNewAction(u, em, sd, actionable.aid, actionable.op, asrc);
 		}
 
+		// Now SB is enabled for logged-in users too, not only for anon
+		// users. (2014-05-20)
+		sd.sbCheck(em);
 
 
 		em.getTransaction().commit(); 
@@ -834,7 +834,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    // <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 	    Matcher m = pHref.matcher(s);
 
-	    StringBuffer sb = new StringBuffer();   
+	    StringBuffer b = new StringBuffer();   
 	    while (m.find()) {
 		String tag=m.group(1);
 		String link=m.group(2);
@@ -845,28 +845,28 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    // Paul's request, 2012-04-22
 		    replacement += " target=\"_blank\"";
 		}
-		m.appendReplacement(sb, replacement);
+		m.appendReplacement(b, replacement);
 	    }
-	    m.appendTail(sb);
-	    s = sb.toString();
+	    m.appendTail(b);
+	    s = b.toString();
 	    
 	    // Display an additional DIV right after the opening
 	    // <body ...> element 
 	    if (willAddNote) {
 		m = pBody.matcher(s);
 		if (m.find()) {
-		    sb = new StringBuffer();
-		    s = sb.toString();		    
-		    m.appendReplacement(sb, m.group(0));
+		    b = new StringBuffer();
+		    s = b.toString();		    
+		    m.appendReplacement(b, m.group(0));
 		    String msg = "<div style=\"border:1px;color:#00FF00;position:fixed\">" + 
 			"Please note: You are now browsing arxiv.org via My.arXiv, "+
 			(user==null? "anonymously" : "as user <em>" +  user.getUser_name() + "</em>") +
 			". You can return to the <a href=\""+cp+"\">My.arXiv main page</a>." + 
 			"</div>";
 
-		    sb.append(msg);
-		    m.appendTail(sb);
-		    s = sb.toString();
+		    b.append(msg);
+		    m.appendTail(b);
+		    s = b.toString();
 		}
 	    }
 
@@ -874,7 +874,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    if (sd.needSBNow) {
 		m = pEndHead.matcher(s);
 		if (m.find()) {
-		    sb = new StringBuffer();
+		    b = new StringBuffer();
 		    s = s.substring(0,m.start()) + "\n" +
 			RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
 			"<script type=\"text/javascript\">\n" +
@@ -924,23 +924,23 @@ public class FilterServlet extends  BaseArxivServlet  {
 	String q ="\nFilterServlet requests involve page retrieval from the ArXiv server at " + FilterServlet.ARXIV_BASE + "\n";
 
 	int sum = 0;
-	StringBuffer sb = new 	StringBuffer();
+	StringBuffer b = new 	StringBuffer();
 	for(Integer code:  errorCodeCount.keySet()) {
 	    int cnt = errorCodeCount.get(code).intValue();
-	    sb.append("Error code "+code+ " : " + cnt +"\n");
+	    b.append("Error code "+code+ " : " + cnt +"\n");
 	    sum += cnt;
 	}
 	if (rejections.size()>0) {
-	    sb.append("\nArXiv error log:\n");
+	    b.append("\nArXiv error log:\n");
 	    for(ArxivRejection r: rejections) {
-		sb.append(r + "\n");
+		b.append(r + "\n");
 	    }
 	}
 
-	if (sb.length() == 0) {
+	if (b.length() == 0) {
 	    return q + "No errors have been reported from the ArXiv server\n";
 	} else {
-	    return q + sum + " errors have been reported when accessing the ArXiv server, as follows:\n" + sb;
+	    return q + sum + " errors have been reported when accessing the ArXiv server, as follows:\n" + b;
 	}
     
     }

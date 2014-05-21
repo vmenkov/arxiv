@@ -163,6 +163,7 @@ public class ResultsBase {
 	    customizeSrc(); 
 
 	    // Do we need a "moving panel"? Once requested, it will stay on
+	    // for the rest of the session
 	    boolean sb = getBoolean("sb", false);
 	    if (sb) {
 		sd.allowedSB = true;

@@ -36,6 +36,8 @@ public class SessionData {
 
     /** Additional mode parameters for the SB generator */
     public boolean sbDebug = false;
+    /** This controls the way of achieving "stable order" of the
+	articles in the rec list */
     public int sbMergeMode = 1;
 
     void validateSbMergeMode() throws WebException {
@@ -234,6 +236,7 @@ public class SessionData {
 	}
 	return  (u!=null)? u : 		defaultUser;
     }
+
 
     /** Returns the user object for the currently logged-in
      user.*/
