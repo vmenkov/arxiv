@@ -76,7 +76,7 @@ public class SBRGenerator {
 	SearchResults sr =  sbrReady.sr;      
 	// double check if there are any new exclusions...
 	int rmCnt = sr.excludeSomeSB(linkedAids);
-	Logging.info("SBRG.getSR(): Removed " + rmCnt + " additional entries from display list");
+	Logging.info("SBRG(session="+sd.getSqlSessionId()+").getSR(): Removed " + rmCnt + " additional entries from display list");
 	return sr;
     }
 
@@ -140,7 +140,7 @@ public class SBRGenerator {
 	to be recomputed accordingly.
      */
     public synchronized void requestRun(int actionCount) {
-	Logging.info("SBRG: requested computations for actionCnt="+actionCount);
+	Logging.info("SBRG(session="+sd.getSqlSessionId()+"): requested computations for actionCnt="+actionCount);
 	if (sbrReady != null && sbrReady.getActionCount() >= actionCount) {
 	    Logging.info("SBRG: ignoring redundant request with actionCount=" + actionCount);
 	    //	} else if (sbrRunning != null && sbrRunning.getState()==Thread.State.TERMINATED) {
@@ -148,11 +148,11 @@ public class SBRGenerator {
 	} else if (sbrRunning != null) {
 
 	    requestedActionCount = Math.max(requestedActionCount,actionCount);
-	    Logging.info("SBRG: recording request with actionCount=" + actionCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): recording request with actionCount=" + actionCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
 	} else {
 	    sbrRunning = new SBRGThread(this, runCnt++);
 	    lastThreadRequestedActionCount=requestedActionCount=actionCount;
-	    Logging.info("SBRG: Immediately starting a new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Immediately starting a new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
 	    sbrRunning.start();
 	}
     }
@@ -166,16 +166,16 @@ public class SBRGenerator {
     synchronized void completeRun() {
 	if (sbrRunning.sr!=null) {
 	    sbrReady = sbrRunning;
-	    Logging.info("SBRG: Thread " + sbrRunning.getId() + " finished successfully; |sr|=" + sbrReady.sr.entries.size());
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished successfully; |sr|=" + sbrReady.sr.entries.size());
 	} else { // there must have been an error
-	    Logging.info("SBRG: Thread " + sbrRunning.getId() + " finished with no result; error=" + sbrRunning.error + " errmsg=" + sbrRunning.errmsg);
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished with no result; error=" + sbrRunning.error + " errmsg=" + sbrRunning.errmsg);
 	}
 	sbrRunning = null;
 	if (requestedActionCount > lastThreadRequestedActionCount) {
 	    sbrRunning = new SBRGThread(this, runCnt++);
 	    lastThreadRequestedActionCount=requestedActionCount;
 	    sbrRunning.start();
-	    Logging.info("SBRG: Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
 	}
     }
 }

@@ -157,6 +157,7 @@ class SBRGThread extends Thread {
 	    
 	    for(Action a: va) {
 		Article art = a.getArticle();
+		if (art==null) continue; // "NEXT PAGE" etc
 		String aid = art.getAid();
 		
 		Action.Op op=a.getOp();
