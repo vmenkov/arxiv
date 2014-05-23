@@ -874,7 +874,6 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    if (sd.needSBNow) {
 		m = pEndHead.matcher(s);
 		if (m.find()) {
-		    b = new StringBuffer();
 		    s = s.substring(0,m.start()) + "\n" +
 			RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
 			"<script type=\"text/javascript\">\n" +
@@ -886,6 +885,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	    return s;
 	}
+
 
 	/** Any additional HTML needs to be inserted before the specified
 	    line of HTML? 

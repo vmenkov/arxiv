@@ -520,8 +520,14 @@ class SBRGThread extends Thread {
     }
 
 
+    /** Records the list of suggestions as a PresentedList object in
+      the database. Note that that the "user" object is usually null
+      (an anon session), which is fine.
+    */
     private PresentedList saveAsPresentedList(EntityManager em) {
-	PresentedList plist = new PresentedList(Action.Source.SB, null,  parent.sd.getSqlSessionId());
+	String uname = parent.sd.getStoredUserName();
+	User user = User.findByName(em, uname); 
+	PresentedList plist = new PresentedList(Action.Source.SB, user,  parent.sd.getSqlSessionId());
 	plist.fillArticleList(sr.entries);	
 	em.getTransaction().begin();
 	em.persist(plist);

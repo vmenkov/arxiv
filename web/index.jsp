@@ -102,9 +102,13 @@ function StartScripts() { BlurLinks();}
 window.onload = StartScripts;
 </script -->
 
+<!-- this script is here so that we can have an "open SB" button -->
+<script type="text/javascript" src="/arxiv/scripts/filterServletSB.js"></script>
+
 <script type="text/javascript">
 <%= main.headJS() %>
 </script>
+
 
 <!-- #EndEditable -->
 </head>
@@ -173,12 +177,20 @@ window.onload = StartScripts;
      <a class="button" href="personal/viewActionsSelfDetailed.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Past activity</a>
 
       <a class="button" href="personal/editUserFormSelf.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your account settings</a>
-<!--      
-     <a class="button" href="personal/index.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>All personalization tools</a> -->
+
 <%  if (main.runByResearcher()) {%>
-	<span class="researcher">
-    <a href="tools/"><span>&nbsp;&diams;&nbsp;</span>Research tools (staff only)</a>
-	</span>
+    <span class="researcher">
+    <a href="tools/"><span>&nbsp;&diams;&nbsp;</span>
+    Research tools (staff only)</a>
+    </span>
+
+    <br>
+    <span class="researcher">
+    <a href="tools/"><span>&nbsp;&diams;&nbsp;</span>
+    <a onclick="javascript:window.onload=openSBMovingPanel('/arxiv');">
+    Show Session-Based suggestions (in a pop-up window)</a>
+    </span>
+ 
  <% }
  } %>
  

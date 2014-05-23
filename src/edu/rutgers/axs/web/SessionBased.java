@@ -42,6 +42,14 @@ public class SessionBased  extends ResultsBase {
 
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
+	
+	// turn SB on in case this has not been done yet (which could happen
+	// if the user has opened the SB popup via the speical button
+	// on the main screen, instead of the normal SB URL)
+	try {
+	    sd.turnSBOn(this); 
+	} catch(WebException ex) {} // no exceptions are expected here
+
 	popout = getBoolean("popout", true);
 
 	sr = null;

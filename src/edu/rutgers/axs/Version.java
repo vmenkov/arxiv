@@ -10,8 +10,8 @@ package  edu.rutgers.axs;
  */
 public class Version {
     /** The version number of the applications */
-    public final static String version = "0.2.044";
-    public final static String date = "2014-05-20";
+    public final static String version = "0.2.045";
+    public final static String date = "2014-05-22";
 
     public static String getVersion() { return version; }
 

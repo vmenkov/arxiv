@@ -31,7 +31,7 @@ public class SessionData {
 
     /** Whether this session needs a "moving panel" with session-based 
 	recommendations (aka "session buddy") */
-    boolean allowedSB = false; 
+    private boolean allowedSB = false; 
     boolean needSBNow = false;
 
     /** Additional mode parameters for the SB generator */
@@ -185,6 +185,14 @@ public class SessionData {
 
     private String storedUserName = null;
 
+    /** Unlike getRemoteUser(), this method does not recheck the
+	extended  session cookie. It is safe to use if we know
+	that  getRemoteUser() has been recently called.
+     */
+    public String getStoredUserName() {
+	return storedUserName;
+    }
+
     /** Gets the user name associated with this session. Originally,
 	this method relied on Tomcat keeping track of this stuff, but
 	as Tomcat is not always deployed quite right, we don't do it
@@ -238,19 +246,24 @@ public class SessionData {
     }
 
 
-    /** Returns the user object for the currently logged-in
-     user.*/
-    User getUserEntry(String user) {
-	EntityManager em = getEM();
-	User u = User.findByName(em, user);
-	em.close();
-	return u;
+    /** Returns the user object for the specified   user.*/
+    /*
+    static User getUserEntry(EntityManager em, String user) {
+	return User.findByName(em, user);
     }
+    */
 
+    /** Saves the user name (received from the [validated] login form, 
+	or recovered via a persistent cookie) into the session's memory.
+     */
     void storeUserName(String u) {
 	storedUserName = u;
     }
 
+    /** Records the session-user association in the SQL server. Note that
+	when a person works for a while without logging in, and then logs in,
+	the user name will be associated with the entire session.
+     */
     void storeUserInfoInSQL(EntityManager em, User user) {
 	em.getTransaction().begin(); 
 	Session s = (Session)em.find(Session.class, sqlSessionId);
@@ -302,7 +315,9 @@ public class SessionData {
 	Role.Name[] ar = authorizedRoles(sp,qs);
 	if (ar==null) return true; // no restrictions
 	if (user==null) return false; // no user 
-	User u = getUserEntry(user);
+	EntityManager em = getEM();
+	User u = User.findByName(em, user);
+	em.close();
 	boolean b = u!=null && u.hasAnyRole(ar);
 	//	Logging.info("isAuthorized("+user+", " + sp + ")=" + b);
 	return b;
@@ -322,5 +337,32 @@ public class SessionData {
 	    }
 	}
     }
+
+    /** This is invoked from the ResultsBase constructor to see if the
+	user has requested the SB to be activated.  Once requested, it
+	will stay on for the rest of the session.
+
+	@rb The ResultsBase object for the web page; used to access
+	command line parameters
+     */
+    void setSBFromRequest(ResultsBase rb) throws WebException {
+	boolean sb = rb.getBoolean("sb", false);
+	if (sb) {
+	    turnSBOn(rb);
+	}
+    }
+    
+    /** Used instead of setSBFromRequest() if we know that SB must be
+	turned on. This happens when the user explicitly loads sessionBased.jsp
+     */
+    void turnSBOn(ResultsBase rb) throws WebException {
+	allowedSB = true;
+	sbMergeMode = rb.getInt("sbMerge", sbMergeMode);
+	validateSbMergeMode();
+	// the same param initializes both vars now
+	sbDebug = rb.getBoolean("sbDebug", sbDebug);
+	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
+    }
+
 
 }

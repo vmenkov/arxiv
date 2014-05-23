@@ -66,7 +66,10 @@ public class ResultsBase {
 
     /** Returns the user object for the currently logged-in user */
     public User getUserEntry() {
-	return sd.getUserEntry(user);
+	EntityManager em = sd.getEM();
+	User u = User.findByName(em, user);
+	em.close();
+	return u;
     }
 
     /** Cached bits reflecting the roles of the user who has requested
@@ -164,6 +167,8 @@ public class ResultsBase {
 
 	    // Do we need a "moving panel"? Once requested, it will stay on
 	    // for the rest of the session
+	    sd.setSBFromRequest(this);
+	    /*
 	    boolean sb = getBoolean("sb", false);
 	    if (sb) {
 		sd.allowedSB = true;
@@ -173,6 +178,7 @@ public class ResultsBase {
 		sd.sbDebug = getBoolean("sbDebug", sd.sbDebug);
 		sd.researcherSB = getBoolean("sbDebug",	sd.researcherSB);
 	    }
+	    */
 
 	}  catch (Exception _e) {
 	    setEx(_e);
