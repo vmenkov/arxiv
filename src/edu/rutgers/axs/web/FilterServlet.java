@@ -189,31 +189,27 @@ public class FilterServlet extends  BaseArxivServlet  {
 		em = sd.getEM();
 		em.getTransaction().begin();		
 		u = (user!=null) ? User.findByName(em, user) : null;
-		if (u!=null) {
-		    Logging.info("FS: pi="+pi+", recording as " + actionable);
-		    Action a = u.addAction(em, sd, actionable.aid, actionable.op, asrc);
 
+		Logging.info("FS: pi="+pi+", recording as " + actionable);
+		Action a = sd.addNewAction(em, u, actionable.aid, actionable.op, asrc);
+
+		if (u!=null) {
 		    skeletonAE = ArticleEntry.getDummyArticleEntry(actionable.aid, 1);
 		    Vector<ArticleEntry> entries= new  Vector<ArticleEntry> ();
 		    entries.add(skeletonAE);
 		    // Mark pages currently in the user's folder, or rated by the user
-
 		    ArticleEntry.markFolder(entries, u.getFolder());
 		    ArticleEntry.markRatings(entries, 
 					     u.getActionHashMap(Action.ratingOps));
-
-		    //em.persist(u);
-		} else { // anon 
-		    Action r = User.addNewAction(u, em, sd, actionable.aid, actionable.op, asrc);
 		}
-
-		// Now SB is enabled for logged-in users too, not only for anon
-		// users. (2014-05-20)
-		sd.sbrg.sbCheck(em);
-
+		//em.persist(u);
 
 		em.getTransaction().commit(); 
 		em.close();
+
+		// Now SB is enabled for logged-in users too, not only for anon
+		// users. (2014-05-20)
+		sd.sbrg.sbCheck();
 	    }
 
 

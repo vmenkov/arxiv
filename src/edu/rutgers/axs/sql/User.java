@@ -11,6 +11,7 @@ import javax.servlet.http.Cookie;
 import org.apache.catalina.realm.RealmBase;
 
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.sb.SBRGenerator;
 import edu.rutgers.axs.bernoulli.Bernoulli;
 
 
@@ -453,6 +454,10 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
         return actions;
     }
 
+    public void addAction(Action a) {
+	actions.add(a);
+    }
+
 
     /** Scans the list of the user's action, finding the most recent
 	(according to the action ID). Note that this may perhaps be done more
@@ -678,33 +683,6 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	return getFolder().size(); 
     }
 
-
-    /** Adds an Action object to the record of this user's activity.
-	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
-    */
-   public Action addAction(EntityManager em, SessionData sd, String p, Action.Op op, ActionSource asrc) {
-       return addNewAction(this, em, sd, p, op, asrc);
-   }
-
-    /** Also works for anon users.
-     @param u User object. May be null (for anon user actions)
-    */
-    static public Action addNewAction(User u, EntityManager em, SessionData sd, String p, Action.Op op, ActionSource asrc) {
-	Article a=null;
-	if (p==null) {
-	    if (op!=Action.Op.NEXT_PAGE && op!=Action.Op.PREV_PAGE) {
-		throw new IllegalArgumentException("Cannot create an article with op code " + op + " without an article ID!");
-	    }
-	} else {
-	    a = Article.getArticleAlways(em,p,false); // no commit needed here
-	}
-	Action r = new Action(u, sd, a, op); 
-	r.setActionSource(asrc);
-        if (u!=null) u.actions.add(r); 
-	em.persist(r);
-	if (u!=null) r.bernoulliFeedback(em); // only affects Bernoulli users
-	return r;
-    }
 
     public int actionCnt(EntityManager em) {
 	return actionCnt(em, -1);

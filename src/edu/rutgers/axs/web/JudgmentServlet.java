@@ -68,7 +68,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 		
 		// Begin a new local transaction so that we can persist a new entity	
 		em.getTransaction().begin();
-		Action a= User.addNewAction(u, em, sd, id, op, asrc);
+		Action a= sd.addNewAction(em, u, id, op, asrc);
 		//em.persist(u);	       
 		em.getTransaction().commit(); 
 	    }

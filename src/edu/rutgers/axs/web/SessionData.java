@@ -301,4 +301,29 @@ public class SessionData {
 	return b;
     }
 
+    /** Creates an Action object; adds an Action object to the record
+	of the specified user's activity (unless it's an anon session)
+
+	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
+	@param u User object. May be null (for anon user actions)
+    */
+    public Action addNewAction(EntityManager em,  User u, String aid, Action.Op op, ActionSource asrc) {
+	Article a=null;
+	if (aid==null) {
+	    if (op!=Action.Op.NEXT_PAGE && op!=Action.Op.PREV_PAGE) {
+		throw new IllegalArgumentException("Cannot create an article with op code " + op + " without an article ID!");
+	    }
+	} else {
+	    a = Article.getArticleAlways(em,aid,false); // no commit needed here
+	}
+	Action r = new Action(u, this, a, op); 
+	r.setActionSource(asrc);
+        if (u!=null) u.addAction(r); 
+	em.persist(r);
+	if (u!=null) r.bernoulliFeedback(em); // only affects Bernoulli users
+	sbrg.addAction(r); // updates the session history for sb
+	return r;
+    }
+
+
 }

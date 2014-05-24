@@ -344,8 +344,7 @@ import  edu.rutgers.axs.web.SessionData;
        @param u The user object. May be null, in case of anon actions.
        @param sd Used to obtain session info.
      */
-//    public
-    Action(User u, SessionData sd, Article _article, Op _op){     
+    public  Action(User u, SessionData sd, Article _article, Op _op){     
 	setUser(u);
 	if (u!=null) {
 	    setDay(u.getDay());

@@ -104,20 +104,16 @@ public class SBRGenerator {
     }
     
 
-
-
-
     /** Turns the flag on to activate the moving panel for the
 	Session-Based recommendations. Requests the suggestion
 	list generation.
      */
-    synchronized public void sbCheck(EntityManager em) {
+    synchronized public void sbCheck() {
 	if (allowedSB) {
-	    // count the actions in this session...
-	    int actionCnt= Action.actionCntForSession(em, sd.getSqlSessionId());
-	    needSBNow = 	     (actionCnt>=2);
+	    int articleCnt = maintainedActionHistory.articleCount;
+	    needSBNow = 	     (articleCnt>=2);
 	    if (needSBNow) {
-		requestRun(actionCnt);
+		requestRun(articleCnt);
 	    }
 	}
     }
@@ -214,7 +210,7 @@ public class SBRGenerator {
 	count at the time the most recent request for which 
 	we actually started a computational thread.
      */
-    private int requestedActionCount=0, lastThreadRequestedActionCount=0;
+    private int requestedArticleCount=0, lastThreadRequestedArticleCount=0;
 
     /** Pre-computed suggestion lists based on individual articles. In
 	the hashmap, the keys are ArXiv article IDs; the values are
@@ -231,20 +227,20 @@ public class SBRGenerator {
 	the user has carried out a new action, and the SBRL may need
 	to be recomputed accordingly.
      */
-    public synchronized void requestRun(int actionCount) {
-	Logging.info("SBRG(session="+sd.getSqlSessionId()+"): requested computations for actionCnt="+actionCount);
-	if (sbrReady != null && sbrReady.getActionCount() >= actionCount) {
-	    Logging.info("SBRG: ignoring redundant request with actionCount=" + actionCount);
-	    //	} else if (sbrRunning != null && sbrRunning.getState()==Thread.State.TERMINATED) {
+    private synchronized void requestRun(int articleCount) {
+	String prefix = "SBRG(session="+sd.getSqlSessionId()+"): ";
+	Logging.info(prefix+"requested computations for articleCnt="+articleCount);
+	if (sbrReady != null && sbrReady.getArticleCount() >= articleCount) {
+	    Logging.info(prefix + "ignoring redundant request with articleCount=" + articleCount);
 	    
 	} else if (sbrRunning != null) {
 
-	    requestedActionCount = Math.max(requestedActionCount,actionCount);
-	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): recording request with actionCount=" + actionCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
+	    requestedArticleCount = Math.max(requestedArticleCount,articleCount);
+	    Logging.info(prefix+"recording request with articleCount=" + articleCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
 	} else {
 	    sbrRunning = new SBRGThread(this, runCnt++);
-	    lastThreadRequestedActionCount=requestedActionCount=actionCount;
-	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Immediately starting a new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
+	    lastThreadRequestedArticleCount=requestedArticleCount=articleCount;
+	    Logging.info(prefix + "Immediately starting a new thread "+ sbrRunning.getId() +", for articleCnt=" + requestedArticleCount);
 	    sbrRunning.start();
 	}
     }
@@ -263,11 +259,25 @@ public class SBRGenerator {
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished with no result; error=" + sbrRunning.error + " errmsg=" + sbrRunning.errmsg);
 	}
 	sbrRunning = null;
-	if (requestedActionCount > lastThreadRequestedActionCount) {
+	if (requestedArticleCount > lastThreadRequestedArticleCount) {
 	    sbrRunning = new SBRGThread(this, runCnt++);
-	    lastThreadRequestedActionCount=requestedActionCount;
+	    lastThreadRequestedArticleCount=requestedArticleCount;
 	    sbrRunning.start();
-	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedActionCount);
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedArticleCount);
 	}
     }
+
+    ActionHistory maintainedActionHistory = new  ActionHistory();
+    
+    synchronized public void addAction(Action a) {
+	maintainedActionHistory.augment(a);
+
+	Article art = a.getArticle();
+	String aid =  (art==null) ? "[none]" : art.getAid();
+
+	Logging.info("SBRG(session="+sd.getSqlSessionId()+"): added action ("+a.getOp()+":"+ aid+"); article cnt = " + maintainedActionHistory.articleCount);
+
+
+    }
+
 }
