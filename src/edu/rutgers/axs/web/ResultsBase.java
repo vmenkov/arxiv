@@ -167,19 +167,8 @@ public class ResultsBase {
 
 	    // Do we need a "moving panel"? Once requested, it will stay on
 	    // for the rest of the session
-	    sd.setSBFromRequest(this);
-	    /*
-	    boolean sb = getBoolean("sb", false);
-	    if (sb) {
-		sd.allowedSB = true;
-		sd.sbMergeMode = getInt("sbMerge", sd.sbMergeMode);
-		sd.validateSbMergeMode();
-		// the same param initializes both vars now
-		sd.sbDebug = getBoolean("sbDebug", sd.sbDebug);
-		sd.researcherSB = getBoolean("sbDebug",	sd.researcherSB);
-	    }
-	    */
-
+	    sd.sbrg.setSBFromRequest(this);
+	
 	}  catch (Exception _e) {
 	    setEx(_e);
 	}	
@@ -586,9 +575,8 @@ public class ResultsBase {
 	session-based recommendation panel
      */
     public boolean needSBNow() {
-	return  sd.needSBNow;
+	return  sd.sbrg.getNeedSBNow();
     }
-
 
 }
 

@@ -49,6 +49,13 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
     /** This flag is only used in SB; it indicates that this article was not
 	displayed in the previous list. */
     public boolean recent=false;
+    /** Used only in SB, indicates the "age" of the suggestions. In
+	the SB context, this is the "age" of the most recent user
+	action that causes this page appear in the recommendation list.
+	Here the "age" of the action is simply its sequential number
+	in the reverse chronological 
+     */
+    public int age=0;
 
     static private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 

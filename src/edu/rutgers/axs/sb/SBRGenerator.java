@@ -30,6 +30,41 @@ import edu.rutgers.axs.web.*;
  */
 public class SBRGenerator {
 
+
+    /** Whether this session needs a "moving panel" with session-based 
+	recommendations (aka "session buddy") */
+    private boolean allowedSB = false; 
+    private boolean needSBNow = false;
+    public boolean getNeedSBNow() { return needSBNow;}
+
+    /** Additional mode parameters for the SB generator */
+    public boolean sbDebug = false;
+    /** This controls the way of achieving "stable order" of the
+	articles in the rec list */
+    public int sbMergeMode = 1;
+
+    void validateSbMergeMode() throws WebException {
+	if (sbMergeMode<0 || sbMergeMode>2) throw new WebException("Illegal SB merge mode = " + sbMergeMode);
+    }
+
+    /** If true, the SB moving panel will be displayed in "researcher mode".
+	Since SB is only shown to users who have not logged in, we can't
+	use the usual researcher flag, but rather set this flag via a 
+	"secret" query string parameter.
+     */
+    public boolean researcherSB = false; 
+
+
+    /** Recommendation list generation methods
+     */
+    public static enum Method {
+	TRIVIAL, ABSTRACTS;
+    };
+
+    /**  Recommendation list generation method 
+     */
+    Method sbMethod = Method.ABSTRACTS;
+
     /** Pointer to a thread object that contains the most recently compiled
 	recommendation list ready for display. */
     private SBRGThread sbrReady = null;
@@ -40,6 +75,53 @@ public class SBRGenerator {
     
     /** Used to keep track of the number of SBRG runs we've done */
     private int runCnt=0;
+
+    /** Used instead of setSBFromRequest() if we know that SB must be
+	turned on. This happens when the user explicitly loads sessionBased.jsp
+     */
+    public void turnSBOn(ResultsBase rb) throws WebException {
+	allowedSB = true;
+	sbMergeMode = rb.getInt("sbMerge", sbMergeMode);
+	validateSbMergeMode();
+	// the same param initializes both vars now
+	sbDebug = rb.getBoolean("sbDebug", sbDebug);
+	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
+	sbMethod = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", sbMethod);
+    }
+
+    /** This is invoked from the ResultsBase constructor to see if the
+	user has requested the SB to be activated.  Once requested, it
+	will stay on for the rest of the session.
+
+	@rb The ResultsBase object for the web page; used to access
+	command line parameters
+     */
+    public void setSBFromRequest(ResultsBase rb) throws WebException {
+	boolean sb = rb.getBoolean("sb", false);
+	if (sb) {
+	    turnSBOn(rb);
+	}
+    }
+    
+
+
+
+
+    /** Turns the flag on to activate the moving panel for the
+	Session-Based recommendations. Requests the suggestion
+	list generation.
+     */
+    synchronized public void sbCheck(EntityManager em) {
+	if (allowedSB) {
+	    // count the actions in this session...
+	    int actionCnt= Action.actionCntForSession(em, sd.getSqlSessionId());
+	    needSBNow = 	     (actionCnt>=2);
+	    if (needSBNow) {
+		requestRun(actionCnt);
+	    }
+	}
+    }
+
 
     /** List of all article IDs that have been mentioned anywhere in pages
 	shown to the user during this session. This can be used an 
@@ -70,13 +152,18 @@ public class SBRGenerator {
 
     /** Retrieves the SearchResults structure encapsulating the most recently
 	generated session-based recommendation list.
+
+	<p>Unless the TRIVIAL SBR method (which uses no exclusions) is
+	used, here we also double check if there are any new articles
+	to exclude.
     */
     public SearchResults getSR() {
 	if (sbrReady==null) return null;
 	SearchResults sr =  sbrReady.sr;      
-	// double check if there are any new exclusions...
-	int rmCnt = sr.excludeSomeSB(linkedAids);
-	Logging.info("SBRG(session="+sd.getSqlSessionId()+").getSR(): Removed " + rmCnt + " additional entries from display list");
+	if (sbrReady.sbMethod != Method.TRIVIAL) {
+	    int rmCnt = sr.excludeSomeSB(linkedAids);
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").getSR(): Removed " + rmCnt + " additional entries from display list");
+	}
 	return sr;
     }
 
@@ -91,6 +178,11 @@ public class SBRGenerator {
      */
     public long getPlid() {
 	return sbrReady==null? 0 : sbrReady.plid;
+    }
+
+    /** This is simply the length of the list of "actionable" viewed articles */
+    public int getMaxAge() {
+	return sbrReady==null? 0 : sbrReady.maxAge;
     }
 
     synchronized public String description() {

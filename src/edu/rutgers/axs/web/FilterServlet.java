@@ -209,7 +209,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 		// Now SB is enabled for logged-in users too, not only for anon
 		// users. (2014-05-20)
-		sd.sbCheck(em);
+		sd.sbrg.sbCheck(em);
 
 
 		em.getTransaction().commit(); 
@@ -871,7 +871,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    }
 
 	    // insert JS for the Moving Panel inside the HEAD element, if needed
-	    if (sd.needSBNow) {
+	    if (sd.sbrg.getNeedSBNow()) {
 		m = pEndHead.matcher(s);
 		if (m.find()) {
 		    s = s.substring(0,m.start()) + "\n" +

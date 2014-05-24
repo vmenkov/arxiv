@@ -40,6 +40,8 @@ public class SessionBased  extends ResultsBase {
      */
     public boolean wantReload=false;
 
+    public int maxAge=0;
+
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	
@@ -47,7 +49,7 @@ public class SessionBased  extends ResultsBase {
 	// if the user has opened the SB popup via the speical button
 	// on the main screen, instead of the normal SB URL)
 	try {
-	    sd.turnSBOn(this); 
+	    sd.sbrg.turnSBOn(this); 
 	} catch(WebException ex) {} // no exceptions are expected here
 
 	popout = getBoolean("popout", true);
@@ -60,11 +62,12 @@ public class SessionBased  extends ResultsBase {
 	    if (sr!=null) {
 		infomsg += "<br>" + sd.sbrg.description() + "\n";
 		plid = sd.sbrg.getPlid();
+		maxAge = sd.sbrg.getMaxAge();
 	    } else if (sd.sbrg.hasRunning()) {
 		// tell the browser to come ask again in a few sec
 		wantReload=true;
 	    }
-	} 
+	}
 	infomsg += "<br>List presented at " + (new Date()) +  "\n";
 
 	// setting this page's "action source" information, which is used
@@ -89,6 +92,9 @@ public class SessionBased  extends ResultsBase {
 	    e.formatDate()+"]";
 	if (e.researcherCommline!=null && e.researcherCommline.length()>0) {
 	    rt += "["+e.researcherCommline+"]";
+	} 
+	if (maxAge>0) {
+	    rt += "[age=" + e.age + "/" + maxAge + "]";
 	}
 	rt += " ";
 

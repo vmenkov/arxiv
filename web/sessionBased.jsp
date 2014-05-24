@@ -87,7 +87,7 @@ Article Suggestions</td></tr>
 <hr>
 
 <p><small>
-<%= main.researcherSpan(main.infomsg, main.sd.researcherSB) %>
+<%= main.researcherSpan(main.infomsg, main.sd.sbrg.researcherSB) %>
 </small>
 </p>
 

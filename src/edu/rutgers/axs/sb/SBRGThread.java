@@ -44,11 +44,13 @@ import edu.rutgers.axs.indexer.*;
 class SBRGThread extends Thread {
     private final SBRGenerator parent;
     private final int id;
+    final SBRGenerator.Method sbMethod;
 
-    /** Creates a thread. You must call its start() next */
+    /** Creates a thread. You must call its start() method next */
     SBRGThread(SBRGenerator _parent, int _id) {
 	parent = _parent;
 	id = _id;
+	sbMethod = parent.sbMethod;
     }
 
     /** When the list generation started and ended. We keep this 
@@ -56,6 +58,8 @@ class SBRGThread extends Thread {
     Date startTime, endTime;
 
     private ActionHistory his = null;
+    /** This is simply the length of the list of "actionable" viewed articles */
+    int maxAge;
 
     /** The main class for the actual recommendation list
 	generation. */
@@ -65,18 +69,21 @@ class SBRGThread extends Thread {
 	IndexReader reader=null;
 	IndexSearcher searcher = null;
 
-	final boolean trivial = false;
-
 	EntityManager em=null;
 	try {
 	    em = parent.sd.getEM();       
 	    reader=Common.newReader();
 	    searcher = new IndexSearcher( reader );
 	    // get the list of article IDs to recommend by some algorithm
-	    if (trivial) {
+	    if (sbMethod==SBRGenerator.Method.TRIVIAL) {
 		computeRecListTrivial(em,searcher);
-	    } else {
+	    } else if (sbMethod==SBRGenerator.Method.ABSTRACTS) {
 		computeRecList(em,searcher);
+	    } else {
+		error = true;
+		errmsg = "Illegal SRB generation method: " + sbMethod;
+		System.out.println(errmsg);
+		return;
 	    }
 	    plid = saveAsPresentedList(em).getId();
 	} catch(Exception ex) {
@@ -92,8 +99,8 @@ class SBRGThread extends Thread {
 		if (reader!=null) reader.close();
 	    } catch(IOException ex) {}
 	    endTime = new Date();
+	    parent.completeRun();
 	}
-	parent.completeRun();
 
     }
 
@@ -140,7 +147,7 @@ class SBRGThread extends Thread {
 	/** Lists  all viewed articles (both actionable and not) */
 	Vector<String> viewedArticlesAll = new Vector<String>();
 	/** Lists viewed articles that are "actionable" (i.e., based on which we
-	    will compute suggestions) */
+	    will compute suggestions). Order: most recent first. */
 	Vector<String> viewedArticlesActionable = new Vector<String>();
 	/** Lists  "prohibited" articles (don't show) */
 	Vector<String> prohibitedArticles = new Vector<String>();
@@ -154,8 +161,10 @@ class SBRGThread extends Thread {
 	    HashMap<String, Boolean> viewedH = new HashMap<String, Boolean>();
 	    // lists of "prohibited" articles
 	    HashSet<String> prohibitedH = new HashSet<String>();
-	    
-	    for(Action a: va) {
+
+	    // scan in the reverse order, with more recent actions first 
+	    for(int i=va.size()-1; i>=0; i--) {
+		Action a = va.elementAt(i);
 		Article art = a.getArticle();
 		if (art==null) continue; // "NEXT PAGE" etc
 		String aid = art.getAid();
@@ -170,14 +179,19 @@ class SBRGThread extends Thread {
 		    Action.Source src = a.getSrc();
 		    boolean actionable = (src!=null && !src.isMainPage());
 		    Boolean val = viewedH.get(aid);
-		    if (val!=null) actionable = actionable||val.booleanValue();
-		    viewedH.put(aid, new Boolean(actionable));
-		}
-	    }
 
-	    for(String aid:  viewedH.keySet()) {
-		viewedArticlesAll.add(aid);
-		if (viewedH.get(aid).booleanValue()) viewedArticlesActionable.add(aid);
+		    if (val==null) {
+			viewedArticlesAll.add(aid);
+		    }
+
+		    boolean a0 = (val!=null && val.booleanValue());
+		    boolean a1 = (a0  || actionable);
+		    if (a1 && !a0) {
+			viewedArticlesActionable.add(aid);
+		    }
+
+		    viewedH.put(aid, new Boolean(a1));
+		}
 	    }
 	    
 	    articleCount=viewedArticlesActionable.size();
@@ -194,6 +208,12 @@ class SBRGThread extends Thread {
 	    information purposes only, and is *not* used for
 	    sorting. */
 	double score=0;
+
+	/** How old was the most recent user action which caused this article
+	    to be suggested? 0 &le; age &lt; n, where n is the number of
+	    distinct-article actions used for generating the rec list.
+	 */
+	int age=0;
 	Vector<Integer> ranks=new Vector<Integer>();
 	public int compareTo(ArticleRanks o) {
 	    for(int i=0; i<ranks.size() && i<o.ranks.size(); i++) {
@@ -202,7 +222,10 @@ class SBRGThread extends Thread {
 	    }
 	    return o.ranks.size() - ranks.size();
 	}
-	ArticleRanks(int _docno) { docno = _docno; }
+	ArticleRanks(int _docno, int _age) { 
+	    docno = _docno;
+	    age= _age;
+	}
 	/** Should be called in order of non-decreasing r */
 	void add(int r, double deltaScore) {
 	    if (ranks.size()>0 && r<ranks.elementAt(ranks.size()-1).intValue()){
@@ -272,8 +295,9 @@ class SBRGThread extends Thread {
 
 	    // abstract match, separately for each article
 	    final int maxlen = 100;
-	    final int maxRecLen = recommendedListLength(his.viewedArticlesActionable.size());
-	    ScoreDoc[][] asr  = new ScoreDoc[his.viewedArticlesActionable.size()][];
+	    maxAge = his.viewedArticlesActionable.size();
+	    final int maxRecLen = recommendedListLength(maxAge);
+	    ScoreDoc[][] asr  = new ScoreDoc[maxAge][];
 	    int k=0;
 	    for(String aid: his.viewedArticlesActionable) {
 		ScoreDoc[] z = parent.articleBasedSD.get(aid);
@@ -292,16 +316,19 @@ class SBRGThread extends Thread {
 	    // merge all lists
 	    HashMap<Integer,ArticleRanks> hr= new HashMap<Integer,ArticleRanks>();
 	    for(int j=0; j<maxlen; j++) {
+		int age=0;
 		for(ScoreDoc[] z: asr) {
 		    if (z!=null && j<z.length) {
 			int docno = z[j].doc;
 			Integer key = new Integer(docno);
 			ArticleRanks r= hr.get(key);
 			if (r==null) { 
-			    hr.put(key, r=new ArticleRanks(docno));
+			    r=new ArticleRanks(docno,age);
+			    hr.put(key, r);
 			}
 			r.add(j, z[j].score);		      
 		    }
+		    age++;
 		}
 	    }
 	    ArticleRanks[] ranked = (ArticleRanks[])hr.values().toArray(new ArticleRanks[0]);
@@ -310,28 +337,26 @@ class SBRGThread extends Thread {
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 	    k=1;
 	    for(ArticleRanks r: ranked) {
-		/*
-		ArticleEntry ae = new ArticleEntry(++k, r.aid);
-		ae.setScore(r.score);
-		*/
 		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno),
 						  new ScoreDoc(r.docno, (float)r.score));
+
+		ae.age += r.age;
 		if (exclusions.contains(ae.id)) {
 		    excludedList += " " + ae.id;
 		    continue;
 		}
 		
 		ae.researcherCommline= "L" + id + ":" + k;
-		if (parent.sd.sbDebug) ae.ourCommline= ae.researcherCommline;
+		if (parent.sbDebug) ae.ourCommline= ae.researcherCommline;
 	 
 		entries.add(ae);
 		k++;
 		if (entries.size()>=maxRecLen) break;
 	    }
 
-	    if (parent.sd.sbMergeMode==1) {
+	    if (parent.sbMergeMode==1) {
 		entries = maintainStableOrder1( entries, maxRecLen);
-	    } else   if (parent.sd.sbMergeMode==2) {
+	    } else   if (parent.sbMergeMode==2) {
 		entries = maintainStableOrder2( entries, maxRecLen);
 	    }
 
@@ -404,9 +429,11 @@ class SBRGThread extends Thread {
 	    // trivial list: out=in
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 	    int k=0;
+	    maxAge = his.viewedArticlesActionable.size();
 	    for(String aid:  his.viewedArticlesActionable) {
 		ArticleEntry ae = new ArticleEntry(++k, aid);
 		ae.setScore(1.0);
+		ae.age = k-1;
 		entries.add(ae);
 	    }
 	    sr = new SearchResults(entries); 
@@ -537,7 +564,7 @@ class SBRGThread extends Thread {
 
 
 
-    /** A human-readable description of what this thread had done. */
+    /** Produces a human-readable description of what this thread has done. */
     public String description() {
 	String s = "Session-based recommendation list produced by thread " + getId() +"; started at " + startTime +", finished at " + endTime;
 	if (startTime!=null && endTime!=null) {
@@ -545,6 +572,8 @@ class SBRGThread extends Thread {
 	    s += " (" + (0.001 * (double)msec) + " sec)";
 	}
 	s += ".";
+	s += "\nSBR method= = " + sbMethod ;
+
 	if (his!=null) {
 	    s += " The list is based on " +his.actionCount+ " user actions (" +
 		his.articleCount + " viewed articles)";
@@ -552,8 +581,9 @@ class SBRGThread extends Thread {
 	return s;
     }
 
-    /** This is used for testing, so that we could quickly view the list of 
-	suggestions that would be prepared for a particular article
+    /** This is used for command-line testing, so that we could
+	quickly view the list of suggestions that would be prepared
+	for a particular article
      */
     public static void main(String [] argv) throws Exception {
 	IndexReader reader = Common.newReader();

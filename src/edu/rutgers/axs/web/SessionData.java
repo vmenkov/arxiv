@@ -29,33 +29,11 @@ public class SessionData {
 
     public  long getSqlSessionId() { return sqlSessionId;}
 
-    /** Whether this session needs a "moving panel" with session-based 
-	recommendations (aka "session buddy") */
-    private boolean allowedSB = false; 
-    boolean needSBNow = false;
-
-    /** Additional mode parameters for the SB generator */
-    public boolean sbDebug = false;
-    /** This controls the way of achieving "stable order" of the
-	articles in the rec list */
-    public int sbMergeMode = 1;
-
-    void validateSbMergeMode() throws WebException {
-	if (sbMergeMode<0 || sbMergeMode>2) throw new WebException("Illegal SB merge mode = " + sbMergeMode);
-    }
-
-    /** If true, the SB moving panel will be displayed in "researcher mode".
-	Since SB is only shown to users who have not logged in, we can't
-	use the usual researcher flag, but rather set this flag via a 
-	"secret" query string parameter.
-     */
-    public boolean researcherSB = false; 
-
     /** The session-based recommendation generator. It's created together
-	with the session, but is not actually used until the needSBNow flag 
+	with the session, but is not actually used until the flag sd.needSBNow
 	is set.
     */
-    final SBRGenerator sbrg=new SBRGenerator(this);
+    final public SBRGenerator sbrg=new SBRGenerator(this);
 
     /** Used to record the ArXiv article ID of an article linked from
 	a viewed page, or of any other article that the SB user does
@@ -322,47 +300,5 @@ public class SessionData {
 	//	Logging.info("isAuthorized("+user+", " + sp + ")=" + b);
 	return b;
     }
-
-    /** Turns the flag on to activate the moving panel for the
-	Session-Based recommendations. Requests the suggestion
-	list generation.
-     */
-    synchronized void sbCheck(EntityManager em) {
-	if (allowedSB) {
-	    // count the actions in this session...
-	    int actionCnt = Action.actionCntForSession( em,  sqlSessionId);
-	    needSBNow = 	     (actionCnt>=2);
-	    if (needSBNow) {
-		sbrg.requestRun(actionCnt);
-	    }
-	}
-    }
-
-    /** This is invoked from the ResultsBase constructor to see if the
-	user has requested the SB to be activated.  Once requested, it
-	will stay on for the rest of the session.
-
-	@rb The ResultsBase object for the web page; used to access
-	command line parameters
-     */
-    void setSBFromRequest(ResultsBase rb) throws WebException {
-	boolean sb = rb.getBoolean("sb", false);
-	if (sb) {
-	    turnSBOn(rb);
-	}
-    }
-    
-    /** Used instead of setSBFromRequest() if we know that SB must be
-	turned on. This happens when the user explicitly loads sessionBased.jsp
-     */
-    void turnSBOn(ResultsBase rb) throws WebException {
-	allowedSB = true;
-	sbMergeMode = rb.getInt("sbMerge", sbMergeMode);
-	validateSbMergeMode();
-	// the same param initializes both vars now
-	sbDebug = rb.getBoolean("sbDebug", sbDebug);
-	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
-    }
-
 
 }
