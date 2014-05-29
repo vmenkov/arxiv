@@ -106,13 +106,24 @@ public class SessionBased  extends ResultsBase {
 	    "javascript:window.opener.location.href='" +urlAbstract(e.id)+ "';":
 	    "javascript:window.parent.location.href='" +urlAbstract(e.id)+ "';";
 
+	//When a new article is added to the list, it will be highlighted a different color.
+	//This code snipet will determine to highlight the given article
+	String colorBack =  "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n"; 
+	String divBackColor = "";
+	if(e.recent) {
+
+	    colorBack =  "<div class=\"result\" id=\"" + e.resultsDivId() + "\" style=\"background-color:#ffff66\">\n";
+	    divBackColor = "style=\"background-color:#ffff66\"";
+	}
+	
+
 	String s =  
 
 	    "<table id=\"table" + e.resultsDivId() + "\"><tr><td>\n" +  
-	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\">" +
+	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\"" + divBackColor + ">" +
 	    htmlRectangle(e.score, largest) + "</div>\n</td>\n" +
             "<td style=\"width:100%\">" +
-	    "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n" +
+	    colorBack +
 	    "<div class=\"document\">\n" +
             "<table style=\"width:100%\"><tr><td>\n" +
 	    "<a name=\""+ aName +"\" title=\""+ rt +
