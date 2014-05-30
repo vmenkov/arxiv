@@ -43,10 +43,16 @@ import edu.rutgers.axs.indexer.*;
  */
 class SBRGThread extends Thread {
     private final SBRGenerator parent;
+    /** A sequential ID (zero-based) of this SBRL-generation run 
+	within the user session.
+     */
     private final int id;
     final SBRGenerator.Method sbMethod;
 
-    /** Creates a thread. You must call its start() method next */
+    /** Creates a thread. You must call its start() method next.
+	@param _id Run id, which identifies this run (and its results)
+	within the session.
+     */
     SBRGThread(SBRGenerator _parent, int _id) {
 	parent = _parent;
 	id = _id;
@@ -147,12 +153,13 @@ class SBRGThread extends Thread {
 	    age= _age;
 	}
 	/** Should be called in order of non-decreasing r */
-	void add(int r, double deltaScore) {
+	void add(int r, double deltaScore, int _age) {
 	    if (ranks.size()>0 && r<ranks.elementAt(ranks.size()-1).intValue()){
 		throw new IllegalArgumentException("ArticleRanks.add() calls must be made in order");
 	    }
 	    ranks.add(new Integer(r));
 	    score +=  deltaScore;
+	    if (_age < age) age = _age;
 	}
     }
 
@@ -246,7 +253,7 @@ class SBRGThread extends Thread {
 			    r=new ArticleRanks(docno,age);
 			    hr.put(key, r);
 			}
-			r.add(j, z[j].score);		      
+			r.add(j, z[j].score, age);		      
 		    }
 		    age++;
 		}
@@ -260,12 +267,14 @@ class SBRGThread extends Thread {
 		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno),
 						  new ScoreDoc(r.docno, (float)r.score));
 
-		ae.age += r.age;
+		ae.age = r.age;
 		if (exclusions.contains(ae.id)) {
 		    excludedList += " " + ae.id;
 		    continue;
 		}
 		
+		// A label that identifies when the article first appeared
+		// on the SB rec list
 		ae.researcherCommline= "L" + id + ":" + k;
 		if (parent.sbDebug) ae.ourCommline= ae.researcherCommline;
 	 
@@ -280,6 +289,7 @@ class SBRGThread extends Thread {
 		entries = maintainStableOrder2( entries, maxRecLen);
 	    }
 
+	    maxAge = actualMaxAge(entries);
 
 	    sr = new SearchResults(entries); 
 	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);
@@ -294,13 +304,19 @@ class SBRGThread extends Thread {
 
     /** Reorders the new suggestion list (entries) so that it includes
 	all (or almost all) elements from the previously displayed
-	list, in their original order
+	list, in their original order.
+
+	<p>Note: ArticleEntry.age setting overrides any previous settings.
      */
     private Vector<ArticleEntry> maintainStableOrder2( Vector<ArticleEntry> entries, int maxRecLen) {
 
-	if (parent.getSR()==null) return entries;
-	Vector<ArticleEntry> previouslyDisplayedEntries =
-	    parent.getSR().entries;
+	for(ArticleEntry e: entries) {
+	    e.age=0;
+	}
+
+	SearchResults oldSR =parent.getSR();
+	if (oldSR==null) return entries;
+	Vector<ArticleEntry> previouslyDisplayedEntries = oldSR.entries;
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
 
@@ -309,15 +325,19 @@ class SBRGThread extends Thread {
 	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
 	for(ArticleEntry e: previouslyDisplayedEntries) {
 	    if (exclusions.contains(e.id)) continue;
-	    try {  // We use clone() because we're going to modify e.i
-		a.add((ArticleEntry)e.clone());
+	    try {  // We use clone() because we're going to modify e.i and e.age
+		ArticleEntry q = (ArticleEntry)e.clone();
+		q.age ++;
+		a.add(q);
+		old.add(q.id);
 	    }  catch (CloneNotSupportedException ex) {}
-	    old.add(e.id);
 	}
 	// new elements not found in the old list
-	Vector<ArticleEntry> b = new 	Vector<ArticleEntry>();
+	Vector<ArticleEntry> b = new Vector<ArticleEntry>();
 	for(ArticleEntry e: entries) {
-	    if (!old.contains(e.id)) b.add(e);
+	    if (!old.contains(e.id)) {
+		b.add(e);
+	    }
 	}
 	double bRatio = b.size() / (double)(b.size() + a.size());
 	
@@ -396,6 +416,8 @@ class SBRGThread extends Thread {
 	(additional) articles became inserted at various positions
 	between them.
 
+	<p>Note: ArticleEntry.age setting overrides any previous settings.
+
 	@param entries The new suggesion list to be reordered.
 
 	@param maxRecLen The desired length of the suggesion list to
@@ -407,27 +429,33 @@ class SBRGThread extends Thread {
 	as per the above rules.
 
      */
-  private Vector<ArticleEntry> maintainStableOrder1( Vector<ArticleEntry> entries, int maxRecLen) {
+    private Vector<ArticleEntry> maintainStableOrder1( Vector<ArticleEntry> entries, int maxRecLen) {
 
-	if (parent.getSR()==null) return entries;
-	Vector<ArticleEntry> previouslyDisplayedEntries =
-	    parent.getSR().entries;
+	for(ArticleEntry e: entries) {
+	    e.age=0;
+	}
+	
+	SearchResults oldSR =parent.getSR();
+	if (oldSR==null) return entries;
+	Vector<ArticleEntry> previouslyDisplayedEntries = oldSR.entries;
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
-
+	
 	// Make a list and hashtable of all old elements which are excluded
 	HashSet<String> old=new HashSet<String>();
-	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
+	Vector<ArticleEntry> a = new Vector<ArticleEntry>();
 	for(ArticleEntry e: previouslyDisplayedEntries) {
 	    if (exclusions.contains(e.id)) continue;
-	    try {  // We use clone() because we're going to modify e.i
-		a.add((ArticleEntry)e.clone());
+	    try {  // We use clone() because we're going to modify e.i and e.age
+		ArticleEntry q = (ArticleEntry)e.clone();
+		q.age++;
+		a.add(q);
+		old.add(q.id);
 	    }  catch (CloneNotSupportedException ex) {}
-	    old.add(e.id);
 	}
-
+	
 	// create a reordered list 
-	Vector<ArticleEntry> v = new 	Vector<ArticleEntry>();
+	Vector<ArticleEntry> v = new Vector<ArticleEntry>();
 	
 	int na=0;
 	for(ArticleEntry e: entries) {
@@ -450,7 +478,7 @@ class SBRGThread extends Thread {
 	    q.recent=false;
 	    v.add(q);
 	}
-
+	
 	// Adjust positions
 	int k=1;
 	for(ArticleEntry e: v) {
@@ -531,5 +559,14 @@ class SBRGThread extends Thread {
 	}
     }
 
+    /** Returns the value equal to the maximum value of ArticleEntry.age + 1
+     */
+    private static int actualMaxAge( Vector<ArticleEntry> entries) {
+	int m = 0;
+	for(ArticleEntry e: entries) {
+	    if (e.age > m) m = e.age;
+	}
+	return m+1;
+    }
 }
 

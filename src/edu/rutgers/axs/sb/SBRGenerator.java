@@ -73,7 +73,8 @@ public class SBRGenerator {
      * next available list, but it is not ready for display yet. */
     private SBRGThread sbrRunning = null;
     
-    /** Used to keep track of the number of SBRG runs we've done */
+    /** Used to keep track of the number of SBRG runs we've done so
+	far on behalf of this particular session. */
     private int runCnt=0;
 
     /** Used instead of setSBFromRequest() if we know that SB must be
