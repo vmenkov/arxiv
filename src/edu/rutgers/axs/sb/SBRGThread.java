@@ -3,6 +3,7 @@ package edu.rutgers.axs.sb;
 import java.io.*;
 import java.util.*;
 import java.text.*;
+import java.net.*;
 import java.util.regex.*;
 import javax.persistence.*;
 
@@ -47,6 +48,7 @@ class SBRGThread extends Thread {
 	within the user session.
      */
     private final int id;
+    /** The method with which the recommendation list is generated here. */
     final SBRGenerator.Method sbMethod;
 
     /** Creates a thread. You must call its start() method next.
@@ -83,8 +85,10 @@ class SBRGThread extends Thread {
 	    // get the list of article IDs to recommend by some algorithm
 	    if (sbMethod==SBRGenerator.Method.TRIVIAL) {
 		computeRecListTrivial(em,searcher);
-	    } else if (sbMethod==SBRGenerator.Method.ABSTRACTS) {
+	    } else if (sbMethod==SBRGenerator.Method.ABSTRACTS ||
+		       sbMethod==SBRGenerator.Method.COACCESS) {
 		computeRecList(em,searcher);
+		if (error) return;
 	    } else {
 		error = true;
 		errmsg = "Illegal SRB generation method: " + sbMethod;
@@ -124,8 +128,10 @@ class SBRGThread extends Thread {
     String errmsg = "";
 
 
-    /** An auxiliary object for ascending-order sort (i.e. rank 1
-	before rank 2, etc) */
+    /** An auxiliary object used to "integrate" information about an
+	article's position in multiple ranked lists. In particular, it
+	is used for ascending-order sort (i.e. rank 1 before rank 2,
+	etc) */
     private static class ArticleRanks implements Comparable<ArticleRanks> {
 	/** Lucene internal id */
 	int docno;
@@ -152,21 +158,24 @@ class SBRGThread extends Thread {
 	    docno = _docno;
 	    age= _age;
 	}
-	/** Should be called in order of non-decreasing r */
+	/** Adds the information about this article being ranked in
+	    yet another list being merged. For a given article, calls
+	    to this method should be carried out in order of
+	    non-decreasing r. */
 	void add(int r, double deltaScore, int _age) {
 	    if (ranks.size()>0 && r<ranks.elementAt(ranks.size()-1).intValue()){
 		throw new IllegalArgumentException("ArticleRanks.add() calls must be made in order");
 	    }
 	    ranks.add(new Integer(r));
 	    score +=  deltaScore;
-	    if (_age < age) age = _age;
+	    if (_age < age) age = _age;  // old-style ages
 	}
     }
 
-    /** A text message containing the list of ArXiv article IDs of the
-	articles that we decided NOT to show in the rec list (e.g., because
-	they had already been shown to the user in this session in
-	other contexts).
+    /** A human-readable text message containing the list of ArXiv
+	article IDs of the articles that we decided NOT to show in the
+	rec list (e.g., because they had already been shown to the
+	user in this session in other contexts).
     */
     String excludedList = "";
 
@@ -190,7 +199,7 @@ class SBRGThread extends Thread {
     }
  
     /** Computes a suggestion list based on a single article */
-    static private ScoreDoc[] computeArticleBasedList(IndexSearcher searcher, String aid, int maxlen) throws Exception {
+    static private ScoreDoc[] computeArticleBasedListAbstracts(IndexSearcher searcher, String aid, int maxlen) throws Exception {
 	int docno=0;
 	try {
 	    docno= Common.find(searcher, aid);
@@ -203,6 +212,84 @@ class SBRGThread extends Thread {
 	ScoreDoc[] z = (new LongTextSearchResults(searcher, abst, maxlen)).scoreDocs;
 	return z;
     }
+
+   static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
+
+       // http://my.arxiv.org/coaccess/CoaccessServlet
+       // http://my.arxiv.org/coaccess/CoaccessServlet?arxiv_id=0704.0001&maxlen=5
+
+       ScoreDoc [] results =  new ScoreDoc[0];
+ 
+
+       String query = "arxiv_id=" + aid + "&maxlen=" + maxlen;
+
+       String lURLString = "http://my.arxiv.org/coaccess/CoaccessServlet";
+       lURLString += "?" + query;
+
+       URL lURL = new URL( lURLString);
+       Logging.info("SBRG requesting URL " + lURL);
+       HttpURLConnection lURLConnection;
+       //       try {
+	   lURLConnection=(HttpURLConnection)lURL.openConnection();	
+	   //       }  catch(Exception ex) {
+	   //	   errmsg= "Failed to open connection to " + lURL;
+	   //	   error = true;
+	   //	   return results;
+	   //       }
+
+	   //	try {
+	    lURLConnection.connect();
+	    //	} catch(Exception ex) {
+	    //	    errmsg= "Failed to connect to " + lURL;
+	    //	    error = true;
+	    //	    return results;
+	    //	}
+    
+	int code = lURLConnection.getResponseCode();
+	if (code != HttpURLConnection.HTTP_OK) {
+	    throw new IOException("Got an error code from " + lURL + ": " + 
+				  lURLConnection.getResponseMessage());
+	    //	    error = true;
+	    //	    errmsg =lURLConnection.getResponseMessage();
+	    //	    return results;
+	}
+
+	InputStream is=null;	
+	//	try {
+	    is = lURLConnection.getInputStream();
+	    //	}  catch(Exception ex) {
+	    //	}
+	if (is==null) {
+	    String errmsg= "Failed to obtain data from " + lURL;
+	    throw new IOException(errmsg);
+	    //	    error = true;
+	    //	    return results;
+	}
+
+	LineNumberReader r = 
+	    new LineNumberReader(new InputStreamReader(is));
+
+	String line=null;
+	
+	Vector<ScoreDoc> v = new Vector<ScoreDoc>();
+	while((line=r.readLine())!=null) {
+	    String q[] = line.split("\\s+");
+	    if (q.length!=2) continue; // FIXME
+	    String zaid = q[0];
+	    int coaccessCnt = Integer.parseInt(q[1]);
+
+	    int docno=0;
+	    try {
+		docno= Common.find(searcher, zaid);
+	    } catch(IOException ex) {
+		continue; // FIXME
+	    }
+	    v.add( new ScoreDoc( docno, (float)coaccessCnt));
+	}
+	results = (ScoreDoc[])v.toArray(results);
+	return results;
+    }
+
 
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
@@ -229,7 +316,29 @@ class SBRGThread extends Thread {
 	    for(String aid: his.viewedArticlesActionable) {
 		ScoreDoc[] z = parent.articleBasedSD.get(aid);
 		if (z==null) {
-		    z = computeArticleBasedList(searcher, aid, maxlen);
+
+		    if (sbMethod==SBRGenerator.Method.ABSTRACTS) {
+			z=computeArticleBasedListAbstracts(searcher,aid,maxlen);
+		    } else if (sbMethod==SBRGenerator.Method.COACCESS) {
+			try {
+			    z=computeArticleBasedListCoaccess(searcher, aid, maxlen);		    
+			} catch (Exception ex) {
+			    error = true;
+			    errmsg = ex.getMessage();
+			    ex.printStackTrace(System.out);
+			}		
+		    } else {
+			error = true;
+			errmsg = "Illegal SRB generation method: " + sbMethod;
+		    }
+
+
+		    if (error) {
+			Logging.error(errmsg);
+			System.out.println(errmsg);
+			return;
+		    }
+
 		    if (z!=null) parent.articleBasedSD.put(aid,z);
 		    else {
 			// this may happen if the article is too new,
@@ -520,7 +629,7 @@ class SBRGThread extends Thread {
 	    s += " (" + (0.001 * (double)msec) + " sec)";
 	}
 	s += ".";
-	s += "\nSBR method= = " + sbMethod ;
+	s += "\nSBR method=" + sbMethod ;
 
 	if (his!=null) {
 	    s += " The list is based on " +his.actionCount+ " user actions (" +
@@ -539,7 +648,7 @@ class SBRGThread extends Thread {
 	final int maxlen = 100;
 	for(String aid: argv) {
 	    System.out.println("Generating suggestion for aid=" + aid);
-	    ScoreDoc[] z = SBRGThread.computeArticleBasedList(searcher, aid, maxlen);
+	    ScoreDoc[] z = SBRGThread.computeArticleBasedListCoaccess(searcher, aid, maxlen);
 	    if (z!=null) {
 		//parent.articleBasedSD.put(aid,z);
 		for(int j=0; j<z.length && j<5; j++) {

@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.util.regex.*;
-import java.net.*;
 import java.nio.charset.Charset;
 
 import javax.servlet.*;
@@ -58,10 +57,18 @@ public class SBRGenerator {
     /** Recommendation list generation methods
      */
     public static enum Method {
-	TRIVIAL, ABSTRACTS;
+	/** Used for testing: the recommendation list is the same as
+	    the list of articles the user has viewed. */
+	TRIVIAL, 
+	    /** Recommendations are based on the article similarity
+		(titles + abstracts) */
+	    ABSTRACTS, 
+	    /** Recommendations are based on the article's historical
+		coaccess data */
+	    COACCESS;
     };
 
-    /**  Recommendation list generation method 
+    /**  Recommendation list generation method used in this session.
      */
     Method sbMethod = Method.ABSTRACTS;
 
