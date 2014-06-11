@@ -314,7 +314,8 @@ public class SessionData {
 		throw new IllegalArgumentException("Cannot create an article with op code " + op + " without an article ID!");
 	    }
 	} else {
-	    a = Article.getArticleAlways(em,aid,false); // no commit needed here
+	    // no commit needed here, since we're inside a transaction already
+	    a = Article.getArticleAlways(em,aid,false); 
 	}
 	Action r = new Action(u, this, a, op); 
 	r.setActionSource(asrc);

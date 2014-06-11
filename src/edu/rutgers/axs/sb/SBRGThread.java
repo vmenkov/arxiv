@@ -86,7 +86,8 @@ class SBRGThread extends Thread {
 	    if (sbMethod==SBRGenerator.Method.TRIVIAL) {
 		computeRecListTrivial(em,searcher);
 	    } else if (sbMethod==SBRGenerator.Method.ABSTRACTS ||
-		       sbMethod==SBRGenerator.Method.COACCESS) {
+		       sbMethod==SBRGenerator.Method.COACCESS ||
+		       sbMethod==SBRGenerator.Method.SUBJECTS) {
 		computeRecList(em,searcher);
 		if (error) return;
 	    } else {
@@ -198,7 +199,8 @@ class SBRGThread extends Thread {
 	    return m;
     }
  
-    /** Computes a suggestion list based on a single article */
+    /** Computes a suggestion list based on a single article, using
+	text similarity of titles and abstracts */
     static private ScoreDoc[] computeArticleBasedListAbstracts(IndexSearcher searcher, String aid, int maxlen) throws Exception {
 	int docno=0;
 	try {
@@ -212,6 +214,27 @@ class SBRGThread extends Thread {
 	ScoreDoc[] z = (new LongTextSearchResults(searcher, abst, maxlen)).scoreDocs;
 	return z;
     }
+
+    /** Computes a suggestion list based on a single article, using
+	subject categories */
+    static private ScoreDoc[] computeArticleBasedListSubjects(IndexSearcher searcher, String aid, int maxlen) throws Exception {
+
+	int docno= Common.find(searcher, aid);
+	Document doc = searcher.doc(docno);
+
+	String catJoined =doc.get(ArxivFields.CATEGORY);
+	String[] allCats =  CatInfo.split(catJoined);
+	if (allCats.length<1) { return new  ScoreDoc[0]; }
+
+	String[] cats = new String[] {allCats[0]}; // main cat only
+
+	Date since = SearchResults.daysAgo(7);
+	SearchResults bsr = SubjectSearchResults.orderedSearch(searcher, cats, since, null, maxlen);
+	ScoreDoc[] z = bsr.scoreDocs;
+	return z;
+    }
+
+
 
    static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
 
@@ -319,19 +342,15 @@ class SBRGThread extends Thread {
 
 		    if (sbMethod==SBRGenerator.Method.ABSTRACTS) {
 			z=computeArticleBasedListAbstracts(searcher,aid,maxlen);
+		    } else if (sbMethod==SBRGenerator.Method.SUBJECTS) {
+			z=computeArticleBasedListSubjects(searcher,aid,maxlen);
 		    } else if (sbMethod==SBRGenerator.Method.COACCESS) {
-			try {
-			    z=computeArticleBasedListCoaccess(searcher, aid, maxlen);		    
-			} catch (Exception ex) {
-			    error = true;
-			    errmsg = ex.getMessage();
-			    ex.printStackTrace(System.out);
-			}		
+			// exception may be thrown; caught in an outer "catch"
+			z=computeArticleBasedListCoaccess(searcher,aid,maxlen);
 		    } else {
 			error = true;
 			errmsg = "Illegal SRB generation method: " + sbMethod;
 		    }
-
 
 		    if (error) {
 			Logging.error(errmsg);
@@ -375,7 +394,6 @@ class SBRGThread extends Thread {
 	    for(ArticleRanks r: ranked) {
 		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno),
 						  new ScoreDoc(r.docno, (float)r.score));
-
 		ae.age = r.age;
 		if (exclusions.contains(ae.id)) {
 		    excludedList += " " + ae.id;

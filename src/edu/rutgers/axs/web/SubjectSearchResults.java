@@ -90,10 +90,20 @@ public  class SubjectSearchResults extends SearchResults {
 		      int maxlen) throws IOException {
 
 	String[] cats = actor.getCats().toArray(new String[0]);
+	return 	orderedSearch( searcher,  cats, since, toDate, maxlen);
+    }
+   
+
+    public static SubjectSearchResults 
+	orderedSearch(IndexSearcher searcher, String[] cats, Date since,
+		      Date toDate,
+		      int maxlen) throws IOException {
+
 	SubjectSearchResults sr = new SubjectSearchResults(searcher, cats, since, toDate, maxlen);
 	sr.reorderCatSearchResults(searcher.getIndexReader(), cats);
 	return sr;
     }
+
 
 }
 

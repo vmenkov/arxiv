@@ -65,7 +65,14 @@ public class SBRGenerator {
 	    ABSTRACTS, 
 	    /** Recommendations are based on the article's historical
 		coaccess data */
-	    COACCESS;
+	    COACCESS,
+	    /** The baseline method: a few most recent articles from 
+		appropriate subject categories */
+	    SUBJECTS,
+	    /** Not an actual method. This param value is used on
+		session initialization to randmly choose one of the
+		"real" methods */
+	    RANDOM; 
     };
 
     /**  Recommendation list generation method used in this session.
@@ -95,6 +102,16 @@ public class SBRGenerator {
 	sbDebug = rb.getBoolean("sbDebug", sbDebug);
 	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
 	sbMethod = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", sbMethod);
+	if (sbMethod==SBRGenerator.Method.RANDOM) {
+	    sbMethod=pickRandomMethod();
+	}
+    }
+
+    private static SBRGenerator.Method pickRandomMethod() {
+	Method[] methods = {  Method.ABSTRACTS, Method.COACCESS,
+			      Method.SUBJECTS};
+	int z = (int)(methods.length * Math.random());	
+	return  methods[z];
     }
 
     /** This is invoked from the ResultsBase constructor to see if the
