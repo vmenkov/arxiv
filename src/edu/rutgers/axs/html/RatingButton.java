@@ -203,18 +203,30 @@ public class RatingButton {
 	return text.replaceAll(" ", "&nbsp;");
     }
 
+    /*
     public static String judgeNoSrc(String cp, String aid, Action.Op op) {
 	return cp + "/JudgmentServlet?"+BaseArxivServlet.ID +"=" + aid;
     }
-
+    */
 
     /** The URL (relative to the CP) for recording a judgment (or
 	performing another user action) on this doc */
     public static String judge(String cp, String aid, Action.Op op,
 			       ActionSource asrc) {
-	return judgeNoSrc(cp,aid,op) +
+	return 
+	    cp + "/JudgmentServlet?"+BaseArxivServlet.ID +"=" + aid +
 	    "&" +BaseArxivServlet.ACTION+ "=" + op + asrc.toQueryString();
     }
+
+    public static String judgePrefix(String cp, Action.Op op,
+			       ActionSource asrc) {
+ 	return 
+	    cp + "/JudgmentServlet?"+
+	    BaseArxivServlet.ACTION+ "=" + op    + asrc.toQueryString() +
+	    "&"+BaseArxivServlet.ID +"=" ;
+  }
+
+   
 
     /** The following are bit flags from which the "flags" parameter of
 	judgmentBarHTML() may be composed. */

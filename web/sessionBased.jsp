@@ -84,21 +84,23 @@ Article Suggestions</td></tr>
 <%= main.resultsDivHTMLLite(e, largest) %>	
  <%  }  %>
 
-<hr>
+<%   }   %>
 
+<hr>
 <p><small>
 <%= main.researcherSpan(main.infomsg, main.sd.sbrg.researcherSB) %>
 </small>
 </p>
 
-
-<%   }   %>
-
-
 <p>
 <form method=post>
 <input type="button" value="Close"
+title="Close this window. Your browsing history will be remembered, and this window will reappear with updated recommendatin after you view more articles."
 onclick="window.close()">
+
+<input type="button" value="Change focus"
+title="Close this window. Your previous browsing history will be forgotten; once you view more articles, this window will reapper with new recommendations."
+onclick="javascript:window.opener.location.href='LogoutServlet?mex=true&redirect=<%=main.sd.sbrg.encodedChangeFocusURL()%>'; window.close()">
 </form>
 
 </body>

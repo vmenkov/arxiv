@@ -59,8 +59,8 @@ public class SessionBased  extends ResultsBase {
 	if (sd.sbrg!=null) {
 	    // get the pre-computed rec list
 	    sr = sd.sbrg.getSR();
+	    infomsg += "<br>" + sd.sbrg.description() + "\n";
 	    if (sr!=null) {
-		infomsg += "<br>" + sd.sbrg.description() + "\n";
 		plid = sd.sbrg.getPlid();
 		maxAge = sd.sbrg.getMaxAge();
 	    } else if (sd.sbrg.hasRunning()) {
@@ -87,6 +87,8 @@ public class SessionBased  extends ResultsBase {
 
     */
     public String resultsDivHTMLLite(ArticleEntry e, double largest) {
+
+
 
 	String rt = "[" + e.idline + "; score="+e.score+ "; "+
 	    e.formatDate()+"]";
@@ -117,7 +119,11 @@ public class SessionBased  extends ResultsBase {
 	}
 	
 
-	String s =  
+	String s =   
+	    "<!-- The URL used in the list reorder call back should be \n" +
+
+	    	     urlReorderPrefix() + "\n" +
+	    " with the column-separated list of article IDs (e.g. '0704.0001:physics/1234:q-bio/5678' appended to it\n-->\n" +
 
 	    "<table id=\"table" + e.resultsDivId() + "\"><tr><td>\n" +  
 	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\"" + divBackColor + ">" +

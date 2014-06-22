@@ -271,6 +271,13 @@ public class ResultsBase {
 	return ServletConstants.articleServletUrl(cp, id, Action.Op.VIEW_PDF,asrc);
     }
 
+    
+    public  String urlReorderPrefix() {
+	return RatingButton.judgePrefix(cp,  Action.Op.REORDER,  asrc);
+	
+	//	return ServletConstants.articleServletUrlPrefix(cp, Action.Op.REORDER, asrc);
+    }
+    
 
     /** Generates a "A" HTML element */
     static String a(String url, String body) {

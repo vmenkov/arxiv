@@ -127,7 +127,11 @@ import  edu.rutgers.axs.web.SessionData;
 
 	    /** Navigation links in the main page. */
 	    PREV_PAGE, 
-	    NEXT_PAGE;
+	    NEXT_PAGE,
+
+	    /** User reorders list items in a recommendation list,
+		using the jQuery "Sortable" feature.   */
+	    REORDER;
 
 	/** Data types for which FilterServlet does not "filter", but
 	 * redirects to the source, as per Simeon Warner, 2012-01-04 */

@@ -41,7 +41,7 @@
 Session-Based recommendation lists (SBRL), different versions:</strong></a>
 <ul>
 <li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=TRIVIAL">Trivial</a> (recommendation list = list of viewed articles)
-<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=SUBJECTS">Subject</a> (the baseline method: a few recent articles from the subject categories of the viewed articles)
+<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=SUBJECTS">Subject based</a> (the baseline method: a few recent articles from the subject categories of the viewed articles)
 <li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=ABSTRACTS">Article similarity based</a> (recommendation generated using article titles and abstracts)
 <li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=COACCESS">Coaccess based</a> (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data thru March 2014)
 

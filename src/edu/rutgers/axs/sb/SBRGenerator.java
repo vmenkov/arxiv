@@ -5,6 +5,7 @@ import java.util.*;
 import java.text.*;
 import java.util.regex.*;
 import java.nio.charset.Charset;
+import java.net.URLEncoder;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -75,9 +76,16 @@ public class SBRGenerator {
 	    RANDOM; 
     };
 
-    /**  Recommendation list generation method used in this session.
+    /**  Recommendation list generation method currently used in this session.
      */
     Method sbMethod = Method.ABSTRACTS;
+
+
+    /**  Recommendation list generation method that was requested for
+	 this session. This can be RANDOM, while sbMethod will contain
+	 the actual (randomly chosen) method.
+     */
+   Method requestedSbMethod = Method.ABSTRACTS;
 
     /** Pointer to a thread object that contains the most recently compiled
 	recommendation list ready for display. */
@@ -101,10 +109,11 @@ public class SBRGenerator {
 	// the same param initializes both vars now
 	sbDebug = rb.getBoolean("sbDebug", sbDebug);
 	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
-	sbMethod = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", sbMethod);
+	sbMethod = requestedSbMethod = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", sbMethod);
 	if (sbMethod==SBRGenerator.Method.RANDOM) {
 	    sbMethod=pickRandomMethod();
 	}
+	Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod);
     }
 
     private static SBRGenerator.Method pickRandomMethod() {
@@ -207,16 +216,21 @@ public class SBRGenerator {
     }
 
     synchronized public String description() {
-	String s = sbrReady==null? "n/a" : sbrReady.description();
-	s += "<br>Per-article result list sizes:\n";
-	for(String aid: articleBasedSD.keySet()) {
-	    s += "<br>* "+aid+" : "+articleBasedSD.get(aid).length+"\n";
+	if (sbrReady==null) {
+	    String s= "No rec list has been generated yet. Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + "\n";
+	    return s;
+	} else {
+	    String s = sbrReady.description() + "\n";
+	    s += "<br>Per-article result list sizes:\n";
+	    for(String aid: articleBasedSD.keySet()) {
+		s += "<br>* "+aid+" : "+articleBasedSD.get(aid).length+"\n";
+	    }
+	    s += "<br>Excludable articles count: " + linkedAids.size()+"\n";
+	    if (sbrReady!=null) {
+		s += "<br>Actually excluded: " + sbrReady.excludedList+"\n";
+	    }
+	    return s;
 	}
-	s += "<br>Excludable articles count: " + linkedAids.size()+"\n";
-	if (sbrReady!=null) {
-	    s += "<br>Actually excluded: " + sbrReady.excludedList+"\n";
-	}
-	return s;
 	
     }
 
@@ -303,6 +317,14 @@ public class SBRGenerator {
 	Logging.info("SBRG(session="+sd.getSqlSessionId()+"): added action ("+a.getOp()+":"+ aid+"); article cnt = " + maintainedActionHistory.articleCount);
 
 
+    }
+
+    public String encodedChangeFocusURL() {
+	String url = "index.jsp?sb=true&sbMethod=COACCESS";
+	if (sbDebug) {
+	    url += "&sbDebug=true";
+	}
+	return URLEncoder.encode(url);
     }
 
 }
