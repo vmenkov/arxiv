@@ -65,6 +65,26 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	}
     }
 
+    /** This is used when recording a user-reordered list.
+	@param rank The new position, 1-based (to be consistent
+	with the semantics used elsewhere)
+    */
+    PresentedListEntry(int rank, String aid)    {
+	setRank(rank);
+	setAid(aid);
+	setScore(0);
+	// FIXME: maybe we should copy this info from the original list?
+	/*
+	setScore(e.score);
+	ArticleEntry.Provenance prov = e.getProv();
+	if (prov!=null) {
+	    setArank(prov.arank);
+	    setBrank(prov.brank);
+	    setFromA(prov.fromA);
+	}
+	*/
+    }
+
     /** Returns a "dummy" ArticleEntry based on this PresentedListEntry
      */
     ArticleEntry toArticleEntry() {

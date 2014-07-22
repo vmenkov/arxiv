@@ -333,7 +333,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	<p>Introduced due to TJ's request that involves recording NEXT_PAGE/
 	PREV_PAGE operations. 2013-02.
     */
-    private void recordAction(EntityManager em, User actor) {
+    private void recordAction(EntityManager em, User actor) throws WebException {
 	Action.Op op = (Action.Op)Tools.getEnum(request, Action.Op.class,
 						BaseArxivServlet.ACTION, Action.Op.NONE);	 
 
@@ -348,7 +348,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	}
 
 	em.getTransaction().begin();
-	Action a = sd.addNewAction(em, actor, null, op, asrc);
+	Action a = sd.addNewAction(em, actor, op, null, null, asrc);
 	//em.persist(u);	       
 	em.getTransaction().commit(); 
     }

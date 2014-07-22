@@ -34,6 +34,9 @@ import edu.rutgers.axs.html.*;
 
  */
 public class JudgmentServlet extends BaseArxivServlet {
+
+    /** Can be used for the REORDER action */
+    static public final String PREFIX = "prefix";
     
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
@@ -57,7 +60,28 @@ public class JudgmentServlet extends BaseArxivServlet {
 
 	    User u= (user!=null) ? User.findByName(em, user) : null;
 		
-	    if (op!=Action.Op.NONE) {
+	    if (op==Action.Op.REORDER) {
+		// supplies a column-separated list of IDs (maybe with prefixes)
+		String prefix = request.getParameter(PREFIX);
+		String ids = request.getParameter(ID);
+		if (ids==null) throw new WebException("No article id list supplied");
+		String q[] = ids.split(":");
+		if (q.length==0) throw new WebException("Empty article id list supplied");
+		// remove prefix from each id
+		if (prefix !=null && prefix.length()>0) {
+		    for(int i=0; i<q.length; i++) {
+			if (!q[i].startsWith(prefix)) throw new WebException("No prefix '"+prefix+"' in article id '"+q[i]+"'");
+			q[i] = q[i].substring(prefix.length());
+		    }
+		}
+	
+		// Begin a new local transaction so that we can persist a new entity	
+		em.getTransaction().begin();
+		Action a= sd.addNewAction(em, u, op, null, q, asrc);
+		//em.persist(u);	       
+		em.getTransaction().commit(); 
+
+	    } else if (op!=Action.Op.NONE) {
 		String id = request.getParameter(ID);
 		if (id==null) throw new WebException("No aticle id supplied");
 		// Record the user's desire not to see it page again. This is only used in SB.
@@ -68,7 +92,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 		
 		// Begin a new local transaction so that we can persist a new entity	
 		em.getTransaction().begin();
-		Action a= sd.addNewAction(em, u, id, op, asrc);
+		Action a= sd.addNewAction(em, u, op, id, null, asrc);
 		//em.persist(u);	       
 		em.getTransaction().commit(); 
 	    }

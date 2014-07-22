@@ -104,6 +104,26 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setQueryId(long val) {     queryId    = val;    }
     public long getQueryId() {        return  queryId;    }
 
+    /** This value, when non-null, indicates that this PresentedList
+	object represents not a system-generated list, but a list
+	reordered by the user. (This is a feature that is being
+	introduced into SB as of July 2014). (Note that the
+	PresentedList's "type" does not indicate that this is a
+	reordered list, since the original type is stored there.) The
+	value itself refers to the original, system-generated list,
+	whose reordering this list is.
+     */
+    @Column(nullable=true) 
+	@Display(editable=false, order=5.5, link="viewPresentedList.jsp")  
+	@Basic
+	private long userReorderingOfPresentedListId;
+    public void setUserReorderingOfPresentedListId(long val) {     
+	userReorderingOfPresentedListId = val;
+    }
+    public long getUserReorderingOfPresentedListId() {        
+	return  userReorderingOfPresentedListId;    
+    }
+
     /** In the case of a suggestion list, this refers to the list of
 	article info entries; otherwise (i.e., for a user profile), it
 	is empty */
@@ -146,6 +166,17 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    docs.add( le ); // FIXME: should not we use get/set?
 	}
     }
+
+    /** This is only used for user-reordered lists */
+    public void fillArticleList(String[] aids) {
+	docs.setSize(0);
+	for(int rank=0; rank<aids.length; rank++) {
+	    PresentedListEntry le=new PresentedListEntry(rank+1, aids[rank]);
+	    docs.add( le ); // FIXME: should not we use get/set?
+	}
+    }
+
+
 
     /**  Copies the content of this PresentedList into a vector of
 	 ArticleEntry objects.

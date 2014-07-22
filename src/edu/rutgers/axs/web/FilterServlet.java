@@ -191,7 +191,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 		u = (user!=null) ? User.findByName(em, user) : null;
 
 		Logging.info("FS: pi="+pi+", recording as " + actionable);
-		Action a = sd.addNewAction(em, u, actionable.aid, actionable.op, asrc);
+		Action a = sd.addNewAction(em, u, actionable.op, 
+					   actionable.aid, null, asrc);
 
 		if (u!=null) {
 		    skeletonAE = ArticleEntry.getDummyArticleEntry(actionable.aid, 1);

@@ -301,16 +301,37 @@ public class SessionData {
 	return b;
     }
 
-    /** Creates an Action object; adds an Action object to the record
-	of the specified user's activity (unless it's an anon session)
-
+    /** Creates and "persists" an Action object; adds an Action object
+	to the record of the specified user's activity (unless it's an
+	anon session).
+	
 	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
 	@param u User object. May be null (for anon user actions)
+	@param aid The ArXiv ID of the article on which the action was
+	carried out. (This may be null, for several
+	non-article-specific action types, such as NEXT_PAGE, PREV_PAGE,
+	and REORDER)
+	@param reorderedAids The list of articles reordered by the user. This is supplied for the REORDER action (instead of a single article ID)
+
+	@throws WebException On illegal argument combinations
     */
-    public Action addNewAction(EntityManager em,  User u, String aid, Action.Op op, ActionSource asrc) {
+    public Action addNewAction(EntityManager em,  User u, Action.Op op, 
+			       String aid, String reorderedAids[],
+			       ActionSource asrc) throws WebException {
 	Article a=null;
-	if (aid==null) {
-	    if (op!=Action.Op.NEXT_PAGE && op!=Action.Op.PREV_PAGE) {
+	long newPLid = 0; // for REORDER op only
+	if (aid==null) { // article ID is usually required, except for..
+	    if (op==Action.Op.REORDER) {
+		// have a user-reordered list to save
+		long oplid = asrc.presentedListId;
+		if (oplid==0) throw new WebException("No original presented list ID is supplied");
+
+		PresentedList original=(PresentedList)em.find(PresentedList.class,oplid);
+		if (original==null)  throw new WebException("No presented list for the supplied ID=" + oplid + " can be found!");
+		PresentedList newPL = saveReorderedPresentedList(em,original,u,reorderedAids,sqlSessionId); 
+		newPLid = newPL.getId();
+	    } else if (op==Action.Op.NEXT_PAGE && op==Action.Op.PREV_PAGE) {
+	    } else {
 		throw new IllegalArgumentException("Cannot create an article with op code " + op + " without an article ID!");
 	    }
 	} else {
@@ -320,6 +341,7 @@ public class SessionData {
 	Action r = new Action(u, this, a, op); 
 	r.setActionSource(asrc);
         if (u!=null) u.addAction(r); 
+	if (op==Action.Op.REORDER) r.setNewPresentedListId(newPLid);
 	em.persist(r);
 	if (u!=null) r.bernoulliFeedback(em); // only affects Bernoulli users
 	sbrg.addAction(r); // updates the session history for sb
@@ -327,4 +349,23 @@ public class SessionData {
     }
 
 
+    /** Creates a new PresentedList object which describes the user-actuated
+	reordering of a previously exiting ("original") PresentedList.
+
+	There is never a DataFile link in this object; this info has to
+	be accessed through the original PresentedList object.
+    */
+    PresentedList saveReorderedPresentedList(EntityManager em, PresentedList original, User u, String aids[], long session) {
+	PresentedList plist = new PresentedList(original.getType(), u, session);
+	plist.setUserReorderingOfPresentedListId(original.getId());
+	plist.fillArticleList(aids);	
+	//	if (df!=null) plist.setDataFileId( df.getId());
+	//if (eq!=null) plist.setQueryId( eq.getId());
+	em.getTransaction().begin();
+	em.persist(plist);
+	em.getTransaction().commit();
+	return plist;
+    }
+
+ 
 }

@@ -288,14 +288,10 @@ import  edu.rutgers.axs.web.SessionData;
     public Source getSrc() { return src; }
     public void setSrc(Source x) { src = x; }
 
-    /** Optional link to the DataFile which contains the (original,
-	Algo-2-generated) suggestion list from whose context the user
-	effected this action. This field is only applicable to actions
-	whose source is Source.MAIN_SL or Source.MAIN_MIX. Even then,
-	it may not be set if it is the very first suggestion list
-	presentation done by the system for this user, and the SL is
-	generated on the fly (because it is known to be identical to the 
-	user cat search results).
+    /** Optional link to the PresentedList object that describes the 
+	list of articles presented to the user in whose context the
+	user action was carried out. The action, then, can be interpreted
+	as a user feedback in response to that list.
      */
 
     @Column(nullable=true) 
@@ -318,6 +314,15 @@ import  edu.rutgers.axs.web.SessionData;
     public User.Day getDay() { return day; }
     public void setDay(User.Day x) { day = x; }
 
+    /** Only used in RELOAD actions, refers to the new
+	(user-reordered) presented list reported by the user agent.
+     */
+    @Column(nullable=true) 
+	@Display(editable=false, order=5.3, link="viewPresentedList.jsp")  
+	@Basic
+	private long newPresentedListId;
+    public void setNewPresentedListId(long val) {  newPresentedListId = val;  }
+    public long getNewPresentedListId() {  return  newPresentedListId;    }
 
 
 
