@@ -304,6 +304,10 @@ public class SessionData {
     /** Creates and "persists" an Action object; adds an Action object
 	to the record of the specified user's activity (unless it's an
 	anon session).
+
+	<p>
+	This method has no transaction begin/end calls in it; it normally
+	should appear inside a transaction.
 	
 	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
 	@param u User object. May be null (for anon user actions)
@@ -361,9 +365,9 @@ public class SessionData {
 	plist.fillArticleList(aids);	
 	//	if (df!=null) plist.setDataFileId( df.getId());
 	//if (eq!=null) plist.setQueryId( eq.getId());
-	em.getTransaction().begin();
+	//em.getTransaction().begin(); // *****
 	em.persist(plist);
-	em.getTransaction().commit();
+	//em.getTransaction().commit();
 	return plist;
     }
 

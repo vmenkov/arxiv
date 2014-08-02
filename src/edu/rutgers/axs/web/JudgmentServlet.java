@@ -60,6 +60,13 @@ public class JudgmentServlet extends BaseArxivServlet {
 
 	    User u= (user!=null) ? User.findByName(em, user) : null;
 		
+	    //   /arxiv/JudgmentServlet?id=1406.2398&action=INTERESTING_AND_NEW&src=MAIN_MIX&pl=3456
+
+	    // /arxiv/JudgmentServlet?id=0805.2417&action=INTERESTING_BUT_KNOWN&src=SB&pl=3463
+
+	    // /arxiv/JudgmentServlet?prefix=xxx-&id=xxx-q-bio/0611055:xxx-q-bio/0701040:xxx-0904.1959&action=REORDER&src=SB&pl=3463
+
+
 	    if (op==Action.Op.REORDER) {
 		// supplies a column-separated list of IDs (maybe with prefixes)
 		String prefix = request.getParameter(PREFIX);
@@ -70,7 +77,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 		// remove prefix from each id
 		if (prefix !=null && prefix.length()>0) {
 		    for(int i=0; i<q.length; i++) {
-			if (!q[i].startsWith(prefix)) throw new WebException("No prefix '"+prefix+"' in article id '"+q[i]+"'");
+			if (!q[i].startsWith(prefix)) throw new WebException("No prefix '"+prefix+"' was found in article id '"+q[i]+"'");
 			q[i] = q[i].substring(prefix.length());
 		    }
 		}
