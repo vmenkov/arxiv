@@ -123,7 +123,10 @@ public class SessionBased  extends ResultsBase {
 	    "<!-- The URL used in the list reorder call back should be \n" +
 
 	    	     urlReorderPrefix() + "\n" +
-	    " with the column-separated list of article IDs (e.g. '0704.0001:physics/1234:q-bio/5678' appended to it\n-->\n" +
+	    " with the colon-separated list of article IDs (e.g. '0704.0001:physics/1234:q-bio/5678' appended to it."+
+	    "One can also use an arbitrary prefix before each article ID; that prefix can be specified with 'prefix=XXX'. For example:\n"+
+	    urlReorderPrefix() + "xx-0704.0001:xx-physics/1234:xx-q-bio/5678&prefix=xx-" +
+	    "\n-->\n" +
 
 	    "<table id=\"table" + e.resultsDivId() + "\"><tr><td>\n" +  
 	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\"" + divBackColor + ">" +
