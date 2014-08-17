@@ -14,11 +14,19 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.sb.SBRGenerator;
 
 /** A single instance of this class is associated with a particular
-    session of the My.ArXiv web application.
+    session of the My.ArXiv web application. It contains information
+    about the logged-in user, various session-scope data structures
+    (in particular, those used for SB recommendations), and a link to
+    the database object (Session) corresponding to the session.
+
+    <p>There is normally a one-to-one association between our
+    SessionData objects and HttpSession objects of the servlet
+    container (Tomcat). The latter stores the former as a property,
+    and the formar back-links to the latter as well.
  */
 public class SessionData {
 
-    /** Back-pointer */
+    /** Back-pointer to the web server's object associated with this session. */
     final private HttpSession session;
 
     static private EntityManagerFactory factory;// = null;
@@ -98,6 +106,9 @@ public class SessionData {
     }  
 
 
+    private final static String ATTRIBUTE_SD = "sd";
+
+
     /** Looks up the SessionData object already associated with the
 	current session, or creates a new one. This is done atomically,
         synchronized on the session object.
@@ -109,19 +120,44 @@ public class SessionData {
 	SessionData sd  = null;
 	synchronized(session) {
   
-	    final String ATTRIBUTE_SD = "sd";
 	    sd  = ( SessionData) session.getAttribute(ATTRIBUTE_SD);
 	    if (sd == null) {
 		sd = new SessionData(session,request);
 		session.setAttribute(ATTRIBUTE_SD, sd);
 	    }
-	    //sd.update(request);
+	}
+	return sd;
+    }
 
+    /** Discards the SessionData object (if any) associated with the
+	current web session; then creates a new one and stores it.
+	This is primarily used for the "change focus" functionality in SB. 
+	
+	<p>When no SessionData object exists yet, this method is
+	similar to getSessionData()
+     */
+    static synchronized SessionData replaceSessionData(HttpServletRequest request) 
+	throws WebException, IOException {
+
+	HttpSession session = request.getSession();
+	SessionData sd  = null;
+	synchronized(session) {  
+	    sd = new SessionData(session,request);
+	    session.setAttribute(ATTRIBUTE_SD, sd);
 	}
 	return sd;
      }
 
- 
+    /** Simply invalidates the HttpSession. This means that the associated 
+	SessionData object will be discarded as well. 
+     */
+    static synchronized void //SessionData
+	discardSessionData(HttpServletRequest request) 
+	throws WebException, IOException {
+	HttpSession session = request.getSession();
+	session.invalidate();
+    }
+
     ServletContext getServletContext() {
 	return session.getServletContext(); 
     }

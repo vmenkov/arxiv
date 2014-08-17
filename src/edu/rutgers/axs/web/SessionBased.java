@@ -121,9 +121,8 @@ public class SessionBased  extends ResultsBase {
 
 	String s =   
 	    "<!-- The URL used in the list reorder call back should be \n" +
-
 	    	     urlReorderPrefix() + "\n" +
-	    " with the colon-separated list of article IDs (e.g. '0704.0001:physics/1234:q-bio/5678' appended to it."+
+	    " with the colon-separated list of article IDs (e.g. '0704.0001:physics/1234:q-bio/5678' ) appended to it. \n"+
 	    "One can also use an arbitrary prefix before each article ID; that prefix can be specified with 'prefix=XXX'. For example:\n"+
 	    urlReorderPrefix() + "xx-0704.0001:xx-physics/1234:xx-q-bio/5678&prefix=xx-" +
 	    "\n-->\n" +

@@ -14,15 +14,17 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 
 
 /** Each PresentedList instance contains information about one list of
-    articles that was presented to the user within a single web page.   
+    articles that was presented to the user within a single web page.
     This is typically a section (10-25 articles) of the search results
     list produced for a particular query (or for the user's categories
-    of interest), or of a suggestion list produced by one algorithm or another.
+    of interest), or of a suggestion list produced by one algorithm or
+    another.  A SessionBased recommendation list is represented by a
+    PresentedList object as well.
 
-    <p> Links to a PresentedList are contained in the "action source"
-    information of all user actions where it makes sense. This allows
-    one to reconstruct the "context" ("what the user saw") within which the 
-    user performed a particular action.
+    <p>A reference to the relevant PresentedList is contained in the
+    "action source" information of every user action where it makes
+    sense. This allows one to reconstruct the "context" ("what the
+    user saw") within which the user performed a particular action.
  */
 @SuppressWarnings("unchecked")
 @Entity
@@ -70,8 +72,8 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     /** The situation in which the list was generated and presented
 	(search results, suggestion list of one kind or another,
 	ect.). This corresponds to various screens of the My.ArXiv Web
-	UI. This is normally the same value as recoreded for the user
-	actions that originated from the context of this presented
+	UI. Normally, the same value will be recorded in each user
+	action that originates in the context of this presented
 	list. */
     @Column(nullable=true,length=24) @Enumerated(EnumType.STRING) 
 	@Display(editable=false, order=5.2) 
@@ -81,9 +83,9 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
     public void setType(Action.Source x) { type = x; }
 
     /** Optional link to the DataFile which contains the (original,
-	Algo-2-generated) suggestion list on which this presented list
+	TJ-Algo-2-generated) suggestion list on which this presented list
 	was based (directly or via Team-Draft merger). This is only
-	applicable to lists presenting a (section of a) suggestion list
+	applicable to lists presenting [a section of] a suggestion list
 	of some kind.
      */
     @Column(nullable=true) 	
@@ -141,7 +143,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	return null;
     }
 
-    /** Don't use this. It exists just to keep the enhancer from complaining */
+    /** Don't use this method. It exists just to keep the OpenJPA Enhancer from complaining */
     private PresentedList() {}
 
     /** The basic constructor. Should be followed by calling set

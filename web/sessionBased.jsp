@@ -100,7 +100,7 @@ onclick="window.close()">
 
 <input type="button" value="Change focus"
 title="Close this window. Your previous browsing history will be forgotten; once you view more articles, this window will reapper with new recommendations."
-onclick="javascript:window.opener.location.href='LogoutServlet?mex=true&redirect=<%=main.sd.sbrg.encodedChangeFocusURL()%>'; window.close()">
+onclick="javascript:window.opener.location.href='LogoutServlet?stay=ON&redirect=<%=main.sd.sbrg.encodedChangeFocusURL()%>'; window.close()">
 </form>
 
 </body>

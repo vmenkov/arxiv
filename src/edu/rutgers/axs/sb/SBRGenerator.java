@@ -40,7 +40,9 @@ public class SBRGenerator {
     /** Additional mode parameters for the SB generator */
     public boolean sbDebug = false;
     /** This controls the way of achieving "stable order" of the
-	articles in the rec list */
+	articles in the rec list. (This paramter has nothing to do 
+	with merging lists obtained by different methods!)
+    */
     public int sbMergeMode = 1;
 
     void validateSbMergeMode() throws WebException {
@@ -71,21 +73,26 @@ public class SBRGenerator {
 		appropriate subject categories */
 	    SUBJECTS,
 	    /** Not an actual method. This param value is used on
-		session initialization to randmly choose one of the
-		"real" methods */
+		session initialization to randomly choose one of the
+		"real" methods. After that, the sbMethod parameter in
+		the SBR generator is set to that real method. 
+	    */
 	    RANDOM; 
     };
 
     /**  Recommendation list generation method currently used in this session.
+	 This is what's called the "Similarity" parameter in PK's 2014-06-04
+	 experiment proposal. This is initialized with NULL, so that we'll
+	 detect any attempt at re-initialization.
      */
-    Method sbMethod = Method.ABSTRACTS;
+    Method sbMethod = null;
 
 
     /**  Recommendation list generation method that was requested for
 	 this session. This can be RANDOM, while sbMethod will contain
 	 the actual (randomly chosen) method.
      */
-   Method requestedSbMethod = Method.ABSTRACTS;
+    private Method requestedSbMethod = null;
 
     /** Pointer to a thread object that contains the most recently compiled
 	recommendation list ready for display. */
@@ -99,23 +106,46 @@ public class SBRGenerator {
 	far on behalf of this particular session. */
     private int runCnt=0;
 
-    /** Used instead of setSBFromRequest() if we know that SB must be
-	turned on. This happens when the user explicitly loads sessionBased.jsp
+    /** Enables SB generation, and sets all necessary mode parameters
+	etc. This method may be invoked directly (from
+	SessionBased.java, when the user explicitly loads
+	sessionBased.jsp), or from setSBFromRequest() (which happens
+	whenever the user loads any page with sb=true in the URL).
+
+	<p>It may have been more logical to put this functionality
+	into the constructor, but in our setup the constructor is
+	invoked immediately when the session is created, and merely
+	created a dummy (and disabled) SBRG object.
      */
-    public void turnSBOn(ResultsBase rb) throws WebException {
+    public synchronized void turnSBOn(ResultsBase rb) throws WebException {
 	allowedSB = true;
 	sbMergeMode = rb.getInt("sbMerge", sbMergeMode);
 	validateSbMergeMode();
 	// the same param initializes both vars now
 	sbDebug = rb.getBoolean("sbDebug", sbDebug);
 	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
-	sbMethod = requestedSbMethod = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", sbMethod);
-	if (sbMethod==SBRGenerator.Method.RANDOM) {
-	    sbMethod=pickRandomMethod();
+
+	Method m = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", null); 
+
+	if (requestedSbMethod == null) { //has not been set before, must set now
+	    requestedSbMethod = (m==null) ? Method.ABSTRACTS : m;
+	    if (sbMethod!=null) {
+		throw new WebException("Somehow we have already set the SB method, and cannot change it anymore!");
+	    }
+	    sbMethod = (requestedSbMethod == Method.RANDOM)?
+		pickRandomMethod() : requestedSbMethod;
+
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod);
+	} else if  (m==null || requestedSbMethod == m ) {
+	    // OK: has already been set, and no attempt to re-set now
+	} else  {  // prohibited attempt to re-set
+	    throw new WebException("Cannot change the SB method to " + m + " now, since "  + requestedSbMethod + " already was requested before");
 	}
-	Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod);
+
     }
 
+    /** Randomly selects a SBR generation method to use in this session.
+     */
     private static SBRGenerator.Method pickRandomMethod() {
 	Method[] methods = {  Method.ABSTRACTS, Method.COACCESS,
 			      Method.SUBJECTS};
@@ -318,9 +348,13 @@ public class SBRGenerator {
 
 
     }
-
+    
+    /** This is a URL used in the "Change Focus" buton in the SB window.
+	The user will be redirected to this URL once he's gone through
+	the logout servlet, where his current session will be terminated.
+     */
     public String encodedChangeFocusURL() {
-	String url = "index.jsp?sb=true&sbMethod=COACCESS";
+	String url = "index.jsp?sb=true&sbMethod=RANDOM";
 	if (sbDebug) {
 	    url += "&sbDebug=true";
 	}
