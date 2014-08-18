@@ -10,12 +10,20 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 
-/** Terminates the current web session. By default, this also
-    terminates the "extended session" (maintained in the database), to
-    ensure complete log out; but there is option mex=true, which can
-    be used to maintains the extended session. This option is used to merely
-    terminate the transient session, and thus allow to start a new session
-    in the SB context.
+/** Terminates the current web session. 
+
+    By default (stay=OFF), this also fully logs out the user
+    (terminates the "extended session", if there is any). However,
+    this servlet can also be used for terminating the session without
+    logging out (i.e., another session for the same user will start
+    right away). This feature is accessed with stay=ON, and is used
+    for the "change of focus" functionality in SB. 
+
+    There is also an "intermediate" functionality (currently not used
+    anywhere): with stay=ESONLY, the current session is terminated,
+    but the extended session survives, so that if the user has been
+    logged with the "remember me" box checked, he will remain logged
+    in, and merely will start another session.
 */
 public class LogoutServlet extends HttpServlet {
 
@@ -49,8 +57,7 @@ public class LogoutServlet extends HttpServlet {
 	EntityManager em=null;
 	try {
 
-	    // maintain extended session?
-	    //boolean mex = Tools.getBoolean(request, "mex", false);
+	    // full log out, or just a "change of focus"?
 	    Stay stay = (Stay)Tools.getEnum(request, Stay.class, STAY, Stay.OFF);
 	  
 	    // where to go after?
