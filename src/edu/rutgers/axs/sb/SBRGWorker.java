@@ -50,10 +50,10 @@ import edu.rutgers.axs.indexer.*;
 
     <p>
     FIXME: must not select based on similarity to "prohibited" articles!
-
     
  */
 class SBRGWorker  {
+    /** Back link to the SBRGenerator on whose behalf this worker works.  */
     private final SBRGenerator parent;
 
     /** The method with which the recommendation list is generated here. */
@@ -87,8 +87,12 @@ class SBRGWorker  {
 
     private ActionHistory his = null;
 
-    private long threadID;
-    private long getId() { return threadID; }
+    /** Looks up the JVM thread ID for the current thread (the SBRGThread within whose
+	context this worker works)
+     */
+    private long getId() { 
+	return Thread.currentThread().getId(); 
+    }
 
     /** The main method for the actual recommendation list generation. It may be invoked
 	several times over the life of a SBRGWorker instance, with a new invocation 
@@ -97,9 +101,8 @@ class SBRGWorker  {
 	@param runID A sequential ID (zero-based) of this
 	SBRL-generation run within the user session.
      */
-    synchronized void work(EntityManager em, IndexSearcher searcher, long _threadID, int runID, ActionHistory _his)  {
-	
-	threadID = _threadID;
+    synchronized void work(EntityManager em, IndexSearcher searcher, int runID, ActionHistory _his)  {
+
 	his = _his;
 	error = false;
 	errmsg = "";
@@ -424,6 +427,10 @@ class SBRGWorker  {
 	list, in their original order.
 
 	<p>Note: ArticleEntry.age setting overrides any previous settings.
+
+	<p>FIXME: As the "old" ordering we use parent.getSR(), this won't
+	work in case of "stabilizing" intermediary (pre-merge) lists in 
+	a team-draft merge context. Only the final list can be stabilized.
      */
     private Vector<ArticleEntry> maintainStableOrder2( Vector<ArticleEntry> entries, int maxRecLen) {
 
@@ -626,7 +633,7 @@ class SBRGWorker  {
 	return plist;
     }
 
-    /** Produces a human-readable description of what this thread has done. */
+    /** Produces a human-readable description of this worker's particulars. */
     public String description() {
 	String s = "SBR method=" + sbMethod + "; stableOrder=" + sbStableOrderMode;
 	return s;

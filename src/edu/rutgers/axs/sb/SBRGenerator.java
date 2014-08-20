@@ -226,7 +226,7 @@ public class SBRGenerator {
     public SearchResults getSR() {
 	if (sbrReady==null) return null;
 	SearchResults sr =  sbrReady.sr;      
-	if (sbrReady.sbMethod != Method.TRIVIAL) {
+	if (sbrReady.worker.sbMethod != Method.TRIVIAL) {
 	    int rmCnt = sr.excludeSomeSB(linkedAids);
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").getSR(): Removed " + rmCnt + " additional entries from display list");
 	}
