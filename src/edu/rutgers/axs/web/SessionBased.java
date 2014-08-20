@@ -62,7 +62,7 @@ public class SessionBased  extends ResultsBase {
 	    infomsg += "<br>" + sd.sbrg.description() + "\n";
 	    if (sr!=null) {
 		plid = sd.sbrg.getPlid();
-		maxAge = sd.sbrg.getMaxAge();
+		maxAge = sr.getMaxAge();
 	    } else if (sd.sbrg.hasRunning()) {
 		// tell the browser to come ask again in a few sec
 		wantReload=true;
@@ -74,7 +74,7 @@ public class SessionBased  extends ResultsBase {
 	// to form FilterServlet URLs
 	Action.Source srcType =	 Action.Source.SB;
 	asrc= new ActionSource(srcType, plid);
-	infomsg += "<br>Session " + sd.getSqlSessionId() +  "\n";
+	//infomsg += "<br>Session " + sd.getSqlSessionId() +  "\n";
     }
 
     /** Creates a snippet  of HTML describing one article entry. 

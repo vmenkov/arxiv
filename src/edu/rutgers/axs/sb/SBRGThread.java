@@ -16,31 +16,10 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.*;
 
-/** This classes encapsulates most of the activity involved in the
-    creation of session-based recommendation lists.
+/** This class is used to run the creation of session-based
+    recommendation lists in an asynchronous mode. The actual
+    computations are encapsulated in SBRGWorker.
 
-    <p> The recommendation list is presently (2014-03) created based
-    on the articles that have been viewed during this session. For
-    each of them, the list of most similar articles is compiled, based
-    on the similarity of the texts of the articles' abstracts (using a
-    Lucene search); the lists are then combined. After that, some
-    articles are excluded from the combined list. The following articles
-    are excluded:
-    
-    <ul>
-    <li>The already-viewed articles themselves.
-
-    <li>Articles that were mentioned (linked to) in any pages
-    viewed during this session.
-
-    <li>Any articles about which the user has expressed his desire not to 
-    see tnem anymore. (This type of feedback is provided via buttons
-    in the SB panel).
-    </ul>
-
-    FIXME: must not select based on similarity to "prohibited" articles!
-
-    
  */
 class SBRGThread extends Thread {
     private final SBRGenerator parent;
@@ -48,17 +27,23 @@ class SBRGThread extends Thread {
 	within the user session.
      */
     private final int id;
+
     /** The method with which the recommendation list is generated here. */
     final SBRGenerator.Method sbMethod;
+
+
+    //    private 
+    SBRGWorker worker;
 
     /** Creates a thread. You must call its start() method next.
 	@param _id Run id, which identifies this run (and its results)
 	within the session.
      */
-    SBRGThread(SBRGenerator _parent, int _id) {
+    SBRGThread(SBRGenerator _parent, int _id, SBRGWorker _worker) {
 	parent = _parent;
 	id = _id;
 	sbMethod = parent.sbMethod;
+	worker = _worker;
     }
 
     /** When the list generation started and ended. We keep this 
@@ -67,7 +52,7 @@ class SBRGThread extends Thread {
 
     private ActionHistory his = null;
     /** This is simply the length of the list of "actionable" viewed articles */
-    int maxAge;
+    //int maxAge;
 
     /** The main class for the actual recommendation list
 	generation. */
@@ -82,27 +67,23 @@ class SBRGThread extends Thread {
 	    em = parent.sd.getEM();       
 	    reader=Common.newReader();
 	    searcher = new IndexSearcher( reader );
-	    // get the list of article IDs to recommend by some algorithm
-	    if (sbMethod==SBRGenerator.Method.TRIVIAL) {
-		computeRecListTrivial(em,searcher);
-	    } else if (sbMethod==SBRGenerator.Method.ABSTRACTS ||
-		       sbMethod==SBRGenerator.Method.COACCESS ||
-		       sbMethod==SBRGenerator.Method.SUBJECTS) {
-		computeRecList(em,searcher);
-		if (error) return;
-	    } else {
-		error = true;
-		errmsg = "Illegal SRB generation method: " + sbMethod;
-		System.out.println(errmsg);
+
+	    his = new ActionHistory(em,parent.sd);
+
+	    worker.work(em, searcher, getId(), id, his);
+	    if (worker.error) {
+		error=true;
+		errmsg = worker.errmsg;
 		return;
 	    }
-	    plid = saveAsPresentedList(em).getId();
+	    sr = worker.sr;
+	    plid = worker.plid;
+	    excludedList = worker.excludedList;
 	} catch(Exception ex) {
 	    error = true;
 	    errmsg = ex.getMessage();
 	    System.out.println("Exception for SBRG thread " + getId());
 	    ex.printStackTrace(System.out);
-	    //sr = null;
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
 	    try {
@@ -112,7 +93,6 @@ class SBRGThread extends Thread {
 	    endTime = new Date();
 	    parent.completeRun();
 	}
-
     }
 
     int getArticleCount() {
@@ -128,516 +108,12 @@ class SBRGThread extends Thread {
     boolean error = false;
     String errmsg = "";
 
-
-    /** An auxiliary object used to "integrate" information about an
-	article's position in multiple ranked lists. In particular, it
-	is used for ascending-order sort (i.e. rank 1 before rank 2,
-	etc) */
-    private static class ArticleRanks implements Comparable<ArticleRanks> {
-	/** Lucene internal id */
-	int docno;
-	/** This field contains the sum of scores for this article
-	    from various lists being merged. It is stored for
-	    information purposes only, and is *not* used for
-	    sorting. */
-	double score=0;
-
-	/** How old was the most recent user action which caused this article
-	    to be suggested? 0 &le; age &lt; n, where n is the number of
-	    distinct-article actions used for generating the rec list.
-	 */
-	int age=0;
-	Vector<Integer> ranks=new Vector<Integer>();
-	public int compareTo(ArticleRanks o) {
-	    for(int i=0; i<ranks.size() && i<o.ranks.size(); i++) {
-		int z=ranks.elementAt(i).intValue()-o.ranks.elementAt(i).intValue();
-		if (z!=0) return z;
-	    }
-	    return o.ranks.size() - ranks.size();
-	}
-	ArticleRanks(int _docno, int _age) { 
-	    docno = _docno;
-	    age= _age;
-	}
-	/** Adds the information about this article being ranked in
-	    yet another list being merged. For a given article, calls
-	    to this method should be carried out in order of
-	    non-decreasing r. */
-	void add(int r, double deltaScore, int _age) {
-	    if (ranks.size()>0 && r<ranks.elementAt(ranks.size()-1).intValue()){
-		throw new IllegalArgumentException("ArticleRanks.add() calls must be made in order");
-	    }
-	    ranks.add(new Integer(r));
-	    score +=  deltaScore;
-	    if (_age < age) age = _age;  // old-style ages
-	}
-    }
-
     /** A human-readable text message containing the list of ArXiv
 	article IDs of the articles that we decided NOT to show in the
 	rec list (e.g., because they had already been shown to the
 	user in this session in other contexts).
     */
     String excludedList = "";
-
-    
-  /**  Paul's suggestion on list length (2014-02-26): I have been
-	thinking about how quickly the SB list grows. I would favor
-	somewhat slower growth. Perhaps start with three; then add
-	two; thereafter, add only one at a time unless there are two
-	(or even three) that suddenly outrank anything already on the
-	list. I am not at all clear on how that fact could be
-	displayed --- flashing text? twinkling lights...:) ?
-
-	@param n The number of articles viewed so far.
-     */ 
-    static private int recommendedListLength(int n) {
- 	    final int maxRecLenTop = 20;
-	    //int m =3*n;   
-	    int m = (n<=2) ? 3: 2 + n;
-	    m = Math.min(m, maxRecLenTop);   
-	    return m;
-    }
- 
-    /** Computes a suggestion list based on a single article, using
-	text similarity of titles and abstracts */
-    static private ScoreDoc[] computeArticleBasedListAbstracts(IndexSearcher searcher, String aid, int maxlen) throws Exception {
-	int docno=0;
-	try {
-	    docno= Common.find(searcher, aid);
-	} catch(IOException ex) {
-	    return null;
-	}
-	Document doc = searcher.doc(docno);
-	String abst = doc.get(ArxivFields.ABSTRACT);
-	abst = abst.replaceAll("\"", " ").replaceAll("\\s+", " ").trim();
-	ScoreDoc[] z = (new LongTextSearchResults(searcher, abst, maxlen)).scoreDocs;
-	return z;
-    }
-
-    /** Computes a suggestion list based on a single article, using
-	subject categories */
-    static private ScoreDoc[] computeArticleBasedListSubjects(IndexSearcher searcher, String aid, int maxlen) throws Exception {
-
-	int docno= Common.find(searcher, aid);
-	Document doc = searcher.doc(docno);
-
-	String catJoined =doc.get(ArxivFields.CATEGORY);
-	String[] allCats =  CatInfo.split(catJoined);
-	if (allCats.length<1) { return new  ScoreDoc[0]; }
-
-	String[] cats = new String[] {allCats[0]}; // main cat only
-
-	Date since = SearchResults.daysAgo(7);
-	SearchResults bsr = SubjectSearchResults.orderedSearch(searcher, cats, since, null, maxlen);
-	ScoreDoc[] z = bsr.scoreDocs;
-	return z;
-    }
-
-
-
-   static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
-
-       // http://my.arxiv.org/coaccess/CoaccessServlet
-       // http://my.arxiv.org/coaccess/CoaccessServlet?arxiv_id=0704.0001&maxlen=5
-
-       ScoreDoc [] results =  new ScoreDoc[0];
- 
-
-       String query = "arxiv_id=" + aid + "&maxlen=" + maxlen;
-
-       String lURLString = "http://my.arxiv.org/coaccess/CoaccessServlet";
-       lURLString += "?" + query;
-
-       URL lURL = new URL( lURLString);
-       Logging.info("SBRG requesting URL " + lURL);
-       HttpURLConnection lURLConnection;
-       //       try {
-	   lURLConnection=(HttpURLConnection)lURL.openConnection();	
-	   //       }  catch(Exception ex) {
-	   //	   errmsg= "Failed to open connection to " + lURL;
-	   //	   error = true;
-	   //	   return results;
-	   //       }
-
-	   //	try {
-	    lURLConnection.connect();
-	    //	} catch(Exception ex) {
-	    //	    errmsg= "Failed to connect to " + lURL;
-	    //	    error = true;
-	    //	    return results;
-	    //	}
-    
-	int code = lURLConnection.getResponseCode();
-	if (code != HttpURLConnection.HTTP_OK) {
-	    throw new IOException("Got an error code from " + lURL + ": " + 
-				  lURLConnection.getResponseMessage());
-	    //	    error = true;
-	    //	    errmsg =lURLConnection.getResponseMessage();
-	    //	    return results;
-	}
-
-	InputStream is=null;	
-	//	try {
-	    is = lURLConnection.getInputStream();
-	    //	}  catch(Exception ex) {
-	    //	}
-	if (is==null) {
-	    String errmsg= "Failed to obtain data from " + lURL;
-	    throw new IOException(errmsg);
-	    //	    error = true;
-	    //	    return results;
-	}
-
-	LineNumberReader r = 
-	    new LineNumberReader(new InputStreamReader(is));
-
-	String line=null;
-	
-	Vector<ScoreDoc> v = new Vector<ScoreDoc>();
-	while((line=r.readLine())!=null) {
-	    String q[] = line.split("\\s+");
-	    if (q.length!=2) continue; // FIXME
-	    String zaid = q[0];
-	    int coaccessCnt = Integer.parseInt(q[1]);
-
-	    int docno=0;
-	    try {
-		docno= Common.find(searcher, zaid);
-	    } catch(IOException ex) {
-		continue; // FIXME
-	    }
-	    v.add( new ScoreDoc( docno, (float)coaccessCnt));
-	}
-	results = (ScoreDoc[])v.toArray(results);
-	return results;
-    }
-
-
-    /** Generates the list of recommendations based on searching the Lucene
-	index for articles whose abstracts are similar to those of the
-	articles viewed by the user in this session.
-
-     */
-    private void computeRecList(EntityManager em, IndexSearcher searcher) {
-	
-	try {
-	    his = new ActionHistory(em,parent.sd);
-
-	    HashSet<String> exclusions = parent.linkedAids;
-	    synchronized (exclusions) {
-		exclusions.addAll(his.viewedArticlesAll);
-		exclusions.addAll(his.prohibitedArticles);
-	    }
-
-	    // abstract match, separately for each article
-	    final int maxlen = 100;
-	    maxAge = his.viewedArticlesActionable.size();
-	    final int maxRecLen = recommendedListLength(maxAge);
-	    ScoreDoc[][] asr  = new ScoreDoc[maxAge][];
-	    int k=0;
-	    for(String aid: his.viewedArticlesActionable) {
-		ScoreDoc[] z = parent.articleBasedSD.get(aid);
-		if (z==null) {
-
-		    if (sbMethod==SBRGenerator.Method.ABSTRACTS) {
-			z=computeArticleBasedListAbstracts(searcher,aid,maxlen);
-		    } else if (sbMethod==SBRGenerator.Method.SUBJECTS) {
-			z=computeArticleBasedListSubjects(searcher,aid,maxlen);
-		    } else if (sbMethod==SBRGenerator.Method.COACCESS) {
-			// exception may be thrown; caught in an outer "catch"
-			z=computeArticleBasedListCoaccess(searcher,aid,maxlen);
-		    } else {
-			error = true;
-			errmsg = "Illegal SRB generation method: " + sbMethod;
-		    }
-
-		    if (error) {
-			Logging.error(errmsg);
-			System.out.println(errmsg);
-			return;
-		    }
-
-		    if (z!=null) parent.articleBasedSD.put(aid,z);
-		    else {
-			// this may happen if the article is too new,
-			// and is not in our Lucene datastore yet
-			Logging.warning("SBRGThread " + getId() + ": skip unavailable page " + aid);	    
-		    }
-		}
-		asr[k++] = z;
-	    }
-
-	    // merge all lists
-	    HashMap<Integer,ArticleRanks> hr= new HashMap<Integer,ArticleRanks>();
-	    for(int j=0; j<maxlen; j++) {
-		int age=0;
-		for(ScoreDoc[] z: asr) {
-		    if (z!=null && j<z.length) {
-			int docno = z[j].doc;
-			Integer key = new Integer(docno);
-			ArticleRanks r= hr.get(key);
-			if (r==null) { 
-			    r=new ArticleRanks(docno,age);
-			    hr.put(key, r);
-			}
-			r.add(j, z[j].score, age);		      
-		    }
-		    age++;
-		}
-	    }
-	    ArticleRanks[] ranked = (ArticleRanks[])hr.values().toArray(new ArticleRanks[0]);
-	    Arrays.sort(ranked);
-
-	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
-	    k=1;
-	    for(ArticleRanks r: ranked) {
-		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno),
-						  new ScoreDoc(r.docno, (float)r.score));
-		ae.age = r.age;
-		if (exclusions.contains(ae.id)) {
-		    excludedList += " " + ae.id;
-		    continue;
-		}
-		
-		// A label that identifies when the article first appeared
-		// on the SB rec list
-		ae.researcherCommline= "L" + id + ":" + k;
-		if (parent.sbDebug) ae.ourCommline= ae.researcherCommline;
-	 
-		entries.add(ae);
-		k++;
-		if (entries.size()>=maxRecLen) break;
-	    }
-
-	    if (parent.sbMergeMode==1) {
-		entries = maintainStableOrder1( entries, maxRecLen);
-	    } else   if (parent.sbMergeMode==2) {
-		entries = maintainStableOrder2( entries, maxRecLen);
-	    }
-
-	    maxAge = actualMaxAge(entries);
-
-	    sr = new SearchResults(entries); 
-	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);
-	}  catch (Exception ex) {
-	    error = true;
-	    errmsg = ex.getMessage();
-	    Logging.error(""+ex);
-	    System.out.println("Exception for SBRG thread " + getId());
-	    ex.printStackTrace(System.out);
-	}
-    }
-
-    /** Reorders the new suggestion list (entries) so that it includes
-	all (or almost all) elements from the previously displayed
-	list, in their original order.
-
-	<p>Note: ArticleEntry.age setting overrides any previous settings.
-     */
-    private Vector<ArticleEntry> maintainStableOrder2( Vector<ArticleEntry> entries, int maxRecLen) {
-
-	for(ArticleEntry e: entries) {
-	    e.age=0;
-	}
-
-	SearchResults oldSR =parent.getSR();
-	if (oldSR==null) return entries;
-	Vector<ArticleEntry> previouslyDisplayedEntries = oldSR.entries;
-	if (previouslyDisplayedEntries==null) return entries;
-	HashSet<String> exclusions = parent.linkedAids;
-
-	HashSet<String> old=new HashSet<String>();
-	// Old elements (not excluded)
-	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
-	for(ArticleEntry e: previouslyDisplayedEntries) {
-	    if (exclusions.contains(e.id)) continue;
-	    try {  // We use clone() because we're going to modify e.i and e.age
-		ArticleEntry q = (ArticleEntry)e.clone();
-		q.age ++;
-		a.add(q);
-		old.add(q.id);
-	    }  catch (CloneNotSupportedException ex) {}
-	}
-	// new elements not found in the old list
-	Vector<ArticleEntry> b = new Vector<ArticleEntry>();
-	for(ArticleEntry e: entries) {
-	    if (!old.contains(e.id)) {
-		b.add(e);
-	    }
-	}
-	double bRatio = b.size() / (double)(b.size() + a.size());
-	
-	Vector<ArticleEntry> v = new 	Vector<ArticleEntry>();
-	int na=0, nb=0;
-	while( v.size() <  maxRecLen &&
-	       (na < a.size() || nb < b.size())) {
-	    boolean useB = 
-		(na == a.size()) ||
-		(nb < b.size() &&  (nb+1) <= (na+nb+1)*bRatio );
-	    
-	    v.add( useB ? b.elementAt(nb++) : a.elementAt(na++));   	    
-	}
-	// Adjust positions
-	int k=1;
-	for(ArticleEntry e: v) {
-	    e.i = k++;
-	}	
-	return  v;
-    }
-
-    /** Generates the trivial recommendation list: 
-	(rec list) = (list of viewed articles). This method was used
-	for quick testing.
-     */
-    private void computeRecListTrivial(EntityManager em, IndexSearcher searcher) {
-	try {
-	    his = new ActionHistory(em,parent.sd);
-	    // trivial list: out=in
-	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
-	    int k=0;
-	    maxAge = his.viewedArticlesActionable.size();
-	    for(String aid:  his.viewedArticlesActionable) {
-		ArticleEntry ae = new ArticleEntry(++k, aid);
-		ae.setScore(1.0);
-		ae.age = k-1;
-		entries.add(ae);
-	    }
-	    sr = new SearchResults(entries); 
-	    addArticleDetails(searcher);
-	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);
-	}  catch (Exception ex) {
-	    error = true;
-	    errmsg = ex.getMessage();
-	    Logging.error(""+ex);
-	    System.out.println("Exception for SBRG thread " + getId());
-	    ex.printStackTrace(System.out);
-	}
-    }
-
-
-    /**	This methods takes the new suggestion list (the one just
-	generated) and reorders it so that it looks a bit more like
-	the "old" suggestion list (the one return by the SBR generator
-	at the previous call). The reordering is carried out in the
-	following fashion:
-
-	<ul> 
-
-	<li> The "new" elements of the new list (those that are
-	present in the new list, but were not shown in the previous
-	list) are kept at their positions
-	
-	<li> The "old" elements of the new list (those that are
-	present in the new list and also were shown in the previous
-	list) are considered as a group. The set of positions they 
-	occupy in the new list is kept unchanged, but they are moved
-	around within this set so that they appear in the same relative
-	order (with respect to each other) as they were in the old list.
-	</ul>
-
-	<p>This process is supposed to achieve the following effect
-	for the user who observe the list change: The previously
-	displayed articles maintain their relative order (although a
-	few of them may disappear from the list), while some new
-	(additional) articles became inserted at various positions
-	between them.
-
-	<p>Note: ArticleEntry.age setting overrides any previous settings.
-
-	@param entries The new suggesion list to be reordered.
-
-	@param maxRecLen The desired length of the suggesion list to
-	be returned.
-
-	@return A suggestion list that contains the articles from
-	"entries" (and possibly also a small number of
-	additional articles from the previously displayed list), reordered
-	as per the above rules.
-
-     */
-    private Vector<ArticleEntry> maintainStableOrder1( Vector<ArticleEntry> entries, int maxRecLen) {
-
-	for(ArticleEntry e: entries) {
-	    e.age=0;
-	}
-	
-	SearchResults oldSR =parent.getSR();
-	if (oldSR==null) return entries;
-	Vector<ArticleEntry> previouslyDisplayedEntries = oldSR.entries;
-	if (previouslyDisplayedEntries==null) return entries;
-	HashSet<String> exclusions = parent.linkedAids;
-	
-	// Make a list and hashtable of all old elements which are excluded
-	HashSet<String> old=new HashSet<String>();
-	Vector<ArticleEntry> a = new Vector<ArticleEntry>();
-	for(ArticleEntry e: previouslyDisplayedEntries) {
-	    if (exclusions.contains(e.id)) continue;
-	    try {  // We use clone() because we're going to modify e.i and e.age
-		ArticleEntry q = (ArticleEntry)e.clone();
-		q.age++;
-		a.add(q);
-		old.add(q.id);
-	    }  catch (CloneNotSupportedException ex) {}
-	}
-	
-	// create a reordered list 
-	Vector<ArticleEntry> v = new Vector<ArticleEntry>();
-	
-	int na=0;
-	for(ArticleEntry e: entries) {
-	    boolean recent = !old.contains(e.id);
-	    ArticleEntry q = recent?
-		// keep the "new" element in place
-		e :
-		// this position was occupied by an "old" element,
-		// and we put the appropriately-ranked "old" element here
-		a.elementAt(na++);
-	    q.recent=recent;
-	    v.add(q);
-	}
-
-	// Bonus old documents: they are added if too few of them have been
-	// preserved
-	final int minOldKept=2;
-	if (na<minOldKept && na<a.size()) {
-	    ArticleEntry q =a.elementAt(na++); 
-	    q.recent=false;
-	    v.add(q);
-	}
-	
-	// Adjust positions
-	int k=1;
-	for(ArticleEntry e: v) {
-	    e.i = k++;
-	}	
-	return  v;
-    }
-
-    /** Adds article title etc to each entry in sr.entries */
-    private void addArticleDetails(IndexSearcher searcher) throws IOException { 
-	for(ArticleEntry ae: sr.entries) {
-	    ae.populateOtherFields(searcher);
-	}	    
-    }
-
-
-    /** Records the list of suggestions as a PresentedList object in
-      the database. Note that that the "user" object is usually null
-      (an anon session), which is fine.
-    */
-    private PresentedList saveAsPresentedList(EntityManager em) {
-	String uname = parent.sd.getStoredUserName();
-	User user = User.findByName(em, uname); 
-	PresentedList plist = new PresentedList(Action.Source.SB, user,  parent.sd.getSqlSessionId());
-	plist.fillArticleList(sr.entries);	
-	em.getTransaction().begin();
-	em.persist(plist);
-	em.getTransaction().commit();
-	return plist;
-    }
-
-
 
     /** Produces a human-readable description of what this thread has done. */
     public String description() {
@@ -647,53 +123,14 @@ class SBRGThread extends Thread {
 	    s += " (" + (0.001 * (double)msec) + " sec)";
 	}
 	s += ".";
-	s += "\nSBR method=" + sbMethod ;
+	s += "<br>\n" +  worker.description();
 
 	if (his!=null) {
-	    s += " The list is based on " +his.actionCount+ " user actions (" +
+	    s += "<br>\nThe list is based on " +his.actionCount+ " user actions (" +
 		his.articleCount + " viewed articles)";
 	}
 	return s;
     }
-
-    /** This is used for command-line testing, so that we could
-	quickly view the list of suggestions that would be prepared
-	for a particular article
-     */
-    public static void main(String [] argv) throws Exception {
-	IndexReader reader = Common.newReader();
-	IndexSearcher searcher = new IndexSearcher( reader );
-	final int maxlen = 100;
-	for(String aid: argv) {
-	    System.out.println("Generating suggestion for aid=" + aid);
-	    ScoreDoc[] z = SBRGThread.computeArticleBasedListCoaccess(searcher, aid, maxlen);
-	    if (z!=null) {
-		//parent.articleBasedSD.put(aid,z);
-		for(int j=0; j<z.length && j<5; j++) {
-		    int docno = z[j].doc;
-		    Document doc = searcher.doc(docno);
-		    String said = doc.get(ArxivFields.PAPER);
-		    System.out.println("doc["+j+"]=" + said + " : " + z[j].score);
-		}
-				    
-
-	    }    else {
-		// this may happen if the article is too new,
-		// and is not in our Lucene datastore yet
-		System.out.println("skip unavailable page " + aid);	    
-	    }
-
-	}
-    }
-
-    /** Returns the value equal to the maximum value of ArticleEntry.age + 1
-     */
-    private static int actualMaxAge( Vector<ArticleEntry> entries) {
-	int m = 0;
-	for(ArticleEntry e: entries) {
-	    if (e.age > m) m = e.age;
-	}
-	return m+1;
-    }
+ 
 }
 

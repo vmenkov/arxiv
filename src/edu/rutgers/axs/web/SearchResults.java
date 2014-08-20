@@ -691,4 +691,18 @@ public class  SearchResults {
 	return s.toString();
     }
 
+    /** Returns the value equal to the maximum value of ArticleEntry.age + 1
+     */
+    int getMaxAge( /* Vector<ArticleEntry> entries */) {
+	int m = 0;
+	for(ArticleEntry e: entries) {
+	    if (e.age > m) m = e.age;
+	}
+	return m+1;
+    }
+
+
+
+
+
 }

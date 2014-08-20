@@ -40,13 +40,13 @@ public class SBRGenerator {
     /** Additional mode parameters for the SB generator */
     public boolean sbDebug = false;
     /** This controls the way of achieving "stable order" of the
-	articles in the rec list. (This paramter has nothing to do 
+	articles in the rec list. (This parameter has nothing to do 
 	with merging lists obtained by different methods!)
     */
-    public int sbMergeMode = 1;
+    public int sbStableOrderMode = 1;
 
-    void validateSbMergeMode() throws WebException {
-	if (sbMergeMode<0 || sbMergeMode>2) throw new WebException("Illegal SB merge mode = " + sbMergeMode);
+    void validateSbStableOrderMode() throws WebException {
+	if (sbStableOrderMode<0 || sbStableOrderMode>2) throw new WebException("Illegal SB merge mode = " + sbStableOrderMode);
     }
 
     /** If true, the SB moving panel will be displayed in "researcher mode".
@@ -106,6 +106,8 @@ public class SBRGenerator {
 	far on behalf of this particular session. */
     private int runCnt=0;
 
+    SBRGWorker worker=null;
+
     /** Enables SB generation, and sets all necessary mode parameters
 	etc. This method may be invoked directly (from
 	SessionBased.java, when the user explicitly loads
@@ -119,8 +121,8 @@ public class SBRGenerator {
      */
     public synchronized void turnSBOn(ResultsBase rb) throws WebException {
 	allowedSB = true;
-	sbMergeMode = rb.getInt("sbMerge", sbMergeMode);
-	validateSbMergeMode();
+	sbStableOrderMode = rb.getInt("sbStableOrder", sbStableOrderMode);
+	validateSbStableOrderMode();
 	// the same param initializes both vars now
 	sbDebug = rb.getBoolean("sbDebug", sbDebug);
 	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
@@ -136,6 +138,10 @@ public class SBRGenerator {
 		pickRandomMethod() : requestedSbMethod;
 
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod);
+
+	    worker = new SBRGWorker(sbMethod, this, sbStableOrderMode);
+	    // worker.setSbStableOrderMode(sbStableOrderMode);
+
 	} else if  (m==null || requestedSbMethod == m ) {
 	    // OK: has already been set, and no attempt to re-set now
 	} else  {  // prohibited attempt to re-set
@@ -240,11 +246,7 @@ public class SBRGenerator {
 	return sbrReady==null? 0 : sbrReady.plid;
     }
 
-    /** This is simply the length of the list of "actionable" viewed articles */
-    public int getMaxAge() {
-	return sbrReady==null? 0 : sbrReady.maxAge;
-    }
-
+  
     synchronized public String description() {
 	if (sbrReady==null) {
 	    String s= "No rec list has been generated yet. Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + "\n";
@@ -252,6 +254,7 @@ public class SBRGenerator {
 	} else {
 	    String s = sbrReady.description() + "\n";
 	    s += "<br>Per-article result list sizes:\n";
+	    HashMap<String,ScoreDoc[]> articleBasedSD= sbrReady.worker.articleBasedSD;
 	    for(String aid: articleBasedSD.keySet()) {
 		s += "<br>* "+aid+" : "+articleBasedSD.get(aid).length+"\n";
 	    }
@@ -281,13 +284,6 @@ public class SBRGenerator {
      */
     private int requestedArticleCount=0, lastThreadRequestedArticleCount=0;
 
-    /** Pre-computed suggestion lists based on individual articles. In
-	the hashmap, the keys are ArXiv article IDs; the values are
-	arrays of ScoreDoc objects of the kind that a Lucene search
-	may return.
-     */
-    HashMap<String,ScoreDoc[]> articleBasedSD= new HashMap<String,ScoreDoc[]>();
-
     public SBRGenerator(SessionData _sd) {
 	sd = _sd;
     }
@@ -307,7 +303,7 @@ public class SBRGenerator {
 	    requestedArticleCount = Math.max(requestedArticleCount,articleCount);
 	    Logging.info(prefix+"recording request with articleCount=" + articleCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
 	} else {
-	    sbrRunning = new SBRGThread(this, runCnt++);
+	    sbrRunning = new SBRGThread(this, runCnt++, worker);
 	    lastThreadRequestedArticleCount=requestedArticleCount=articleCount;
 	    Logging.info(prefix + "Immediately starting a new thread "+ sbrRunning.getId() +", for articleCnt=" + requestedArticleCount);
 	    sbrRunning.start();
@@ -329,7 +325,7 @@ public class SBRGenerator {
 	}
 	sbrRunning = null;
 	if (requestedArticleCount > lastThreadRequestedArticleCount) {
-	    sbrRunning = new SBRGThread(this, runCnt++);
+	    sbrRunning = new SBRGThread(this, runCnt++,worker);
 	    lastThreadRequestedArticleCount=requestedArticleCount;
 	    sbrRunning.start();
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedArticleCount);

@@ -127,7 +127,10 @@ public class ResultsBase {
 		infomsg += name + "=" + request.getParameter(name) + "<br>";
 	    }	    
 	    sd = SessionData.getSessionData(request);	  
-	    //Logging.info("obtained sd=" + sd);
+
+	    infomsg += "Session " + sd.getSqlSessionId();
+	    
+  	    //Logging.info("obtained sd=" + sd);
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 	    user = sd.getRemoteUser(request);
 
