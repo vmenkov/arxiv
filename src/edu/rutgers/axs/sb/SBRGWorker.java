@@ -85,7 +85,7 @@ class SBRGWorker  {
 	sbStableOrderMode = _sbStableOrderMode;
     }
 
-    private ActionHistory his = null;
+    ActionHistory his = null;
 
     /** Looks up the JVM thread ID for the current thread (the SBRGThread within whose
 	context this worker works)
@@ -212,7 +212,7 @@ class SBRGWorker  {
 
 	@param n The number of articles viewed so far.
      */ 
-    static private int recommendedListLength(int n) {
+    static int recommendedListLength(int n) {
  	    final int maxRecLenTop = 20;
 	    //int m =3*n;   
 	    int m = (n<=2) ? 3: 2 + n;
@@ -385,10 +385,11 @@ class SBRGWorker  {
 	    Arrays.sort(ranked);
 
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
+	    Vector<ScoreDoc> sd = new  Vector<ScoreDoc>();
 	    k=1;
 	    for(ArticleRanks r: ranked) {
-		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno),
-						  new ScoreDoc(r.docno, (float)r.score));
+		ScoreDoc z = new ScoreDoc(r.docno, (float)r.score);
+		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno), z);
 		ae.age = r.age;
 		if (exclusions.contains(ae.id)) {
 		    excludedList += " " + ae.id;
@@ -399,19 +400,18 @@ class SBRGWorker  {
 		// on the SB rec list
 		ae.researcherCommline= "L" + runID + ":" + k;
 		if (parent.sbDebug) ae.ourCommline= ae.researcherCommline;
-	 
+		
 		entries.add(ae);
+		sd.add(z);
 		k++;
 		if (entries.size()>=maxRecLen) break;
 	    }
 
-	    if (sbStableOrderMode==1) {
-		entries = maintainStableOrder1( entries, maxRecLen);
-	    } else   if (sbStableOrderMode==2) {
-		entries = maintainStableOrder2( entries, maxRecLen);
-	    }
+
+	    stableOrderCheck(maxRecLen);
 
 	    sr = new SearchResults(entries); 
+	    sr.scoreDocs=(ScoreDoc[])sd.toArray(new ScoreDoc[0]); // for use in merges
 	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);
 	}  catch (Exception ex) {
 	    error = true;
@@ -428,9 +428,12 @@ class SBRGWorker  {
 
 	<p>Note: ArticleEntry.age setting overrides any previous settings.
 
-	<p>FIXME: As the "old" ordering we use parent.getSR(), this won't
+	<p>FIXME: As the "old" ordering we use is parent.getSR(), this won't
 	work in case of "stabilizing" intermediary (pre-merge) lists in 
 	a team-draft merge context. Only the final list can be stabilized.
+	
+	<p>FIXME: no ScoreDoc here, thus not suitable for
+	merging. (Normally this does not matter)       
      */
     private Vector<ArticleEntry> maintainStableOrder2( Vector<ArticleEntry> entries, int maxRecLen) {
 
@@ -486,11 +489,15 @@ class SBRGWorker  {
     /** Generates the trivial recommendation list: 
 	(rec list) = (list of viewed articles). This method was used
 	for quick testing.
+
+	<p>FIXME: no ScoreDoc here, thus not suitable for
+	merging. (Normally this does not matter)
      */
     private void computeRecListTrivial(EntityManager em, IndexSearcher searcher) {
 	try {
 	    // trivial list: out=in
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
+	    //	    Vector<ScoreDoc> sd = new Vector<ScoreDoc>();
 	    int k=0;
 	    int maxAge = his.viewedArticlesActionable.size();
 	    for(String aid:  his.viewedArticlesActionable) {
@@ -498,6 +505,7 @@ class SBRGWorker  {
 		ae.setScore(1.0);
 		ae.age = k-1;
 		entries.add(ae);
+
 	    }
 	    sr = new SearchResults(entries); 
 	    addArticleDetails(searcher);
@@ -551,6 +559,9 @@ class SBRGWorker  {
 	additional articles from the previously displayed list), reordered
 	as per the above rules.
 
+	<p>FIXME: As the "old" ordering we use is parent.getSR(), this won't
+	work in case of "stabilizing" intermediary (pre-merge) lists in 
+	a team-draft merge context. Only the final list can be stabilized.
      */
     private Vector<ArticleEntry> maintainStableOrder1( Vector<ArticleEntry> entries, int maxRecLen) {
 
@@ -622,7 +633,7 @@ class SBRGWorker  {
       the database. Note that that the "user" object is usually null
       (an anon session), which is fine.
     */
-    private PresentedList saveAsPresentedList(EntityManager em) {
+    PresentedList saveAsPresentedList(EntityManager em) {
 	String uname = parent.sd.getStoredUserName();
 	User user = User.findByName(em, uname); 
 	PresentedList plist = new PresentedList(Action.Source.SB, user,  parent.sd.getSqlSessionId());
@@ -633,12 +644,37 @@ class SBRGWorker  {
 	return plist;
     }
 
+    /** Carry out the "stable order" procedure, if required by the sbStableOrderMode
+	parameter.
+	
+	<p>FIXME: this gets sr.scoreDocs out of sync with sr.entries, but who cares?
+    */
+    void stableOrderCheck(int maxRecLen) {
+
+	if (sbStableOrderMode==1) {
+	    sr.entries = maintainStableOrder1( sr.entries, maxRecLen);
+	} else   if (sbStableOrderMode==2) {
+	    sr.entries = maintainStableOrder2( sr.entries, maxRecLen);
+	}
+    }
+
+
     /** Produces a human-readable description of this worker's particulars. */
     public String description() {
 	String s = "SBR method=" + sbMethod + "; stableOrder=" + sbStableOrderMode;
 	return s;
     }
    
+    /** A very auxiliary function, used in debugging... */
+    String describeLength() {
+	if (sr==null) return "[No sr!]";
+	if (sr.entries==null) return "[No sr.entries!]";
+	if (sr.scoreDocs==null) return "[No sr.scoreDocs!]";
+	String s = sr.entries.size() + "/";
+	s += sr.scoreDocs.length;
+	return s;
+    }
+
     /** This is used for command-line testing, so that we could
 	quickly view the list of suggestions that would be prepared
 	for a particular article

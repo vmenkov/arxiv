@@ -4,6 +4,7 @@ import java.net.*;
 
 import java.io.*;
 import java.util.*;
+import java.text.*;
 
 import javax.persistence.*;
 
@@ -152,6 +153,7 @@ public class  SearchResults {
 	return nexta;
     }
 
+
     /** Merges two lists using the Team-Draft algorithm. This is
 	Algorithm 2 in: Filip Radlinski, Madhu Kurup, Thorsten
 	Joachims, "How Does Clickthrough Data Reflect Retrieval
@@ -167,8 +169,8 @@ public class  SearchResults {
 	that during same-day page reloads the user will see the same
 	list. (Thorsten's suggestion, 2012-06)
 
-	@return A wrapper around the "merged" ScoreDoc array. The
-	"entries" values are not set yet; one needs to call setWindow
+	@return A wrapper around the "merged" ScoreDoc array. NOTE: The
+	"entries" values are not set yet; one needs to call setWindow!
     */
     public static SearchResults teamDraft(ScoreDoc[] a, ScoreDoc[] b,long seed){
 	HashSet<Integer> saved = new HashSet<Integer> ();
@@ -210,6 +212,16 @@ public class  SearchResults {
 	}
 
 	return new SearchResults(v,vp);
+    }
+
+    private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
+
+    /** Computes the seed for use in the random number generator in the team-draft
+	merger. The idea is for the random process to produce the same results
+	on the same when run repeatedly for the same user on the same day.
+    */
+    public static long teamDraftSeed(String userName) {
+	return (userName.hashCode()<<16) | dfmt.format(new Date()).hashCode();
     }
 
     static org.apache.lucene.search.Query mkTermOrPrefixQuery(String field, String t) {
@@ -326,6 +338,9 @@ public class  SearchResults {
        to this method there is   something in "entries" already, it is
        deleted).
 
+       <P>This method has to be used, for example, after a merged list
+       is generated with teamDraft().
+
        @param searcher A valid Searcher object; used to get document
        information based on Lucene doc ids stored in scoreDocs[]
        entries.
@@ -336,7 +351,7 @@ public class  SearchResults {
        of entries reflects their post-exclusion positions.
        
     */
-    void setWindow(IndexSearcher searcher, ResultsBase.StartAt startat, int M, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
+    public void setWindow(IndexSearcher searcher, ResultsBase.StartAt startat, int M, HashMap<String, Action> exclusions) throws IOException,  CorruptIndexException {
 	prevstart = startat.offset(- M);
 	nextstart = startat.offset(M);
 	needPrev = (prevstart.startat < startat.startat);

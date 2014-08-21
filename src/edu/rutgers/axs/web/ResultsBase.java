@@ -453,6 +453,16 @@ public class ResultsBase {
 	} else return  "<!-- "+s+"-->\n";
     }
 
+   /** Formats the specified text as a visible "span" element, or as
+	a comment, based on the user's status. */
+    static public String researcherDiv(String s, boolean isResearcher) {
+	if (isResearcher) {
+	    return "<div class=\"researcher\">" + s + "</div>\n";
+	} else return "<!-- "+s+"-->\n";
+    }
+
+
+
     /** The full URL corresponding to the request we're serving now */
     URL thisUrl() throws java.net.MalformedURLException {
 	//	Logging.info("this URL is apparently " + s);

@@ -85,12 +85,13 @@ Article Suggestions</td></tr>
  <%  }  %>
 
 <%   }   %>
+</p>
 
 <hr>
-<p><small>
-<%= main.researcherSpan(main.infomsg, main.sd.sbrg.researcherSB) %>
+<small>
+<%= main.researcherDiv(main.infomsg, main.sd.sbrg.researcherSB) %>
 </small>
-</p>
+
 
 <p>
 <form method=post>

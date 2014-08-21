@@ -3,7 +3,7 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import java.text.*;
+//import java.text.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -63,8 +63,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 
     static final String TEAM_DRAFT = "team_draft";
     public boolean teamDraft = false;
-
-    private static DateFormat dfmt = new SimpleDateFormat("yyyyMMdd");
 
     /** If true, we want to generate a list to be put into an email
      message, rather than into the web page. The list of articles will
@@ -487,7 +485,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    if (since == null) since = SearchResults.daysAgo( days );
 	    SearchResults bsr = catSearch(searcher, since);
 		    
-	    long seed = (actorUserName.hashCode()<<16) | dfmt.format(new Date()).hashCode();
+	    long seed = SearchResults.teamDraftSeed(actorUserName);
 	    // merge
 	    sr = SearchResults.teamDraft(asr.scoreDocs, bsr.scoreDocs, seed);
 	} else {

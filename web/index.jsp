@@ -215,10 +215,10 @@ window.onload = StartScripts;
     <!-- Left Frame -->
 
     <div id="right_frame">
-     <% if (main.user==null) { %> <!-- Not logged in -->
-     <% } else if (main.error) { %>
+    <% if (main.error) { %>
     <p>Error message: <%= main.errmsg %></p> 
     <p><pre> <%= main.stackTrace() %></pre></p> 
+     <% } else if (main.user==null) { %> <!-- Not logged in -->
     <% } else { 
   	  SearchResults sr = main.sr; 
 %>
