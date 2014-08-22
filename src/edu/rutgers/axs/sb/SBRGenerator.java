@@ -51,16 +51,6 @@ public class SBRGenerator {
 
     public boolean sbMergeWithBaseline = false;
 
-    /** Generates the query string for the URL. Used in tools/index.jsp */
-    static public String qsd(Method method, boolean withBaseline) {
-	String s= "sb=true" + 
-	    "&sbDebug=true" + 
-	    "&sbMethod="+ method;
-	if (withBaseline) s += "&sbMergeWithBaseline=true";
-	return s;
-    }
-
-
     /** If true, the SB moving panel will be displayed in "researcher mode".
 	Since SB is only shown to users who have not logged in, we can't
 	use the usual researcher flag, but rather set this flag via a 
@@ -387,15 +377,26 @@ public class SBRGenerator {
 
     }
     
+    /** Generates the query string for the URL. Used in tools/index.jsp */
+    static public String qsd(Method method, boolean withBaseline) {
+	return qs(method, true, withBaseline);
+    }
+
+    static public String qs(Method method, boolean debug, boolean withBaseline) {
+	String s= "sb=true";
+	if (debug) { s += "&sbDebug=true"; }
+	s += "&sbMethod="+ method;
+	if (withBaseline) s += "&sbMergeWithBaseline=true";
+	return s;
+    }
+
+
     /** This is a URL used in the "Change Focus" buton in the SB window.
 	The user will be redirected to this URL once he's gone through
 	the logout servlet, where his current session will be terminated.
      */
     public String encodedChangeFocusURL() {
-	String url = "index.jsp?sb=true&sbMethod=RANDOM";
-	if (sbDebug) {
-	    url += "&sbDebug=true";
-	}
+	String url = "index.jsp?" + qs( Method.RANDOM, sbDebug, sbMergeWithBaseline);
 	return URLEncoder.encode(url);
     }
 
