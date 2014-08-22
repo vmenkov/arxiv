@@ -30,6 +30,8 @@ class SBRGWorkerMerge extends  SBRGWorker  {
 	super( SBRGenerator.Method.MERGE, _parent, _sbStableOrderMode);
 	worker1 = _worker1;
 	worker2 = _worker2;
+	worker1.hidden = true;
+	worker2.hidden = true;
     }
 
     synchronized void work(EntityManager em, IndexSearcher searcher, int runID, ActionHistory _his)  {
@@ -90,5 +92,20 @@ class SBRGWorkerMerge extends  SBRGWorker  {
 	return s;
     }
    
+   /** Auxiliary for saveAsPresentedList():  sets fields that are specific
+       for this worker class.   */
+    void addExtraPresentedListInfo(PresentedList plist) {
+	plist.setMergePlid1(worker1.plid);
+	plist.setMergePlid2(worker2.plid);
+    }
+
+    /** Generally, saves "MERGE" (as stored in this class), except for
+	ABSTRACTS_COACCESS */
+    SBRGenerator.Method getSbMethodForPlist() { 
+	return (worker1.sbMethod==SBRGenerator.Method.ABSTRACTS &&
+		worker2.sbMethod==SBRGenerator.Method.COACCESS) ? SBRGenerator.Method.ABSTRACTS_COACCESS:
+	    sbMethod; 
+    }
+ 
 }
  

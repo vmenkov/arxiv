@@ -73,6 +73,11 @@ class SBRGWorker  {
     */
     private final int sbStableOrderMode;
 
+    /** Set to true to "inner nodes" of a merge tree, to indicate that
+	rec lists produced by these workers are never actually
+	presented to the user.*/
+    boolean hidden=false;
+
     /** Creates a thread. You must call its start() method next.
 	@param _id Run id, which identifies this run (and its results)
 	within the session.
@@ -407,10 +412,9 @@ class SBRGWorker  {
 		if (entries.size()>=maxRecLen) break;
 	    }
 
-
+	    sr = new SearchResults(entries); 
 	    stableOrderCheck(maxRecLen);
 
-	    sr = new SearchResults(entries); 
 	    sr.scoreDocs=(ScoreDoc[])sd.toArray(new ScoreDoc[0]); // for use in merges
 	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);
 	}  catch (Exception ex) {
@@ -628,6 +632,14 @@ class SBRGWorker  {
 	}	    
     }
 
+    /** May be overridden  in WorkerMerge */
+    SBRGenerator.Method getSbMethodForPlist() { return sbMethod; }
+    
+    /** Auxiliary forsaveAsPresentedList(): overridden by
+	SBRGWorkerMerge, it adds worker-specific info to the
+	PresentedList object before it is saved in the database.
+     */
+    void addExtraPresentedListInfo(PresentedList plist) {}
 
     /** Records the list of suggestions as a PresentedList object in
       the database. Note that that the "user" object is usually null
@@ -637,6 +649,9 @@ class SBRGWorker  {
 	String uname = parent.sd.getStoredUserName();
 	User user = User.findByName(em, uname); 
 	PresentedList plist = new PresentedList(Action.Source.SB, user,  parent.sd.getSqlSessionId());
+	plist.setSbMethod(getSbMethodForPlist());
+	plist.setHidden(hidden);
+	addExtraPresentedListInfo(plist);
 	plist.fillArticleList(sr.entries);	
 	em.getTransaction().begin();
 	em.persist(plist);
@@ -650,7 +665,10 @@ class SBRGWorker  {
 	<p>FIXME: this gets sr.scoreDocs out of sync with sr.entries, but who cares?
     */
     void stableOrderCheck(int maxRecLen) {
-
+	if (sr==null || sr.entries==null) {
+	    Logging.warning("called SBRGW.stableOrderCheck() with no data, WTF?");
+	    return;
+	}
 	if (sbStableOrderMode==1) {
 	    sr.entries = maintainStableOrder1( sr.entries, maxRecLen);
 	} else   if (sbStableOrderMode==2) {

@@ -281,7 +281,7 @@ public class SBRGenerator {
   
     synchronized public String description() {
 	if (sbrReady==null) {
-	    String s= "No rec list has been generated yet. Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + "\n";
+	    String s= "No rec list has been generated yet. Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline +"\n";
 	    return s;
 	} else {
 	    String s = sbrReady.description() + "\n";

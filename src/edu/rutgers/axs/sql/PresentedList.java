@@ -11,6 +11,7 @@ import org.apache.lucene.search.IndexSearcher;
 import edu.cornell.cs.osmot.options.Options;
 import edu.rutgers.axs.web.ArticleEntry;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
+import edu.rutgers.axs.sb.SBRGenerator;
 
 
 /** Each PresentedList instance contains information about one list of
@@ -155,6 +156,7 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	setUser(u);
 	setTime( new Date());
 	setSession(sid);
+	setHidden(false);
     }
 
 
@@ -245,6 +247,40 @@ import edu.rutgers.axs.recommender.ArticleAnalyzer;
 	    return null;
 	}
     }
+
+    //--- The following fields are primarily used in SB
+    /** This flag is true for presented lists that have never been meant to be
+	shown to the user, but merely have been generated as inputs for 
+	team-draft merge.
+     */
+    @Basic  @Display(editable=false, order=6.1)    private boolean hidden;
+    public boolean getHidden() { return hidden; }
+    public void setHidden( boolean x) {hidden  = x; }
+
+    /** Only filled in PL objects produced by team-draft merge in SB, these
+	fields refer to the lists being merged to produce this list. */
+    @Basic     @Column(nullable=true)
+	@Display(editable=false, order=6.2, link="viewPresentedList.jsp")  
+	private long mergePlid1;
+
+    public void setMergePlid1(long val) {    mergePlid1      = val;    }
+    public long getMergePlid1() {        return  mergePlid1;    }
+
+    @Basic     @Column(nullable=true)
+	@Display(editable=false, order=6.3, link="viewPresentedList.jsp")  
+	private long mergePlid2;
+
+    public void setMergePlid2(long val) {    mergePlid2      = val;    }
+    public long getMergePlid2() {        return  mergePlid2;    }
+
+    /** The method used to generate this list */
+    @Display(editable=false, order=7.1)
+	@Column(nullable=true,length=24)
+	@Enumerated(EnumType.STRING)     
+	private SBRGenerator.Method sbMethod;
+
+    public SBRGenerator.Method getSbMethod() { return sbMethod; }
+    public void setSbMethod(SBRGenerator.Method x) {sbMethod =x; }
 
 
 
