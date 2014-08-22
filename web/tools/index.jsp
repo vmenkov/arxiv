@@ -1,6 +1,8 @@
 <%@ page import="java.io.*" %>
 <%@ page import="edu.rutgers.axs.web.*" %>
 <%@ page import="edu.rutgers.axs.sql.*" %>
+<%@ page import="edu.rutgers.axs.sb.SBRGenerator" %>
+
 <%@ taglib uri="http://my.arxiv.org/taglibs/icdtags" prefix="icd" %>
 <% ResultsBase main=new ResultsBase(request,response); %>
 <html>
@@ -39,16 +41,35 @@
 
 <p><a name="sb"><strong>
 Session-Based recommendation lists (SBRL), different versions:</strong></a>
+<table border=1>
+<tr><th>By itself<th>Merged with baseline<th>
+<tr><td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.TRIVIAL,false)%>">Trivial</a>
+<td></td> Recommendation list = list of viewed articles
+<tr><td colspan=2><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.SUBJECTS,false)%>">SUBJECTS</a> (= baseline)
+<td>Subject based (a few recent articles from the subject categories of the viewed articles)
+
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS,false)%>">ABSTRACTS</a>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS,true)%>">ABSTRACTS + SUBJECTS</a>
+<td> Article similarity based (recommendation generated using article titles and abstracts)
+
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS,false)%>">COACCESS</a>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS,true)%>">COACCESS + SUBJECTS</a>
+<td>Coaccess based (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data thru March 2014)
+
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,false)%>">ABSTRACTS + COACCESS</a>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,true)%>">(ABSTRACTS + COACCESS) + SUBJECTS</a>
+<td>Team-draft merge of ABSTRACTS and COACCESS
+
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.RANDOM,false)%>">RANDOM</a>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.RANDOM,true)%>">RANDOM + SUBJECTS</a>
+<td>Pick one of ABSTRACTS, COACCESS, or  ABSTRACTS + COACCESS randomly
+</table>
+
 <ul>
-<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=TRIVIAL">Trivial</a> (recommendation list = list of viewed articles)
-<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=SUBJECTS">SUBJECTS</a>: Subject based (the baseline method: a few recent articles from the subject categories of the viewed articles)
-<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=ABSTRACTS">ABSTRACTS</a>: Article similarity based (recommendation generated using article titles and abstracts)
-<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=COACCESS">COACCESS</a>: Coaccess based (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data thru March 2014)
-
-<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=ABSTRACTS_COACCESS">Team-draft merge of ABSTRACT and COACCESS</a>
-
-<li><a href="../index.jsp?sb=true&sbDebug=true&sbMethod=RANDOM">Random</a> (pick a method randomly)
-
 <li>The <a href="../LogoutServlet">logout link</a> -- use that to explicitly terminate your session if you want to try a new SBRL generation  method after you've recently used another SBRL method. (Otherwise, a strange mix of results may appear). You can also use it to start a new session from scratch.
 </ul>
 

@@ -49,6 +49,18 @@ public class SBRGenerator {
 	if (sbStableOrderMode<0 || sbStableOrderMode>2) throw new WebException("Illegal SB merge mode = " + sbStableOrderMode);
     }
 
+    public boolean sbMergeWithBaseline = false;
+
+    /** Generates the query string for the URL. Used in tools/index.jsp */
+    static public String qsd(Method method, boolean withBaseline) {
+	String s= "sb=true" + 
+	    "&sbDebug=true" + 
+	    "&sbMethod="+ method;
+	if (withBaseline) s += "&sbMergeWithBaseline=true";
+	return s;
+    }
+
+
     /** If true, the SB moving panel will be displayed in "researcher mode".
 	Since SB is only shown to users who have not logged in, we can't
 	use the usual researcher flag, but rather set this flag via a 
@@ -114,6 +126,8 @@ public class SBRGenerator {
 
     SBRGWorker worker=null;
 
+
+
     /** Enables SB generation, and sets all necessary mode parameters
 	etc. This method may be invoked directly (from
 	SessionBased.java, when the user explicitly loads
@@ -143,15 +157,28 @@ public class SBRGenerator {
 	    sbMethod = (requestedSbMethod == Method.RANDOM)?
 		pickRandomMethod() : requestedSbMethod;
 
-	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod);
+	    sbMergeWithBaseline = rb.getBoolean("sbMergeWithBaseline", sbMergeWithBaseline);
 
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline);
+
+	    // If merging with baseline is to follow, then the stable-order
+	    // procedure is only carried out after that merging.
+	    int soMode = sbMergeWithBaseline? 0:  sbStableOrderMode;
 	    if (sbMethod == Method.ABSTRACTS_COACCESS) {
-		worker = new SBRGWorkerMerge(this,  sbStableOrderMode,
+		worker = new SBRGWorkerMerge(this, soMode,
 					     new SBRGWorker(Method.ABSTRACTS, this, 0),
 					     new SBRGWorker(Method.COACCESS, this, 0));
+
 	    } else {
-		worker = new SBRGWorker(sbMethod, this, sbStableOrderMode);
+		worker = new SBRGWorker(sbMethod, this, soMode);
 	    }
+
+	    if (sbMergeWithBaseline) {
+		worker = new SBRGWorkerMerge(this, sbStableOrderMode,
+					     worker,
+					     new SBRGWorker(Method.SUBJECTS, this, 0));
+	    }
+
 
 	} else if  (m==null || requestedSbMethod == m ) {
 	    // OK: has already been set, and no attempt to change it now 
