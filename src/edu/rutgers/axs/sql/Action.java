@@ -141,11 +141,23 @@ import  edu.rutgers.axs.web.SessionData;
 	     VIEW_HTML,
 	     VIEW_OTHER};
 
-	public boolean isViewArticleBody() {
-	    for(Op q: VIEW_ARTICLE_BODY_TYPES) {
+	private boolean isInList(Op [] z) {
+	    for(Op q: z) {
 		if (this==q) return true;
 	    }
 	    return false;
+	}
+
+	public boolean isViewArticleBody() {
+	    return isInList(VIEW_ARTICLE_BODY_TYPES);
+	}
+
+	/** Any kind of article "view" */
+	public boolean isAnyViewArticleBody() {
+	    return  isViewArticleBody() ||
+		isInList(new Op[] {EXPAND_ABSTRACT,
+				   VIEW_ABSTRACT, 
+				   VIEW_FORMATS});
 	}
 
 	static public final Op[] ALL_FOLDER_OPS =  
@@ -159,15 +171,30 @@ import  edu.rutgers.axs.web.SessionData;
 	}
 
 	/** Returns true if this operation, in the SB context,
-	    should cause the article not to be shown again
+	    should cause the article not to be shown again.
 	 */
 	public boolean isHideSB() {
-	    return this==INTERESTING_BUT_KNOWN ||
-		this == DONT_SHOW_AGAIN ||
-		this==Action.Op.USELESS;	
+	    return isInList(new Op[] {INTERESTING_BUT_KNOWN,
+				      DONT_SHOW_AGAIN,
+				      USELESS});	
 	}
 	
+	/** Is this operation considered a "negative" for the purposes of SBStats? */
+	public boolean isNegativeSBStats() {
+	    return 
+		this==DONT_SHOW_AGAIN ||
+		this==USELESS;		    
+	}
 
+	/** Is this operation considered a "positive" for the purposes of SBStats? */
+	public boolean isPositiveSBStats() {
+	    return isAnyViewArticleBody() ||
+		isToFolder() ||
+		isInList(new Op[] {
+			INTERESTING_AND_NEW,        
+			INTERESTING_BUT_SEEN_TODAY, 
+			INTERESTING_BUT_KNOWN});
+	}
     };
 
 
