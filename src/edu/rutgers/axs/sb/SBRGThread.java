@@ -61,7 +61,7 @@ class SBRGThread extends Thread {
 	    reader=Common.newReader();
 	    searcher = new IndexSearcher( reader );
 
-	    his = new ActionHistory(em,parent.sd);
+	    his = new ActionHistory(em, parent.sd.getSqlSessionId());
 
 	    worker.work(em, searcher, runID, his);
 	    if (worker.error) {

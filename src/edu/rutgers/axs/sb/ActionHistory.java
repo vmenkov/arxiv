@@ -44,9 +44,11 @@ class ActionHistory {
 
     /** Retrieves and processes the session's entire list of actions
 	from the SQL database.
+
+	@param sqlSessionID  Session ID (obtained with SessionData.getSqlSessionId())
      */
-    ActionHistory(EntityManager em, SessionData sd) {
-	Vector<Action> va = Action.actionsForSession( em, sd.getSqlSessionId());
+    ActionHistory(EntityManager em, long sqlSessionID) {
+	Vector<Action> va = Action.actionsForSession( em, sqlSessionID);
 	actionCount = va.size();
 
 	// lists of viewed articles; a true value is stored
