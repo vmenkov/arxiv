@@ -33,7 +33,11 @@
 %><tr>
 <td><%= i+1 %>
 <%= u.to4cells()  %>
-<td><a href="viewActions.jsp?user_name=<%=u.getUser_name()%>">view</a></td>
+<td>
+<a href="viewActions.jsp?user_name=<%=u.getUser_name()%>">All activity</a>
+<br>
+<a href="SBStatsServlet?user_name=<%=u.getUser_name()%>">SB stats</a>
+</td>
 </tr>
 <%  }  %>
 </table></p>

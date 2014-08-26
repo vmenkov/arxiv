@@ -159,7 +159,22 @@
     <servlet-name>QueryServlet</servlet-name>
     <url-pattern>/tools/QueryServlet</url-pattern>
   </servlet-mapping>
+ 
+  <servlet>
+    <servlet-name>SBStatsServlet</servlet-name>
+    <description>
+      SB stats
+    </description>
+    <servlet-class>edu.rutgers.axs.web.SBStatsServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>SBStatsServlet</servlet-name>
+    <url-pattern>/tools/SBStatsServlet</url-pattern>
+  </servlet-mapping>
   
+ 
+ 
   <servlet>
     <servlet-name>LogoutServlet</servlet-name>
     <description>

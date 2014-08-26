@@ -3,18 +3,13 @@ package edu.rutgers.axs.sb;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-import java.net.*;
-import java.util.regex.*;
+//import java.net.*;
+//import java.util.regex.*;
 import javax.persistence.*;
-
-//import org.apache.lucene.document.*;
-//import org.apache.lucene.index.*;
-//import org.apache.lucene.search.IndexSearcher;
-//import org.apache.lucene.search.ScoreDoc;
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
-import edu.rutgers.axs.indexer.*;
+//import edu.rutgers.axs.indexer.*;
 
 /** Handling statistics for SB experiments */
 public class SBStats {
@@ -28,7 +23,7 @@ public class SBStats {
 	return listSessionsForUser( em, uid, null);
     }
 
-    static Vector<Long[]> listSessionsForUser( EntityManager em, int uid, String uname) {
+    static public Vector<Long[]> listSessionsForUser( EntityManager em, int uid, String uname) {
 	if (uid != 0 && uname != null) throw new IllegalArgumentException("Exactly one of uid or uname must be specified");
 
 	String qs1 = "select x.session, count(x) from PresentedList x where x.time > '2014-08-22' and ",
@@ -55,7 +50,7 @@ public class SBStats {
     }
 
     /** Report on one web session */
-    static void sessionStats(PrintStream out, EntityManager em, long sqlSessionID) {
+    static public void sessionStats(PrintStream out, EntityManager em, long sqlSessionID) {
 
 	RatedActionHistory his = new RatedActionHistory(em, sqlSessionID);
 	String query = "select x from PresentedList x where x.session = :sid and x.type = :type and x.hidden=:h order by x.id";
@@ -72,6 +67,7 @@ public class SBStats {
 	out.println("Displayed lists for session " +  sqlSessionID);
 	for(PresentedList x: v) {
 	    out.println("PresentedList " + x.getId() + ", sbMethod=" + x.getSbMethod());
+	    plStats(out, x, his);
 	}
 	
 	//query = "select x from PresentedList x where x.session = :sid and x.type = :type and x.hidden=:h order by x.id";
@@ -134,13 +130,12 @@ $$
 		boolean negative = op.isNegativeSBStats();	
 		boolean positive = op.isPositiveSBStats();
 		int score = (negative? -1 : positive? 1 : 0);
-		if (score == 0) {
+		if (score != 0) {
 		    this.put(aid, score);
 		}
 	    }
 	}
     }
-
 
 
     public static void main(String[] args) throws Exception {
