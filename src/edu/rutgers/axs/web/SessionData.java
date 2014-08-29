@@ -378,9 +378,9 @@ public class SessionData {
 		}
 
 
-	    } else if (op==Action.Op.NEXT_PAGE && op==Action.Op.PREV_PAGE) {
+	    } else if (op==Action.Op.NEXT_PAGE || op==Action.Op.PREV_PAGE) {
 	    } else {
-		throw new IllegalArgumentException("Cannot create an article with op code " + op + " without an article ID!");
+		throw new IllegalArgumentException("Cannot create an action with op code " + op + " without an article ID!");
 	    }
 	} else {
 	    // no commit needed here, since we're inside a transaction already
