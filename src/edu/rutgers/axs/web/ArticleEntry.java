@@ -378,11 +378,83 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
 	return "result" + i;
     }
 
-    /** Javascript snippet that hides an article's entry. 
+   /** The ID of a TABLE element pertianing to this article in search
+	results or a recommendation list. The TABLE element encloses
+	the element's DIV element in one of its cell, and has some
+	adornment in another cell. (This is used in SB only, I think;
+	needed to drag items around).
      */
-    public String hideJS() { 
-	return "$('#" + resultsDivId() +"').hide();"; 
+    public String resultsTableId() {
+	return SessionBased.AID_REORDER_PREFIX + encodeAid(id);
     }
+
+    /** "ID and NAME tokens must begin with a letter ([A-Za-z]) and
+	may be followed by any number of letters, digits ([0-9]),
+	hyphens ("-"), underscores ("_"), colons (":"), and periods
+	(".")."  http://www.w3.org/TR/html4/types.html#type-id
+    */
+    static String encodeAid(String aid) {
+	StringBuffer b= new 	StringBuffer(aid.length() * 3);
+	for(char x: aid.toCharArray()) {
+	    char z = Character.toLowerCase(x);
+	    if (x>='0' && x<='9' || x>='a' && x <= 'z') {
+		b.append(x);
+	    } else {
+		String w = String.format( "%02x", (int)x);		
+		b.append( "_" + w);
+	    }
+	}
+	return b.toString();
+    }
+
+    static String decodeAid(String q) throws WebException {
+	StringBuffer b= new 	StringBuffer(q.length());
+	for(int i=0; i<q.length(); i++) {
+	    char x = q.charAt(i);
+	    if (x == '_') {
+		if (i+2 >= q.length())  {
+		    // ouch!
+		    throw new WebException("Cannot decode AID: " + q);
+		}
+		b.append( (char)Integer.parseInt( q.substring(i+1, i+3), 16));
+		i+=2;
+	    } else {
+		b.append(x);
+	    }
+	}
+	return b.toString();	
+    }
+
+    /** Extracts the original ArXiv ID from a string sent from a string that
+	had been built using resultsTableId(), and now has been sent to
+	us from the web browser.
+	@param q String which consists of a prefix + encoded AID
+	@param q The prefix
+    */
+    static String extractAidFromResultsTableId(String q, String prefix) throws WebException {
+	if (prefix !=null && prefix.length()>0) {
+	    if (!q.startsWith(prefix)) throw new WebException("No prefix '"+prefix+"' was found in article id '"+q+"'");
+	    q = q.substring(prefix.length());
+	}
+	return decodeAid(q);
+    }
+
+
+
+    /** Generates a Javascript snippet that hides this article's
+	entry. The ID of the appropriate HTML element may be different
+	in SB from the main page, due to some prettifying work done by
+	David D.
+
+	@param isSB True if this is done in the SB pop-up (rather than the main
+	window)
+     */
+    public String hideJS(boolean isSB) { 
+	return isSB? 
+	    "$('#" + resultsTableId() + "').hide();" :
+	    "$('#" + resultsDivId()     + "').hide();" ; 
+    }
+
 
     /** Should a particular rating button for this article
 	be shown as already checked?

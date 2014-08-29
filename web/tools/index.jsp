@@ -22,7 +22,7 @@
 
 <ul>
 <li><A href="../personal/editUserFormSelf.jsp">Edit your own user record</a>
-<li><A href="listUsers.jsp">List all users</a> (including links to their interaction histories)
+<li><A href="listUsers.jsp">List all users</a> (including links to their interaction histories, and links to SB experiment data analysis)
 <li><A href="../admin/manageUsers.jsp">Manage users</a>
 <li><A href="../admin/invitations.jsp">Manage invitations</a>
 <li>Send a notification email to yourself or another user. Pressing the "SEND" button will send the current recommendation list to the user right away, much in the same way it's done by the regular nightly email script. 

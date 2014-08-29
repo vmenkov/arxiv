@@ -218,12 +218,23 @@ public class RatingButton {
 	    "&" +BaseArxivServlet.ACTION+ "=" + op + asrc.toQueryString();
     }
 
+    /** Used to help form URLs to which information about user's article
+	rating actions is sent. */
     public static String judgePrefix(String cp, Action.Op op,
 			       ActionSource asrc) {
- 	return 
+ 	return judgePrefix(cp, op, asrc, null);
+    }
+
+    /** Used to help form the URLs to which information about REORDER actions
+	(user-initiated reordering of the SB list) is sent. */
+    public static String judgePrefix(String cp, Action.Op op,
+				     ActionSource asrc, String prefix) {
+	String s=
 	    cp + "/JudgmentServlet?"+
-	    BaseArxivServlet.ACTION+ "=" + op    + asrc.toQueryString() +
-	    "&"+BaseArxivServlet.ID +"=" ;
+	    BaseArxivServlet.ACTION+ "=" + op    + asrc.toQueryString();
+	if (prefix != null) s += "&" + JudgmentServlet.PREFIX + "=" + prefix;
+	s +=	    "&"+BaseArxivServlet.ID +"=" ;
+ 	return s;	
   }
 
    
@@ -319,8 +330,8 @@ public class RatingButton {
 	    
 	    String afterJS = b.inGroup? "ratingEntered("+e.i+ ", '" +sn +"');":
 		"flipCheckedOn('#"+sn+"');";
-	    if (b.willRemove) afterJS += e.hideJS();
-	    if (program == User.Program.SB_ANON) afterJS += "$('#table"+ e.resultsDivId() +  "').hide();";
+	    if (b.willRemove) afterJS += e.hideJS(program == User.Program.SB_ANON);
+	    //if (program == User.Program.SB_ANON) afterJS += "$('#"+ e.resultsTableId() + "').hide();";
 
 	    afterJS += " eval(data);";
 

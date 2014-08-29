@@ -212,6 +212,7 @@ import  edu.rutgers.axs.web.SessionData;
 
     /** On Thorsten's request (as discussed in June-July 2012) we record
 	the general context wherein the user effected a particular action.
+	This is also stored as the "type" field of each PresentedList object.
     */
     public static enum Source {
 	UNKNOWN,
@@ -257,7 +258,12 @@ import  edu.rutgers.axs.web.SessionData;
 		to anon users) */
 	    SB,
 	    /** An action from a "research page". Regular users won't have it. */
-	    RESEARCH;
+	    RESEARCH,
+	    /** This is not used to tag actions, but to indicate the "type"
+	     of PresentedList objects that record lists reordered by the user
+	     (rather than system-generated lists). */
+	    REORDER;
+	
 
 
 	/** List of sources that are considered "main page" */

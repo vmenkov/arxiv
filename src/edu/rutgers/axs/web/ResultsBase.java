@@ -275,18 +275,6 @@ public class ResultsBase {
     }
 
     
-    /** The prefix used to form URLs for sending to the servers information
-	about a user-performed result list reordering. URLs like this can
-	be inserted into the SB code, to be activated via jQuery once the user
-	moves links around.
-     */
-    public  String urlReorderPrefix() {
-	return RatingButton.judgePrefix(cp,  Action.Op.REORDER,  asrc);
-	
-	//	return ServletConstants.articleServletUrlPrefix(cp, Action.Op.REORDER, asrc);
-    }
-    
-
     /** Generates a "A" HTML element */
     static String a(String url, String body) {
 	return  "<a href=\"" + url+ "\">"+body+"</a>";	

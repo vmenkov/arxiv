@@ -154,7 +154,6 @@ class SBRGWorker  {
     boolean error = false;
     String errmsg = "";
 
-
     /** An auxiliary object used to "integrate" information about an
 	article's position in multiple ranked lists. In particular, it
 	is used for ascending-order sort (i.e. rank 1 before rank 2,
@@ -445,9 +444,7 @@ class SBRGWorker  {
 	    e.age=0;
 	}
 
-	SearchResults oldSR =parent.getSR();
-	if (oldSR==null) return entries;
-	Vector<ArticleEntry> previouslyDisplayedEntries = oldSR.entries;
+	Vector<ArticleEntry> previouslyDisplayedEntries = parent.getBaseList();
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
 
@@ -573,9 +570,7 @@ class SBRGWorker  {
 	    e.age=0;
 	}
 	
-	SearchResults oldSR =parent.getSR();
-	if (oldSR==null) return entries;
-	Vector<ArticleEntry> previouslyDisplayedEntries = oldSR.entries;
+	Vector<ArticleEntry> previouslyDisplayedEntries = parent.getBaseList();
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
 	

@@ -61,8 +61,6 @@ public class SBStats {
 	for(Object o: list) {
 	    v1.add((PresentedList)o);
 	}
-
-
 	
 	//query = "select x from PresentedList x where x.session = :sid and x.type = :type and x.hidden=:h order by x.id";
 	Query q2 = em.createQuery(query);
@@ -145,12 +143,13 @@ $$
 	out.println("Score(L)=" + sum);
     }
 
-    /** Looks up the "score" for pages based on user actions within
-	the specified session. */
+    /** An auxiliary class used to compute "scores" for pages based on
+	user actions within the specified session. */
     static private class RatedActionHistory extends HashMap<String, Integer> {
+	/** Looks up the "score" for pages based on user actions within
+	the specified session. */
 	RatedActionHistory(EntityManager em, long sqlSessionID) {
 	    Vector<Action> va = Action.actionsForSession( em, sqlSessionID);
-	    //HashMap<String, Integer> q = new HashMap<String, Integer>();
 	    // scan in the reverse order, with the most recent actions first 
 	    for(int i=va.size()-1; i>=0; i--) {
 		Action a = va.elementAt(i);
@@ -170,6 +169,95 @@ $$
 		    this.put(aid, score);
 		}
 	    }
+	    applyReorderActions(em, va);
+	} 
+
+	/** Finds all REORDER actions in this session and uses them to set
+	    score for the articles affected. */
+	private void applyReorderActions(EntityManager em, Vector<Action> va) {
+	    //	    System.out.println("Looking for REORDER ops among " + va.size() + " ops in this session");
+	    HashMap<String,Double> reorderScores = new HashMap<String,Double>();
+	    Action prev = null;
+	    // reverse chrono order 
+	    for(int i=va.size()-1; i>=0; i--) {
+		Action a = va.elementAt(i);
+		if (a.getOp()!=Action.Op.REORDER) continue;
+		if (prev!=null &&
+		    a.getPresentedListId() == prev.getPresentedListId()) {
+		    // ignore an earlier REORDER action that was
+		    // overridden by a later action on the same list
+		    continue;
+		}
+		//		System.out.println("Found REORDER op no. " + a.getId());
+		prev = a; 
+		addReorderScores(em, reorderScores,a);		
+	    }	    
+	    //	    System.out.println("REORDER-based scored may affect up to " + reorderScores.size() + " articles");
+	    for(String aid: reorderScores.keySet()) {
+		// ignore REORDERs when there are "substantial actions"
+		Integer has = this.get(aid);
+		if (has!=null && has!=0) continue;
+		double s = reorderScores.get(aid);
+		//		System.out.println("Use REORDER score(" + aid+")=" + s);
+		if (s==0) continue;
+		int v = (s>0)? 1 : -1;
+		this.put(aid, v);
+	    }
+	}
+    }
+
+
+    /** Compares the original and reordered list associated with the
+	specified REORDER action; computes "boosts" for all articles,
+	and adds appropriate scores to h.
+     */
+    private static void addReorderScores(EntityManager em, HashMap<String, Double> h, Action a) {
+	long whence = a.getPresentedListId();
+	long whither= a.getNewPresentedListId();
+	if (whence == 0 || whither == 0) throw new IllegalArgumentException("Action " + a.getId() + " does not have PL id");
+	PresentedList pl0 = (PresentedList)em.find(PresentedList.class, whence);
+	PresentedList pl1 = (PresentedList)em.find(PresentedList.class, whither);
+	Vector<PresentedListEntry> docs0 = pl0.getDocs();
+	Vector<PresentedListEntry> docs1 = pl1.getDocs();
+	//	System.out.println("Comparing PL " + pl1.getId() + " vs. " +  pl0.getId());
+	
+	int n0 = docs0.size(), n1= docs1.size();
+	if (n0 < n1) {
+	    Logging.warning("Reordered PresentedList " +whither + " has size " + n1 +", while the original list " + whence + " has a smaller size " + n0);
+	    return;
+	}
+	
+	if (n1 <= 1) return; // no meaningful reordering possible
+
+	HashMap<String, Integer> map1 = new HashMap<String, Integer>();
+	int i1 = 0;
+	for(PresentedListEntry q: docs1) {
+	    map1.put( q.getAid(), i1++);
+	}	
+
+	int pos0 = 0, skipCnt=0;
+	for(PresentedListEntry q: docs0) {
+	    String aid = q.getAid();
+	    Integer pos1 = map1.get(aid);
+	    if (pos1 == null) {
+		// Page was in the original list, but not in reordered one.
+		// This can be legitimate, due to late exclusions
+		skipCnt++;
+		continue;
+	    }
+
+	    if (pos0 != pos1) {
+		int up = pos0 - pos1;
+		double d = (double)up/(double)(n1-1);
+		Double val = h.get(aid);
+		h.put(aid, (val==null? 0 : val) + d);
+	    }
+	    pos0++;
+	}	
+	if (n1 + skipCnt != n0) {
+	    // this ought not to happen; indicates the presence of articles
+	    // in the reordered list which weren't in the original list!
+	    Logging.warning("|PL("+ whence + ")|=" + n0 + " was reordered to |PL("+whither+")="+n1 +"; the defect ("+(n0-n1)+") is not equal to the skip cnt="+skipCnt);
 	}
     }
 

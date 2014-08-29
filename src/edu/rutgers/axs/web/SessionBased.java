@@ -77,6 +77,21 @@ public class SessionBased  extends ResultsBase {
 	//infomsg += "<br>Session " + sd.getSqlSessionId() +  "\n";
     }
 
+    /** The prefix that is used to form element IDs for draggable elements.
+	It is sent back from the client to the server, to be stripped to
+	reveal pure article IDs. */
+    public static final String AID_REORDER_PREFIX = "table";
+
+    /** The prefix used to form URLs for sending to the servers information
+	about a user-performed result list reordering. URLs like this can
+	be inserted into the SB code, to be activated via jQuery once the user
+	moves links around.
+     */
+    public  String urlReorderPrefix() {
+	return RatingButton.judgePrefix(cp,  Action.Op.REORDER,  asrc,
+					AID_REORDER_PREFIX);
+    }
+        
     /** Creates a snippet  of HTML describing one article entry. 
 
 	<ul>
@@ -87,8 +102,6 @@ public class SessionBased  extends ResultsBase {
 
     */
     public String resultsDivHTMLLite(ArticleEntry e, double largest) {
-
-
 
 	String rt = "[" + e.idline + "; score="+e.score+ "; "+
 	    e.formatDate()+"]";
@@ -110,27 +123,30 @@ public class SessionBased  extends ResultsBase {
 
 	//When a new article is added to the list, it will be highlighted a different color.
 	//This code snipet will determine to highlight the given article
-	String colorBack =  "<div class=\"result\" id=\"" + e.resultsDivId() + "\">\n"; 
-	String divBackColor = "";
-	if(e.recent) {
+	String colorCode = "#ffffff";
+	if(e.age > 3) e.age = 3;
 
-	    colorBack =  "<div class=\"result\" id=\"" + e.resultsDivId() + "\" style=\"background-color:#ffff66\">\n";
-	    divBackColor = "style=\"background-color:#ffff66\"";
+	switch(e.age) {
+	case 1: colorCode = "#e0e0e0"; break;
+	case 2: colorCode = "#d8d8d8"; break;
+	case 3: colorCode = "#d0d0d0"; break;
+	default: colorCode = "#ffffff"; break;
 	}
-	
 
-	String s =   
-	    "<!-- The URL used in the list reorder call back should be \n" +
-	    	     urlReorderPrefix() + "\n" +
-	    " with the colon-separated list of article IDs (e.g. '0704.0001:physics/1234:q-bio/5678' ) appended to it. \n"+
-	    "One can also use an arbitrary prefix before each article ID; that prefix can be specified with 'prefix=XXX'. For example:\n"+
-	    urlReorderPrefix() + "xx-0704.0001:xx-physics/1234:xx-q-bio/5678&prefix=xx-" +
-	    "\n-->\n" +
+	String colorBack =  "<div class=\"result\" id=\"" + e.resultsDivId() + "\" style=\"background-color:" + colorCode + "\">\n"; 
+	String divBackColor = "style=\"background-color:" + colorCode + "\"";
 
-	    "<table id=\"table" + e.resultsDivId() + "\"><tr><td>\n" +  
-	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\"" + divBackColor + ">" +
-	    htmlRectangle(e.score, largest) + "</div>\n</td>\n" +
-            "<td style=\"width:100%\">" +
+	String chartTD = "<td>\n" +  
+	    "<div class=\"chart\" id=\"chart" + e.resultsDivId() + "\" " + divBackColor + ">" +
+	    htmlRectangle(e.score, largest) + "</div>\n";
+
+	if (sd.sbrg.researcherSB && !e.ourCommline.equals("")) {
+	    chartTD += 
+		"<br><strong>"+e.ourCommline+"</strong>\n";    
+	}
+	chartTD += "</td>\n";
+     
+	String docInfoTD =  "<td style=\"width:100%\">" +
 	    colorBack +
 	    "<div class=\"document\">\n" +
             "<table style=\"width:100%\"><tr><td>\n" +
@@ -138,22 +154,23 @@ public class SessionBased  extends ResultsBase {
 	    "\" onclick=\""  + js + "\">\n" +
 	    e.i + ". " + e.titline + "</a></td></tr>\n" +
 	    "<tr><td colspan=2>" +
-	    abbreviateAuthline(e.authline)+ " &mdash; "+abbreviateSubj(e.subj)+
+	    abbreviateAuthline(e.authline)+" &mdash; \n"+
+	    abbreviateSubj(e.subj)+"</td>\n" +
 	    "<tr><td>" + judgmentBarHTML_sb(e) +
-	    "</td></tr>" +
 	    "</td></tr>\n" +
-            "</table>\n";
-	    //researcherSpan(rt, sd.researcherSB)+  	    "<br>\n" +
+	    "</table></div></div></td>\n";
 
-	s += 
-	    (!e.ourCommline.equals("") ? "<tr><td colspan=2><strong>"  + e.ourCommline + "</strong></td></tr>\n" : "") +
-	    
-	    "</div>\n" +
-	    "</div>\n" +
-            "</td>\n" +
-	    "</tr>\n" + 
+	String resultsTable = 
+	    "<table id=\"" + e.resultsTableId() + "\">\n" + 
+	    "<tr>\n" + 
+	    chartTD +
+	    docInfoTD +
+	    "</tr>\n" +
 	    "</table>\n";
-	return s;
+
+
+
+	return resultsTable;
     }
 
     /** The bar with rating buttons, to be inserted after each

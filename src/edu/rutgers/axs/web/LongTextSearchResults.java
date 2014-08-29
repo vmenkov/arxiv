@@ -67,7 +67,7 @@ public class LongTextSearchResults extends TextSearchResults {
 	
 	numdocs = searcher.getIndexReader().numDocs();
 	//System.out.println("index has "+numdocs +" documents");
-	Logging.info("LongTextSearchResults: query=" + q);
+	//Logging.info("LongTextSearchResults: query=" + q);
 
 	reportedLuceneQuery=q;
 	TopDocs 	 top = searcher.search(q, maxlen + 1);

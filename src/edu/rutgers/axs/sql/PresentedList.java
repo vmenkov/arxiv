@@ -180,8 +180,6 @@ import edu.rutgers.axs.sb.SBRGenerator;
 	}
     }
 
-
-
     /**  Copies the content of this PresentedList into a vector of
 	 ArticleEntry objects.
 	 @param entries The vector to be filled. It also becomes the return value

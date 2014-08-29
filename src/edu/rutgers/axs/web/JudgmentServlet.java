@@ -3,7 +3,6 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-import java.lang.reflect.*;
 import java.util.regex.*;
 
 import javax.servlet.*;
@@ -17,11 +16,21 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.*;
 
 
-/** This servlet the user's "judgment" (explicit feedback) about an
+/** This servlet processes the user's "judgment" (explicit feedback) about an
     article. A "judgment" results from the user's clicking on one of
     the action buttons, such as rating an article, "copying" it in
     one's personal folder, asking the server not to show it again,
     etc.
+
+    <p>This servlet also processes the REORDER feedback (user-initiated
+    list reordering), introduced by David Desimone in the summer of
+    2014.
+
+    <p>A call to JudgmentServlet normally results in an Action object
+    being created in the database. Sometimes other data objects are
+    created as well: specifically, a REORDER event causes a
+    PresentedList object to be created, to hold the reordered article
+    list.
 
     <p>
     The "page" returned by this servlet is not actually
@@ -37,7 +46,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 
     /** Can be used for the REORDER action */
     static public final String PREFIX = "prefix";
-    
+
     public void	service(HttpServletRequest request, HttpServletResponse response
 ) {
 	reinit(request);
@@ -46,11 +55,9 @@ public class JudgmentServlet extends BaseArxivServlet {
 	Action.Op op = (Action.Op)Tools.getEnum(request, Action.Op.class,
 					 ACTION, Action.Op.NONE);	 
 	ActionSource asrc = new ActionSource(request);
-	String js="";
 
 	EntityManager em = null;
 	try {
-
 
 	    SessionData sd =  SessionData.getSessionData(request);
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
@@ -66,6 +73,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 
 	    // /arxiv/JudgmentServlet?prefix=xxx-&id=xxx-q-bio/0611055:xxx-q-bio/0701040:xxx-0904.1959&action=REORDER&src=SB&pl=3463
 
+	    Logging.info("JudgmentServlet: op=" + op + ", " + ID+ "=" +  request.getParameter(ID));
 
 	    if (op==Action.Op.REORDER) {
 		// supplies a column-separated list of IDs (maybe with prefixes)
@@ -74,12 +82,9 @@ public class JudgmentServlet extends BaseArxivServlet {
 		if (ids==null) throw new WebException("No article id list supplied");
 		String q[] = ids.split(":");
 		if (q.length==0) throw new WebException("Empty article id list supplied");
-		// remove prefix from each id
-		if (prefix !=null && prefix.length()>0) {
-		    for(int i=0; i<q.length; i++) {
-			if (!q[i].startsWith(prefix)) throw new WebException("No prefix '"+prefix+"' was found in article id '"+q[i]+"'");
-			q[i] = q[i].substring(prefix.length());
-		    }
+		// remove prefix (if any) from each id, and decode special chars
+		for(int i=0; i<q.length; i++) {
+		    q[i] = ArticleEntry.extractAidFromResultsTableId(q[i], prefix);
 		}
 	
 		// Begin a new local transaction so that we can persist a new entity	
@@ -99,12 +104,13 @@ public class JudgmentServlet extends BaseArxivServlet {
 		
 		// Begin a new local transaction so that we can persist a new entity	
 		em.getTransaction().begin();
+		// reocrd the action and the new PresentedList object
 		Action a= sd.addNewAction(em, u, op, id, null, asrc);
 		//em.persist(u);	       
 		em.getTransaction().commit(); 
 	    }
 
-	    js= (u!=null)? responseJS(em, u, op, asrc.presentedListId) : "";
+	    String js=(u!=null)? responseJS(em,u,op,asrc.presentedListId) : "";
 
 	    em.close();
 
@@ -137,6 +143,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 	String js="";
 	RatingButton [] buttons = RatingButton.chooseRatingButtonSet(u.getProgram());
       
+	Logging.info("JudgmentServlet.responseJS(op=" + op+")");
 	try {
 	    int fs = u.getFolderSize();
 	    String q = "("+fs+")";
@@ -163,7 +170,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 	    for(ArticleEntry e: entries) {
 		boolean hidden = exclusions.containsKey(e.id);
 		if (hidden) {
-		    js += e.hideJS() +"\n";
+		    js += e.hideJS(false) +"\n";
 		    cnt++;
 		    continue;
 		}
@@ -181,7 +188,8 @@ public class JudgmentServlet extends BaseArxivServlet {
 	    }
 	    //js += "alert('Cnt = " + cnt + "')";
 	} catch(Exception ex) {
-	    Logging.error("JS.responseJS: " + ex);
+	    ex.printStackTrace(System.out);
+	    Logging.error("JudgmentServlet.responseJS: " + ex);
 	}	
 	return js;
     }

@@ -370,6 +370,14 @@ public class SessionData {
 		if (original==null)  throw new WebException("No presented list for the supplied ID=" + oplid + " can be found!");
 		PresentedList newPL = saveReorderedPresentedList(em,original,u,reorderedAids,sqlSessionId); 
 		newPLid = newPL.getId();
+
+		// on SB lists, make in-memory record in the SB generator,
+		// for furture use in "maintain stable order" procedures
+		if (original.getType()==Action.Source.SB) {
+		    sbrg.receiveReorderedList(oplid, reorderedAids);
+		}
+
+
 	    } else if (op==Action.Op.NEXT_PAGE && op==Action.Op.PREV_PAGE) {
 	    } else {
 		throw new IllegalArgumentException("Cannot create an article with op code " + op + " without an article ID!");
@@ -396,7 +404,9 @@ public class SessionData {
 	be accessed through the original PresentedList object.
     */
     PresentedList saveReorderedPresentedList(EntityManager em, PresentedList original, User u, String aids[], long session) {
-	PresentedList plist = new PresentedList(original.getType(), u, session);
+	//Action.Source type = original.getType();
+	Action.Source type = Action.Source.REORDER;
+	PresentedList plist = new PresentedList(type, u, session);
 	plist.setUserReorderingOfPresentedListId(original.getId());
 	plist.fillArticleList(aids);	
 	//	if (df!=null) plist.setDataFileId( df.getId());

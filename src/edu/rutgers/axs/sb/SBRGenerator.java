@@ -253,17 +253,57 @@ public class SBRGenerator {
 
 	<p>Unless the TRIVIAL SBR method (which uses no exclusions) is
 	used, here we also double check if there are any new articles
-	to exclude.
+	to exclude. This means that the actually displayed list
+	(returned by this method) may sometimes be slightly shorter than 
+	the list stored in the PresentedList object in the database!
+	(FIXME: The above means that the PresentedList objects may not
+	always exactly reflect the "displayed reality"...)
     */
-    public SearchResults getSR() {
+    public synchronized SearchResults getSR() {
 	if (sbrReady==null) return null;
+	SearchResults sr =  sbrReady.sr;      
+	if (sbrReady.worker.sbMethod != Method.TRIVIAL) {
+	    int rmCnt = sr.excludeSomeSB(linkedAids);
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").getSR(): Removed " + rmCnt + " additional entries from display list based on plid="+sbrReady.plid);
+	}
+	return sr;
+    }
+
+    /** Returns the list that was previously displayed in the SB window, with
+	any user-initiated reorderings applied to it. This list is used in the
+	"maintain stable order" procedure in SBRGWorker.
+     */
+    synchronized Vector<ArticleEntry> getBaseList() {
+	if (sbrReady==null) return null;
+	if (sbrReady.reorderedEntries != null) return sbrReady.reorderedEntries;
 	SearchResults sr =  sbrReady.sr;      
 	if (sbrReady.worker.sbMethod != Method.TRIVIAL) {
 	    int rmCnt = sr.excludeSomeSB(linkedAids);
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").getSR(): Removed " + rmCnt + " additional entries from display list");
 	}
-	return sr;
+	return sr.entries;
     }
+
+    /** This method is called when the user reorders articles shown in
+	sr, so that a local record is made, for use in any future
+	"maintain stable order"  procedures. It calls the eponymous method
+	in SBRGThread.
+	
+	@param oplid The id of the original PresentedList whose reordering the new list purports to be 
+	@param aids The list of article IDs in the reordered list, as arrived from the web browser
+    */
+    public synchronized void receiveReorderedList(long oplid, String aids[]) {
+	if (sbrReady==null) {
+	    // This could happen in exceptional cases, e.g. on session timeout
+	    Logging.warning("SBRGenerator asked to record a reordered list while there is no original list!");
+	    return;
+	}
+	if (sbrReady.plid != oplid) {
+	    Logging.warning("SBRG(session="+sd.getSqlSessionId()+").getSR(): Request to receive reordered list for PL=" + oplid + " has been denied, because that PL has expired; the currently available PL is " + sbrReady.plid);
+	}
+	sbrReady.receiveReorderedList(aids);
+    }
+
 
     /** Does this generator has a running thread (which is going to
 	generate a new list) in progress? */
