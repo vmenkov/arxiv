@@ -32,14 +32,14 @@ import edu.rutgers.axs.html.*;
     PresentedList object to be created, to hold the reordered article
     list.
 
-    <p>
-    The "page" returned by this servlet is not actually
-    displayed to the user, because this servlet is invoked
-    asynchronously (with something like jQuery's $.get(url); see
-    http://api.jquery.com/jQuery.get/ ). However, the return text may be
-    a piece of JavaScript, which the caller may choose to evaluate
-    in order to dynamically update the appearance of the page (e.g.,
-    show the current user folder size).
+    <p> The "page" returned by this servlet is not actually displayed
+    to the user, because this servlet is invoked asynchronously (with
+    something like jQuery's $.get(url); see
+    http://api.jquery.com/jQuery.get/ ). However, the return text may
+    be a piece of JavaScript, which the caller may choose to evaluate
+    (function "eval" inside the get()), in order to dynamically update
+    the appearance of the page (e.g., show the current user folder
+    size).
 
  */
 public class JudgmentServlet extends BaseArxivServlet {

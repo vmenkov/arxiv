@@ -80,6 +80,20 @@
     <url-pattern>/JudgmentServlet</url-pattern>
   </servlet-mapping>
   
+ <servlet>
+    <servlet-name>CheckSBServlet</servlet-name>
+    <description>
+      Is used to check what recommendation lists are available for SB
+    </description>
+    <servlet-class>edu.rutgers.axs.web.CheckSBServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>CheckSBServlet</servlet-name>
+    <url-pattern>/CheckSBServlet</url-pattern>
+  </servlet-mapping>
+ 
+
   <servlet>
     <servlet-name>FilterServlet</servlet-name>
     <description>

@@ -187,7 +187,7 @@ window.onload = StartScripts;
     <br>
     <span class="researcher">
     <a href="tools/"><span>&nbsp;&diams;&nbsp;</span>
-    <a onclick="javascript:window.onload=openSBMovingPanel('/arxiv');">
+    <a onclick="javascript:window.onload=openSBMovingPanelNow('<%=main.cp%>');">
     Show Session-Based suggestions (in a pop-up window)</a>
     </span>
  

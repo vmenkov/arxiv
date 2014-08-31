@@ -311,14 +311,33 @@ public class SBRGenerator {
 	return sbrRunning != null;
     }
 
-    /** Retrieves the PresentedList id associated with  the most recently
+    /** Retrieves the PresentedList id associated with the most recently
 	generated session-based recommendation list.
      */
-    public long getPlid() {
-	return sbrReady==null? 0 : sbrReady.plid;
+    synchronized public long getPlid() {    
+	return   sbrReady==null? 0 : sbrReady.plid;
     }
 
+    /** Retrieves the PresentedList id associated with the most recently       
+	generated session-based recommendation list.
+	@param record If true, record this request in the belief that this
+	PresentedList will now be sent to the client
+     */
+    synchronized public long getPlid(boolean record) {
+	long c = getPlid();
+	if (record) lastDisplayedPlid = c;
+	return c;
+    }
   
+    /** This is what we beleive was the PLID for the most recent rec list 
+	displayed in the SB window. SessionBased.java is supposed to set it.
+	FIXME: This is just what we were about to send; we do not receive
+	a confirmation from the client that the list in fact was successfully
+	received and displayed there!
+    */
+    private long lastDisplayedPlid = 0;
+    public long getLastDisplayedPlid() { return lastDisplayedPlid;}
+
     synchronized public String description() {
 	if (sbrReady==null) {
 	    String s= "No rec list has been generated yet. Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline +"\n";
@@ -439,5 +458,7 @@ public class SBRGenerator {
 	String url = "index.jsp?" + qs( Method.RANDOM, sbDebug, sbMergeWithBaseline);
 	return URLEncoder.encode(url);
     }
+
+ 
 
 }

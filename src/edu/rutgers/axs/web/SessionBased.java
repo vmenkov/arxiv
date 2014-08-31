@@ -42,6 +42,8 @@ public class SessionBased  extends ResultsBase {
 
     public int maxAge=0;
 
+    private long  plid=0;
+
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	
@@ -55,17 +57,18 @@ public class SessionBased  extends ResultsBase {
 	popout = getBoolean("popout", true);
 
 	sr = null;
-	long plid=0;
 	if (sd.sbrg!=null) {
-	    // get the pre-computed rec list
-	    sr = sd.sbrg.getSR();
-	    infomsg += "<br>" + sd.sbrg.description() + "\n";
-	    if (sr!=null) {
-		plid = sd.sbrg.getPlid();
-		maxAge = sr.getMaxAge();
-	    } else if (sd.sbrg.hasRunning()) {
-		// tell the browser to come ask again in a few sec
-		wantReload=true;
+	    synchronized(sd.sbrg) { // make sure the SR list and PLID match
+		// get the pre-computed rec list
+		sr = sd.sbrg.getSR();
+		infomsg += "<br>" + sd.sbrg.description() + "\n";
+		if (sr!=null) {
+		    plid = sd.sbrg.getPlid(true);
+		    maxAge = sr.getMaxAge();
+		} else if (sd.sbrg.hasRunning()) {
+		    // tell the browser to come ask again in a few sec
+		    wantReload=true;
+		}
 	    }
 	}
 	infomsg += "<br>List presented at " + (new Date()) +  "\n";
@@ -80,7 +83,7 @@ public class SessionBased  extends ResultsBase {
     /** The prefix that is used to form element IDs for draggable elements.
 	It is sent back from the client to the server, to be stripped to
 	reveal pure article IDs. */
-    public static final String AID_REORDER_PREFIX = "table";
+    static final String AID_REORDER_PREFIX = "table";
 
     /** The prefix used to form URLs for sending to the servers information
 	about a user-performed result list reordering. URLs like this can
@@ -116,10 +119,11 @@ public class SessionBased  extends ResultsBase {
 	String aName = "article_" + e.id;
 
 	// The JavaScript snippet used to load the article in question
-	// into the main window
-	String js = popout?
-	    "javascript:window.opener.location.href='" +urlAbstract(e.id)+ "';":
-	    "javascript:window.parent.location.href='" +urlAbstract(e.id)+ "';";
+	// into the main window. The PLID is included into the URL,
+	// to be sent by the client back to CheckSBServlet on the server
+	String url = urlAbstract(e.id);
+
+	String js = "javascript:window.opener.location.href='" +url+ "';";
 
 	//When a new article is added to the list, it will be highlighted a different color.
 	//This code snipet will determine to highlight the given article

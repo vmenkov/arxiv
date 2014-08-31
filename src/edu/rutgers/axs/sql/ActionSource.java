@@ -102,14 +102,26 @@ public class ActionSource {
 	qs.strip( SRC);
 	qs.strip( PL);
     } 
-    
+ 
+   
     /** Produces a component to be added to the query string, containing
 	action source information. This is passed to JudgmentServlet etc. 
 	@return A query string component (including the leading '&amp;') */
-    public String toQueryString() {
+   public String toQueryString() {
+       return toQueryString(false);
+   }
+
+   /** Produces a component to be added to the query string, containing
+	action source information. This is passed to JudgmentServlet etc. 
+	@param leading This is going to be used as the first parameter
+	after '?' (and thus does not need the leading ampersand)
+	@return A query string component (including the leading '&amp;', unless
+	leading=true) */
+     public String toQueryString(boolean leading) {
 	String s="";
 	for(String[] p:  toQueryPairs()) {
-	    s += "&"+p[0] +"=" + p[1];
+	    if (!leading || s.length()>0) s += "&";
+	    s += p[0] +"=" + p[1];
 	}
 	return s;
     }

@@ -141,7 +141,12 @@ public class FilterServlet extends  BaseArxivServlet  {
 	/** For handling action source, as applicable. The default source
 	    for FilterServlet is FILTER, but it is overridden via the HTTP
 	    request if we've come e.g. from a suggestion list of some
-	    kind */
+	    kind.  
+
+	    Note that in the SB context, asrc contains the
+	    PresentedList ID pertaining to the list in SB; this can be
+	    used to decide if/when we need to refresh SB.
+	*/
 	
 	ActionSource asrc = new ActionSource(Action.Source.FILTER,0);
 
@@ -867,15 +872,14 @@ public class FilterServlet extends  BaseArxivServlet  {
 		}
 	    }
 
-	    // insert JS for the Moving Panel inside the HEAD element, if needed
+	    // Insert JS for the Moving Panel inside the HEAD element if needed.
+	    // The code will cause the SB pop-up window to open, or its content
+	    // to be updated.
 	    if (sd.sbrg.getNeedSBNow()) {
 		m = pEndHead.matcher(s);
 		if (m.find()) {
 		    s = s.substring(0,m.start()) + "\n" +
-			RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
-			"<script type=\"text/javascript\">\n" +
-			"window.onload=openSBMovingPanel('"+cp+"');\n" + 
-			"</script>\n" + 
+			mkSBJS() +
 			s.substring(m.start());
 		}
 	    }
@@ -883,7 +887,23 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    return s;
 	}
 
+	/** Generates SCRIPT elements with the JavaScript needed for
+	    the opening or reloading of the SB pop-up window.  */
+	private String mkSBJS() {
+	    String js = CheckSBServlet.mkJS(cp, /*asrc,*/ sd.sbrg);
+	    return
+		RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
+		RatingButton.js_snippet(js);
+	}
 
+
+	private String mkLoadSBJS() {
+	    return
+		RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
+		RatingButton.js_snippet("window.onload=openSBMovingPanel('"+cp+"', 1500);");
+	}
+
+	
 	/** Any additional HTML needs to be inserted before the specified
 	    line of HTML? 
 	    E.g., in FilterServlet/abs/1110.3154 we'd insert rating

@@ -386,6 +386,11 @@ public class RatingButton {
 	    "></script>\n";
     }
 
+    static public String js_snippet(String snippet) {
+	return "<script" +
+	    att("type", "text/javascript") + ">\n" +snippet+ "\n</script>\n";
+    }
+
     /** Generates JS code to be inserted into each HTML page's HEAD
 	element. In this case, it is an array of ordinals for actions
 	whose buttons/texts may need to be "flipped" sometimes.

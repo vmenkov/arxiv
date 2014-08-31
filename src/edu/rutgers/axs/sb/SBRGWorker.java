@@ -241,7 +241,7 @@ class SBRGWorker  {
     }
 
     /** Computes a suggestion list based on a single article, using
-	subject categories */
+	subject categories. This is used in our baseline method. */
     static private ScoreDoc[] computeArticleBasedListSubjects(IndexSearcher searcher, String aid, int maxlen) throws Exception {
 
 	int docno= Common.find(searcher, aid);
@@ -253,7 +253,7 @@ class SBRGWorker  {
 
 	String[] cats = new String[] {allCats[0]}; // main cat only
 
-	Date since = SearchResults.daysAgo(7);
+	Date since = SearchResults.daysAgo(7); // date range
 	SearchResults bsr = SubjectSearchResults.orderedSearch(searcher, cats, since, null, maxlen);
 	ScoreDoc[] z = bsr.scoreDocs;
 	return z;
