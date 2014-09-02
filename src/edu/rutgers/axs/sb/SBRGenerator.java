@@ -151,24 +151,7 @@ public class SBRGenerator {
 
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline);
 
-	    // If merging with baseline is to follow, then the stable-order
-	    // procedure is only carried out after that merging.
-	    int soMode = sbMergeWithBaseline? 0:  sbStableOrderMode;
-	    if (sbMethod == Method.ABSTRACTS_COACCESS) {
-		worker = new SBRGWorkerMerge(this, soMode,
-					     new SBRGWorker(Method.ABSTRACTS, this, 0),
-					     new SBRGWorker(Method.COACCESS, this, 0));
-
-	    } else {
-		worker = new SBRGWorker(sbMethod, this, soMode);
-	    }
-
-	    if (sbMergeWithBaseline) {
-		worker = new SBRGWorkerMerge(this, sbStableOrderMode,
-					     worker,
-					     new SBRGWorker(Method.SUBJECTS, this, 0));
-	    }
-
+	    worker =createWorker(this);
 
 	} else if  (m==null || requestedSbMethod == m ) {
 	    // OK: has already been set, and no attempt to change it now 
@@ -176,6 +159,35 @@ public class SBRGenerator {
 	    String msg = "Cannot change the SB method to " + m + " now, since "  + requestedSbMethod + " already was requested before";
 	    Logging.error(msg);
 	    throw new WebException(msg);
+	}
+
+    }
+
+    /** Creates a SBRGWorker object of an appropriate type for the job.
+	@param sbrg The SBR generator which contains all relevant parameters
+	@return A new worker object.
+     */
+    private static SBRGWorker createWorker(SBRGenerator sbrg) {
+	// If merging with baseline is to follow, then the stable-order
+	// procedure is only carried out after that merging.
+	int soMode = sbrg.sbMergeWithBaseline? 0:  sbrg.sbStableOrderMode;
+
+	SBRGWorker w;
+	if (sbrg.sbMethod == Method.ABSTRACTS_COACCESS) {
+	    w = new SBRGWorkerMerge(sbrg, soMode,
+				    new SBRGWorker(Method.ABSTRACTS, sbrg, 0),
+				    new SBRGWorker(Method.COACCESS, sbrg, 0));
+
+	} else {
+	    w = new SBRGWorker(sbrg.sbMethod, sbrg, soMode);
+	}
+
+	if (sbrg.sbMergeWithBaseline) {
+	    return new SBRGWorkerMerge(sbrg, sbrg.sbStableOrderMode,
+				       w,
+				       new SBRGWorker(Method.SUBJECTS, sbrg, 0));
+	} else {
+	    return w;
 	}
 
     }

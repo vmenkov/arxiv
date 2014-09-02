@@ -887,20 +887,38 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    return s;
 	}
 
+
+	/** Wraps the specified JS code into a no-argument function,
+	    and associates that function with a window.onload handler;
+	    wraps everything into a SCRIPT element.
+	 */
+	private /* static*/ String wrapJSForOnload(String js0) {
+	    final String f ="myWindowOnloadFunction";
+	    String js = 
+		"function "+f+"() { "+js0+" }\n" +
+		"window.onload="+f+";";
+	    return 
+		RatingButton.js_snippet(js);
+
+	}
+
 	/** Generates SCRIPT elements with the JavaScript needed for
 	    the opening or reloading of the SB pop-up window.  */
 	private String mkSBJS() {
-	    String js = CheckSBServlet.mkJS(cp, /*asrc,*/ sd.sbrg);
+	    String js = CheckSBServlet.mkJS(cp, sd.sbrg);
 	    return
 		RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
-		RatingButton.js_snippet(js);
+		wrapJSForOnload(js);
 	}
 
-
-	private String mkLoadSBJS() {
-	    return
-		RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
-		RatingButton.js_snippet("window.onload=openSBMovingPanel('"+cp+"', 1500);");
+	/** This was used before the introduction of timeout-check-eval
+	    loop in August 2014. Superseded by mkSBJS().  */
+	private String mkSBJS_orig() {
+	    String js = 
+		"openSBMovingPanel('"+cp+"', 1500);";
+	    return 
+		RatingButton.js_script(cp+"/scripts/filterServletSB.js") +
+		wrapJSForOnload(js);
 	}
 
 	

@@ -16,6 +16,7 @@ function openSBMovingPanel(cp, delayMsec) {
     },  delayMsec);
 }
 
+
 function checkSBAgainLater(url, delayMsec) {
     //alert('Told to wait for ' + delayMsec + ' msec and check again');
     setTimeout(function() {
@@ -25,6 +26,3 @@ function checkSBAgainLater(url, delayMsec) {
 	    eval(data);})
     },  delayMsec);
 }
-
-
-//window.onload=openSBMovingPanel;

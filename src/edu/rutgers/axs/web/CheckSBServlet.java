@@ -56,7 +56,7 @@ public class CheckSBServlet extends BaseArxivServlet {
 	    long clientHasPlid = sbrg.getLastDisplayedPlid(); 
 
 	    if ( serverHasPlid > clientHasPlid) {
-		js= "window.onload=openSBMovingPanelNow('"+cp+"');";
+		js= "openSBMovingPanelNow('"+cp+"');";
 	    } else if (sbrg.hasRunning()) {
 		String url = mkUrl(cp /*, asrc */);
 		js= "checkSBAgainLater('"+url+"', 2000);";
@@ -65,7 +65,6 @@ public class CheckSBServlet extends BaseArxivServlet {
 	}					  
 
 	return js;
-
     }
 
     public void	service(HttpServletRequest request, HttpServletResponse response
