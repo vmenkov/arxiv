@@ -40,15 +40,17 @@ store certain data to simplify the recomputation of the SBRL
 
 <p>In each SessionData instance there is an instance of {@link
 edu.rutgers.axs.sb.SBRGenerator} (field SessionData.sbrg), which
-contains the data structure related to SBRL generation.
+contains parameters and objects related to SBRL generation.
 
 <H3>The organization of the SBRL generation process</h3>
 
-<p>Presently, two classes are responsible for the SBRL generation:
-{@link edu.rutgers.axs.sb.SBRGenerator} and {@link
-edu.rutgers.axs.sb.SBRGThread}. The second class, {@link
-edu.rutgers.axs.sb.SBRGThread}, extends the Java Thread class, and it
-is in its run() method where the actual SBRL computation resides. The
+<p>Presently, three classes are responsible for the SBRL generation:
+{@link edu.rutgers.axs.sb.SBRGenerator},
+{@link edu.rutgers.axs.sb.SBRGThread}, and
+{@link edu.rutgers.axs.sb.SBRGWorker} (and its child classes).
+The second class, {@link edu.rutgers.axs.sb.SBRGThread}, extends the Java Thread class, and serves as a wrapper for the SBRGWorker. It is {@link edu.rutgers.axs.sb.SBRGWorker} of an appropriate type which implements the actual computations
+involved in the creating of a SBRL; its work() method is
+the main method for this computation resides. The
 first class, {@link edu.rutgers.axs.sb.SBRGenerator}, provides the
 necessary scheduling framework for these computations. It ensures:
 <ul>
@@ -58,7 +60,7 @@ etc) are taken into account;
 <li>  that the most recently computed SBRL is available for retrieval.
 </ul>
 
-<p>Each {@link edu.rutgers.axs.sb.SBRGenerator} instance also stores
+<p>Each {@link edu.rutgers.axs.sb.SBRGWorker} instance also stores
 certain data that can be reused whenever recomputing the SBRL during
 the session. E.g., in our main algorithm presently - computing an
 "article-based suggestion list" for each viewed article, and then
@@ -84,26 +86,20 @@ and if it is, returns it.
 few seconds and automatic self-reloading if the SBRL was not available
 the first time around.
 
+
+<h3>SBRGWorker subclasses</h3>
+
+<p>Presently, most SBRL generation methods use class SBRGWorker itself. A subclass, SBRGWorkerMerge, is used to implement a composite worker, which causes to "underlying" workers create their respective rec lists, and then merges the two using the team-draft process.
+
+<p>More subclasses can be added to implement other methods.
+
 <h3>Expansion support</h3>
 
 <p>How can we easily add new SBRL generation algorithms to the
-existing framework? One possible refactoring scheme is as follows:
-<ul>
-
-<li>Convert edu.rutgers.axs.sb.SBRGenerator into an abstract class,
-with a separate child class responsible for each particular SBRL
-generation algorithm.  The computation scheduling machinery will stay
-in this abstract class, while the algorithm-specific data staructure
-that need to be maintained within the session can be kept in the child
-classes responsible for individual algorithms.
-
-<li>Class edu.rutgers.axs.sb.SBRGenerator can be similarly refactored
-into an abstract class. The code responsible for the interaction with
-the SBRGenerator (the shell of the run() method) will stay in the
-abstract class, while the algorithm-specific code (such as method
-computeRecList()) can be moved to the algorithm-specific class.
-</ul>
-
-
+existing framework? The easiest approach is to subclass SBRGWorker as needed,
+overriding the method work() or some methods it calls. The method
+SBRGenerator.createWorker(), should be modify appropriately, to ensure that a
+worker object of the appropriate type is created for a particular combination
+of parameters.
 
 </body>
