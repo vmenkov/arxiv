@@ -66,11 +66,6 @@ class SBRGWorkerMerge extends  SBRGWorker  {
 	    return;
 	}
 	
-	Thread t = Thread.currentThread();
-	if (t instanceof SBRGThread) {
-	    ((SBRGThread)t).reportPartialProgress();
-	}
-
 	stableOrderCheck(maxRecLen);
 
 	excludedList = worker1.excludedList  + " ; " + worker2.excludedList;

@@ -664,8 +664,11 @@ class SBRGWorker  {
 	return plist;
     }
 
-    /** Carry out the "stable order" procedure, if required by the sbStableOrderMode
-	parameter.
+    /** Carry out the "maintain stable order" procedure, if required by the
+	sbStableOrderMode parameter.  If there is indeed an MSO in order,
+	this method also signals to the parent thread that the worker is
+	near completion; this information can be used elsewhere to optimize
+	client-server communication.
 	
 	<p>FIXME: this gets sr.scoreDocs out of sync with sr.entries, but who cares?
     */
@@ -674,6 +677,15 @@ class SBRGWorker  {
 	    Logging.warning("called SBRGW.stableOrderCheck() with no data, WTF?");
 	    return;
 	}
+	if (sbStableOrderMode==0) {  // no MSO
+	    return;
+	}
+
+	Thread t = Thread.currentThread();
+	if (t instanceof SBRGThread) {
+	    ((SBRGThread)t).reportPartialProgress();
+	}
+
 	if (sbStableOrderMode==1) {
 	    sr.entries = maintainStableOrder1( sr.entries, maxRecLen);
 	} else   if (sbStableOrderMode==2) {
