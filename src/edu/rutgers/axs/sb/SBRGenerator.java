@@ -319,8 +319,16 @@ public class SBRGenerator {
 
     /** Does this generator has a running thread (which is going to
 	generate a new list) in progress? */
-    public boolean hasRunning() {
+    synchronized public boolean hasRunning() {
 	return sbrRunning != null;
+    }
+
+    /** Returns true is this generator has a running thread (which is
+	going to generate a new list) in progress, AND it believes
+	that the thread will complete pretty soon.
+    */
+     synchronized public boolean runningNearCompletion() {
+	return sbrRunning != null && sbrRunning.nearCompletion;
     }
 
     /** Retrieves the PresentedList id associated with the most recently

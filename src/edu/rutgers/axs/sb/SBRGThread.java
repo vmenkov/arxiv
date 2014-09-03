@@ -152,6 +152,14 @@ class SBRGThread extends Thread {
 	Logging.info("SBRGThread " + getId() + ": Saved user-reordered list");
     }
 
+    boolean nearCompletion=false;
+    /** The thread's worker may call this method to report that it's near
+	completion. That information may be used to optimize client-server
+	communication.
+     */
+    void reportPartialProgress() {
+	nearCompletion = true;
+    }
 
  
 }

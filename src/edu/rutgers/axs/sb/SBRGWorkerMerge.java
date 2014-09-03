@@ -65,6 +65,11 @@ class SBRGWorkerMerge extends  SBRGWorker  {
 	    errmsg = "I/O Error in setWindow(): " + ex;
 	    return;
 	}
+	
+	Thread t = Thread.currentThread();
+	if (t instanceof SBRGThread) {
+	    ((SBRGThread)t).reportPartialProgress();
+	}
 
 	stableOrderCheck(maxRecLen);
 

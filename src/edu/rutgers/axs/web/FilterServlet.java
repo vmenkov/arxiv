@@ -905,7 +905,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	/** Generates SCRIPT elements with the JavaScript needed for
 	    the opening or reloading of the SB pop-up window.  */
 	private String mkSBJS() {
-	    String js = CheckSBServlet.mkJS(cp, sd.sbrg);
+	    String js = CheckSBServlet.mkJS(sd, cp);
 	    return
 		RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
 		wrapJSForOnload(js);

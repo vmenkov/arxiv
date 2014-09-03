@@ -43,7 +43,8 @@ public class CheckSBServlet extends BaseArxivServlet {
 	currently available on the server, and produces an appropriate
 	JavaScript statement to be executed in the main window.
     */
-    static String mkJS(String cp, /* ActionSource asrc, */  SBRGenerator sbrg) {
+    static String mkJS(SessionData sd, String cp) {
+	SBRGenerator sbrg  = sd.sbrg;
 	if (sbrg==null) return "";
 
 	//boolean good = Math.random() < 0.5;
@@ -58,10 +59,11 @@ public class CheckSBServlet extends BaseArxivServlet {
 	    if ( serverHasPlid > clientHasPlid) {
 		js= "openSBMovingPanelNow('"+cp+"');";
 	    } else if (sbrg.hasRunning()) {
-		String url = mkUrl(cp /*, asrc */);
-		js= "checkSBAgainLater('"+url+"', 2000);";
+		int msec = sbrg.runningNearCompletion()? 1000: 2000;
+		String url = mkUrl(cp);
+		js= "checkSBAgainLater('"+url+"', "+msec+");";
 	    }
-	    Logging.info("CheckSBServlet (client="+clientHasPlid+", server="+serverHasPlid+") will send back: " + js);
+	    Logging.info("CheckSBServlet (session="+sd.getSqlSessionId()+", client="+clientHasPlid+", server="+serverHasPlid+") will send back: " + js);
 	}					  
 
 	return js;
@@ -73,7 +75,7 @@ public class CheckSBServlet extends BaseArxivServlet {
 	ActionSource asrc = new ActionSource(request);
 	try {
 	    SessionData sd =  SessionData.getSessionData(request);
-	    String js = mkJS(getContextPath(), /*asrc,*/ sd.sbrg);
+	    String js = mkJS(sd, getContextPath());
 
 	    response.setContentType("text/plain");
 	    OutputStream aout = response.getOutputStream();

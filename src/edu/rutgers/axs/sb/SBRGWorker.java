@@ -78,7 +78,8 @@ class SBRGWorker  {
 	presented to the user.*/
     boolean hidden=false;
 
-    /** Creates a thread. You must call its start() method next.
+    /** Creates a worker object for a given user session. Later, you can call
+	its work() method every time you need an updated rec list.
 	@param _id Run id, which identifies this run (and its results)
 	within the session.
      */
@@ -99,12 +100,21 @@ class SBRGWorker  {
 	return Thread.currentThread().getId(); 
     }
 
-    /** The main method for the actual recommendation list generation. It may be invoked
-	several times over the life of a SBRGWorker instance, with a new invocation 
-	every time when the rec list needs to be updated.
+    /** The main method for the actual recommendation list
+	generation. It may be invoked several times over the life of a
+	SBRGWorker instance (i.e., over a particular user session),
+	with a new invocation every time when the rec list needs to be
+	updated. 
 	
 	@param runID A sequential ID (zero-based) of this
 	SBRL-generation run within the user session.
+
+	@param _his An ActionHistory object containing all user
+	actions within this session. Since a single SBRGWorker
+	instance is supposed to be used within the same user session,
+	the _his parameter on subsequent calls to the work() method of
+	a particular SBRGWorker instance you are supposed to use
+	(updated) ActionHistory objects for the same session. 
      */
     synchronized void work(EntityManager em, IndexSearcher searcher, int runID, ActionHistory _his)  {
 
@@ -713,6 +723,7 @@ class SBRGWorker  {
 	    }
 	}
     }
+
 
 }
 
