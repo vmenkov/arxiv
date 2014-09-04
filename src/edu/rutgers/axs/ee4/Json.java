@@ -21,9 +21,9 @@ import edu.rutgers.axs.sql.DataFile;
 
 /** Auxiliary methods for processing usage logs in Json format
  */
-class Json {
+public class Json {
 
-    static JSONObject readJsonFile(String fname) throws IOException, JSONException {
+    public static JSONObject readJsonFile(String fname) throws IOException, JSONException {
 	Reader fr = fname.endsWith(".gz") ?
 	    new InputStreamReader(new GZIPInputStream(new FileInputStream(fname))) :
 	    new FileReader(fname);
@@ -72,7 +72,7 @@ class Json {
 	return false;
     }
 
-    private static String canonicAid(String aid) {
+    public static String canonicAid(String aid) {
 	aid = aid.replaceAll("v(\\d+)$", "");
 	//if (aid.endsWith("v")) return aid.substring(0, aid.length()-1);
 	return aid;
