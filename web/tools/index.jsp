@@ -42,9 +42,11 @@
 <p><a name="sb"><strong>
 Session-Based recommendation lists (SBRL), different versions:</strong></a>
 <table border=1>
-<tr><th>By itself<th>Merged with baseline<th>
-<tr><td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.TRIVIAL,false)%>">Trivial</a>
-<td></td> Recommendation list = list of viewed articles
+<tr><th>By itself<th>Merged with baseline<th></tr>
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.TRIVIAL,false)%>">Trivial</a></td>
+<td></td>
+<td>Recommendation list = list of viewed articles</td> </tr>
 <tr><td colspan=2><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.SUBJECTS,false)%>">SUBJECTS</a> (= baseline)
 <td>Subject based (a few recent articles from the subject categories of the viewed articles)
 
