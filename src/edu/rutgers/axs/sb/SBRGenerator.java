@@ -430,7 +430,7 @@ public class SBRGenerator {
     synchronized void completeRun() {
 	if (sbrRunning.sr!=null) {
 	    sbrReady = sbrRunning;
-	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished successfully; |sr|=" + sbrReady.sr.entries.size());
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished successfully; |sr|=" + sbrReady.sr.entries.size() + "; " + sbrReady.msecLine());
 	} else { // there must have been an error
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished with no result; error=" + sbrRunning.error + " errmsg=" + sbrRunning.errmsg);
 	}

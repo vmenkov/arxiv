@@ -111,14 +111,18 @@ class SBRGThread extends Thread {
     */
     String excludedList = "";
 
+     public String msecLine() {
+	if (startTime!=null && endTime!=null) {
+	    long msec = endTime.getTime() - startTime.getTime();
+	    return " (" + (0.001 * (double)msec) + " sec)";
+	} else return "";
+     }
+
+
     /** Produces a human-readable description of what this thread has done. */
     public String description() {
 	String s = "Session-based recommendation list no. "+plid+" produced by thread " + getId() +"; started at " + startTime +", finished at " + endTime;
-	if (startTime!=null && endTime!=null) {
-	    long msec = endTime.getTime() - startTime.getTime();
-	    s += " (" + (0.001 * (double)msec) + " sec)";
-	}
-	s += ".";
+	s += msecLine() + ".";
 	s += "<br>\n" +  worker.description();
 
 	if (his!=null) {
