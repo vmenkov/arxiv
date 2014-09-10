@@ -892,7 +892,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    and associates that function with a window.onload handler;
 	    wraps everything into a SCRIPT element.
 	 */
-	private /* static*/ String wrapJSForOnload(String js0) {
+	private  /*static*/ String wrapJSForOnload(String js0) {
 	    final String f ="myWindowOnloadFunction";
 	    String js = 
 		"function "+f+"() { "+js0+" }\n" +
@@ -905,7 +905,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 	/** Generates SCRIPT elements with the JavaScript needed for
 	    the opening or reloading of the SB pop-up window.  */
 	private String mkSBJS() {
-	    String js = CheckSBServlet.mkJS(sd, cp);
+	    if (sd.sbrg==null) return "";
+	    String js = sd.sbrg.mkJS(cp);
 	    return
 		RatingButton.js_script(cp+"/scripts/filterServletSB.js")+
 		wrapJSForOnload(js);

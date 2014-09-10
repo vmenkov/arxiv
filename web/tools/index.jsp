@@ -58,7 +58,7 @@ Session-Based recommendation lists (SBRL), different versions:</strong></a>
 <tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS,false)%>">COACCESS</a>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS,true)%>">COACCESS + SUBJECTS</a>
-<td>Coaccess based (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data thru March 2014)
+<td>Coaccess based (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data thru August 2014)
 
 <tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,false)%>">ABSTRACTS + COACCESS</a>
@@ -72,7 +72,11 @@ Session-Based recommendation lists (SBRL), different versions:</strong></a>
 </table>
 
 <ul>
-<li>The <a href="../LogoutServlet">logout link</a> -- use that to explicitly terminate your session if you want to try a new SBRL generation  method after you've recently used another SBRL method. (Otherwise, a strange mix of results may appear). You can also use it to start a new session from scratch.
+<li>
+The <a href="../LogoutServlet">logout link</a> -- use that to explicitly terminate your session if you want to try a new SBRL generation  method after you've recently used another SBRL method. (Otherwise, a strange mix of results may appear). You can also use it to start a new session from scratch.
+
+<li>The "<a href="../LogoutServlet?stay=ON&redirect=tools/index.jsp">change focus</a>" link.
+
 </ul>
 
 

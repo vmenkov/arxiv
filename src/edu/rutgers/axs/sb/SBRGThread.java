@@ -150,10 +150,10 @@ class SBRGThread extends Thread {
 		}
 	    }
 	    if (!found) {
-		Logging.warning("SBRGThread " + getId() + ": Reordered list contains article " + aid + " which is not presented in the original list!");
+		Logging.warning("SBRG(" + parent.sd.getSqlSessionId()+", thread="+this+"): Reordered list contains article " + aid + " which is not presented in the original list!");
 	    }
 	}
-	Logging.info("SBRGThread " + getId() + ": Saved user-reordered list");
+	Logging.info("SBRG(" + parent.sd.getSqlSessionId()+", thread="+this+"): Saved user-reordered list");
     }
 
     boolean nearCompletion=false;

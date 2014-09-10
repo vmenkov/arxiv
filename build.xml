@@ -412,8 +412,6 @@ http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
   <available file="${tomcat.home.orie}"/>
 </condition>
 
-<echo message="reloadurl=${reloadurl}"/>
-
 <!-- Or try to run ant as follows:
       ant -lib ../lib/catalina-ant.jar  , 
    or place that jar file into ~/.ant/lib
@@ -426,6 +424,7 @@ http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
 <!-- The user list, with roles, is stored in /usr/local/tomcat/conf/tomcat-users.xml -->
 <target name="reload" description="Reload web application on localhost"
         depends="deploy">
+  <echo message="reload.url=${reload.url}"/>
   <reload url="${reload.url}" username="vmenkov2" password="vmenkov2-manager-script" path="/${app.name}"/>
 </target>
 

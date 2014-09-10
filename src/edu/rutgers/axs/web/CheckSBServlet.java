@@ -33,40 +33,8 @@ import edu.rutgers.axs.sb.SBRGenerator;
  */
 public class CheckSBServlet extends BaseArxivServlet {
 
-    static private String mkUrl(String cp /*, ActionSource asrc */) {
-	//	return cp + "/CheckSBServlet?" + asrc.toQueryString(true);
+    static public String mkUrl(String cp) {
 	return cp + "/CheckSBServlet";
-    }
-
-    /** Compares the IDs of the PresentedList object currently displayed in
-	the SB popup in the web browser against that of the object
-	currently available on the server, and produces an appropriate
-	JavaScript statement to be executed in the main window.
-    */
-    static String mkJS(SessionData sd, String cp) {
-	SBRGenerator sbrg  = sd.sbrg;
-	if (sbrg==null) return "";
-
-	//boolean good = Math.random() < 0.5;
-
-	String js="";
-	synchronized(sbrg) {
-	    long serverHasPlid = sbrg.getPlid();
-	    // asrc.presentedListId won't do, because it may have come
-	    // from MAIN or SEARCH contexts, rather than SB!
-	    long clientHasPlid = sbrg.getLastDisplayedPlid(); 
-
-	    if ( serverHasPlid > clientHasPlid) {
-		js= "openSBMovingPanelNow('"+cp+"');";
-	    } else if (sbrg.hasRunning()) {
-		int msec = sbrg.runningNearCompletion()? 1000: 2000;
-		String url = mkUrl(cp);
-		js= "checkSBAgainLater('"+url+"', "+msec+");";
-	    }
-	    Logging.info("CheckSBServlet (session="+sd.getSqlSessionId()+", client="+clientHasPlid+", server="+serverHasPlid+") will send back: " + js);
-	}					  
-
-	return js;
     }
 
     public void	service(HttpServletRequest request, HttpServletResponse response
@@ -75,7 +43,7 @@ public class CheckSBServlet extends BaseArxivServlet {
 	ActionSource asrc = new ActionSource(request);
 	try {
 	    SessionData sd =  SessionData.getSessionData(request);
-	    String js = mkJS(sd, getContextPath());
+	    String js = (sd.sbrg!=null)? sd.sbrg.mkJS(getContextPath()) : "";
 
 	    response.setContentType("text/plain");
 	    OutputStream aout = response.getOutputStream();
@@ -83,16 +51,8 @@ public class CheckSBServlet extends BaseArxivServlet {
 	    w.println(js);
 	    w.close();
 	} catch (Exception e) {
-	    /*
-	    try {
-	    */
 	    Logging.error("Exception in CheckSBServlet: " + e);
 	    e.printStackTrace(System.out);
-		/*
-		response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "error in ArticleServer: " + e); //e.getMessage());
-	    } catch(IOException ex) {};		
-	} finally {
-	    */
 	}
 
     }

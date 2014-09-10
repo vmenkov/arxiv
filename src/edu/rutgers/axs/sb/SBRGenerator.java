@@ -128,6 +128,8 @@ public class SBRGenerator {
 	into the constructor, but in our setup the constructor is
 	invoked immediately when the session is created, and merely
 	created a dummy (and disabled) SBRG object.
+
+	@param rb Provides access to the query-string parameters
      */
     public synchronized void turnSBOn(ResultsBase rb) throws WebException {
 	allowedSB = true;
@@ -297,9 +299,10 @@ public class SBRGenerator {
     }
 
     /** This method is called when the user reorders articles shown in
-	sr, so that a local record is made, for use in any future
-	"maintain stable order"  procedures. It calls the eponymous method
-	in SBRGThread.
+	SB, so that a local record is made, for use in any future
+	"maintain stable order" procedures. It calls the eponymous
+	method in the SBRGThread object which was responsible for
+	generating the presented list now being reordered.
 	
 	@param oplid The id of the original PresentedList whose reordering the new list purports to be 
 	@param aids The list of article IDs in the reordered list, as arrived from the web browser
@@ -307,13 +310,12 @@ public class SBRGenerator {
     public synchronized void receiveReorderedList(long oplid, String aids[]) {
 	if (sbrReady==null) {
 	    // This could happen in exceptional cases, e.g. on session timeout
-	    Logging.warning("SBRGenerator asked to record a reordered list while there is no original list!");
-	    return;
-	}
-	if (sbrReady.plid != oplid) {
+	    Logging.warning("SBRG(session="+sd.getSqlSessionId()+") asked to record a reordered list (PL=" + oplid + ") while there is no original list!");
+	} else if (sbrReady.plid != oplid) {
 	    Logging.warning("SBRG(session="+sd.getSqlSessionId()+").getSR(): Request to receive reordered list for PL=" + oplid + " has been denied, because that PL has expired; the currently available PL is " + sbrReady.plid);
+	} else {
+	    sbrReady.receiveReorderedList(aids);
 	}
-	sbrReady.receiveReorderedList(aids);
     }
 
 
@@ -327,7 +329,7 @@ public class SBRGenerator {
 	going to generate a new list) in progress, AND it believes
 	that the thread will complete pretty soon.
     */
-     synchronized public boolean runningNearCompletion() {
+    synchronized boolean runningNearCompletion() {
 	return sbrRunning != null && sbrRunning.nearCompletion;
     }
 
@@ -356,7 +358,7 @@ public class SBRGenerator {
 	received and displayed there!
     */
     private long lastDisplayedPlid = 0;
-    public long getLastDisplayedPlid() { return lastDisplayedPlid;}
+    private long getLastDisplayedPlid() { return lastDisplayedPlid;}
 
     synchronized public String description() {
 	if (sbrReady==null) {
@@ -387,13 +389,14 @@ public class SBRGenerator {
 
     /** The "action count" at a particular moment of time is the
 	number of recorded user actions in the session so far.
-	requestedActionCount is the action count at the time of the
-	last received request to recompute SBRL;
-	lastThreadRequestedActionCount is the value of the action
-	count at the time the most recent request for which 
-	we actually started a computational thread.
-     */
-    private int requestedArticleCount=0, lastThreadRequestedArticleCount=0;
+	requestedActionCount stores the value of the "action count" at
+	the time of the last received request to recompute SBRL.  */
+    private int requestedArticleCount=0;
+    /**
+	lastThreadRequestedActionCount stores the value of the action
+	count at the time of the most recent request for which 
+	we actually started a computational thread.     */
+    private int lastThreadRequestedArticleCount=0;
 
     public SBRGenerator(SessionData _sd) {
 	sd = _sd;
@@ -430,7 +433,7 @@ public class SBRGenerator {
     synchronized void completeRun() {
 	if (sbrRunning.sr!=null) {
 	    sbrReady = sbrRunning;
-	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished successfully; |sr|=" + sbrReady.sr.entries.size() + "; " + sbrReady.msecLine());
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished successfully; plid="+ sbrRunning.plid+", |sr|=" + sbrReady.sr.entries.size() + "; " + sbrReady.msecLine());
 	} else { // there must have been an error
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished with no result; error=" + sbrRunning.error + " errmsg=" + sbrRunning.errmsg);
 	}
@@ -442,6 +445,7 @@ public class SBRGenerator {
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Starting new thread "+ sbrRunning.getId() +", for actionCnt=" + requestedArticleCount);
 	}
     }
+
 
     ActionHistory maintainedActionHistory = new  ActionHistory();
     
@@ -479,6 +483,46 @@ public class SBRGenerator {
 	return URLEncoder.encode(url);
     }
 
- 
+    /** Creates a JS statement to be sent back to the client by CheckSBServlet.
+	The statement advises the client to get a new rec list immediately,
+	or wait and come again later, depending on the state of data in the
+	SBRGenerator.
+
+	<p>The logic is as follows: if the server has a more recent
+	presented list than the one on the clinet, the client is told
+	to download it immediately. Instead of this, or in addition of
+	this, if the server currently has a running rec list
+	recomputation thread, the client is told to send another check
+	request a couple seconds later.
+
+	<p>This method makes its decision based, in part, on the
+	comparison of the presented list ID values for the list
+	currently in the client (in the browser's SB pop-up window)
+	and in the server (in the most recent SBR list available). To
+	figure what the client has, we check what we last sent to the
+	client (getLastDisplayedPlid()), instead of looking at the
+	request's asrc.presentedListId (which may have come from MAIN
+	or SEARCH contexts, rather than SB, and thus will be irrelevant).
+	
+     */
+    public synchronized String mkJS( String cp) {
+
+	String js="";
+	long serverHasPlid = getPlid();
+	long clientHasPlid = getLastDisplayedPlid(); 
+
+	if ( serverHasPlid > clientHasPlid) {
+	    js= "openSBMovingPanelNow('"+cp+"'); ";
+	}
+
+	if (hasRunning()) {
+	    int msec = runningNearCompletion()? 1000: 2000;
+	    String url = CheckSBServlet.mkUrl(cp);
+	    js += "checkSBAgainLater('"+url+"', "+msec+");";
+	}
+	Logging.info("CheckSBServlet (session="+sd.getSqlSessionId()+", client="+clientHasPlid+", server="+serverHasPlid+") will send back: " + js);
+	return js;
+    }
+
 
 }
