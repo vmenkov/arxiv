@@ -92,7 +92,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 		Action a= sd.addNewAction(em, u, op, null, q, asrc);
 		//em.persist(u);	       
 		em.getTransaction().commit(); 
-
+		
 	    } else if (op!=Action.Op.NONE) {
 		String id = request.getParameter(ID);
 		if (id==null) throw new WebException("No aticle id supplied");
@@ -104,17 +104,25 @@ public class JudgmentServlet extends BaseArxivServlet {
 		
 		// Begin a new local transaction so that we can persist a new entity	
 		em.getTransaction().begin();
-		// reocrd the action and the new PresentedList object
+		// record the action and the new PresentedList object
 		Action a= sd.addNewAction(em, u, op, id, null, asrc);
 		//em.persist(u);	       
 		em.getTransaction().commit(); 
 	    }
 
-	    String js=(u!=null)? responseJS(em,u,op,asrc.presentedListId) : "";
+	    // start SB computation, if appropriate. (This is mostly useful
+	    // for Op.EXPAND_ABSTRACT)
+	    if (sd.sbrg!=null) sd.sbrg.sbCheck();
+
+	    String js=(u!=null)? responseJS(sd, em,u,op,asrc.presentedListId) : "";
 
 	    em.close();
 
+	    // It seems like the "Expand" button works better with text/plain!
+
 	    response.setContentType("text/plain");
+	    //response.setContentType("application/javascript");
+
 	    OutputStream aout = response.getOutputStream();
 	    PrintWriter w = new PrintWriter(aout);
 
@@ -133,60 +141,88 @@ public class JudgmentServlet extends BaseArxivServlet {
     }
 
     /** Generates JS code that will be sent back to the client to be
-	executed there. There are two situations when we need to do
-	it: (a) Folder size changed; (b) Page not-quite-reload in
-	Chrome (it happens when you use the "Back" button in the
-	browser), when we need to make sure that all recent activity
-	is properly reflected.
+	executed there. There are three situations when we need to do
+	it: 
+
+	(a) Folder size changed.
+
+	(b) Page not-quite-reload in Chrome (it happens when you use
+	the "Back" button in the browser), when we need to make sure
+	that all recent activity is properly reflected. This is
+	triggered by Action.Op.NONE, from
+	ResultsBase.refreshEverythingJsCode()
+
+	(c) On "EXPAND_ABSTRACT" action, activating (possibly delayed) reload
+	in the SB popup window.
+
+	FIXME: (c) probably should also apply to main-window rating
+	ops.  The proper criterion should involve the operation's
+	countext (Action.Src).
+
      */
-    private String responseJS(EntityManager em, User u, Action.Op op, long presentedListId ) {
+    private String responseJS(SessionData sd, EntityManager em, User u, Action.Op op, long presentedListId ) {
 	String js="";
 	RatingButton [] buttons = RatingButton.chooseRatingButtonSet(u.getProgram());
       
 	Logging.info("JudgmentServlet.responseJS(op=" + op+")");
 	try {
-	    int fs = u.getFolderSize();
-	    String q = "("+fs+")";
-	    js += //"alert(' +"+q+"'); "+
-		"setFolderSize('" +q+ "');\n";
-	    if (op != Action.Op.NONE || presentedListId==0) return js;
 
-	    HashMap<String, Action> exclusions = u.listExclusions();
+	    if (op!=Action.Op.EXPAND_ABSTRACT) {
+		// it is important not to activate this code
+		// when it is not needed, so that it won't 
+		// trigger a JS error.
+		int fs = u.getFolderSize();
+		String q = "("+fs+")";
+		js += //"alert(' +"+q+"'); "+
+		    "setFolderSize('" +q+ "');\n";
+	    }
+
+	    if (op == Action.Op.NONE && presentedListId>0) {
+		// the "refresh everything" routine for Chrome
+
+		HashMap<String, Action> exclusions = u.listExclusions();
 
 
-	    PresentedList plist = (PresentedList)em.find( PresentedList.class, presentedListId);
-	    IndexSearcher searcher=  new IndexSearcher( Common.newReader() );
-	    Vector<ArticleEntry> entries = plist.toArticleList(null, searcher);
-	    //  ArticleEntry.applyUserSpecifics(entries, u); // don't do this - it will actually remove some entries!
-
-	    // Mark pages currently in the user's folder, or rated by the user
-	    ArticleEntry.markFolder(entries, u.getFolder());
-	    ArticleEntry.markRatings(entries, u.getActionHashMap(Action.ratingOps));
+		PresentedList plist = (PresentedList)em.find( PresentedList.class, presentedListId);
+		IndexSearcher searcher=  new IndexSearcher( Common.newReader() );
+		Vector<ArticleEntry> entries = plist.toArticleList(null, searcher);
+		//  ArticleEntry.applyUserSpecifics(entries, u); // don't do this - it will actually remove some entries!
+		
+		// Mark pages currently in the user's folder, or rated by the user
+		ArticleEntry.markFolder(entries, u.getFolder());
+		ArticleEntry.markRatings(entries, u.getActionHashMap(Action.ratingOps));
  
 
-	    User.Program program = u.getProgram();
-	    
-	    int cnt=0;
-	    for(ArticleEntry e: entries) {
-		boolean hidden = exclusions.containsKey(e.id);
-		if (hidden) {
-		    js += e.hideJS(false) +"\n";
-		    cnt++;
-		    continue;
-		}
-		for(RatingButton b: buttons) {
-		    boolean checked= e.buttonShouldBeChecked(b.op);
-		    String sn = b.sn(e);	 	
-		    if (checked) {
-			js += "flipCheckedOn('#"+sn+"');\n";
+		User.Program program = u.getProgram();
+		
+		int cnt=0;
+		for(ArticleEntry e: entries) {
+		    boolean hidden = exclusions.containsKey(e.id);
+		    if (hidden) {
+			js += e.hideJS(false) +"\n";
 			cnt++;
-		    } else {
-			js += "flipCheckedOff('#"+sn+"');\n";
-			cnt++;
+			continue;
+		    }
+		    for(RatingButton b: buttons) {
+			boolean checked= e.buttonShouldBeChecked(b.op);
+			String sn = b.sn(e);	 	
+			if (checked) {
+			    js += "flipCheckedOn('#"+sn+"');\n";
+			    cnt++;
+			} else {
+			    js += "flipCheckedOff('#"+sn+"');\n";
+			    cnt++;
+			}
 		    }
 		}
+	    } else if (op==Action.Op.EXPAND_ABSTRACT && sd.sbrg!=null) {
+		// see if we need to load the SB popup
+		js += sd.sbrg.mkJS(getContextPath());
+		//js += "alert('Running response code!'); ";
 	    }
-	    //js += "alert('Cnt = " + cnt + "')";
+
+	    Logging.info("JudgmentServlet.responseJS(op=" + op+") : " + js);
+
 	} catch(Exception ex) {
 	    ex.printStackTrace(System.out);
 	    Logging.error("JudgmentServlet.responseJS: " + ex);

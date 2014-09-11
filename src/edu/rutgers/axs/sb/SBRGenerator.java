@@ -31,6 +31,7 @@ import edu.rutgers.axs.web.*;
 public class SBRGenerator {
 
 
+    private final boolean sbOnByDefault = true;
     /** Whether this session needs a "moving panel" with session-based 
 	recommendations (aka "session buddy") */
     private boolean allowedSB = false; 
@@ -49,7 +50,8 @@ public class SBRGenerator {
 	if (sbStableOrderMode<0 || sbStableOrderMode>2) throw new WebException("Illegal SB merge mode = " + sbStableOrderMode);
     }
 
-    public boolean sbMergeWithBaseline = false;
+    /** If true (= default), the results are merged with the baseline */
+    public boolean sbMergeWithBaseline = true;
 
     /** If true, the SB moving panel will be displayed in "researcher mode".
 	Since SB is only shown to users who have not logged in, we can't
@@ -114,9 +116,7 @@ public class SBRGenerator {
 	far on behalf of this particular session. */
     private int runCnt=0;
 
-    SBRGWorker worker=null;
-
-
+    private SBRGWorker worker=null;
 
     /** Enables SB generation, and sets all necessary mode parameters
 	etc. This method may be invoked directly (from
@@ -127,29 +127,37 @@ public class SBRGenerator {
 	<p>It may have been more logical to put this functionality
 	into the constructor, but in our setup the constructor is
 	invoked immediately when the session is created, and merely
-	created a dummy (and disabled) SBRG object.
+	created a dummy (and disabled) SBRG object. 
 
-	@param rb Provides access to the query-string parameters
+	@param rb Provides access to the query-string parameters. Since
+	2014-09-10, we call turnSBOn() in the constructor, with rb=null,
+	for the SB-on-by-default functionality. On this call,
+	all defaults are used.
      */
     public synchronized void turnSBOn(ResultsBase rb) throws WebException {
 	allowedSB = true;
-	sbStableOrderMode = rb.getInt("sbStableOrder", sbStableOrderMode);
+	if (rb!=null) sbStableOrderMode = rb.getInt("sbStableOrder", sbStableOrderMode);
 	validateSbStableOrderMode();
+	Method m = null;
 	// the same param initializes both vars now
-	sbDebug = rb.getBoolean("sbDebug", sbDebug);
-	researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
+	if (rb!=null) {
+	    sbDebug = rb.getBoolean("sbDebug", sbDebug);
+	    researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
+	    m = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", null);
+	}
+ 
+	final boolean nothingDoneYet = sbrRunning==null && sbrReady==null;
 
-	Method m = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", null); 
-
-	if (requestedSbMethod == null) { //has not been set before, must set now
+	if (requestedSbMethod == null ||
+	    (m!=null && nothingDoneYet)) { //has not been set before, must set now
 	    requestedSbMethod = (m==null) ? Method.ABSTRACTS : m;
-	    if (sbMethod!=null) {
+	    if (sbMethod!=null && !nothingDoneYet) {
 		throw new WebException("Somehow we have already set the SB method, and cannot change it anymore!");
 	    }
 	    sbMethod = (requestedSbMethod == Method.RANDOM)?
 		pickRandomMethod() : requestedSbMethod;
 
-	    sbMergeWithBaseline = rb.getBoolean("sbMergeWithBaseline", sbMergeWithBaseline);
+	    if (rb!=null)  sbMergeWithBaseline = rb.getBoolean("sbMergeWithBaseline", sbMergeWithBaseline);
 
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline);
 
@@ -366,11 +374,6 @@ public class SBRGenerator {
 	    return s;
 	} else {
 	    String s = sbrReady.description() + "\n";
-	    s += "<br>Per-article result list sizes:\n";
-	    HashMap<String,ScoreDoc[]> articleBasedSD= sbrReady.worker.articleBasedSD;
-	    for(String aid: articleBasedSD.keySet()) {
-		s += "<br>* "+aid+" : "+articleBasedSD.get(aid).length+"\n";
-	    }
 	    s += "<br>Excludable articles count: " + linkedAids.size()+"\n";
 	    if (sbrReady!=null) {
 		s += "<br>Actually excluded: " + sbrReady.excludedList+"\n";
@@ -398,8 +401,12 @@ public class SBRGenerator {
 	we actually started a computational thread.     */
     private int lastThreadRequestedArticleCount=0;
 
-    public SBRGenerator(SessionData _sd) {
+    /** Since 2014-09-10, the SB functionality is turned on by
+	default, right here in the constructor.
+     */
+    public SBRGenerator(SessionData _sd) throws WebException {
 	sd = _sd;
+	if (sbOnByDefault) turnSBOn(null);
     }
 
     /** This method is invoked by front-end pages when they believe that 
@@ -457,7 +464,6 @@ public class SBRGenerator {
 
 	Logging.info("SBRG(session="+sd.getSqlSessionId()+"): added action ("+a.getOp()+":"+ aid+"); article cnt = " + maintainedActionHistory.articleCount);
 
-
     }
     
     /** Generates the query string for the URL. Used in tools/index.jsp */
@@ -469,7 +475,7 @@ public class SBRGenerator {
 	String s= "sb=true";
 	if (debug) { s += "&sbDebug=true"; }
 	s += "&sbMethod="+ method;
-	if (withBaseline) s += "&sbMergeWithBaseline=true";
+	s += "&sbMergeWithBaseline=" +withBaseline ;
 	return s;
     }
 
@@ -515,12 +521,13 @@ public class SBRGenerator {
 	    js= "openSBMovingPanelNow('"+cp+"'); ";
 	}
 
-	if (hasRunning()) {
+	boolean r = hasRunning();
+	if (r) {
 	    int msec = runningNearCompletion()? 1000: 2000;
 	    String url = CheckSBServlet.mkUrl(cp);
 	    js += "checkSBAgainLater('"+url+"', "+msec+");";
 	}
-	Logging.info("CheckSBServlet (session="+sd.getSqlSessionId()+", client="+clientHasPlid+", server="+serverHasPlid+") will send back: " + js);
+	Logging.info("CheckSBServlet(session="+sd.getSqlSessionId()+", client="+clientHasPlid+", server="+serverHasPlid+", running="+r+") will send back: " + js);
 	return js;
     }
 

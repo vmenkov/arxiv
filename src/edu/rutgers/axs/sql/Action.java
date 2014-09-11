@@ -95,7 +95,7 @@ import  edu.rutgers.axs.web.SessionData;
     /** Various supported action types. Typically, there is a distinct
 	action type for every button or link type the user may click on. 
 	<p>
-	NOTE: New types must be added to the ADD of the list, because we store
+	NOTE: New types must be added to the END of the list, because we store
 	the numeric code, not string, in the SQL database!
     */
     public static enum Op {

@@ -45,7 +45,8 @@ public class CheckSBServlet extends BaseArxivServlet {
 	    SessionData sd =  SessionData.getSessionData(request);
 	    String js = (sd.sbrg!=null)? sd.sbrg.mkJS(getContextPath()) : "";
 
-	    response.setContentType("text/plain");
+	    //response.setContentType("text/plain");
+	    response.setContentType("application/javascript");
 	    OutputStream aout = response.getOutputStream();
 	    PrintWriter w = new PrintWriter(aout);
 	    w.println(js);

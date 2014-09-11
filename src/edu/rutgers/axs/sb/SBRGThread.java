@@ -129,6 +129,12 @@ class SBRGThread extends Thread {
 	    s += "<br>\nThe list is based on " +his.actionCount+ " user actions (" +
 		his.articleCount + " viewed articles)";
 	}
+
+	s += "<br>Per-article result list sizes:\n";
+	for(String aid: worker.articleBasedSD.keySet()) {
+	    s += "<br>* "+aid+" : "+ worker.articleBasedSD.get(aid).length+"\n";
+	}
+
 	return s;
     }
 

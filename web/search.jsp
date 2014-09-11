@@ -40,6 +40,8 @@
 <script type="text/javascript" src="_technical/scripts/jquery-transitions.js"></script>
 <script type="text/javascript" src="scripts/blur.js"></script>
 <script type="text/javascript" src="scripts/buttons_control.js"></script>
+<!-- this script is here so that we can "open SB" tied to EXPAND_ABSTRACT -->
+<script type="text/javascript" src="scripts/filterServletSB.js"></script>
 
 <!-- #EndEditable -->
 

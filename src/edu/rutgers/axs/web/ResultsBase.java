@@ -321,7 +321,7 @@ public class ResultsBase {
 	String id = "abs" + e.i;
 	String title="Expand article details";
 	String jsOn = "$.get('" + RatingButton.judge(cp,e.id, Action.Op.EXPAND_ABSTRACT, asrc)+ "', " +
-		"function(data) { flipCheckedOn('#"+id+"')})";
+		"function(data) { flipCheckedOn('#"+id+"');eval(data);})";
 
 	String expandButton =  "<a" +
 	    //			  att("class", "add") +
