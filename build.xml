@@ -112,10 +112,11 @@
        description="The classpath to use for compiling and running AXS">
    <!-- fileset file="../lucene/lucene-3.3.0/lucene-core-3.3.0.jar"/ -->
 
-   <!--fileset dir="${tomcat.lib}">
+   <fileset dir="${tomcat.lib}">
+     <include name="catalina.jar"/>
      <include name="servlet-api.jar"/>
+   </fileset>
 
-   </fileset-->
      <!-- catalina-ant.jar -->
 
    <fileset dir="${lib}">  <!-- third-party JAR files, and our axs.jar -->
@@ -157,6 +158,19 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
    <fileset dir="${openjpa}">
      <include name="openjpa-*.jar"/>
    </fileset>
+</path>
+
+
+<!-- this is for ant itself to use in the Reload task -->
+<path id="catalina-ant-classpath">
+    <fileset dir="${tomcat.lib}">
+        <include name="catalina-ant.jar"/>
+        <include name="tomcat-coyote.jar"/>
+        <include name="tomcat-util.jar"/>
+    </fileset>
+    <fileset dir="${tomcat.home}/bin">
+        <include name="tomcat-juli.jar"/>
+    </fileset>
 </path>
 
 <!-- An auxiliary target; you aren't likely to use it directly.  It just creates necessary directories -->
