@@ -81,6 +81,13 @@ On a Red Hat Enterprise Linux (RHEL, a.k.a. Fedora) machine:
 sudo yum install emacs
 sudo yum install svn
 sudo yum install ant
+</pre>
+
+<h5>Tomcat</h5>
+
+<p>Note: the following instructions are for Tomcat 6; we have upgraded to Tomcat 7 since; see <a href="tomcat7.html">Tomcat 7</a>.
+
+<pre>
 #-- as per http://www.oracle-base.com/articles/linux/apache-tomcat-installation-on-linux.php
 sudo yum install tomcat6 tomcat6-webapps tomcat6-admin-webapps
 sudo  chkconfig tomcat6 on  #-- make the start automatic
@@ -100,6 +107,23 @@ sudo yum install httpd
 <pre>
 sudo service httpd start
 </pre>
+
+
+<p>In order for Apache to redirect all requests to Tomcat, we add the
+following lines to /etc/httpd/conf/httpd.conf:
+<pre>
+&lt;Proxy *&gt;
+        AddDefaultCharset Off
+     Order deny,allow
+     Allow from all
+&lt;/Proxy&gt;
+
+ProxyPass / ajp://localhost:8009/
+ProxyPassReverse / ajp://localhost:8009/
+</pre>
+
+<h5>Java</h5>
+
 
 <pre>
 # as per https://access.redhat.com/site/documentation/en-US/JBoss_Communications_Platform/5.0/html/Platform_Installation_Guide/chap-Installing_and_Configuring_Java.html
@@ -137,6 +161,64 @@ During this process, you will set the  usual MySQL server root password for the 
 
 <p>
 (Note: After reboot, mysqld apparently automatically restarts).
+
+
+
+<h5>For access to mysqld from other hosts (identified by their IP)</h5>
+
+As per the avice at http://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html
+
+See also iptables tutorial here: http://wiki.centos.org/HowTos/Network/IPTables
+
+Added the following line to /etc/my.cnf:
+<pre>
+bind-address 132.236.91.38
+</pre>
+
+Take a look at the existing iptables rules:
+<pre>
+ sudo iptables -L INPUT -n
+ sudo iptables -S INPUT
+</pre>
+
+Insert a new rule into position 7 - after other ACCEPT rules, and
+before the final REJECT rule:
+<pre>
+ sudo /sbin/iptables -I INPUT 7 -p tcp -m state --state NEW -m tcp -s 132.236.91.37 --dport 3306 -j ACCEPT
+sudo service iptables save
+</pre>
+
+<p>
+We now have the table as follows:
+<pre>
+[vm293@en-myarxiv02 log]$ sudo iptables -L INPUT -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:443
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:80
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:22
+ACCEPT     tcp  --  132.236.91.37        0.0.0.0/0           state NEW tcp dpt:3306
+ACCEPT     tcp  --  128.84.96.49         0.0.0.0/0           state NEW tcp dpt:3306
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited
+</pre>
+
+<h5>Adding read-only database users</h5>
+
+For Paul Ginsparg's project, user named "readonly" on database <tt>json</tt>
+
+<pre>
+create user  'readonly'@'localhost' IDENTIFIED BY 'XXXXX';
+GRANT SELECT ON json.* TO 'readonly'@'localhost';
+GRANT SELECT ON arxiv_xs.* TO 'readonly'@'localhost';
+
+create user  'readonly'@'%' IDENTIFIED BY 'XXXXX';
+GRANT SELECT ON json.* TO  'readonly'@'%';
+GRANT SELECT ON  arxiv_xs.*  TO 'readonly'@'%';
+flush privileges;
+</pre>
 
 
 <h4>Create directories</h4>
@@ -233,6 +315,20 @@ sudo -u mysql mysqlimport --local -u arxiv -p arxiv_xs DUMPDIR/*.txt   # load da
 <p>Copy (or soft-link) certain jar files into your <pre>~/.ant/lib</pre> directory:
 
 <pre>
+[vm293@en-myarxiv02 lib]$ pwd
+/home/vm293/.ant/lib
+[vm293@en-myarxiv02 lib]$ dir
+total 0
+lrwxrwxrwx. 1 vm293 pug-vm293 39 Sep 18 14:29 catalina-ant.jar -> /usr/share/tomcat7/lib/catalina-ant.jar
+</pre>
+
+<p>This is needed for the Apache Ant to be able to better perform
+certain tasks during the build process (such as communicating with the
+web server, causing the latter to reload the web application).
+
+<small>On <tt>cactuar,</tt> with Tomcat 5.5 this was as follows:
+
+<pre>
 [vmenkov@cactuar lib]$ pwd
 /mnt/cactext/home/SCILSNET/vmenkov/.ant/lib
 [vmenkov@cactuar lib]$ ls -l
@@ -240,10 +336,8 @@ total 4
 lrwxrwxrwx 1 vmenkov domain users 42 Nov  3  2011 catalina-ant.jar -> ../../tomcat55/server/lib/catalina-ant.jar
 lrwxrwxrwx 1 vmenkov domain users 65 Nov  8  2011 openjpa-all-2.1.1.jar -> /home/SCILSNET/vmenkov/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar
 </pre>
+</small>
 
-<p>This is needed for the Apache Ant to be able to better perform
-certain tasks during the build process (such as communicating with the
-web server, causing the latter to reload the web application).
 
 <h4>Tomcat</h4>
 
@@ -257,6 +351,7 @@ svn checkout --username vmenkov https://forge.cornell.edu/svn/repos/arxiv
 </pre>
 
 
+<!-- OBSOLETE:
 <h4>Third-party libraries</h4>
 
 $ARXIV/tomcat-lib:
@@ -269,6 +364,7 @@ $ARXIV/tomcat-lib:
 </pre>
 
 The above is for Tomcat 5.5; in Tomcat 6, some file names are slightly different, but the directory is the same.
+-->
 
 <h2>More stuff - to run svmlight </h2>
 
