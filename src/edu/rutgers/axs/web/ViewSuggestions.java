@@ -114,7 +114,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    plid = Tools.getLong(request, "plid", 0);
 	    if (plid != 0) {
 		PresentedList plist=(PresentedList)em.find(PresentedList.class, plid);
-		if (plist==null) 	throw new WebException("PresentedList " +plid+ " does not exist");
+		if (plist==null) throw new WebException("PresentedList " +plid+ " does not exist");
 		long dfid = plist.getDataFileId();
 		df = (dfid==0)? null : (DataFile)em.find(DataFile.class, dfid);
 
@@ -148,7 +148,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		if (type.isProfile()) {
 		    // A special situation: a somewhat mistaken call from
 		    // the page displayed by QueryServlet (due to the link=...
-		    // atribute in DataFile.id
+		    // atribute in DataFile.id)
 		    String redirect =  "viewUserProfile.jsp?" + ID + "=" +id;
 	    
 		    //String eurl = response.encodeRedirectURL(redirect);

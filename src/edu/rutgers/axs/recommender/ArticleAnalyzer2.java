@@ -14,7 +14,7 @@ import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 
-/** Another way to compute article stats..
+/** Another way to compute article stats...
  */
 public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
@@ -34,7 +34,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
     /** Computes norms for all real fields, as well as for one
 	artificial field, which contains the "flattened document" (=
-	concatenation of fields).
+	concatenation of fields). (This was Thorsten's proposal, 2013-12-28)
      */
     ArticleAnalyzer2(IndexReader _reader) throws IOException {
 	reader = _reader;
@@ -383,7 +383,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
     public HashMap<String,  MutableDouble> getCoef(int docno) 
 	throws IOException {
 
-	HashMap<String, MutableDouble> h = new HashMap<String, MutableDouble>();
+	HashMap<String, MutableDouble> h = new HashMap<String,MutableDouble>();
 
 	final int nf =upFields.length;
 	TermFreqVector [] tfvs = new TermFreqVector[nf];
@@ -400,7 +400,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 		Term term = new Term(name, terms[i]);
 		int df = reader.docFreq(term);
 		if (df < minDf || UserProfile.isUseless(term)) {
-		    continue; // skip very rare words, non-words, and stop words
+		    continue;// skip very rare words, non-words, and stop words
 		}
 
 		String key = mkKey(term);

@@ -46,7 +46,7 @@ public class DailyPPP {
 	return refined? 2:1;
     }
 
-    /** Figure which DataFile versions you need for the current document
+    /** Figures which DataFile versions you need for the current document
 	representation. */
     public static int[] allowedFileVersions() {
 	return allowedFileVersions(refined);

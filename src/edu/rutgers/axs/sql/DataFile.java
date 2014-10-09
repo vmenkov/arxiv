@@ -92,7 +92,9 @@ import edu.rutgers.axs.ParseConfig;
 	    EE4_SUGGESTIONS,
 	    /**  Thorsten's Perturbed Preference Perceptron */
 	    PPP_USER_PROFILE,
-	    PPP_SUGGESTIONS;
+	    PPP_SUGGESTIONS,
+	    /** Toronto System */
+	    UPLOAD_PDF;
 
 	/** Is this a user profile file? */
 	public boolean isProfile() {
@@ -127,7 +129,7 @@ import edu.rutgers.axs.ParseConfig;
 	   @return "profile", "linsug1", etc when files are needed;
 	   null on errors
 	*/
-	String givePrefix() {
+	public String givePrefix() {
 	    if (this == USER_PROFILE) {
 		return "profile";
 	    } else if (this == TJ_ALGO_2_USER_PROFILE) {
@@ -144,6 +146,8 @@ import edu.rutgers.axs.ParseConfig;
 		return "p3profile";
 	    } else if (this == PPP_SUGGESTIONS) {
 		return "p3sug";
+	    } else if (this == UPLOAD_PDF) {
+		return "upload_pdf";
 	    } else {
 		return null;
 	    }	 
@@ -459,17 +463,17 @@ import edu.rutgers.axs.ParseConfig;
     }
 
 
-    /** Maps to a file system file. */
-    public File  getFile() {
-	return new File(getPath());
+    /** Maps this DataFile object to a file system file. */
+    public File getFile() {
+	File f1 = new File(getMainDatafileDirectory(), "user");
+	File f2 = new File(f1, getUser());
+	return new File(f2, getThisFile());
     }
 
     
     /** Maps to a full file system path. */
     String  getPath()  {
-	String s = getMainDatafileDirectory().getPath() + 	File.separator;
-	s += "user"  +	File.separator;
-	return s + getUser() + File.separator + getThisFile();
+    	return getFile().getPath();
     }
 
     public static File getMainDatafileDirectory()  {
@@ -561,8 +565,10 @@ import edu.rutgers.axs.ParseConfig;
 	    return prefix + File.separator + dayFmt.format(now) + "." +
 		fmt1.format(pid) + "." + fmt2.format(fileCnt++) + ".txt";
 	}
-   }
+    }
 
+    /** Creates a DataFile object with a file location appropriate for the
+	file type. */
     public DataFile(String user, long taskId, Type type) {
 	this();
 	Date now = new Date();
@@ -572,8 +578,21 @@ import edu.rutgers.axs.ParseConfig;
 	setTask(taskId);	    
 	setTime( now);
 	setThisFile(f);
-   }
+    }
 
+    /** This is primarily used for the file uploader, when the file name is
+	pre-determined. 
+	@param _thisFile just the file name (without the dir path)
+    */
+    public DataFile(String user, Type type, String _thisFile) {
+	this();
+	Date now = new Date();
+	setType(type);
+	setUser(user);
+	setTask(0);	    
+	setTime( now);
+	setThisFile(_thisFile);	
+    }
 
     /** List DataFile objects that should have disk files but don't.
 	(They probably were created from a servlet, when writing

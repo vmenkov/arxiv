@@ -37,6 +37,8 @@
 </table>
 </p>
 
+<!-- link to "upload articles" (Toronto system) page will go here -->
+
 <p>
 Now you can 
 <a href="<%=main.cp%>/login2.jsp?sp=/index.jsp">Log in with your new user name and password</a> to continue browsing.
