@@ -22,6 +22,21 @@
 
 <h1>Uploading personal papers</h1>
 
+
+     <%if (main.uploadCnt>0) { %>
+
+     <h2>Papers uploaded</h2>
+
+     <p>
+     <%= main.uploadCnt%> PDF document(s) uploaded now.
+     </p>
+
+     <% }%>
+
+<%= main.dirInfo() %>
+
+<h2>Uploading personal papers</h2>
+     
 <p>To help My.ArXiv personalize your user experience, you can upload a
 few papers, in PDF format, that have been written by you, or are of particular
 interest to you. Our system will analyze their content in order to be
@@ -45,12 +60,11 @@ documents (which themselves have to be on the web somewhere).
 
 </ul>
 
-
 <table border=1>
 <tr> <td>
 Option 1 - specify a URL for a PDF file
 <form  action="uploadPapers.jsp" method="post">
-URL: <input type="file" size="80" name="url">
+URL: <input type="text" size="80" name="url">
 <input type="submit" value="Load PDF from this URL" />
 </form>
 </tr>
