@@ -3,7 +3,7 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-//import java.text.*;
+import java.text.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -30,6 +30,9 @@ import edu.rutgers.axs.indexer.Common;
 /** The "Toronto system"
 */
 public class UploadPapers  extends ResultsBase {
+
+    /** How many PDF files have been uploaded on this invocation? */
+    public int uploadCnt=0;
 
     /** An auxiliary class, used in parsing requests sent in "multipart" format
 	(data uploads)
@@ -141,6 +144,7 @@ public class UploadPapers  extends ResultsBase {
 
 			infomsg +="<p>Successfully uploaded PDF file '"+ 
 			    fileName+"'</p>";
+			uploadCnt ++;
 		    }
 		    
 		    infomsg += "<p>File field name="+fieldName+", file name="+fileName+", in mem=" + isInMemory +", len=" + sizeInBytes+"</p>"; 
@@ -179,7 +183,35 @@ public class UploadPapers  extends ResultsBase {
 
    }
 
- 
+    private static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+
+    public String dirInfo() {
+	File d = DataFile.getDir(user, DataFile.Type.UPLOAD_PDF);
+	if (d==null) {
+	    return "<p>No files have been uploaded by user <em>" + user + "</em> so far</p>\n";
+	}
+	StringBuffer b = new StringBuffer();
+	File[] files = d.listFiles();
+	if (files==null) {
+	    return "<p>No files have been uploaded by user <em>" + user + "</em> so far</p>\n";
+	}
+	if (files.length==0) {
+	    b.append("<p>No files have been uploaded to the directory <tt>" + d + "</tt></p>\n");
+	    return b.toString();
+	}
+	b.append("<p>The following files "+files.length+ " have been uploaded so far to the directory <tt>" + d + "</tt></p>\n");
+	b.append("<table>\n");
+	for(File f: files) {
+	    b.append("<tr><td><tt>" +f.getName() + "</tt>");
+	    b.append("<td align='right'><tt>" +f.length() + " bytes</tt>");
+	    b.append("<td align='right'><tt>" +sqlDf.format(f.lastModified())+ "</tt>");
+	    b.append("</tr>\n");
+	}
+	b.append("</table>\n");
+	return b.toString();
+	
+    }
 
 }
 

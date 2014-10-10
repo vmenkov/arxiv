@@ -242,7 +242,12 @@ import edu.rutgers.axs.ParseConfig;
     public DataFile getInputFile() { return inputFile; }
     public void setInputFile( DataFile x) { inputFile = x; }
 
-    /** This file's path name, relative to $DATAFILE_DIRECTORY/$user_ */
+    /** This file's path name, relative to $DATAFILE_DIRECTORY/user/$user.
+	Normally it includes a subdirectory name (which is determined
+	by the file's type or role in the algorithm), and the file's unique
+	name.
+	// FIXME: 64 chars may be too short, once the users start PDF uploads!
+     */
     @Basic      @Column(length=64) @Display(order=9, editable=false)
 	String thisFile;
     public String getThisFile() { return thisFile; }
@@ -463,10 +468,16 @@ import edu.rutgers.axs.ParseConfig;
     }
 
 
+    /** Returns into the directory into which files of the specified
+	type for the specified user would be placed. */
+    public static File getDir(String user, Type type) {
+	File f2 = getUserDir(user);	
+	return new File(f2, type.givePrefix());
+    }
+
     /** Maps this DataFile object to a file system file. */
     public File getFile() {
-	File f1 = new File(getMainDatafileDirectory(), "user");
-	File f2 = new File(f1, getUser());
+	File f2 = getUserDir(user);	
 	return new File(f2, getThisFile());
     }
 
@@ -476,15 +487,33 @@ import edu.rutgers.axs.ParseConfig;
     	return getFile().getPath();
     }
 
+    private static File mainDataFileDirectory  = null;
+
+    /** Returns the main directory for the specified user's files.
+     */
+    private static File getUserDir(String user) {
+	File f1 = new File(getMainDatafileDirectory(), "user");
+	return new File(f1, user);	
+    }
+
+    /** Returns the location of the main data file directory used by
+	My.ArXiv for text files it generates. This directory has
+	subdirectory "user" for user-specific files, as well as
+	subdirectories for other purposes (e.g. for document clustering
+	information).
+     */
     public static File getMainDatafileDirectory()  {
-	String s = "";
-	try {
-	    s = Options.get("DATAFILE_DIRECTORY") +	File.separator;
-	} catch(Exception ex) {
-	    Logging.error(ex.getMessage());
-	    ex.printStackTrace(System.err);
+	if ( mainDataFileDirectory  == null) {
+	    String s = "";
+	    try {
+		s = Options.get("DATAFILE_DIRECTORY");//+	File.separator;
+	    } catch(Exception ex) {
+		Logging.error(ex.getMessage());
+		ex.printStackTrace(System.err);
+	    }
+	    mainDataFileDirectory  = new File(s);
 	}
-	return new File(s);
+	return  mainDataFileDirectory;
     }
 
     // FIXME: READABLE  by EVERYONE, eh?
@@ -582,16 +611,17 @@ import edu.rutgers.axs.ParseConfig;
 
     /** This is primarily used for the file uploader, when the file name is
 	pre-determined. 
-	@param _thisFile just the file name (without the dir path)
+	@param fileName just the file name (without the dir path)
     */
-    public DataFile(String user, Type type, String _thisFile) {
+    public DataFile(String user, Type type, String fileName) {
 	this();
 	Date now = new Date();
 	setType(type);
 	setUser(user);
 	setTask(0);	    
 	setTime( now);
-	setThisFile(_thisFile);	
+	String prefix = type.givePrefix();
+	setThisFile(prefix+	File.separator + fileName);	
     }
 
     /** List DataFile objects that should have disk files but don't.
