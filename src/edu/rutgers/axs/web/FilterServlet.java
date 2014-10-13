@@ -344,7 +344,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    throw new WebException(msg);
 	}
 
-	lURLConnection.setFollowRedirects(false); 
+	lURLConnection.setInstanceFollowRedirects(false); 
 
 	if (lPost) {
 	    lURLConnection.setDoOutput(true);
@@ -429,7 +429,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    Pattern p = Pattern.compile("charset=([\\w:\\-\\.]+)");
 	    Matcher m = p.matcher(lContentType);
 	    if (m.find()) {
-		String charsetName = charsetName=m.group(1);
+		String charsetName = m.group(1);
 		try {
 		    cs = Charset.forName( charsetName);
 		    Logging.info("For name " + charsetName+", got charset "+cs);

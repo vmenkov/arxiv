@@ -38,13 +38,18 @@
 <h2>Uploading personal papers</h2>
      
 <p>To help My.ArXiv personalize your user experience, you can upload a
-few papers, in PDF format, that have been written by you, or are of particular
-interest to you. Our system will analyze their content in order to be
-able to find recnet ArXiv papers that may be of interest to you.
+few papers, in PDF format, that have been written by you, or are of
+particular interest to you. (For example, those may be a few papers
+from your personal "to read" list - they can even be some papers from
+arxiv.org!) Our system will try to analyze their content in order to be able
+to find recent ArXiv papers that may be of interest to you.
 
-<p>You can upload any number of papers at this time. After all papers
-have been uploaded, and your initial recommendation list has been
-created and displayed, you will not be allowed to upload more papers.
+<p>You can upload any number of papers at this time. (Once you upload
+one paper, the system will allow you to upload one more, etc.) 
+
+<p>Note that after all papers of your choice have been uploaded, and
+your initial recommendation list has been created and displayed, you
+will not be allowed to upload more papers.
 
 <p>There are three options for uploading a paper: 
 
@@ -59,6 +64,8 @@ simply provide a URL for the PDF file.
 documents (which themselves have to be on the web somewhere).
 
 </ul>
+
+<p>Note that if you upload multiple PDF documents, they all have to have different names.
 
 <table border=1>
 <tr> <td>
