@@ -150,8 +150,17 @@ public class UploadPapers  extends ResultsBase {
 	
 	File file = df.getFile();
 	File dir = file.getParentFile();
-	dir.mkdirs();
-	
+	if (dir.exists()) {
+	    if (!dir.isDirectory() || !dir.canWrite()) {
+		throw new IOException("Server error: Cannot receive files, because " + dir + " already exists, but is not a directory, or is not writeable!");
+	    }
+	} else {
+	    if (!dir.mkdirs()) {
+		throw new IOException("Server error: Cannot receive files: failed to create directory " + dir);
+	    }
+	    Logging.info("Created directory " + dir);
+	}
+
 	FileOutputStream fos = new FileOutputStream(file);
 	BufferedOutputStream bos=new BufferedOutputStream(fos,L);
 	
@@ -398,7 +407,7 @@ public class UploadPapers  extends ResultsBase {
 	    if (q[j].equals("")) j--;
 	    if (j>=0) f = q[j];
 	}
-	Logging.info("UploadPapers: set file='"+f+"' based on url=" + lURL);
+	Logging.info("UploadPapers: set file='"+f+"' based on url=" + eURL);
 	String dispo  = lURLConnection.getHeaderField("Content-Disposition");
 	if (dispo==null) return f;
 
