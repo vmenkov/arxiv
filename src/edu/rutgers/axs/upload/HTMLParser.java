@@ -27,10 +27,16 @@ public class HTMLParser {
 	}
     }
 
+    
     public static Outliner parse(URL url, InputStream in) throws IOException {
-	String encoding = "ISO-8859-1";
-	Charset cs =  Charset.forName(encoding);
+	return parse(url, in, null);
+    }
 
+    public static Outliner parse(URL url, InputStream in, Charset cs) throws IOException {
+	if (cs==null) {
+	    String encoding = "ISO-8859-1";
+	    cs =  Charset.forName(encoding);
+	}
 	ParserGetter kit = new ParserGetter();
 	HTMLEditorKit.Parser parser = kit.getParser();
 	InputStreamReader r = new InputStreamReader(in, cs);

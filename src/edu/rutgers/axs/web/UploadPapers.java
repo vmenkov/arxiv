@@ -62,6 +62,7 @@ public class UploadPapers  extends ResultsBase {
 		    String name = item.getFieldName();
 		    String value = item.getString();	
 
+		    /*
 		    if (name.equals("url")) {
 			String url = value;
 			URL lURL = new URL(url);
@@ -69,8 +70,11 @@ public class UploadPapers  extends ResultsBase {
 			Vector<DataFile> results = UploadProcessingThread.pullPage(user, lURL, false);
 			uploadCnt += results.size();
 		    } else {
-			infomsg += "<p>Ignoring parameter "+name+"=<pre>"+value+"</pre></p>\n";
+		    */
+			infomsg += "<p>UploadPapers: Ignoring parameter "+name+"=<pre>"+value+"</pre></p>\n";
+			/*
 		    }
+			*/
 		} else {
 		    
 		    String fieldName = item.getFieldName();
@@ -149,10 +153,11 @@ public class UploadPapers  extends ResultsBase {
 	    } else {
 		String url = getString("url", null);
 		if (url!=null) {
-		    
 		    URL lURL = new URL(url);
-		    Vector<DataFile> results = UploadProcessingThread.pullPage(user, lURL, false);
-		    uploadCnt += results.size();
+		    sd.upThread = new UploadProcessingThread(user, lURL);
+		    sd.upThread.start();
+		    //		    Vector<DataFile> results = UploadProcessingThread.pullPage(user, lURL, false);
+		    //		    uploadCnt += results.size();
 		}
 	    }
 	    

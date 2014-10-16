@@ -23,7 +23,9 @@ import edu.rutgers.axs.upload.*;
 public class UploadProcessingThread extends Thread {
     
     private final String user;
-    private HTMLParser.Outliner outliner = null;
+    private HTMLParser.Outliner outliner;
+    private final URL startURL;
+
 
     /** When the list generation started and ended. We keep this 
      for statistics. */
@@ -35,25 +37,59 @@ public class UploadProcessingThread extends Thread {
     String statusText = "";
     int pdfCnt = 0;
 
+    /** Human-readable text used to display this thread's progress. */
+    private StringBuffer progressText = new StringBuffer();
+
+    private void progress(String text) {
+	progressText.append(text + "\n");
+	Logging.info(text);
+    }
+
+    private void error(String text) {
+	progressText.append(text + "\n");
+	Logging.error(text);
+    }
+
+
+
+    public String getProgressText() {
+	return progressText.toString();
+    }
+
+
+    /** Creates a thread which will follow the links listed in the Outliner structure
+     */
     public UploadProcessingThread(String _user, HTMLParser.Outliner _outliner) {
 	user = _user;
 	outliner = _outliner;
+	startURL = null;
     }
+
+    /** Creates a thread which will get a document from a specified
+	URL, and, if it is HTML, will follow the links in it as well.
+     */
+    public UploadProcessingThread(String _user, URL url) {
+	user = _user;
+	outliner = null;
+	startURL = url;
+    }
+
+
 
     /** The main class for the actual recommendation list
 	generation. */
     public void run()  {
 	startTime = new Date();
 	try {
-	    if (outliner!=null) {
-		HashSet<URL> doneLinks = new 	HashSet<URL>();
-		for(URL url: outliner.getLinks()) {
-		    if (doneLinks.contains(url)) continue;		    
-		    doneLinks.add(url);
-		    Vector<DataFile> results = pullPage(user, url, true);
-		    pdfCnt += results.size();
-		}
+	    if (startURL != null) {
+		Vector<DataFile> results = pullPage(user, startURL, false);
+		pdfCnt += results.size();
+		progress("The total of " + pdfCnt +  " PDF files have been obtained from " + startURL);
 	    }
+
+	    // outliner may have been supplied in the constructor or set in pullPage()
+	    processOutliner();
+
 	} catch(Exception ex) {
 	    error = true;
 	    errmsg = ex.getMessage();
@@ -64,10 +100,31 @@ public class UploadProcessingThread extends Thread {
 
     }
 
+    /** Gets the PDF focuments from the URLs listed in this thread's outliner object */
+    private void processOutliner() {
+	if (outliner==null) return;
+	HashSet<URL> doneLinks = new 	HashSet<URL>();
+	for(URL url: outliner.getLinks()) {
+	    if (doneLinks.contains(url)) continue;		    
+	    doneLinks.add(url);
+	    try {
+		Vector<DataFile> results = pullPage(user, url, true);
+		pdfCnt += results.size();
+		if (results.size()>0) {
+		    progress("Obtained PDF file from " + url);
+		} else {
+		    progress("No PDF file could be obtained from " + url);			
+		}
+	    } catch(IOException ex) {
+		error(ex.getMessage());
+	    }
+	}
+	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been obtained from them");
+    }
+
 
     /** Saves the data from an input stream in a PDF file.
      */
-
     static public DataFile savePdf(String user, InputStream uploadedStream, String fileName ) 
     throws IOException {
 	final int L = 32 * 1024;
@@ -103,18 +160,20 @@ public class UploadProcessingThread extends Thread {
 	return df;
     }
 
-    static public Vector<DataFile> pullPage(String user, URL lURL, boolean pdfOnly) 
-	throws //WebException,
-	    IOException, java.net.MalformedURLException {
+    /** Downloads an HTML or PDF document from a specified URL. If a
+	PDF file is found, returns info about it in a DataFile
+	object; if an HTML file is found, sets this.outliner  */
+    private Vector<DataFile> pullPage(String user, URL lURL, boolean pdfOnly) 
+	throws IOException, java.net.MalformedURLException {
 
 	Vector<DataFile> results = new Vector<DataFile>();
-	Logging.info("UploadPapers requesting URL " + lURL);
+	progress("UploadPapers requesting URL " + lURL);
 	HttpURLConnection lURLConnection;
 	try {
 	    lURLConnection=(HttpURLConnection)lURL.openConnection();	
 	}  catch(Exception ex) {
 	    String msg= "Failed to open connection to " + lURL;
-	    Logging.error(msg);
+	    error(msg);
 	    ex.printStackTrace(System.out);
 	    throw new IOException(msg);
 	}
@@ -125,7 +184,7 @@ public class UploadProcessingThread extends Thread {
 	    lURLConnection.connect();
 	} catch(Exception ex) {
 	    String msg= "UP: Failed to connect to " + lURL;
-	    Logging.error(msg);
+	    error(msg);
 	    throw new IOException(msg);
 	}
 
@@ -136,7 +195,7 @@ public class UploadProcessingThread extends Thread {
 
 	if (code != HttpURLConnection.HTTP_OK) {
 	    String msg= "UploadPapers: Error code " + code + " received when trying to retrieve page from " + lURL;
-	    Logging.error(msg);
+	    error(msg);
 	    throw new IOException(msg);	    
 	}
 
@@ -149,7 +208,6 @@ public class UploadProcessingThread extends Thread {
 	URL eURL = lURLConnection.getURL();
 
 	boolean expectPdf = checkContentType( eURL, lContentType);
-	Charset cs = getCharset(lContentType);
 	String fileName = getRecommendedFileName(//lURL,
 						 lURLConnection);
 
@@ -177,8 +235,10 @@ public class UploadProcessingThread extends Thread {
 	    return results;
 	    //throw new IOException("Not a PDF file: " + lURL);
 	} else {
-	    BufferedInputStream in= new BufferedInputStream(is, ChunkSize);
-
+	    Charset cs = getCharset(lContentType);
+	    // set the outliner for the main function to process
+	    outliner = HTMLParser.parse(null, is, cs);
+	    is.close();
 	}
 	return results;
 
