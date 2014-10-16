@@ -32,7 +32,7 @@ import edu.rutgers.axs.indexer.*;
     
     <ul>
     <li>The already-viewed articles themselves.
-
+ 
     <li>Articles that were mentioned (linked to) in any pages
     viewed during this session.
 
@@ -50,6 +50,10 @@ import edu.rutgers.axs.indexer.*;
 
     <p>
     FIXME: must not select based on similarity to "prohibited" articles!
+
+    <p>To implement a new SBRG algorithm, you may expand this class'
+    work() method (if the algo is similar to those in it), or you can
+    subclass this class.
     
  */
 class SBRGWorker  {
@@ -105,6 +109,11 @@ class SBRGWorker  {
 	SBRGWorker instance (i.e., over a particular user session),
 	with a new invocation every time when the rec list needs to be
 	updated. 
+
+	<p>Several different algos are supported here; all of them
+	are based on computing individual lists of related
+	articles for each viewed article, and then merging these lists.
+	After this, exclusions are applied.
 	
 	@param runID A sequential ID (zero-based) of this
 	SBRL-generation run within the user session.
@@ -339,13 +348,18 @@ class SBRGWorker  {
 		exclusions.addAll(his.prohibitedArticles);
 	    }
 
-	    // abstract match, separately for each article
+	    // A list of related articles (by abstract match, or by
+	    // coaccess, as appropriate), is obtained separately for
+	    // each article. 
 	    final int maxlen = 100;
 	    int maxAge = his.viewedArticlesActionable.size();
 	    final int maxRecLen = recommendedListLength(maxAge);
 	    ScoreDoc[][] asr  = new ScoreDoc[maxAge][];
 	    int k=0;
 	    for(String aid: his.viewedArticlesActionable) {
+		// see if the list has been precomputed on 
+		// a previous invocation of this worker's work()
+		// method
 		ScoreDoc[] z = articleBasedSD.get(aid);
 		if (z==null) {
 
@@ -405,6 +419,7 @@ class SBRGWorker  {
 		ScoreDoc z = new ScoreDoc(r.docno, (float)r.score);
 		ArticleEntry ae= new ArticleEntry(k, searcher.doc(r.docno), z);
 		ae.age = r.age;
+		// check this article against the exclusion list
 		if (exclusions.contains(ae.id)) {
 		    excludedList += " " + ae.id;
 		    continue;

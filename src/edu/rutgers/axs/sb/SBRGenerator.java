@@ -445,6 +445,7 @@ public class SBRGenerator {
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished with no result; error=" + sbrRunning.error + " errmsg=" + sbrRunning.errmsg);
 	}
 	sbrRunning = null;
+	// is another run needed?
 	if (requestedArticleCount > lastThreadRequestedArticleCount) {
 	    sbrRunning = new SBRGThread(this, runCnt++,worker);
 	    lastThreadRequestedArticleCount=requestedArticleCount;

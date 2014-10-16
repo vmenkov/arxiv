@@ -12,6 +12,8 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.sb.SBRGenerator;
+import edu.rutgers.axs.upload.UploadProcessingThread;
+
 
 /** A single instance of this class is associated with a particular
     session of the My.ArXiv web application. It contains information
@@ -42,6 +44,10 @@ public class SessionData {
 	is set.
     */
     final public SBRGenerator sbrg=new SBRGenerator(this);
+
+    /** The most recent uploaded document processsing thread (for the Toronto
+	system) in this session. */
+    UploadProcessingThread upThread = null;
 
     /** Used to record the ArXiv article ID of an article linked from
 	a viewed page, or of any other article that the SB user does

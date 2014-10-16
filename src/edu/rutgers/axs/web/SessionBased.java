@@ -44,6 +44,8 @@ public class SessionBased  extends ResultsBase {
 
     private long  plid=0;
 
+    /** Retrieves the currently available session-based rec list, and
+	sets various values that are needed to display it correctly */
     public SessionBased(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 	
