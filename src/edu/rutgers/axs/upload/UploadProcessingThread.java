@@ -108,7 +108,14 @@ public class UploadProcessingThread extends Thread {
     /** Gets the PDF focuments from the URLs listed in this thread's outliner object */
     private void processOutliner() {
 	if (outliner==null) return;
-	progress("Will process " + outliner.getLinks().size() + " links found in the HTML document. (May skip some of them if duplicate, though)");
+	progress("During processing of the HTML document " + outliner.getErrors().size() + " errors were encountered");
+	int i=0;
+	for(String error: outliner.getErrors()) {
+	    i++;
+	    progress("" + i + ". " + error);
+	}
+
+	progress("Will follow all " + outliner.getLinks().size() + " links found in the HTML document, looking for PDF documents. (May skip some of them if duplicate, though)");
 	HashSet<URL> doneLinks = new 	HashSet<URL>();
 	for(URL url: outliner.getLinks()) {
 	    if (doneLinks.contains(url)) continue;		    
@@ -181,7 +188,8 @@ public class UploadProcessingThread extends Thread {
 	    String msg= "Failed to open connection to " + lURL;
 	    error(msg);
 	    ex.printStackTrace(System.out);
-	    throw new IOException(msg);
+	    //throw new IOException(msg);
+	    return results;
 	}
 
 	lURLConnection.setInstanceFollowRedirects(true); 
@@ -191,7 +199,8 @@ public class UploadProcessingThread extends Thread {
 	} catch(Exception ex) {
 	    String msg= "UP: Failed to connect to " + lURL;
 	    error(msg);
-	    throw new IOException(msg);
+	    //throw new IOException(msg);
+	    return results;
 	}
 
 	int code = lURLConnection.getResponseCode();
@@ -202,7 +211,8 @@ public class UploadProcessingThread extends Thread {
 	if (code != HttpURLConnection.HTTP_OK) {
 	    String msg= "UploadPapers: Error code " + code + " received when trying to retrieve page from " + lURL;
 	    error(msg);
-	    throw new IOException(msg);	    
+	    //throw new IOException(msg);	    
+	    return results;
 	}
 
 	final int ChunkSize = 8192;
@@ -226,8 +236,9 @@ public class UploadProcessingThread extends Thread {
 	    //	    ex.printStackTrace(System.out);
 	    int xcode = (code==HttpURLConnection.HTTP_OK)? 
 		HttpServletResponse.SC_INTERNAL_SERVER_ERROR :  code;
-	    throw new //WebException(xcode, msg);
-		IOException( msg);
+	    //	    throw new //WebException(xcode, msg);
+	    //		IOException( msg);
+	    return results;
 	}
 
 	if (expectPdf) {
@@ -243,7 +254,7 @@ public class UploadProcessingThread extends Thread {
 	} else {
 	    Charset cs = getCharset(lContentType);
 	    // set the outliner for the main function to process
-	    outliner = HTMLParser.parse(null, is, cs);
+	    outliner = HTMLParser.parse(lURL, is, cs);
 	    is.close();
 	}
 	return results;
@@ -279,21 +290,21 @@ public class UploadProcessingThread extends Thread {
     }
 
     /** Gets the charset from the content type, whenever supplied. (E.g. 
-	"Content-Type: text/html; charset=ISO-8859-4"
+	"Content-Type: text/html; charset=ISO-8859-4" )
+	@return An Charset object based on the document's Content-Type header, or null if there was no content type indication in that header
     */
     static private Charset getCharset(String lContentType) {
 	Charset cs = null;
-	if (lContentType!=null) {
-	    Pattern p = Pattern.compile("charset=([\\w:\\-\\.]+)");
-	    Matcher m = p.matcher(lContentType);
-	    if (m.find()) {
-		String charsetName = m.group(1);
-		try {
-		    cs = Charset.forName( charsetName);
-		    Logging.info("For name " + charsetName+", got charset "+cs);
-		} catch(Exception ex) {
-		    Logging.info("No charset available for name "+charsetName);
-		}
+	if (lContentType==null) return cs;
+	Pattern p = Pattern.compile("charset=([\\w:\\-\\.]+)");
+	Matcher m = p.matcher(lContentType);
+	if (m.find()) {
+	    String charsetName = m.group(1);
+	    try {
+		cs = Charset.forName( charsetName);
+		Logging.info("For name " + charsetName+", got charset "+cs);
+	    } catch(Exception ex) {
+		Logging.info("No charset available for name "+charsetName);
 	    }
 	}
 	return cs;

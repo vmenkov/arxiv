@@ -32,6 +32,16 @@ public class HTMLParser {
 	return parse(url, in, null);
     }
 
+    /** Reads the document from a given input stream, and extracts the URL links
+
+	@param url The URL at which the document is located. This is
+	used to reconstruct absolute link URLs out of relative ones
+	that may be found in the document.  If null is passed, only absolute
+	link URLs will be extracted from the document, and relative ones will 
+	have to be ignored.
+	
+	@param in An opened input stream through which the document can be read in.
+     */
     public static Outliner parse(URL url, InputStream in, Charset cs) throws IOException {
 	if (cs==null) {
 	    String encoding = "ISO-8859-1";
@@ -96,20 +106,27 @@ public class HTMLParser {
 	    this.baseURL =  _baseURL;
 	}
 
+	/** Checks if the tag is an "A" tag; if so, extracts and
+	    processes the URL in the "HREF" attribute. If it's
+	    relative, the URL is converted to an absolute URL using
+	    the document's stored base URL.  URLs with the "javascript:"
+	    protocols are explicitly ignored, to avoid the URL constructor
+	    throwing an exception.
+	 */
 	public void handleStartTag(HTML.Tag tag, MutableAttributeSet attributes, int position) {
 	    
 	    if (tag == HTML.Tag.A) {
 		String x = (String)attributes.getAttribute(HTML.Attribute.HREF);
-		if (x!=null) {
-		    try {
-			URL u = new URL(baseURL, x);
-			links.add(u);
-		    } catch( java.net.MalformedURLException ex) {
-			String msg="Cannot resolve the URL in the link '" + x +
-			    "' in the context '"+baseURL+"'";
-			errors.add(msg);
-		    }
-		} 
+		if (x==null) return;
+		if (x.startsWith("javascript:")) return;
+		try {
+		    URL u = new URL(baseURL, x);
+		    links.add(u);
+		} catch( java.net.MalformedURLException ex) {
+		    String msg="Cannot resolve the URL in the link '" + x +
+			"' in the context '"+baseURL+"'";
+		    errors.add(msg);
+		}
 	    }
 	}
     

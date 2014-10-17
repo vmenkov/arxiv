@@ -71,11 +71,11 @@ one paper, the system will allow you to upload one more, etc.)
 your initial recommendation list has been created and displayed, you
 will not be allowed to upload more papers.
 
-<p>There are three options for uploading a paper: 
+<p>There are four options for uploading a paper: 
 
 <ul> 
 
-<li>If it is on the web somewhere (including on arxiv.org!) you can
+<li>If the paper is on the web somewhere (including on arxiv.org!) you can
 simply provide a URL for the PDF file.
 
 <li>You can simply upload the PDF file.
@@ -83,21 +83,26 @@ simply provide a URL for the PDF file.
 <li>You can upload an HTML document that contains links to several PDF
 documents (which themselves have to be on the web somewhere).
 
+<li>You can provide a URL of an HTML document that contains links to several PDF
+documents 
+
 </ul>
 
 <p>Note that if you upload multiple PDF documents, they all have to have different names.
 
 <table border=1>
 <tr> <td>
-Option 1 - specify a URL for a PDF file
-<form  action="uploadPapers.jsp" method="post">
+Option 1 - specify a URL for a PDF file, or an HTML documents with links to PDF documents,
+e.g. <tt>http://www.example.com/some-artcle.pdf</tt> or
+<tt>http://my.domain.edu/my-home-page/cv.html</tt>
+<form  action="uploadPapers.jsp" method="post"><br>
 URL: <input type="text" size="80" name="url">
 <input type="submit" value="Load PDF from this URL" />
 </form>
 </tr>
 
 <tr> <td>
-Option 2 - upload a PDF file:  
+Option 2 - upload a PDF file or an HTML file with links to PDF documents:  <br>
 <form  enctype="multipart/form-data" action="uploadPapers.jsp" method="post">
 <input type="file" size="80" name="pdf">
 <input type="submit" value="Upload PDF file" />
