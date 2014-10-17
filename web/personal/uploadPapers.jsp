@@ -8,8 +8,10 @@
 <html>
 <head>
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
-<title>Uploading personal papers
-</title>
+<% if (main.wantReload) { %>
+<meta http-equiv="refresh" content="2; url=<%=main.reloadURL%>"/>
+<%}%>
+<title>Uploading personal papers</title>
 <jsp:include page="../include/date-head-include.html" />
 </head>
 <body>
@@ -18,7 +20,25 @@
    if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 
 
-<%   } else {      %>
+<%   } else if (main.check) {      %>
+<h1><%= main.checkTitle %></h1>
+<pre>
+<%= main.checkText %>
+</pre>
+
+<hr>
+<p>
+<% if (main.wantReload) { %>
+This page should automatically refresh within a few seconds. 
+If it does not, click the button below to continue:
+<%}%>
+</p>
+
+<form action="<%=main.reloadURL%>">
+<input type=submit value="Continue">
+</form>
+     
+<%   } else {    %>
 
 <h1>Uploading personal papers</h1>
 
@@ -92,13 +112,13 @@ Option 2 - upload a PDF file:
 <%   }      %>
 
 
-
+<!--
 <ul>
 <li><a href="<%=main.cp%>">Main page</a>
 <li><a href="<%=main.cp%>/personal/index.jsp">Your account</a>
 <li><a href="<%=main.cp%>/personal/editUserFormSelf.jsp">Modify your account information</a>
 </ul>
-
+-->
 
 <icd:RU/>
 

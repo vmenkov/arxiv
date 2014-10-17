@@ -39,8 +39,7 @@ public class UploadPapers  extends ResultsBase {
     public int uploadCnt=0;
 
    
-    /** Reads and parses a sensor description uploaded from the web
-     * form (as an uploaded file, or via a TEXTAREA element 
+    /** Reads a file uploaded from the web form
      */
     void readUploadedFile() {
 	try {
@@ -141,8 +140,62 @@ public class UploadPapers  extends ResultsBase {
 	    
     }
 
+    /** The "check=true" in the query string means that the user want to check
+	the status of the current load process */
+    public boolean check=false;
+
+    /** To be displayed when check=true */
+    public String checkTitle="???", checkText="?????";
+    
+   /** This will be set to true if we want the client to retry
+	loading this page (or a slightly different one) in a few second.
+	This is used on "progress" pages
+     */
+    public boolean wantReload=false;
+    public String reloadURL;
+
+    /** Generates the URL for the "Continue" button (and/or the "refresh" tag)
+     */
+    private String getReloadURL(boolean check) {
+	String s= cp + "/personal/uploadPapers.jsp" ;
+	if (check) s +=  "?check=true";
+	return s;
+    }
+
     public UploadPapers(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
+
+	reloadURL = getReloadURL(false);
+
+	check = getBoolean("check", check);
+
+	if (check) {
+	    if (sd.upThread == null) {
+		checkTitle = "No uploading is taking place";
+		checkText = "No uploading process is taking place right now or was taking place recently";
+	    } else if (sd.upThread.getState() == Thread.State.TERMINATED) {
+		checkTitle = "Uploading completed";
+		checkText = sd.upThread.getProgressText();
+	    } else {
+		wantReload = true;
+		checkTitle = "Uploading in progress";
+		checkText =
+		    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
+		    sd.upThread.getProgressText();		
+		reloadURL = getReloadURL(true);
+	    }
+	    return;
+	} else if (sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED) {
+	    check = true;
+	    wantReload = false;
+	    checkTitle = "Wait for the previous uploading process to finish!";
+	    checkText =
+		"You cannot upload more documents until the previous uploading process has completed.\n" +
+		"Uploading thread state = " + sd.upThread.getState()+ "\n"+
+		sd.upThread.getProgressText();		
+	    reloadURL = getReloadURL(true);	  
+	    return;
+	}
 
 	try {
 	    if (ServletFileUpload.isMultipartContent(request)) {
@@ -153,6 +206,9 @@ public class UploadPapers  extends ResultsBase {
 	    } else {
 		String url = getString("url", null);
 		if (url!=null) {
+		    if (url.trim().equals("")) {
+			throw new WebException("No URL specified!");
+		    }
 		    URL lURL = new URL(url);
 		    sd.upThread = new UploadProcessingThread(user, lURL);
 		    sd.upThread.start();
@@ -161,6 +217,17 @@ public class UploadPapers  extends ResultsBase {
 		}
 	    }
 	    
+
+	    if (sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED) {
+		check=true;
+		wantReload = true;
+		checkTitle = "Uploading in progress";
+		checkText =
+		    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
+		    sd.upThread.getProgressText();		
+		reloadURL = getReloadURL(true);		
+	    }
+
 	} catch(  Exception ex) {
 	    setEx(ex);
 	}

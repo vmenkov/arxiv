@@ -50,10 +50,15 @@ public class UploadProcessingThread extends Thread {
 	Logging.error(text);
     }
 
-
-
     public String getProgressText() {
-	return progressText.toString();
+	String s = (startTime == null ?
+		    "Uploading has not started yet\n" : 
+		    "Uploading and processing started at " + startTime + "\n");
+	s += progressText.toString();
+	if (endTime != null) {
+	    s += "\n\nUploading and processing completed at " + endTime;
+	}
+	return s;
     }
 
 
@@ -75,7 +80,6 @@ public class UploadProcessingThread extends Thread {
     }
 
 
-
     /** The main class for the actual recommendation list
 	generation. */
     public void run()  {
@@ -84,7 +88,7 @@ public class UploadProcessingThread extends Thread {
 	    if (startURL != null) {
 		Vector<DataFile> results = pullPage(user, startURL, false);
 		pdfCnt += results.size();
-		progress("The total of " + pdfCnt +  " PDF files have been obtained from " + startURL);
+		progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
 	    }
 
 	    // outliner may have been supplied in the constructor or set in pullPage()
@@ -96,6 +100,7 @@ public class UploadProcessingThread extends Thread {
 	    System.out.println("Exception for UploadProcessingThread " + getId());
 	    ex.printStackTrace(System.out);
 	} finally {
+	    endTime = new Date();
 	}
 
     }
@@ -103,6 +108,7 @@ public class UploadProcessingThread extends Thread {
     /** Gets the PDF focuments from the URLs listed in this thread's outliner object */
     private void processOutliner() {
 	if (outliner==null) return;
+	progress("Will process " + outliner.getLinks().size() + " links found in the HTML document. (May skip some of them if duplicate, though)");
 	HashSet<URL> doneLinks = new 	HashSet<URL>();
 	for(URL url: outliner.getLinks()) {
 	    if (doneLinks.contains(url)) continue;		    
@@ -111,15 +117,15 @@ public class UploadProcessingThread extends Thread {
 		Vector<DataFile> results = pullPage(user, url, true);
 		pdfCnt += results.size();
 		if (results.size()>0) {
-		    progress("Obtained PDF file from " + url);
+		    progress("Retrieved PDF file from " + url);
 		} else {
-		    progress("No PDF file could be obtained from " + url);			
+		    progress("No PDF file could be retrieved from " + url);
 		}
 	    } catch(IOException ex) {
 		error(ex.getMessage());
 	    }
 	}
-	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been obtained from them");
+	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them");
     }
 
 
