@@ -34,22 +34,44 @@ public class UploadProcessingThread extends Thread {
 
     /** Human-readable text used to display this thread's progress. */
     private StringBuffer progressText = new StringBuffer();
+    /** The last line, which may be replaced by a later call, in order
+	to achieve a more concise report on the user's screen. No
+	trailing LF attached yet. */
+    private String progressTextMore = null;
 
     private void progress(String text) {
-	progressText.append(text + "\n");
-	Logging.info(text);
+	progress(text, false, false);
     }
 
     private void error(String text) {
-	progressText.append(text + "\n");
-	Logging.error(text);
+	progress(text, true, false);
     }
+
+    /** Adds a line of text to the progress text visible to the user.
+       @param replace If true, this line replaces the last line.
+     */
+    private void progress(String text, boolean isError, boolean replace) {
+	if (progressTextMore != null  && !replace) {
+	    progressText.append(progressTextMore + "\n");
+	}
+	progressTextMore = text;
+	
+	if (isError) {
+	    Logging.error(text);
+	} else {
+	    Logging.info(text);
+	}
+    }
+
 
     public String getProgressText() {
 	String s = (startTime == null ?
 		    "Uploading is about to start...\n" : 
 		    "Uploading and processing started at " + startTime + "\n");
 	s += progressText.toString();
+	if (progressTextMore != null) {
+	    s += progressTextMore + "\n";
+	}
 	if (endTime != null) {
 	    s += "\n\nUploading and processing completed at " + endTime;
 	}
@@ -143,13 +165,13 @@ public class UploadProcessingThread extends Thread {
 		Vector<DataFile> results = pullPage(user, url, true);
 		pdfCnt += results.size();
 		if (results.size()>0) {
-		    progress("Retrieved PDF file from " + url);
+		    progress("Retrieved PDF file from " + url, false, true);
 		    for(DataFile pdf: results) {
 			DataFile txt = pdf2txt(pdf);
 			if (txt != null) convCnt ++;
 		    }
 		} else {
-		    progress("No PDF file could be retrieved from " + url);
+		    progress("No PDF file could be retrieved from " + url, false, true);
 		}
 	    } catch(IOException ex) {
 		error(ex.getMessage());
