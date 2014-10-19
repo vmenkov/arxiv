@@ -56,11 +56,12 @@ public class DailyPPP {
 	return refined? new int[] {2} : new int[] {0, 1};
     }
 
+    /** Carry out profile and rec list updates for all users for whom
+	this is needed */
     static void updates() throws Exception {
 
 	Logging.info("refined=" + refined);
 	//ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
-	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 	IndexReader reader = Common.newReader();
 
 	ArticleAnalyzer z = refined? 
@@ -96,7 +97,8 @@ public class DailyPPP {
 	em.close();
     }
 
-    /** Just a wrapper around 2 function calls */
+    /** Just a wrapper around 2 function calls: profile and rec list
+	updates for one user */
     private static void oneUser(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User user) 
 	throws IOException {
 	if (doProf) {
@@ -430,6 +432,11 @@ public class DailyPPP {
 	forcedToDate=ht.getOptionDate("until",null);
 	newProfID=ht.getOptionLong("newProfID", 0);
 	newSugID=ht.getOptionLong("newSugID", 0);
+
+	String stoplist = "WEB-INF/stop200.txt";
+	stoplist = ht.getOption("stoplist",stoplist);
+	UserProfile.setStoplist(new Stoplist(new File(stoplist)));
+
 
 	if (basedon>0) {
 	    if (doProf)  throw new IllegalArgumentException("-Dbasedon=... can only be used with -Dprof=false");

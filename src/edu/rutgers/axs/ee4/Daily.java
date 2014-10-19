@@ -29,7 +29,6 @@ public class Daily {
     static void updates() throws IOException {
 
 	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
-	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
 	ArticleAnalyzer z = new ArticleAnalyzer();
 	IndexReader reader = z.reader;
 
@@ -378,6 +377,7 @@ public class Daily {
 	    k = j;
 	}
     }
+
   
     /** When the system is first set up, run
 	<pre>
@@ -392,8 +392,11 @@ public class Daily {
 	every night
      */
     static public void main(String[] argv) throws IOException {
-	ParseConfig ht = new ParseConfig();
-	
+	ParseConfig ht = new ParseConfig();      
+	String stoplist = "WEB-INF/stop200.txt";
+	stoplist = ht.getOption("stoplist",stoplist);
+	UserProfile.setStoplist(new Stoplist(new File(stoplist)));
+
 	if (argv.length == 0) {
 	    System.out.println("Usage: Daily [init|update]");
 	    return;

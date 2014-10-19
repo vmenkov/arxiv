@@ -330,7 +330,8 @@ public class Bernoulli {
     /** Initializes training set data in the SQL datase. */
     public static void main(String[] argv) throws org.apache.lucene.index.CorruptIndexException, IOException {
 	ParseConfig ht = new ParseConfig();
-	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
+	String stoplist = ht.getOption("stoplist","WEB-INF/stop200.txt");
+	UserProfile.setStoplist(new Stoplist(new File(stoplist)));
 
 	if (argv.length < 1)     usage();
 	String cmd = argv[0];

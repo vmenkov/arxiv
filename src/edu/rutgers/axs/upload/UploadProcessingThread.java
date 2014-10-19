@@ -1,6 +1,5 @@
 package edu.rutgers.axs.upload;
 
-
 import java.io.*;
 import java.util.*;
 import java.text.*;
@@ -9,15 +8,14 @@ import java.nio.charset.Charset;
 import java.util.regex.*;
 //import javax.persistence.*;
 
-
 import javax.servlet.*;
 import javax.servlet.http.*;
 
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
-//import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.upload.*;
+//import edu.rutgers.axs.html.*;
 //import edu.rutgers.axs.indexer.Common;
 
 public class UploadProcessingThread extends Thread {
@@ -25,17 +23,14 @@ public class UploadProcessingThread extends Thread {
     private final String user;
     private HTMLParser.Outliner outliner;
     private final URL startURL;
-
+    private final DataFile startDf;
 
     /** When the list generation started and ended. We keep this 
      for statistics. */
     Date startTime, endTime;
     
-    boolean error = false;
-    String errmsg = "";
-
     String statusText = "";
-    int pdfCnt = 0;
+    int pdfCnt = 0, convCnt = 0;
 
     /** Human-readable text used to display this thread's progress. */
     private StringBuffer progressText = new StringBuffer();
@@ -52,7 +47,7 @@ public class UploadProcessingThread extends Thread {
 
     public String getProgressText() {
 	String s = (startTime == null ?
-		    "Uploading has not started yet\n" : 
+		    "Uploading is about to start...\n" : 
 		    "Uploading and processing started at " + startTime + "\n");
 	s += progressText.toString();
 	if (endTime != null) {
@@ -68,6 +63,7 @@ public class UploadProcessingThread extends Thread {
 	user = _user;
 	outliner = _outliner;
 	startURL = null;
+ 	startDf = null;
     }
 
     /** Creates a thread which will get a document from a specified
@@ -77,7 +73,17 @@ public class UploadProcessingThread extends Thread {
 	user = _user;
 	outliner = null;
 	startURL = url;
-    }
+	startDf = null;
+   }
+
+    /** Creates a thread that will run pdf2txt conversion for a single pre-read
+	file */
+    public UploadProcessingThread(String _user, DataFile df) {
+	user = _user;
+	outliner = null;
+	startURL = null;
+	startDf = df;
+   }
 
 
     /** The main class for the actual recommendation list
@@ -85,19 +91,32 @@ public class UploadProcessingThread extends Thread {
     public void run()  {
 	startTime = new Date();
 	try {
+
+	    if (startDf != null) {
+		pdfCnt = 1;
+		DataFile txt = pdf2txt(startDf);
+		if (txt != null) convCnt ++;
+		return;
+	    }
+
 	    if (startURL != null) {
 		Vector<DataFile> results = pullPage(user, startURL, false);
 		pdfCnt += results.size();
 		progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
+
+		for(DataFile pdf: results) {
+		    DataFile txt = pdf2txt(pdf);
+		    if (txt != null) convCnt ++;
+		}
+
 	    }
 
 	    // outliner may have been supplied in the constructor or set in pullPage()
 	    processOutliner();
-
+	    
 	} catch(Exception ex) {
-	    error = true;
-	    errmsg = ex.getMessage();
-	    System.out.println("Exception for UploadProcessingThread " + getId());
+	    String errmsg = ex.getMessage();
+	    error("Exception for UploadProcessingThread " + getId() + errmsg);
 	    ex.printStackTrace(System.out);
 	} finally {
 	    endTime = new Date();
@@ -125,6 +144,10 @@ public class UploadProcessingThread extends Thread {
 		pdfCnt += results.size();
 		if (results.size()>0) {
 		    progress("Retrieved PDF file from " + url);
+		    for(DataFile pdf: results) {
+			DataFile txt = pdf2txt(pdf);
+			if (txt != null) convCnt ++;
+		    }
 		} else {
 		    progress("No PDF file could be retrieved from " + url);
 		}
@@ -132,7 +155,8 @@ public class UploadProcessingThread extends Thread {
 		error(ex.getMessage());
 	    }
 	}
-	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them");
+	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.");
+	progress("The total of " + convCnt + " PDF files have been successfully converted to text");
     }
 
 
@@ -175,7 +199,9 @@ public class UploadProcessingThread extends Thread {
 
     /** Downloads an HTML or PDF document from a specified URL. If a
 	PDF file is found, returns info about it in a DataFile
-	object; if an HTML file is found, sets this.outliner  */
+	object; if an HTML file is found, sets this.outliner  
+	@param pdfOnly If true, only look for a PDF file; otehrwise, read HTML as well
+    */
     private Vector<DataFile> pullPage(String user, URL lURL, boolean pdfOnly) 
 	throws IOException, java.net.MalformedURLException {
 
@@ -232,8 +258,7 @@ public class UploadProcessingThread extends Thread {
 	    is = lURLConnection.getInputStream();
 	}  catch(Exception ex) {
 	    String msg= "UploadPapers: Failed to obtain data from " + lURL;
-	    Logging.error(msg);
-	    //	    ex.printStackTrace(System.out);
+	    error(msg);
 	    int xcode = (code==HttpURLConnection.HTTP_OK)? 
 		HttpServletResponse.SC_INTERNAL_SERVER_ERROR :  code;
 	    //	    throw new //WebException(xcode, msg);
@@ -258,7 +283,6 @@ public class UploadProcessingThread extends Thread {
 	    is.close();
 	}
 	return results;
-
     }
 
     /** Checks the content type to figure whether this is a PDF document
@@ -352,6 +376,75 @@ public class UploadProcessingThread extends Thread {
 	
 	return f;
     }
+
+    private static File findScript() {
+	final String [] dirs = {"/usr/bin", "/usr/local/bin"};
+	for(String x: dirs) {
+	    File dir = new File(x);
+	    File g = new File(dir, "pdf2txt.py");
+	    if (g.exists()) return g;
+	}
+	return null;
+    }
+
+    /** Uses PDFMiner to convert a PDF file to text */
+    private DataFile pdf2txt(DataFile pdf) {
+	File pdfFile = pdf.getFile();
+	String pdfFileName = pdfFile.getName();
+	try {
+	    final String suffix = ".pdf";
+	    if (!pdfFileName.toLowerCase().endsWith(suffix)) {
+		error("File name " + pdfFileName + " does not have expected suffix '.pdf'; won't convert");
+		return null;
+	    }
+	    String txtFileName = pdfFileName.substring(0, pdfFileName.length() - suffix.length()) + ".txt";
+
+	    DataFile txtDf = new DataFile(user, DataFile.Type.UPLOAD_TXT, txtFileName);
+
+	    File dir = txtDf.getFile().getParentFile();
+	    if (!dir.exists() && !dir.mkdirs()) {
+		error("Server error: Failed to create directory " + dir);
+		return null;
+	    }
+	    Logging.info("Created directory " + dir);
+
+	    File script = findScript();
+	    if (script==null) {
+		error("Cannot find pdf2txt.py");
+		return null;
+	    }
+
+	    String[] cmdarray={"python", script.getPath(),"-o",txtDf.getPath(),pdf.getPath()};
+
+	    Runtime ru = Runtime.getRuntime();
+	    Process proc = ru.exec(cmdarray, null);
+
+	    InputStream stderr = proc.getErrorStream();
+	    LineNumberReader rerr = new LineNumberReader(new InputStreamReader(stderr));
+	    String s=null;
+	    StringBuffer sb=new StringBuffer();
+	    while((s=rerr.readLine())!=null) { 
+		sb.append(s + "\n");
+	    }
+	    if (sb.length()>0) error(sb.toString());
+
+	    try {
+		proc.waitFor();
+	    } catch(java.lang.InterruptedException ex) {}
+	    int ev = proc.exitValue();
+	    if (ev==0) {
+		progress("Converted " + pdfFile + " to " + txtDf.getPath());
+		return txtDf;
+	    } else {
+		error("Error reported when conveting " + pdfFile + " to " + txtDf.getPath());
+		return null;
+	    }
+	} catch (IOException ex) {
+	    error("I/O error when trying to convert " + pdfFile + ": " + ex.getMessage());
+	    return null;
+	}      
+    }
+
 
 
 }

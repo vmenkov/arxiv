@@ -97,7 +97,7 @@ e.g. <tt>http://www.example.com/some-artcle.pdf</tt> or
 <tt>http://my.domain.edu/my-home-page/cv.html</tt>
 <form  action="uploadPapers.jsp" method="post"><br>
 URL: <input type="text" size="80" name="url">
-<input type="submit" value="Load PDF from this URL" />
+<input type="submit" value="Load PDF or HTML from this URL" />
 </form>
 </tr>
 
@@ -105,7 +105,7 @@ URL: <input type="text" size="80" name="url">
 Option 2 - upload a PDF file or an HTML file with links to PDF documents:  <br>
 <form  enctype="multipart/form-data" action="uploadPapers.jsp" method="post">
 <input type="file" size="80" name="pdf">
-<input type="submit" value="Upload PDF file" />
+<input type="submit" value="Upload PDF or HTML file" />
 </form>
 </tr>
 

@@ -234,9 +234,13 @@ cd /data
 sudo mkdir arxiv
 cd /data/arxiv
 sudo mkdir arXiv-cache arXiv-data arXiv-index arXiv-metadata-cache arXiv-text
+sudo mkdir log ; sudo chown tomcat.tomcat log
 
 ....
 </pre>
+
+<p>(The <tt>log</tt> directory will be used by nightly scripts run by
+user <tt>tomcat</tt>; we'll schedule them with <tt>crontab</tt> -- see below).
 
 <h4>Lucene</h4>
 
@@ -366,6 +370,16 @@ $ARXIV/tomcat-lib:
 The above is for Tomcat 5.5; in Tomcat 6, some file names are slightly different, but the directory is the same.
 -->
 
+<h2>Install <tt>crontab</tt> scripts</h2>
+
+<p>Certain scripts need to write every night, updating user profiles, recreating recommendation lists, etc. We run these under the same user name that runs the Tomcat server (which happens to be user <tt>tomcat</tt> on our system). This is done so in order both for these scripts and for the Tomcat server itself to be able to use the directory tree <tt>/data/arxiv/arXiv-data</tt> for reading and writing, without having to make it world-writeable.
+
+<pre>
+sudo crontab -u tomcat -e
+</pre>
+
+
+
 <h2>More stuff - to run svmlight </h2>
 
 http://svmlight.joachims.org/svm_multiclass.html
@@ -374,6 +388,19 @@ http://svmlight.joachims.org/svm_multiclass.html
 <!-- sudo yum install gcc -->
 sudo yum install /lib/ld-linux.so.2
 </pre> 
+
+<h2>PDFMiner (October 2014)</h3>
+
+<p><a href="http://www.unixuser.org/~euske/python/pdfminer/">PDFMiner</a> is used to convert PDF to text, for the needs of the "Toronto system" (uploading users' personal documents).
+
+<pre>
+tar xf pdfminer-20140328.tar
+cd pdfminer-20140328.tar
+sudo python ./setup.py install
+</pre>
+
+<p>The installs the package in /usr/lib/python2.6/site-packages/pdfminer/ ; 
+the main script is in /usr/bin/pdf2txt.py  (or in /usr/local/bin)
 
 </body>
 

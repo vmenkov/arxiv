@@ -93,8 +93,9 @@ import edu.rutgers.axs.ParseConfig;
 	    /**  Thorsten's Perturbed Preference Perceptron */
 	    PPP_USER_PROFILE,
 	    PPP_SUGGESTIONS,
-	    /** Toronto System */
-	    UPLOAD_PDF;
+	    /** Toronto System: original PDF and text obtained by pdf2txt */
+	    UPLOAD_PDF,
+	    UPLOAD_TXT;
 
 	/** Is this a user profile file? */
 	public boolean isProfile() {
@@ -148,6 +149,8 @@ import edu.rutgers.axs.ParseConfig;
 		return "p3sug";
 	    } else if (this == UPLOAD_PDF) {
 		return "upload_pdf";
+	    } else if (this == UPLOAD_TXT) {
+		return "upload_txt";
 	    } else {
 		return null;
 	    }	 
@@ -483,7 +486,7 @@ import edu.rutgers.axs.ParseConfig;
 
     
     /** Maps to a full file system path. */
-    String  getPath()  {
+    public String  getPath()  {
     	return getFile().getPath();
     }
 

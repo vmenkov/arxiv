@@ -60,20 +60,7 @@ public class UploadPapers  extends ResultsBase {
 		if (item.isFormField()) {
 		    String name = item.getFieldName();
 		    String value = item.getString();	
-
-		    /*
-		    if (name.equals("url")) {
-			String url = value;
-			URL lURL = new URL(url);
-
-			Vector<DataFile> results = UploadProcessingThread.pullPage(user, lURL, false);
-			uploadCnt += results.size();
-		    } else {
-		    */
-			infomsg += "<p>UploadPapers: Ignoring parameter "+name+"=<pre>"+value+"</pre></p>\n";
-			/*
-		    }
-			*/
+		    infomsg += "<p>UploadPapers: Ignoring parameter "+name+"=<pre>"+value+"</pre></p>\n";
 		} else {
 		    
 		    String fieldName = item.getFieldName();
@@ -100,6 +87,10 @@ public class UploadPapers  extends ResultsBase {
 			    infomsg +="<p>Successfully uploaded PDF file '"+ 
 				fileName+"'</p>";
 			}
+
+			sd.upThread = new UploadProcessingThread(user, df);
+			sd.upThread.start();
+		
 		    } else if (fileNameLC.endsWith(".html") ||
 			       fileNameLC.endsWith(".htm")) {
 			InputStream uploadedStream=item.getInputStream();
