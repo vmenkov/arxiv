@@ -53,7 +53,11 @@ If it does not, click the button below to continue:
 
      <% }%>
 
-<%= main.dirInfo() %>
+<h2>Summary of your uploading activity so far</h2>
+<%= main.dirInfo(false) %>
+
+<p>
+<%= main.dirInfo(true) %>
 
 <h2>Uploading personal papers</h2>
      

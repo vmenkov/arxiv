@@ -116,9 +116,9 @@ public class DailyPPP {
     }
 
     /** Updates and saves the user profile for the specified user, as
-	long as it makes sense to do it (i.e., there is no profile yet,
-	or there has been some usable activity since the existing profile
-	has been created).
+	long as it makes sense to do it (i.e., either there is no
+	profile yet, or there has been some usable activity since the
+	existing profile has been created).
 
 	<p>Since Jan 2014, multiple document representations are
 	supported, with two entirely different (independent) series of
@@ -134,14 +134,29 @@ public class DailyPPP {
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE, 
 	    stype =  DataFile.Type.PPP_SUGGESTIONS;
 	final String uname = u.getUser_name();
-	// the latest profile (with the right version)
+	// Find the latest profile (with the right version)
 	DataFile oldProfileFile = DataFile.getLatestFileByVersion(em, uname, ptype, allowedFileVersions());
 	System.out.println("Old user profile = " + oldProfileFile);
 
-	UserProfile upro = (oldProfileFile == null)?
+	boolean blankPage = (oldProfileFile == null);
+	
+	if (blankPage) {
+	    UserProfile upro =  new UserProfile(aa);
+	    DataFile outputFile=upro.saveToFile(uname, 0, ptype);
+	    setDataFileId(em, outputFile, newProfID);
+	    outputFile.setLastActionId(0);
+	    
+	    em.getTransaction().begin(); 
+	    em.persist(outputFile);
+	    em.getTransaction().commit();
+	    Logging.info("Saved initial profile: " + outputFile);
+	    return;
+	}	
+
+	UserProfile upro = blankPage?
 	    new UserProfile(aa) :  new UserProfile(oldProfileFile, aa);
 
-	// the sug lists based on the old profile
+	// Find all sug lists based on this old profile
 	List<DataFile> sugLists = DataFile.getAllFilesBasedOn(em, uname, stype, oldProfileFile);
 
 	System.out.println("Found " +sugLists.size() + " applicable suggestion lists");
@@ -173,14 +188,14 @@ public class DailyPPP {
 	    upro.rocchioUpdate(updateCo );
  	    upro.setTermsFromHQ();
 	}
-	if (rocchioCnt==0 && oldProfileFile!=null) {
+	if (rocchioCnt==0 && !blankPage) {
 	    System.out.println("There is no need to update the existing profile " + oldProfileFile +", because no important action based on it has been recorded");
 	    return;
 	}
 	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
 	setDataFileId(em, outputFile, newProfID);
 
-	if (oldProfileFile!=null) {
+	if (!blankPage) {
 	    outputFile.setInputFile(oldProfileFile);
 	}
 	outputFile.setLastActionId(lid);

@@ -38,7 +38,7 @@ public  class SubjectSearchResults extends SearchResults {
        @param toDate Date range end (usually null). 
     */
     SubjectSearchResults(IndexSearcher searcher, String[] cats, 	
-				Date since, Date toDate, int maxlen) 
+			 Date since, Date toDate, int maxlen) 
     throws IOException {
 
 	org.apache.lucene.search.Query q;

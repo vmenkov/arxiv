@@ -112,16 +112,6 @@ public class UploadPapers  extends ResultsBase {
 		}
 	    }
 
-	    /*
-	    if (u.q==null) {
-		error=true;
-		errmsg = "No file data seems to have been uploaded!";
-	    } else if (sensorname != null && !sensorname.trim().equals("")) {
-		sensorname = sensorname.trim();
-		u.q.setName(sensorname);
-	    }
-	    */
-
 	}  catch (Exception _e) {
 	    e = _e;
 	    error = true;
@@ -153,6 +143,21 @@ public class UploadPapers  extends ResultsBase {
 	return s;
     }
 
+    /** The main class for document uploading; it is the back end for
+	uploadPapers.jsp. There are several cases when this page is
+	used:
+
+	<ul>
+
+	<li> check=true : look up the current state of the uploading
+	process running in a background thread.
+
+	<li>form  enctype="multipart/form-data" : uploading a PDF or HTML
+	document
+
+	<li>url=... : getting a PDF or HTML document from a URL.
+	</ul>
+     */
     public UploadPapers(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 
@@ -228,8 +233,14 @@ public class UploadPapers  extends ResultsBase {
     private static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
-    public String dirInfo() {
-	File d = DataFile.getDir(user, DataFile.Type.UPLOAD_PDF);
+    /** @param convertedToTxt Show converted text files (rather than PDF files)
+     */
+    public String dirInfo(boolean convertedToTxt) {
+	
+	DataFile.Type type = convertedToTxt? DataFile.Type.UPLOAD_TXT:
+	    DataFile.Type.UPLOAD_PDF;
+
+	File d = DataFile.getDir(user, type);
 	if (d==null) {
 	    return "<p>No files have been uploaded by user <em>" + user + "</em> so far</p>\n";
 	}
@@ -239,10 +250,12 @@ public class UploadPapers  extends ResultsBase {
 	    return "<p>No files have been uploaded by user <em>" + user + "</em> so far</p>\n";
 	}
 	if (files.length==0) {
-	    b.append("<p>No files have been uploaded to the directory <tt>" + d + "</tt></p>\n");
+	    b.append("<p>There are no files in the directory <tt>" + d + "</tt></p>\n");
 	    return b.toString();
 	}
-	b.append("<p>The following  "+files.length+ " files have been uploaded so far to the directory <tt>" + d + "</tt></p>\n");
+	b.append("<p>The following  "+files.length+ " files have been " +
+		 (convertedToTxt ? "converted" : "uploaded") + 
+		 " so far to the directory <tt>" + d + "</tt></p>\n");
 	b.append("<table>\n");
 	for(File f: files) {
 	    b.append("<tr><td><tt>" +f.getName() + "</tt>");

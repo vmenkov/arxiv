@@ -224,6 +224,9 @@ public class  SearchResults {
 	return (userName.hashCode()<<16) | dfmt.format(new Date()).hashCode();
     }
 
+    /** Generates eitehr a term query (usually) or a prefix query (if there is
+	an asterisk in the query string)
+     */
     static org.apache.lucene.search.Query mkTermOrPrefixQuery(String field, String t) {
 	int pos = t.indexOf('*');
 	return (pos<0) ? 

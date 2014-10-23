@@ -15,8 +15,6 @@ import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.upload.*;
-//import edu.rutgers.axs.html.*;
-//import edu.rutgers.axs.indexer.Common;
 
 public class UploadProcessingThread extends Thread {
     
@@ -122,15 +120,13 @@ public class UploadProcessingThread extends Thread {
 	    }
 
 	    if (startURL != null) {
-		Vector<DataFile> results = pullPage(user, startURL, false);
-		pdfCnt += results.size();
-		progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
-
-		for(DataFile pdf: results) {
+		DataFile pdf = pullPage(user, startURL, false);
+		if (pdf != null) {
+		    pdfCnt ++;
 		    DataFile txt = pdf2txt(pdf);
 		    if (txt != null) convCnt ++;
-		}
-
+		} 
+		//progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
 	    }
 
 	    // outliner may have been supplied in the constructor or set in pullPage()
@@ -162,16 +158,13 @@ public class UploadProcessingThread extends Thread {
 	    if (doneLinks.contains(url)) continue;		    
 	    doneLinks.add(url);
 	    try {
-		Vector<DataFile> results = pullPage(user, url, true);
-		pdfCnt += results.size();
-		if (results.size()>0) {
-		    progress("Retrieved PDF file from " + url, false, true);
-		    for(DataFile pdf: results) {
-			DataFile txt = pdf2txt(pdf);
-			if (txt != null) convCnt ++;
-		    }
+		DataFile pdf = pullPage(user, url, true);
+		if (pdf != null) {
+		    pdfCnt ++;
+		    DataFile txt = pdf2txt(pdf);
+		    if (txt != null) convCnt ++;
 		} else {
-		    progress("No PDF file could be retrieved from " + url, false, true);
+		    // error is reported inside pullPage()
 		}
 	    } catch(IOException ex) {
 		error(ex.getMessage());
@@ -182,7 +175,12 @@ public class UploadProcessingThread extends Thread {
     }
 
 
-    /** Saves the data from an input stream in a PDF file.
+    /** Saves the data from an input stream into a PDF file. The stream
+	can be opened from direct file uploading, or during downloading
+	a file from the web.
+	@param user User name. This controls choice of the directory to save the file.
+	@param fileName The name of the downloaded file (without dir path)
+	@param uploadedStream The input strem.
      */
     static public DataFile savePdf(String user, InputStream uploadedStream, String fileName ) 
     throws IOException {
@@ -224,10 +222,9 @@ public class UploadProcessingThread extends Thread {
 	object; if an HTML file is found, sets this.outliner  
 	@param pdfOnly If true, only look for a PDF file; otehrwise, read HTML as well
     */
-    private Vector<DataFile> pullPage(String user, URL lURL, boolean pdfOnly) 
+    private DataFile pullPage(String user, URL lURL, boolean pdfOnly) 
 	throws IOException, java.net.MalformedURLException {
 
-	Vector<DataFile> results = new Vector<DataFile>();
 	progress("UploadPapers requesting URL " + lURL);
 	HttpURLConnection lURLConnection;
 	try {
@@ -237,7 +234,7 @@ public class UploadProcessingThread extends Thread {
 	    error(msg);
 	    ex.printStackTrace(System.out);
 	    //throw new IOException(msg);
-	    return results;
+	    return null;
 	}
 
 	lURLConnection.setInstanceFollowRedirects(true); 
@@ -248,7 +245,7 @@ public class UploadProcessingThread extends Thread {
 	    String msg= "UP: Failed to connect to " + lURL;
 	    error(msg);
 	    //throw new IOException(msg);
-	    return results;
+	    return null;
 	}
 
 	int code = lURLConnection.getResponseCode();
@@ -260,7 +257,7 @@ public class UploadProcessingThread extends Thread {
 	    String msg= "UploadPapers: Error code " + code + " received when trying to retrieve page from " + lURL;
 	    error(msg);
 	    //throw new IOException(msg);	    
-	    return results;
+	    return null;
 	}
 
 	final int ChunkSize = 8192;
@@ -285,26 +282,26 @@ public class UploadProcessingThread extends Thread {
 		HttpServletResponse.SC_INTERNAL_SERVER_ERROR :  code;
 	    //	    throw new //WebException(xcode, msg);
 	    //		IOException( msg);
-	    return results;
+	    return null;
 	}
 
 	if (expectPdf) {
 	    // simple bytewise copy
-	    DataFile df = UploadProcessingThread.savePdf(user, is, fileName);
-	    if (df != null) {
-		results.add(df);
-		//		infomsg +="<p>Successfully uploaded PDF file '"+ 		    fileName+"'</p>";
-	    }
-	} else if (pdfOnly) {
+	    DataFile results = UploadProcessingThread.savePdf(user, is, fileName);
+	    progress("Retrieved PDF file from " + lURL, false, true);
 	    return results;
-	    //throw new IOException("Not a PDF file: " + lURL);
+	} else if (pdfOnly) {
+	    //progress("No PDF file could be retrieved from " + url, false, true);
+	    progress("Ignoring the document from " + lURL + " (not a PDF file)", false, true);
+	    return null;
 	} else {
 	    Charset cs = getCharset(lContentType);
 	    // set the outliner for the main function to process
 	    outliner = HTMLParser.parse(lURL, is, cs);
 	    is.close();
+	    progress("Retrieved HTML file from " + lURL, false, true);
+	    return null;
 	}
-	return results;
     }
 
     /** Checks the content type to figure whether this is a PDF document

@@ -65,7 +65,7 @@ public class Cache {
 	    log("CACHE: Created cache directory: " + cacheDir);
 	}
 	
-	log("Created a Cache.");
+	//	log("Created a Cache.");
     }
 
     /**

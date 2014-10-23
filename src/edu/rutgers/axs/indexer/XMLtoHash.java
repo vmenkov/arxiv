@@ -14,6 +14,8 @@ import org.xml.sax.SAXException;
  */
 
 public class XMLtoHash   {
+    
+    static final boolean debug = false;
 
     /** Flags for Xml2Lucene objects */
     static class Flags {
@@ -79,7 +81,7 @@ public class XMLtoHash   {
 	Action q = map.get(name0);
 	if (q==null) {
 	    // Logger.log
-	    System.err.println("There are no instructions for processing Element '"+name0+"'; ignoring it and any children");
+	    if (debug) System.err.println("There are no instructions for processing Element '"+name0+"'; ignoring it and any children");
 	    return;
 	}
 	if ((q.flags & Flags.IGNORE)!=0) return;
