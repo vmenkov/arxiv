@@ -170,8 +170,8 @@ public class UploadProcessingThread extends Thread {
 		error(ex.getMessage());
 	    }
 	}
-	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.");
-	progress("The total of " + convCnt + " PDF files have been successfully converted to text");
+	progress("<strong>The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.</strong>");
+	progress("<strong>The total of " + convCnt + " PDF files have been successfully converted to text</strong>");
     }
 
 
