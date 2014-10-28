@@ -169,7 +169,9 @@ public class UploadProcessingThread extends Thread {
     /** Gets the PDF focuments from the URLs listed in this thread's outliner object */
     private void processOutliner() {
 	if (outliner==null) return;
-	progress("During processing of the HTML document " + outliner.getErrors().size() + " errors were encountered");
+	if (outliner.getErrors().size()>0) {
+	    progress("During processing of the HTML document " + outliner.getErrors().size() + " errors were encountered");
+	}
 	int i=0;
 	for(String error: outliner.getErrors()) {
 	    i++;

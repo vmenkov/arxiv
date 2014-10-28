@@ -169,7 +169,7 @@ public class UploadPapers  extends ResultsBase {
 		checkText = sd.upThread.getProgressText();
 	    } else {
 		wantReload = true;
-		checkTitle = "Uploading in progress";
+		checkTitle = "Uploading in progress...";
 		checkText =
 		    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
 		    sd.upThread.getProgressText();		
@@ -202,7 +202,11 @@ public class UploadPapers  extends ResultsBase {
 		    if (url.trim().equals("")) {
 			throw new WebException("No URL specified!");
 		    }
+		    if (url.indexOf("://")<0) { // add omitted protocol
+			url = "http://" + url;
+		    }
 		    URL lURL = new URL(url);
+
 		    sd.upThread = new UploadProcessingThread(user, lURL);
 		    sd.upThread.start();
 		    //		    Vector<DataFile> results = UploadProcessingThread.pullPage(user, lURL, false);

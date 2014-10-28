@@ -111,14 +111,15 @@ public class HTMLParser {
 	    relative, the URL is converted to an absolute URL using
 	    the document's stored base URL.  URLs with the "javascript:"
 	    protocols are explicitly ignored, to avoid the URL constructor
-	    throwing an exception.
+	    throwing an exception; "mailto:" are ignored as well.
 	 */
 	public void handleStartTag(HTML.Tag tag, MutableAttributeSet attributes, int position) {
 	    
 	    if (tag == HTML.Tag.A) {
 		String x = (String)attributes.getAttribute(HTML.Attribute.HREF);
 		if (x==null) return;
-		if (x.startsWith("javascript:")) return;
+		if (x.startsWith("javascript:") || x.startsWith("mailto:")) 
+		    return;
 		try {
 		    URL u = new URL(baseURL, x);
 		    links.add(u);
