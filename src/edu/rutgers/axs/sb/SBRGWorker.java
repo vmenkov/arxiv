@@ -15,6 +15,7 @@ import org.apache.lucene.search.ScoreDoc;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.*;
+import edu.rutgers.axs.search.*;
 
 /** This class encapsulates most of the activity involved in the
     creation of session-based recommendation lists.

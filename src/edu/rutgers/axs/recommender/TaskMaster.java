@@ -13,6 +13,7 @@ import javax.persistence.*;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.indexer.Common;
 
 /** The main command-line application responsible for generating SET_BASED suggestion lists.

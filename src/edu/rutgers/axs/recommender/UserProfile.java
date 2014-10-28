@@ -15,6 +15,7 @@ import edu.rutgers.axs.indexer.ArxivFields;
 import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.search.*;
 
 /** Used to maintain a variety of used profiles for TJ's methods, in
     particular SET_BASED and PPP (aka 3PR). A user profile is stored

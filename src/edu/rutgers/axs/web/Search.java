@@ -15,6 +15,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.search.*;
 
 /** Our interface for Lucene searches
  */
@@ -31,8 +32,8 @@ public class Search extends ResultsBase {
     /** Used for cat search, to restrict date range */
     public int days=DEFAULT_DAYS;
 
-    static final String DAYS="days",
-	SIMPLE_SEARCH="simple_search", USER_CAT_SEARCH="user_cat_search";
+    public static final String DAYS="days";
+    static final String	SIMPLE_SEARCH="simple_search", USER_CAT_SEARCH="user_cat_search";
 
     /** The web interface to various searches that My.ArXiv can carry out
       over its own Lucene article repository. In the user_cat_search

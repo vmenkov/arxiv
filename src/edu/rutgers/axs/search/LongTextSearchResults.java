@@ -1,4 +1,4 @@
-package edu.rutgers.axs.web;
+package edu.rutgers.axs.search;
 
 import java.io.*;
 import java.util.*;
@@ -9,6 +9,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.Logging;
+import edu.rutgers.axs.web.SearchResults;
 
 /** Our interface for Lucene searches: searching article abstracts,
     matching to a long query (another article's abstract). The purpose
@@ -63,7 +64,7 @@ public class LongTextSearchResults extends TextSearchResults {
 	    q.add( zq,  BooleanClause.Occur.SHOULD);
 	    tcnt++;
 	}
-	if (tcnt==0) throw new WebException("Empty query");
+	if (tcnt==0) throw new IllegalArgumentException("Empty query");
 	
 	numdocs = searcher.getIndexReader().numDocs();
 	//System.out.println("index has "+numdocs +" documents");

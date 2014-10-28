@@ -65,28 +65,11 @@ class Show {
 
 
     /** Finds Lucene document (its internal integer id) by Arxiv id */
-    int find(String id) throws IOException{
+    private int find(String id) throws IOException{
 
 	IndexSearcher s = new IndexSearcher( reader );
-   	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, id));
-	//System.out.println("query=("+tq+")");
-	TopDocs 	 top = s.search(tq, 1);
-	ScoreDoc[] 	scoreDocs = top.scoreDocs;
-	if (scoreDocs.length < 1) {
-	    System.out.println("No document found with paper="+id);
-	    throw new IOException("No document found with paper="+id);
-	}
-	return scoreDocs[0].doc;
-	/*
-	Document doc = s.doc(scoreDocs[0].doc);
-	if (doc==null) {
-	    System.out.println("s.doc() failed");
-	    throw new IOException("s.doc() failed");
-	} else {
-	    return doc;
-	}
-	*/
-    }
+	return Common.find(s, id);
+   }
 
 
     /**

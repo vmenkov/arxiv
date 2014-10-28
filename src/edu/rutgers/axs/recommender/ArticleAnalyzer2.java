@@ -372,7 +372,10 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
     }
 
 
-    /** Computes a (weighted) term frequency vector for a specified document.
+    /** Computes a (weighted) term frequency vector for a specified
+	document.  The refined representation is used; the data for
+	each "real" field being retrieved from Lucene, and the DF
+	for the additional CONCAT field being obtained by summation.
 
 	@param docno Lucene's internal integer ID for the document,
 

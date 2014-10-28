@@ -204,7 +204,8 @@ public class Indexer {
     }
 
 
-    /** @param doc_file File name. It can be a text file, or a "*.gz"
+    /** Reads a text file or GZipped text file.
+	@param doc_file File name. It can be a text file, or a "*.gz"
 	GZipped text file.
      */
     static String parseDocFile(String doc_file) throws IOException {

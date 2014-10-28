@@ -15,7 +15,7 @@ import edu.rutgers.axs.indexer.ArxivFields;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.SearchResults;
-import edu.rutgers.axs.web.SubjectSearchResults;
+import edu.rutgers.axs.search.SubjectSearchResults;
 
 import edu.rutgers.axs.recommender.UserProfile;
 import edu.rutgers.axs.recommender.Stoplist;

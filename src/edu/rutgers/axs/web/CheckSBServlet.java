@@ -9,8 +9,6 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.persistence.*;
 
-import org.apache.lucene.search.IndexSearcher;
-
 import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.*;

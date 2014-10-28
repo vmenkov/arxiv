@@ -11,10 +11,13 @@ import java.util.regex.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
+import org.apache.lucene.index.*;
+
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.upload.*;
+import edu.rutgers.axs.indexer.UploadImporter;
+import edu.rutgers.axs.html.ProgressIndicator;
 
 public class UploadProcessingThread extends Thread {
     
@@ -76,6 +79,14 @@ public class UploadProcessingThread extends Thread {
 	return s;
     }
 
+    /** Displayable progress indicator. Only used during the
+	processing of HTML docs */
+    ProgressIndicator pin = null;
+
+    /** An HTML table that displays a graphic progress indicator */
+    public String getProgressIndicatorHTML(String cp) {
+	return pin==null? "" : pin.toHTML(cp);
+    }
 
     /** Creates a thread which will follow the links listed in the Outliner structure
      */
@@ -103,8 +114,11 @@ public class UploadProcessingThread extends Thread {
 	outliner = null;
 	startURL = null;
 	startDf = df;
-   }
+    }
+    
 
+    /** Used to import data into Lucene */
+    private IndexWriter writer = null;
 
     /** The main class for the actual recommendation list
 	generation. */
@@ -112,10 +126,15 @@ public class UploadProcessingThread extends Thread {
 	startTime = new Date();
 	try {
 
+	    writer = UploadImporter.makeWriter();
+
 	    if (startDf != null) {
 		pdfCnt = 1;
 		DataFile txt = pdf2txt(startDf);
-		if (txt != null) convCnt ++;
+		if (txt != null) {
+		    convCnt ++;
+		}
+
 		return;
 	    }
 
@@ -134,9 +153,14 @@ public class UploadProcessingThread extends Thread {
 	    
 	} catch(Exception ex) {
 	    String errmsg = ex.getMessage();
-	    error("Exception for UploadProcessingThread " + getId() + errmsg);
+	    error("Exception for UploadProcessingThread " + getId() + ": " + errmsg);
 	    ex.printStackTrace(System.out);
 	} finally {
+	    if (writer != null) {
+		try {
+		    writer.close();
+		} catch(IOException ex) {}
+	    }
 	    endTime = new Date();
 	}
 
@@ -152,9 +176,13 @@ public class UploadProcessingThread extends Thread {
 	    progress("" + i + ". " + error);
 	}
 
-	progress("Will follow all " + outliner.getLinks().size() + " links found in the HTML document, looking for PDF documents. (May skip some of them if duplicate, though)");
+	int nLinks = outliner.getLinks().size();
+	progress("Will follow all " + nLinks + " links found in the HTML document, looking for PDF documents. (May skip some of them if duplicate, though)");
+	pin = new ProgressIndicator(nLinks);
 	HashSet<URL> doneLinks = new 	HashSet<URL>();
+	int cnt=0;
 	for(URL url: outliner.getLinks()) {
+	    pin.setK(cnt++);
 	    if (doneLinks.contains(url)) continue;		    
 	    doneLinks.add(url);
 	    try {
@@ -170,6 +198,7 @@ public class UploadProcessingThread extends Thread {
 		error(ex.getMessage());
 	    }
 	}
+	pin.setK(cnt);
 	progress("<strong>The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.</strong>");
 	progress("<strong>The total of " + convCnt + " PDF files have been successfully converted to text</strong>");
     }
@@ -292,7 +321,7 @@ public class UploadProcessingThread extends Thread {
 	    return results;
 	} else if (pdfOnly) {
 	    //progress("No PDF file could be retrieved from " + url, false, true);
-	    progress("Ignoring the document from " + lURL + " (not a PDF file)", false, true);
+	    progress("Ignoring document from " + lURL + " (not a PDF file)", false, true);
 	    return null;
 	} else {
 	    Charset cs = getCharset(lContentType);
@@ -451,13 +480,17 @@ public class UploadProcessingThread extends Thread {
 		proc.waitFor();
 	    } catch(java.lang.InterruptedException ex) {}
 	    int ev = proc.exitValue();
-	    if (ev==0) {
-		progress("Converted " + pdfFile + " to " + txtDf.getPath());
-		return txtDf;
-	    } else {
-		error("Error reported when conveting " + pdfFile + " to " + txtDf.getPath());
+	    if (ev!=0) {
+		error("Error reported when converting " + pdfFile + " to " + txtDf.getPath());
 		return null;
 	    }
+
+	    progress("Converted " + pdfFile + " to " + txtDf.getPath());
+	    UploadImporter.importFile(user, txtDf.getFile(), writer);
+
+	    return txtDf;
+
+
 	} catch (IOException ex) {
 	    error("I/O error when trying to convert " + pdfFile + ": " + ex.getMessage());
 	    return null;

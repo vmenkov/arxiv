@@ -12,24 +12,19 @@ import javax.servlet.http.*;
 
 import javax.persistence.*;
 
-//import org.apache.lucene.document.*;
-//import org.apache.lucene.index.*;
-//import org.apache.lucene.search.IndexSearcher;
-
-
 import org.apache.commons.fileupload.*;
 import org.apache.commons.fileupload.servlet.*;
 import org.apache.commons.fileupload.disk.*;
 
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.upload.*;
-import edu.rutgers.axs.indexer.Common;
-//import edu.rutgers.axs.recommender.Scheduler;
-//import edu.rutgers.axs.recommender.DailyPPP;
-//import edu.rutgers.axs.ee4.Daily;
+import edu.rutgers.axs.indexer.*;
 
 /** The "Toronto system": uploading PDF documents
 */
@@ -126,7 +121,7 @@ public class UploadPapers  extends ResultsBase {
     public boolean check=false;
 
     /** To be displayed when check=true */
-    public String checkTitle="???", checkText="?????";
+    public String checkTitle="???", checkText="?????", checkProgressIndicator="<!-- n/a -->";
     
    /** This will be set to true if we want the client to retry
 	loading this page (or a slightly different one) in a few second.
@@ -179,6 +174,7 @@ public class UploadPapers  extends ResultsBase {
 		    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
 		    sd.upThread.getProgressText();		
 		reloadURL = getReloadURL(true);
+		checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
 	    }
 	    return;
 	} else if (sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED) {
@@ -190,6 +186,7 @@ public class UploadPapers  extends ResultsBase {
 		"Uploading thread state = " + sd.upThread.getState()+ "\n"+
 		sd.upThread.getProgressText();		
 	    reloadURL = getReloadURL(true);	  
+	    checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
 	    return;
 	}
 
@@ -222,8 +219,11 @@ public class UploadPapers  extends ResultsBase {
 		    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
 		    sd.upThread.getProgressText();		
 		reloadURL = getReloadURL(true);		
+		checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
 	    }
 
+
+	  
 	} catch(  Exception ex) {
 	    setEx(ex);
 	}
@@ -264,6 +264,33 @@ public class UploadPapers  extends ResultsBase {
 	    b.append("</tr>\n");
 	}
 	b.append("</table>\n");
+
+	if (!convertedToTxt)	return b.toString();
+	try {
+	    IndexReader reader=Common.newReader();
+	    IndexSearcher searcher = new IndexSearcher( reader );
+	    ScoreDoc[] sd = Common.findAllUserFiles(searcher, user);
+
+	    b.append("<p>" + sd.length + " uploaded documents have been imported so far into Lucene data store");
+	    b.append("<table>\n");
+	    b.append("<tr><td>Doc No.<td>Name <td> Length <td> Importing date</tr>\n");
+	    for(int i=0; i<sd.length; i++) {
+		int docno = sd[i].doc;
+		Document doc = reader.document(docno);
+		b.append("<tr><td align=right><tt>" + docno +"</tt>");
+		b.append("<td><tt>" + doc.get(ArxivFields.UPLOAD_FILE) +"</tt>");
+		b.append("<td align=right><tt>" + doc.get(ArxivFields.ARTICLE_LENGTH) +"</tt>");
+		b.append("<td align=right><tt>" + doc.get(ArxivFields.DATE_INDEXED) +"</tt>");
+		b.append("</tr>\n");
+
+
+	    }
+	    b.append("</table>\n");
+	    reader.close();
+	} catch(IOException ex) {
+	    b.append("Cannot access Lucene data store");
+	}
+
 	return b.toString();
 	
     }

@@ -370,9 +370,8 @@ public class ArxivImporter {
 	if (!rewrite || fixCatsOnly) {
 	    // see if the doc already exists (both the Lucene entry, and the cached body and metadata)
 
-	    TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, paper));
-	    TopDocs 	 top = searcher.search(tq, 1);
-	    if (top.scoreDocs.length >0) {
+	    int docno = Common.findOrZero(searcher, paper);
+	    if (docno >0) {
 		boolean isCached = metacache.fileExists(paper) && 
 		    bodycache.fileOrGzExists(paper);
 
@@ -389,7 +388,7 @@ public class ArxivImporter {
 		    // should be changed
 
 
-		    if (catsMatch(doc, top.scoreDocs[0].doc, reader)) {
+		    if (catsMatch(doc, docno, reader)) {
 			System.out.println("skip already stored doc with matching cats, id=" + paper);
 			return;
 		    }

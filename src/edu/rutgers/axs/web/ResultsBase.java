@@ -115,7 +115,7 @@ public class ResultsBase {
 	String foundCookie = request.getHeader("Cookie");
 	if (foundCookie!=null) {
 	    infomsg+= "Cookie: " + foundCookie + "<br>\n" ;
-	    Logging.info("Cookie: " + foundCookie);
+	    //	    Logging.info("Cookie: " + foundCookie);
 	}
 
 	try {
@@ -130,7 +130,6 @@ public class ResultsBase {
 
 	    infomsg += "Session " + sd.getSqlSessionId();
 	    
-  	    //Logging.info("obtained sd=" + sd);
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
 	    user = sd.getRemoteUser(request);
 
@@ -453,7 +452,6 @@ public class ResultsBase {
 
     /** The full URL corresponding to the request we're serving now */
     URL thisUrl() throws java.net.MalformedURLException {
-	//	Logging.info("this URL is apparently " + s);
 	return new URL( request.getScheme(), request.getServerName(),
 			request.getServerPort(), request.getRequestURI());	
     }

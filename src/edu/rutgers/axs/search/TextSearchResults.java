@@ -1,4 +1,4 @@
-package edu.rutgers.axs.web;
+package edu.rutgers.axs.search;
 
 import java.io.*;
 import java.util.*;
@@ -8,6 +8,8 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
+import edu.rutgers.axs.web.SearchResults;
+import edu.rutgers.axs.web.Search;
 
 /** Our interface for Lucene searches: Full-text search */
 public class TextSearchResults extends SearchResults {
@@ -29,7 +31,7 @@ public class TextSearchResults extends SearchResults {
 
        @param query Text that the user typed into the Search box
     */
-    TextSearchResults(IndexSearcher searcher, String query,  int maxlen) 
+    public TextSearchResults(IndexSearcher searcher, String query,  int maxlen) 
 	throws Exception {
 	
 	query=query.trim();
@@ -65,7 +67,7 @@ public class TextSearchResults extends SearchResults {
 		q.add( zq,  BooleanClause.Occur.MUST);
 		tcnt++;
 	    }
-	    if (tcnt==0) throw new WebException("Empty query");
+	    if (tcnt==0) throw new IllegalArgumentException("Empty query");
 	}	
 	
 	numdocs = searcher.getIndexReader().numDocs();
@@ -77,19 +79,20 @@ public class TextSearchResults extends SearchResults {
 	mayHaveBeenTruncated= (scoreDocs.length >= maxlen+1);
     }
 
+    /** Parses a query entered by a user via the search.jsp web UI */
     static org.apache.lucene.search.Query mkWordClause(String t, String [] onlySearchInTheseFields) {
 	String f0 = ArxivFields.CATEGORY;
 	String prefix = f0 + ":";
 	if (t.startsWith(prefix)) {
 	    String w = t.substring(prefix.length());
-	    return mkTermOrPrefixQuery(f0, w);
+	    return Queries.mkTermOrPrefixQuery(f0, w);
 	}
 	
 	for(String f: searchFields) {
 	    prefix = f + ":";
 	    if (t.startsWith(prefix)) {
 		String w = t.substring(prefix.length());
-		return mkTermOrPrefixQuery(f, w.toLowerCase());
+		return Queries.mkTermOrPrefixQuery(f, w.toLowerCase());
 	    }
 	}
 	
@@ -100,12 +103,12 @@ public class TextSearchResults extends SearchResults {
 	    try {
 		int  days = Integer.parseInt(s);
 		Date since = daysAgo(days);
-		return mkSinceDateQuery(since);
+		return Queries.mkSinceDateQuery(since);
 	    } catch (Exception ex) { return null; }
 	} else {
 	    BooleanQuery b = new BooleanQuery(); 
 	    for(String f:  onlySearchInTheseFields) {
-		b.add(  mkTermOrPrefixQuery(f, t.toLowerCase()),
+		b.add(  Queries.mkTermOrPrefixQuery(f, t.toLowerCase()),
 			BooleanClause.Occur.SHOULD);		
 	    }
 	    return b;

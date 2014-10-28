@@ -20,6 +20,7 @@ import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.recommender.Scheduler;
 import edu.rutgers.axs.recommender.DailyPPP;
 import edu.rutgers.axs.ee4.Daily;
+import edu.rutgers.axs.search.SubjectSearchResults;
 
 /** This class is responsible for the retrieval, formatting, and
     displaying of a "suggestion list": a list of articles which some kind

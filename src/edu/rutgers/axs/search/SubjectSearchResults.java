@@ -1,4 +1,4 @@
-package edu.rutgers.axs.web;
+package edu.rutgers.axs.search;
 
 import java.io.*;
 import java.util.*;
@@ -12,6 +12,7 @@ import org.apache.lucene.search.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.ParseConfig;
+import edu.rutgers.axs.web.SearchResults;
 
 /** Category (subject) search; used to retrieve articles in particular
     categories. */
@@ -48,20 +49,20 @@ public  class SubjectSearchResults extends SearchResults {
 	    Logging.warning("No categories specified for cat search!");
 	    return;
 	} else if (cats.length==1) {
-	    q =   mkTermOrPrefixQuery(ArxivFields.CATEGORY, cats[0]);
+	    q =   Queries.mkTermOrPrefixQuery(ArxivFields.CATEGORY, cats[0]);
 	} else {
 	    BooleanQuery bq = new BooleanQuery();
 	    for(String t: cats) {
 		t = t.trim();
 		if (t.equals("")) continue;
-		bq.add(  mkTermOrPrefixQuery(ArxivFields.CATEGORY, t),
+		bq.add(  Queries.mkTermOrPrefixQuery(ArxivFields.CATEGORY, t),
 			 BooleanClause.Occur.SHOULD);
 	    }
 	    q = bq;
 	}
 	
 	if ( since!=null) {
-	    q = andQuery( q, mkDateRangeQuery(since,toDate));
+	    q = Queries.andQuery( q, Queries.mkDateRangeQuery(since,toDate));
 	} else if (toDate!=null) {
 	    throw new IllegalArgumentException("toDate can't be set without since");
 	}

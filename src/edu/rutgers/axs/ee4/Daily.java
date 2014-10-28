@@ -14,6 +14,7 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.recommender.*;
 
 
@@ -55,7 +56,7 @@ public class Daily {
     }
 
     private static HashMap<Integer,EE4DocClass> updateClassStats(EntityManager em, ArticleAnalyzer z, Date since)  throws IOException {
-	org.apache.lucene.search.Query q= SearchResults.mkSinceDateQuery(since);
+	org.apache.lucene.search.Query q= Queries.mkSinceDateQuery(since);
 
 	IndexSearcher searcher = new IndexSearcher( z.reader );
 	TopDocs    top = searcher.search(q, maxlen);

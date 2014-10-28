@@ -152,14 +152,12 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
 	@param aid Arxiv id for the article
 	@param pos Position in our list (has nothing to do with Lucene!)
     */
-    static ArticleEntry getArticleEntry(Searcher s, String aid, int pos) {
+    static ArticleEntry getArticleEntry(IndexSearcher s, String aid, int pos) {
 	ArticleEntry dummy =  getDummyArticleEntry( aid,  pos);
 	try {
 	    if (s==null) return dummy;
-	    TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
-	    ScoreDoc[] 	scoreDocs = s.search(tq, 1).scoreDocs;
-	    if (scoreDocs.length < 1) return dummy;
-	    int docno = scoreDocs[0].doc;
+	    int docno = Common.findOrZero(s, aid);
+	    if (docno == 0) return dummy;
 	    Document doc = s.doc(docno);
 	    if (doc==null) return dummy;
 	    return new	ArticleEntry(pos, doc, docno);

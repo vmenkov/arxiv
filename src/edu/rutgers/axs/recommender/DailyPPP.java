@@ -14,6 +14,7 @@ import javax.persistence.*;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.indexer.Common;
 
 /** The nightly updater for Thorsten's 3PR (a.k.a. PPP) experiment plan.
