@@ -35,8 +35,9 @@ If it does not, click the button below to continue:
 <%}%>
 </p>
 
-<form action="<%=main.reloadURL%>">
-<input type=submit value="Continue">
+<!-- using 'onclik' in order to pass the query string -->
+<form>
+<input onClick="location.href='<%=main.reloadURL%>'" type=button value="Continue">
 </form>
      
 <%   } else {    %>
@@ -113,8 +114,6 @@ Option 2 - upload a PDF file or an HTML file with links to PDF documents:  <br>
 <input type="submit" value="Upload PDF or HTML file" />
 </form>
 </tr>
-
-
 
 </table>
 

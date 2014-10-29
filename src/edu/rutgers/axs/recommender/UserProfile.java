@@ -394,6 +394,8 @@ public class UserProfile {
 	int mt = maxCC;
 	if (maxTerms > 0 && maxTerms < mt) mt = maxTerms;
 	Logging.info("Max clause count=" + maxCC +", maxTerms="+maxTerms+"; profile has " + terms.length + " terms; using top " + mt);
+
+	mt--; // to leave space for the AID clause (2014-10-29)
 	
 	int tcnt=0;
 	for(String t: terms) {
@@ -406,6 +408,11 @@ public class UserProfile {
 	    tcnt++;
 	    if (tcnt >= mt) break;
 	}	    
+
+	// to ensure that only ArXiv docs (and not user-uploaded docs)
+	// are retrieved (2014-10-29)
+	q.add( Queries.hasAidQuery(), BooleanClause.Occur.MUST);
+
 	return q;
     }
     
@@ -587,10 +594,11 @@ public class UserProfile {
 	final int M = 10000; // well, the range is supposed to be narrow...
 	IndexSearcher searcher = new IndexSearcher( dfc.reader);	
 
-	TermRangeQuery q = 
+	TermRangeQuery tq = 
 	    new TermRangeQuery(ArxivFields.DATE_INDEXED,
 			       DateTools.dateToString(since, DateTools.Resolution.SECOND),
 			       null, true, true);
+	org.apache.lucene.search.Query q = Queries.andQuery(tq, Queries.hasAidQuery());
 	Logging.info("Query=" + q);
 	TopDocs 	 top = searcher.search(q, M+1);
 	ScoreDoc[] scoreDocs = top.scoreDocs;

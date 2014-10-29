@@ -69,6 +69,10 @@ public class TextSearchResults extends SearchResults {
 	    }
 	    if (tcnt==0) throw new IllegalArgumentException("Empty query");
 	}	
+
+	// to ensure that only ArXiv docs (and not user-uploaded docs)
+	// are retrieved (2014-10-29)
+	q.add( Queries.hasAidQuery(), BooleanClause.Occur.MUST);
 	
 	numdocs = searcher.getIndexReader().numDocs();
 	//System.out.println("index has "+numdocs +" documents");

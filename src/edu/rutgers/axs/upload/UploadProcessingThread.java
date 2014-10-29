@@ -273,7 +273,7 @@ public class UploadProcessingThread extends Thread {
 	try {
 	    lURLConnection.connect();
 	} catch(Exception ex) {
-	    String msg= "UP: Failed to connect to " + lURL;
+	    String msg= "UploadPapers: Failed to connect to " + lURL;
 	    error(msg);
 	    //throw new IOException(msg);
 	    return null;
@@ -298,10 +298,15 @@ public class UploadProcessingThread extends Thread {
 
 	// effective URL (after any redirect)
 	URL eURL = lURLConnection.getURL();
-
 	boolean expectPdf = checkContentType( eURL, lContentType);
-	String fileName = getRecommendedFileName(//lURL,
-						 lURLConnection);
+
+	if (!expectPdf && pdfOnly) {
+	    //progress("No PDF file could be retrieved from " + url, false, true);
+	    progress("Ignoring document from "+lURL+" (not a PDF file)",false,true);
+	    return null;
+	}
+
+	String fileName = getRecommendedFileName(lURLConnection);
 
 	InputStream is=null;	
 	try {
@@ -318,13 +323,9 @@ public class UploadProcessingThread extends Thread {
 
 	if (expectPdf) {
 	    // simple bytewise copy
-	    DataFile results = UploadProcessingThread.savePdf(user, is, fileName);
+	    DataFile results = savePdf(user,is,fileName);
 	    progress("Retrieved PDF file from " + lURL, false, true);
 	    return results;
-	} else if (pdfOnly) {
-	    //progress("No PDF file could be retrieved from " + url, false, true);
-	    progress("Ignoring document from " + lURL + " (not a PDF file)", false, true);
-	    return null;
 	} else {
 	    Charset cs = getCharset(lContentType);
 	    // set the outliner for the main function to process

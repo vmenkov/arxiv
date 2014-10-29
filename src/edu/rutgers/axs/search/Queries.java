@@ -80,7 +80,7 @@ public class Queries {
 	a document that has an ArXiv ID, i.e. the "paper" field). This can be
 	used to distinguish ArXiv documents from user-uploaded documents.
      */
-    static TermRangeQuery hasAidQuery() {
+    public static TermRangeQuery hasAidQuery() {
 	return new TermRangeQuery(ArxivFields.PAPER,null,null,true,true);
     }
 

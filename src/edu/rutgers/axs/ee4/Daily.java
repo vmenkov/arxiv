@@ -55,8 +55,11 @@ public class Daily {
 	em.close();
     }
 
+    /** 2014-10-28: restricted query to true ArXiv docs (not uploads) */
     private static HashMap<Integer,EE4DocClass> updateClassStats(EntityManager em, ArticleAnalyzer z, Date since)  throws IOException {
-	org.apache.lucene.search.Query q= Queries.mkSinceDateQuery(since);
+	org.apache.lucene.search.Query q= 
+	    Queries.andQuery(Queries.mkSinceDateQuery(since),
+			     Queries.hasAidQuery());
 
 	IndexSearcher searcher = new IndexSearcher( z.reader );
 	TopDocs    top = searcher.search(q, maxlen);

@@ -35,6 +35,11 @@ public class LongTextSearchResults extends TextSearchResults {
        words that occur in StandardAnalyzer.STOP_WORDS_SET, because
        those aren't stored in our Lucene index.
 
+       <p>The Lucene query we use here is "safe" in the sense that it only
+       retrieves ArXiv docs and no user-uploaded docs. This is because 
+       search is only carried out on the TITLE and ABSTRACT fields, 
+       which are not present in user-uploaded docs. 
+
        @param query Text that the user typed into the Search box
     */
     public LongTextSearchResults(IndexSearcher searcher, String query,  int maxlen) 
