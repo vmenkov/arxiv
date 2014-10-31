@@ -222,7 +222,7 @@ public class DailyPPP {
 	     the dot product with the user profile)
 	</ul>
      */
-    private static void makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u) 
+    static void makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u) 
     throws IOException {
 	String msg="";
 	Vector<DataFile> ptr = new  Vector<DataFile>(0);

@@ -850,6 +850,35 @@ public class UserProfile {
 	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
     }
 
+    /**Similar to rocchioUpdate(), but uses docno rather than AID
+       @param updateCo The map that takes the Lucene docno as key
+     */
+    void rocchioUpdate2(HashMap<Integer,? extends Number> updateCo ) throws IOException {
+	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+
+	int cnt=0;
+	for(Integer docno: updateCo.keySet()) {
+	    double w =  updateCo.get(docno).doubleValue();
+	    HashMap<String, ?extends Number> h = dfc.getCoef(docno.intValue());
+	    for(Map.Entry<String, ?extends Number> e: h.entrySet()) {
+		double q = e.getValue().doubleValue();
+		add1( e.getKey(), w*q);
+	    }
+	    cnt++;
+	}
+
+	removeUselessTerms(); // just in case
+
+	// Rocchio type update (rather than Delta Psi) is only used in methods
+	// with no non-linear part       
+	zeroNonlinear();
+
+	// updates terms[]
+	terms = hq.keySet().toArray(new String[0]);
+	Arrays.sort(terms, getByDescVal());
+	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
+    }
+
     /** Stuff used to control debugging and additional verbose reporting. */
     static class Debug {
 	static int watchPos[]= {};

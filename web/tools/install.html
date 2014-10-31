@@ -402,6 +402,63 @@ sudo python ./setup.py install
 <p>The installs the package in /usr/lib/python2.6/site-packages/pdfminer/ ; 
 the main script is in /usr/bin/pdf2txt.py  (or in /usr/local/bin)
 
+<h2>Note on gcc and devtoolset-1.1</h2>
+
+<em>2014-10-29</em>
+
+<p>
+My.ArXiv does not use gcc (we do not have C/C++ code in the code base). For the needs of other projects, here's a note on gcc.
+
+<p>
+It seems one cannot upgrade the "standard" gcc that comes with RedHat,
+since gcc 4.4 is already the most recent that comes with RHEL 6.6.
+But one can install a separate package, devtools-1.1, which comes with
+a more recent version of gcc.
+
+<p>
+This is what I've done (as per advice at
+http://superuser.com/questions/381160/how-to-install-gcc-4-7-x-4-8-x-on-centos ;
+https://access.redhat.com/documentation/en-US/Red_Hat_Developer_Toolset/1/html/User_Guide/chap-GCC.html  )
+
+<pre>
+sudo rpm --import http://ftp.mirrorservice.org/sites/ftp.scientificlinux.org/linux/scientific/51/i386/RPM-GPG-KEYs/RPM-GPG-KEY-cern
+</pre>
+(This key is needed for the following command not to fail).
+
+<pre>
+sudo yum install devtoolset-1.1
+</pre>
+
+<p>
+The gcc in the new package can be accessed in a particular roundabout
+way (as per instructions in
+https://access.redhat.com/documentation/en-US/Red_Hat_Developer_Toolset/1/html/User_Guide/chap-GCC.html , sec 2.1.2, "Using the C Compiler".)   For example:
+
+<pre>
+[vm293@en-myarxiv02 ~]$ scl enable devtoolset-1.1 'gcc --version'
+gcc (GCC) 4.7.2 20121015 (Red Hat 4.7.2-5)
+...
+</pre>
+
+<p>
+You can run any program via "scl"; for example, you can run "bash",
+and during the bash session you'll be using the devtools' gcc (ver
+4.7.2) instead of the "standard" one:
+
+<pre>
+[vm293@en-myarxiv02 ~]$ which gcc
+/usr/bin/gcc
+[vm293@en-myarxiv02 ~]$ gcc --version
+gcc (GCC) 4.4.7 20120313 (Red Hat 4.4.7-11)
+...
+[vm293@en-myarxiv02 ~]$ scl enable devtoolset-1.1 'bash'
+[vm293@en-myarxiv02 ~]$ which gcc
+/opt/rh/devtoolset-1.1/root/usr/bin/gcc
+[vm293@en-myarxiv02 ~]$ gcc --version
+gcc (GCC) 4.7.2 20121015 (Red Hat 4.7.2-5)
+....
+</pre>
+
 </body>
 
 </html>
