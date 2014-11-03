@@ -16,7 +16,8 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.upload.*;
-import edu.rutgers.axs.indexer.Common;
+import edu.rutgers.axs.indexer.*;
+
 
 /** Code for initializing 3PR (aka PPP) user profiles using user-uploaded
     documents (aka the "Toronto System").
@@ -98,23 +99,26 @@ public class TorontoPPP {
 
 	    int uDocno = uuSd[k].doc;
 	    sd[nEachRandomSample] = new ArxivScoreDoc( uuSd[k] ); 
+	    sd[nEachRandomSample].score = 0; // for tie-breaking: to keep it at the end of the list
+
+	    Vector<ArticleEntry> entries = upro.packageEntries(sd);	    
+	    String m = "TorontoPPP("+uname+":"+k+"), before sorting: " + listReport(entries,null);
+	    Logging.info(m);
+
 
 	    //searcher.close();
 	    TjAlgorithm1 algo = new TjAlgorithm1();
 	    // rank by TJ Algo 1
 	    sd = algo.rank( upro, sd,  em, standardSugListSize, false);
 		
-	    Vector<ArticleEntry> entries = upro.packageEntries(sd);
-	    
-	    String m = "TorontoPPP("+uname+":"+k+"), packageEntries = (";
-	    for(int i=0; i<entries.size(); i++) {
-		m += " " + entries.elementAt(i);
-	    }
-	    m += ")";
-	    Logging.info(m);
-
 	    // simulated feedback
 	    HashMap<Integer,MutableDouble> updateCo = getRocchioUpdateCoeff(sd, uDocno);
+
+	    //	    Vector<ArticleEntry>
+	    entries = upro.packageEntries(sd);	    
+	    m = "TorontoPPP("+uname+":"+k+"),  after sorting: " + listReport(entries,updateCo);
+	    Logging.info(m);
+
 
 	    // apply the feedback to the user profile
 	    upro.rocchioUpdate2(updateCo );
@@ -137,6 +141,23 @@ public class TorontoPPP {
 	// prepare suggestion list based on the final profile
 	DailyPPP.makeP3Sug( em,  aa, searcher, u);
 
+    }
+
+    private static String listReport(Vector<ArticleEntry> entries,
+				     HashMap<Integer,?extends Number> updateCo){
+	String m = "packageEntries = (";
+	for(int i=0; i<entries.size(); i++) {
+	    ArticleEntry e= entries.elementAt(i);
+	    m += " " + e;
+	    if (updateCo!=null) {
+		Number x = updateCo.get(e.docno);
+		if (x!=null) {
+		    m += (x.doubleValue()>=0 ? "+" : "") + x;
+		}
+	    }
+	}
+	m += ")";
+	return m;
     }
 
     static class CoMap extends HashMap<Integer, MutableDouble> { 
@@ -203,7 +224,11 @@ public class TorontoPPP {
 
 	    EntityManager em  = Main.getEM();
 	    IndexReader reader = Common.newReader();
-	    ArticleAnalyzer aa =  new ArticleAnalyzer2( reader);
+	    
+	    String [] fields = ArticleAnalyzer.upFields;
+	    final String [] xFields =  {ArxivFields.ARTICLE};
+
+	    ArticleAnalyzer aa =  new ArticleAnalyzer2( reader, xFields);
 	    IndexSearcher searcher = new IndexSearcher( reader );
 
 	    final User.Program program = User.Program.PPP;

@@ -98,6 +98,13 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
 	}
 	id=doc.get(ArxivFields.PAPER);
 	idline="arXiv:" + id;
+	if (id==null) { // a user-uploaded doc?
+	    String uploadUser = doc.get(ArxivFields.UPLOAD_USER);
+	    String uploadFile = doc.get(ArxivFields.UPLOAD_FILE);
+	    if (uploadUser != null) {
+		idline = "upload:"+uploadUser+":"+uploadFile;
+	    }
+	}
 	populateOtherFields( doc);
     }
 
@@ -142,7 +149,9 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
     public void setScore(double x) { score=x;}
 
     public String toString() {
-	return "ArticleEntry(i="+i+", aid=" + id+")"; 
+	return (id==null) ?
+	    "ArticleEntry(i="+i+", " + idline+")" :
+	    "ArticleEntry(i="+i+", aid=" + id+")"; 	
     }
 
     /** Retrieves article's info from Lucene, and initializes the

@@ -37,11 +37,25 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	concatenation of fields). (This was Thorsten's proposal, 2013-12-28)
      */
     ArticleAnalyzer2(IndexReader _reader) throws IOException {
+	this(_reader, upFields);
+    }
+
+    /** Computes norms for all real fields, as well as for one
+	artificial field, which contains the "flattened document" (=
+	concatenation of fields). (This was Thorsten's proposal, 2013-12-28)
+
+	@param The list of "real fields". Typically, this is the full
+	list given in ArticleAnalyzer.upField, but a shorter list 
+	may be used for specialized purposes.
+     */
+    ArticleAnalyzer2(IndexReader _reader, String [] _fields) throws IOException {
+	super(_reader, _fields);
+
 	reader = _reader;
 	numdocs = reader.numDocs();
 	maxdoc=reader.maxDoc() ;
 	double[][] w0 =computeFieldNorms();
-	int nf = upFields.length;
+	int nf = fields.length;
 	norms = new double[nf+1][];
 	double[][] weights = new double[nf][];
 	for(int i=0;i<nf; i++) { 
@@ -50,7 +64,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	    for(int j=0; j<weights[i].length; j++) weights[i][j]=1;
 	}
 	norms[nf]= multiNorms( fields, weights);	
-	printStats(upFields, norms);
+	printStats(fields, norms);
     }	
     
     private static double computeIdf(int numdocs, int df)  {
@@ -86,11 +100,11 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
 	Logging.info("AA2: numdocs=" + numdocs + ", maxdoc=" + maxdoc + "; minDF=" + ArticleAnalyzer.getMinDf() );
 
-	final int nf=upFields.length;
+	final int nf=fields.length;
 	double[][] w= new double[nf][];
 
 	for(int i=0; i<nf; i++) {
-	    String f= upFields[i];	
+	    String f= fields[i];	
 	    Logging.info("Field=" + f);
 	    Term startTerm = new Term(f, "0");
 	    TermEnum te = reader.terms(startTerm);
@@ -192,7 +206,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
    
     /** Computing the norm of a "flattened" (concatenated) field. As a
 	side effect, precomputes and saves IDFs of terms with respect
-	to the concatenated field. */
+	to the concatenated field (concatDfTable). */
     private double[] multiNorms(String[] fields, double[][] weights)  throws IOException{
 	Logging.info("Computing norms for the concatenated field");
 	final int nf = fields.length;
@@ -388,11 +402,11 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
 	HashMap<String, MutableDouble> h = new HashMap<String,MutableDouble>();
 
-	final int nf =upFields.length;
+	final int nf =fields.length;
 	TermFreqVector [] tfvs = new TermFreqVector[nf];
 
 	for(int j=0; j<nf;  j++) {	    
-	    String name= upFields[j];
+	    String name= fields[j];
 	    TermFreqVector tfv= tfvs[j]=reader.getTermFreqVector(docno, name);
 	    if (tfv==null) continue;
 	    
@@ -447,10 +461,12 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
 	double boostConcat = 1.0 / norms[fields.length][docno];
 
+	//int noTfvCnt=0;
+
 	for(int j=0; j< fields.length;  j++) {	
 	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
 	    if (tfv==null) {
-		Logging.warning("No tfv for docno="+docno+", field="+fields[j]);
+		//Logging.warning("No tfv for docno="+docno+", field="+fields[j]);
 		continue;
 	    }
 
