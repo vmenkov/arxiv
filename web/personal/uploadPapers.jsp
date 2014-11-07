@@ -117,6 +117,14 @@ Option 2 - upload a PDF file or an HTML file with links to PDF documents:  <br>
 
 </table>
 
+<hr>
+
+<p>If you have uploaded all articles you wanted, click on the button below. This will prepare your first personalized recommendation list. After that, you will not be able to upload more articles; the personalization recommendation list will be updated daily based on the articles you view, and on new submissions to ArXiv.</p>
+
+<form action="uploadPapersInitProfile.jsp">
+<input type="submit" value="Prepare my personalized recommendations" />
+</form>
+
 
 <%   }      %>
 

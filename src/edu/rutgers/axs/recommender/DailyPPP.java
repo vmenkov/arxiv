@@ -67,9 +67,9 @@ public class DailyPPP {
 
 	ArticleAnalyzer z = refined? 
 	    new ArticleAnalyzer2( reader) :
-	    new ArticleAnalyzer( reader, ArticleAnalyzer.upFields);
+	    new ArticleAnalyzer1( reader, ArticleAnalyzer.upFields);
 
-	if (!refined) z.readCasa();
+	if (!refined) ((ArticleAnalyzer1)z).readCasa();
 
 	EntityManager em  = Main.getEM();
 	IndexSearcher searcher = new IndexSearcher( reader );

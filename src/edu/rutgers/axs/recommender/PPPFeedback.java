@@ -115,18 +115,6 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	}
      }
 
-     /** A mutable aid-to-real-value map */
-     static class CoMap extends HashMap<String,MutableDouble> { 
-	 synchronized void addCo(String aid, double inc) {
-	     MutableDouble z=get(aid);
-	     if (z==null) {
-		 put(aid,  new MutableDouble(inc));
-	     } else {
-		 z.add(inc);
-	     }
-	 }
-     }
-
      private static boolean areUnique(Vector<ArticleEntry> entries) {     
 	 HashSet<String> h=new  HashSet<String>();
 	 for(ArticleEntry e: entries) {
@@ -146,7 +134,8 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
      */
     HashMap<String,MutableDouble> getRocchioUpdateCoeff( boolean topOrphan, final Vector<ArticleEntry> entries0) {
 
-	CoMap updateCo = new CoMap();
+	// A mutable aid-to-real-value map 
+	CoMap<String> updateCo = new CoMap<String>();
 
 	Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 	for(ArticleEntry ae: entries0) { 

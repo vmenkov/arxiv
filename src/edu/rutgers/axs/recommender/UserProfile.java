@@ -71,7 +71,7 @@ public class UserProfile {
 
     /** The vector w, stored as a hash maps that maps each feature to
 	the pair of values (cumulative tf) */
-    public HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
+    HashMap<String, TwoVal> hq = new HashMap<String, TwoVal>();	
 
     /** Used with the (currently used) Approach 2 */
     private void add1(String key, double inc1) {
@@ -260,14 +260,13 @@ public class UserProfile {
      UserProfile object is created, which can only be used for displaying
      the data from an existing user profile file.
     */
-    //    private UserProfile(int version, File f, IndexReader reader) throws IOException {
     private UserProfile(int version, File f, ArticleAnalyzer aa) throws IOException {
 
 	if (aa==null) {
 	    Logging.warning("Creating a 'light' UserProfile, only for viewing a file");
-	} else if ((version==2) ^ (aa instanceof ArticleAnalyzer2)) throw new IllegalArgumentException("DF.version=" + version +", AA type=" + aa.getClass());
+	} else if ((version==2) ^ 
+		   ((aa instanceof ArticleAnalyzer2)||(aa instanceof ArticleAnalyzer3))) throw new IllegalArgumentException("DF.version=" + version +", AA type=" + aa.getClass());
 
-	//	    new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
 	dfc=aa;
 
 	FileReader fr = new FileReader(f);
@@ -368,7 +367,7 @@ public class UserProfile {
 	}
     }
     
-    Comparator<String> getByDescVal() {
+    private Comparator<String> getByDescVal() {
 	return new  TermsByDescVal();
     }
 
@@ -500,7 +499,7 @@ public class UserProfile {
 		    }
 		    */
 		    double fr = useLog? Math.log(1.0 + freq) :
-			(ArticleAnalyzer.useSqrt? Math.sqrt(freq) : freq);    
+			(ArticleAnalyzer1.useSqrt? Math.sqrt(freq) : freq);    
 		    double z =qval * normFactor * fr;
 
 		    scores[p] += z;
@@ -537,8 +536,11 @@ public class UserProfile {
 			 EntityManager em, User u, int days,
 			 boolean useLog) throws IOException {
 
-	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+	if (dfc==null || !(dfc instanceof ArticleAnalyzer1)) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 	if (dfc.getCasa()==null) throw new IllegalArgumentException("AA.catAndDateSearch() called without initializing AA.CASA first!");
+
+	ArticleAnalyzer1 dfc1 = ( ArticleAnalyzer1)dfc;
+
 
 	Date since = SearchResults.daysAgo( days );
 	final int M = 10000; // well, the range is supposed to be narrow...
@@ -564,8 +566,8 @@ public class UserProfile {
 	    } 
 
 	    double sim = useLog? 
-		dfc.logSim(docno, dfc.getCasa(), hq) :
-		dfc.linSim(docno, dfc.getCasa(), hq);
+		dfc1.logSim(docno, hq) :
+		dfc1.linSim(docno, dfc.getCasa(), hq);
 
 	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
 	}
@@ -588,7 +590,8 @@ public class UserProfile {
 				 //CompactArticleStatsArray   allStats, 
 				 EntityManager em, int days,
 				 boolean useLog) throws IOException {
-	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+       if (dfc==null || !(dfc instanceof ArticleAnalyzer1)) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+	ArticleAnalyzer1 dfc1 = ( ArticleAnalyzer1)dfc;
 
 	Date since = SearchResults.daysAgo( days );
 	final int M = 10000; // well, the range is supposed to be narrow...
@@ -624,8 +627,8 @@ public class UserProfile {
 	    } 
 
 	    double sim = useLog? 
-		dfc.logSim(docno, allStats, hq) :
-		dfc.linSim(docno, allStats, hq);
+		dfc1.logSim(docno,  hq) :
+		dfc1.linSim(docno, allStats, hq);
 
 	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
 	}
@@ -923,22 +926,21 @@ public class UserProfile {
 
 	EntityManager em = Main.getEM();
 	IndexReader reader =  Common.newReader();
-	ArticleAnalyzer aa=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	ArticleAnalyzer1 aa=new ArticleAnalyzer1(reader,ArticleAnalyzer.upFields);
 
 	for(int j=2; j<argv.length; j++) {
 	    String aid = argv[j];
 
 	    DataFile df = DataFile.findFileByName( em,  username,  file);
-	    
 	    UserProfile up = new UserProfile( df, aa);
 
 	    System.out.println("Doc="+aid);
-	    int docno = up.dfc.find(aid);
+	    int docno = Common.find(reader,aid);
 
-	    ArticleStats as =  up.dfc.getArticleStatsByAidAlways( em, aid);
-	    double linsim = up.dfc.linSimReport(docno, as, up.hq);
+	    ArticleStats as =  aa.getArticleStatsByAidAlways( em, aid);
+	    double linsim = aa.linSimReport(docno, as, up.hq);
 	    System.out.println("linsim="+linsim);
-	    double logsim = up.dfc.logSimReport(docno, as, up.hq);
+	    double logsim = aa.logSimReport(docno, up.hq);
 	    System.out.println("logsim="+logsim);
 	}
     }

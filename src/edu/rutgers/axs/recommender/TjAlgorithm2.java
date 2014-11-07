@@ -35,7 +35,7 @@ class TjAlgorithm2 {
     private void addToPhi(double [] phi, double gamma,  ArxivScoreDoc sd) 
 	throws IOException
     {
-	HashMap<String, ?extends Number> h = upro.dfc.getCoef(sd.doc, null);
+	HashMap<String, ?extends Number> h = upro.dfc.getCoef(sd.doc);
 
 	double f = gamma;
 

@@ -14,7 +14,8 @@ import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 
-/** Another way to compute article stats...
+/** Another way to compute article stats: Everything is computed on
+    startup.
  */
 public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
@@ -22,8 +23,11 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
     /** Norms of all real and concatenated fields of all documents */
     private final double[][] norms;
+    double getFieldNorm(int docno, int fieldNo) {
+	return norms[fieldNo][docno];
+    }
+
     private final int numdocs, maxdoc;
-    private static final String 	CONCAT = "concat";
 
     /** Contains df values of all terms accepted for the
 	"concatenated" field". The absence of a term in the table
@@ -67,7 +71,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	printStats(fields, norms);
     }	
     
-    private static double computeIdf(int numdocs, int df)  {
+    static double computeIdf(int numdocs, int df)  {
 	double idf = 1+ Math.log(numdocs / (1.0 + df));
 	return idf;
     }
@@ -95,7 +99,8 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
     }
 
 
-    /** Computes the norms of all documents' "real" fields */
+    /** Computes the norms of all documents' "real" fields, using the
+	Lucene inverted index. */
     private double[][] computeFieldNorms() throws IOException{
 
 	Logging.info("AA2: numdocs=" + numdocs + ", maxdoc=" + maxdoc + "; minDF=" + ArticleAnalyzer.getMinDf() );
@@ -271,10 +276,6 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	    concatDfTable.put(minText, new Integer(df));
 	    double idf = computeIdf(numdocs, df);
 
-	    //double norm2 = merged.norm2();
-	    //	    Logging.info("Term=" + minText +", in " + nchosen + " fields, " +df + " docs; |m|^2=" + norm2);
-	    //if (norm2==0) throw new AssertionError("0 for term " + minText);
-
 	    for(merged.i=0; merged.i<merged.n; merged.i++) {
 		int p = merged.ps[merged.i];
 		double freq = merged.freqs[merged.i];
@@ -371,10 +372,10 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
     }
 
     /** Make a key for a particular qualified term in UserProfile */
-    private String mkKey(String field, String text) {
+    static String mkKey(String field, String text) {
 	return field + ":" + text;
     }
-    private String mkKey(Term t) {
+    static String mkKey(Term t) {
 	return mkKey(t.field(), t.text());
     }
 
@@ -399,41 +400,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
    
     public HashMap<String,  MutableDouble> getCoef(int docno) 
 	throws IOException {
-
-	HashMap<String, MutableDouble> h = new HashMap<String,MutableDouble>();
-
-	final int nf =fields.length;
-	TermFreqVector [] tfvs = new TermFreqVector[nf];
-
-	for(int j=0; j<nf;  j++) {	    
-	    String name= fields[j];
-	    TermFreqVector tfv= tfvs[j]=reader.getTermFreqVector(docno, name);
-	    if (tfv==null) continue;
-	    
-	    int[] freqs=tfv.getTermFrequencies();
-	    String[] terms=tfv.getTerms();	    
-	    for(int i=0; i<terms.length; i++) {	
-
-		Term term = new Term(name, terms[i]);
-		int df = reader.docFreq(term);
-		if (df < minDf || UserProfile.isUseless(term)) {
-		    continue;// skip very rare words, non-words, and stop words
-		}
-
-		String key = mkKey(term);
-		//double idf = computeIdf( numdocs, df);
-
-		double z =  freqs[i] / norms[j][docno];
-		h.put( key, new MutableDouble(z));
-
-		key = mkKey(CONCAT, terms[i]);
-		z =  freqs[i] / norms[nf][docno];
-		MutableDouble val = h.get(key);
-		if (val==null) h.put(key, new MutableDouble(z));
-		else val.add(z);
-	    }	
-	}
-	return h;
+	return  getCoef23(docno);
     }
 
     /** Computes various dot products that are used to initialize
@@ -461,8 +428,6 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 
 	double boostConcat = 1.0 / norms[fields.length][docno];
 
-	//int noTfvCnt=0;
-
 	for(int j=0; j< fields.length;  j++) {	
 	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
 	    if (tfv==null) {
@@ -474,9 +439,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	    int[] freqs=tfv.getTermFrequencies();
 	    String[] terms=tfv.getTerms();	    
 
-
 	    double boost = 1.0 / norms[j][docno];
-
 
 	    for(int i=0; i<terms.length; i++) {
 		String key=mkKey(fields[j], terms[i]);	       

@@ -4,9 +4,6 @@ import java.util.*;
 import java.io.*;
 import java.text.*;
 
-import edu.rutgers.axs.recommender.ArticleAnalyzer;
-
-
 /** A dense vector, for use in KMeans */
 class DenseDataPoint extends DataPoint {
 

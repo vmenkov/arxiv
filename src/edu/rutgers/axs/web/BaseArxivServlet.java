@@ -109,6 +109,11 @@ public class BaseArxivServlet extends HttpServlet {
 
 	out.println(FilterServlet.report());
 
+	// The answer (on my dev machine) is, /var/lib/tomcat6
+	//String path = (new File(".").getCanonicalPath();
+	//out.println("Current work directory: " + path);
+
+
 	out.flush();
 	ostream.flush();
 	ostream.close();

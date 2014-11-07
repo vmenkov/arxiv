@@ -20,7 +20,7 @@ set opt="-cp ${cp} ${opt} -Drefined=true"
 
 echo "opt=$opt"
 
-/usr/bin/time  java  $opt -Duser=vmenkov edu.rutgers.axs.recommender.TorontoPPP init
+/usr/bin/time  java  $opt -Duser=vmenkov edu.rutgers.axs.recommender.TorontoPPP init2
 
 
 

@@ -46,6 +46,14 @@ public class Common {
         } else return docno;
     }
 
+    /** Finds a document in the Lucene index by its ArXiv ID.
+	@param aid ArXiv ID
+     */
+    static public int find(IndexReader reader, String aid) throws IOException{
+	IndexSearcher s = new IndexSearcher( reader );
+	return Common.find(s, aid);
+    }
+
 
    /** Find a document by article ID, using a given searcher. 
      @return Lucene internal doc id, or 0 if none found.

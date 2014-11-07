@@ -122,9 +122,9 @@ public class PPPConversion {
 	Logging.info("Computing doc norms...");
 	ArticleAnalyzer aa2 = refined? 
 	    new ArticleAnalyzer2( reader) :
-	    new ArticleAnalyzer( reader, ArticleAnalyzer.upFields);
+	    new ArticleAnalyzer1( reader, ArticleAnalyzer.upFields);
 
-	if (!refined) aa2.readCasa();
+	if (!refined) ((ArticleAnalyzer1)aa2).readCasa();
 	Logging.info("Done doc norms...");
 
 	EntityManager em  = Main.getEM();

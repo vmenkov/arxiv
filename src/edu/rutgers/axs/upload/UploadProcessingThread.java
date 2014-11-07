@@ -19,51 +19,22 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.indexer.UploadImporter;
 import edu.rutgers.axs.html.ProgressIndicator;
 
-public class UploadProcessingThread extends Thread {
+/** An UploadProcessingThread object is created to handle all the operations
+    that need to be carried out when the user uploads one or several files.
+    The class has several constructors, one of which is used depending on 
+    what kind of upload mode was used (direct upload from the user's desktop,
+    or file loading from a URL). All actual work is carried out in the run()
+    method; a reference to the thread is stored in the SessionData object,
+    whereby the thread's progress can be monitored from later HTTP requests.
+ */
+public class UploadProcessingThread extends BackgroundThread {
     
     private final String user;
     private HTMLParser.Outliner outliner;
     private final URL startURL;
     private final DataFile startDf;
 
-    /** When the list generation started and ended. We keep this 
-     for statistics. */
-    Date startTime, endTime;
-    
-    String statusText = "";
     int pdfCnt = 0, convCnt = 0;
-
-    /** Human-readable text used to display this thread's progress. */
-    private StringBuffer progressText = new StringBuffer();
-    /** The last line, which may be replaced by a later call, in order
-	to achieve a more concise report on the user's screen. No
-	trailing LF attached yet. */
-    private String progressTextMore = null;
-
-    private void progress(String text) {
-	progress(text, false, false);
-    }
-
-    private void error(String text) {
-	progress(text, true, false);
-    }
-
-    /** Adds a line of text to the progress text visible to the user.
-       @param replace If true, this line replaces the last line.
-     */
-    private void progress(String text, boolean isError, boolean replace) {
-	if (progressTextMore != null  && !replace) {
-	    progressText.append(progressTextMore + "\n");
-	}
-	progressTextMore = text;
-	
-	if (isError) {
-	    Logging.error(text);
-	} else {
-	    Logging.info(text);
-	}
-    }
-
 
     public String getProgressText() {
 	String s = (startTime == null ?
@@ -77,15 +48,6 @@ public class UploadProcessingThread extends Thread {
 	    s += "\n\nUploading and processing completed at " + endTime;
 	}
 	return s;
-    }
-
-    /** Displayable progress indicator. Only used during the
-	processing of HTML docs */
-    ProgressIndicator pin = null;
-
-    /** An HTML table that displays a graphic progress indicator */
-    public String getProgressIndicatorHTML(String cp) {
-	return pin==null? "" : pin.toHTML(cp);
     }
 
     /** Creates a thread which will follow the links listed in the Outliner structure
@@ -493,13 +455,10 @@ public class UploadProcessingThread extends Thread {
 
 	    return txtDf;
 
-
 	} catch (IOException ex) {
 	    error("I/O error when trying to convert " + pdfFile + ": " + ex.getMessage());
 	    return null;
 	}      
     }
-
-
 
 }

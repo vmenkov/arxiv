@@ -20,6 +20,7 @@ import edu.rutgers.axs.search.SubjectSearchResults;
 import edu.rutgers.axs.recommender.UserProfile;
 import edu.rutgers.axs.recommender.Stoplist;
 import edu.rutgers.axs.recommender.ArticleAnalyzer;
+import edu.rutgers.axs.recommender.ArticleAnalyzer1;
 
 /** Methods used in the Exploration Engine */
 public class Bernoulli {
@@ -63,7 +64,7 @@ public class Bernoulli {
 	/** This plays a very auxiliary role; mostly, a cludge to piggyback
 	    on AA's definition of IDF */
 	//    static 
-	ArticleAnalyzer analyzer = new  ArticleAnalyzer(reader, new String[] {field});
+	ArticleAnalyzer analyzer = new  ArticleAnalyzer1(reader, new String[] {field});
 	for(String aid: aids) {
 	    int docno = Common.find(searcher, aid);
 	    double norm = computeNorm(analyzer, docno);
@@ -275,7 +276,7 @@ public class Bernoulli {
 	EntityManager em  = Main.getEM();
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
-	ArticleAnalyzer analyzer = new  ArticleAnalyzer(reader, new String[] {field});
+	ArticleAnalyzer analyzer = new  ArticleAnalyzer1(reader, new String[] {field});
 
 	HashMap<Integer, BernoulliTrainArticleStats> trainData = 
 	    readTrainData(em, searcher, BernoulliArticleStats.cats);

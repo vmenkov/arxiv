@@ -42,7 +42,7 @@ public class KMeans {
 				int mT[]
 				) throws IOException {
 
-	IndexReader reader = z.reader;
+	IndexReader reader = z.getReader();
 	Categorizer catz = new Categorizer(false);
 
 	for(ScoreDoc sd: scoreDocs) {
@@ -90,7 +90,7 @@ public class KMeans {
 	    //System.out.println("Reading vectors...");
 	    int cnt=0;
 	    for(int docno: vdocno) {
-		SparseDataPoint q = new SparseDataPoint(z.getCoef( docno,null), dic, z);
+		SparseDataPoint q = new SparseDataPoint(z.getCoef(docno), dic, z);
 		q.normalize();
 		vdoc.add(q);
 		cnt++;
@@ -131,7 +131,7 @@ public class KMeans {
     static int clusterAll(ArticleAnalyzer z, EntityManager em, int maxn) throws IOException {
 	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
-	IndexReader reader = z.reader;
+	IndexReader reader = z.getReader();
 
 	int numdocs = reader.numDocs();
 	int maxdoc = reader.maxDoc();
@@ -239,7 +239,7 @@ public class KMeans {
 	//System.out.println("Reading vectors...");
 	int cnt=0;
 	for(int docno: vdocno) {
-	    SparseDataPoint q=new SparseDataPoint(z.getCoef(docno,null),dic,z);
+	    SparseDataPoint q=new SparseDataPoint(z.getCoef(docno),dic,z);
 	    q.normalize();
 	    vdoc.add(q);
 	    cnt++;
@@ -298,7 +298,7 @@ public class KMeans {
 
 	int nClu =0;
 	if (all) {
-	    ArticleAnalyzer z = new ArticleAnalyzer();
+	    ArticleAnalyzer z = new ArticleAnalyzer1();
 	    EntityManager em  = Main.getEM();
 	    
 	    //	IndexReader reader =  Common.newReader();

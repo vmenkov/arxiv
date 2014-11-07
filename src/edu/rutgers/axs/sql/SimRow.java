@@ -53,8 +53,8 @@ public class SimRow implements Serializable {
     */
     public SimRow( int docno, ArticleStats[] allStats, EntityManager em,ArticleAnalyzer z) throws IOException {
 	entries =new Vector<SimRowEntry>();
-	HashMap<String, ?extends Number> doc1 = z.getCoef(docno, null);		
-	Document doc = z.reader.document(docno);
+	HashMap<String, ?extends Number> doc1 = z.getCoef(docno);		
+	Document doc = z.getReader().document(docno);
 	String cats =doc.get(ArxivFields.CATEGORY);
 	CatInfo catInfo=new CatInfo(cats, true);
 	Logging.info("Doing sims for doc " + allStats[docno].getAid() +", cats=" + cats + ", cat bases=" + catInfo);
@@ -62,7 +62,7 @@ public class SimRow implements Serializable {
 	final double threshold = 0.1;
 	final double thresholds[] = {threshold};
 
-	int maxdoc = z.reader.maxDoc() ;
+	int maxdoc = z.getReader().maxDoc() ;
 	double scores[] = new double[maxdoc];	
 	int tcnt=0,	missingStatsCnt=0;
 
@@ -73,7 +73,7 @@ public class SimRow implements Serializable {
 	    for(int i=0; i<ArticleAnalyzer.upFields.length; i++) {
 		String f= ArticleAnalyzer.upFields[i];
 		Term term = new Term(f, t);
-		TermDocs td = z.reader.termDocs(term);
+		TermDocs td = z.getReader().termDocs(term);
 		td.seek(term);
 		while(td.next()) {
 		    int p = td.doc();
@@ -98,7 +98,7 @@ public class SimRow implements Serializable {
 
 	for(int k=0; k<scores.length; k++) {
 	    if (scores[k]>0) {
-		Document doc2 = z.reader.document(k);
+		Document doc2 = z.getReader().document(k);
 		String cat2 =doc2.get(ArxivFields.CATEGORY);
 		boolean catMatch = catInfo.match(cat2);
 

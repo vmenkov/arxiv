@@ -155,7 +155,7 @@ public class TaskMaster {
 
 	IndexReader reader =  Common.newReader();
 
-	ArticleAnalyzer aa=new ArticleAnalyzer(reader,ArticleAnalyzer.upFields);
+	ArticleAnalyzer1 aa=new ArticleAnalyzer1(reader,ArticleAnalyzer.upFields);
 	aa.readCasa();
 
 	int oneTaskId = ht.getOption("task", 0);

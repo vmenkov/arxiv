@@ -101,7 +101,7 @@ public class Similarities {
     static void doSims(EntityManager em, String aids[]) throws IOException {
 
 	UserProfile.setStoplist(new Stoplist(new File("WEB-INF/stop200.txt")));
-	ArticleAnalyzer z = new ArticleAnalyzer();
+	ArticleAnalyzer1 z = new ArticleAnalyzer1();
 	// array arranged by docno
 	ArticleStats[] allStats = ArticleStats.getArticleStatsArray(em, z.reader); 
 
@@ -139,7 +139,7 @@ public class Similarities {
 	for(String aid: aids) {
 	    int docno = -1;
 	    try {
-		docno = z.find(aid);
+		docno = Common.find(z.reader,aid);
 	    } catch(Exception ex) {
 		Logging.warning("No document found in Lucene data store for id=" + aid +"; skipping");
 

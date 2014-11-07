@@ -30,8 +30,8 @@ public class Daily {
     static void updates() throws IOException {
 
 	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
-	ArticleAnalyzer z = new ArticleAnalyzer();
-	IndexReader reader = z.reader;
+	ArticleAnalyzer z = new ArticleAnalyzer1();
+	IndexReader reader = z.getReader();
 
 	EntityManager em  = Main.getEM();
 	    
@@ -61,7 +61,7 @@ public class Daily {
 	    Queries.andQuery(Queries.mkSinceDateQuery(since),
 			     Queries.hasAidQuery());
 
-	IndexSearcher searcher = new IndexSearcher( z.reader );
+	IndexSearcher searcher = new IndexSearcher( z.getReader() );
 	TopDocs    top = searcher.search(q, maxlen);
 	System.out.println("Looking back to " + since + "; found " + 
 			   top.scoreDocs.length +  " papers");

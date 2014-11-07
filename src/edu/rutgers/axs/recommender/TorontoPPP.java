@@ -20,10 +20,11 @@ import edu.rutgers.axs.indexer.*;
 
 
 /** Code for initializing 3PR (aka PPP) user profiles using user-uploaded
-    documents (aka the "Toronto System").
+    documents (aka the "Toronto System"). 
 
-    <p>The algorithm is based on Thorsten's 2014-09-25 message, "Using
-    the "Toronto System" with 3PR (or other recommenders)?"
+    <p>The algorithm is based on the first option (simulated feedback)
+    outlined in Thorsten's 2014-09-25 message, "Using the "Toronto
+    System" with 3PR (or other recommenders)?"
 
     <blockquote> 
     Let D_Toronto be the documents uploaded into the Toronto system,
@@ -45,9 +46,11 @@ import edu.rutgers.axs.indexer.*;
  */
 public class TorontoPPP {
 
-    private static void makeP3SugX(EntityManager em,  UserProfile upro,
-				   ArticleAnalyzer aa, IndexSearcher searcher, User u) 
+    private static void initP3SimulatedFeedback(EntityManager em,  
+						ArticleAnalyzer aa, IndexSearcher searcher, User u) 
     throws IOException {
+	UserProfile upro =  new UserProfile(aa);
+
 	String msg="";
 	//Vector<DataFile> ptr = new  Vector<DataFile>(0);
 
@@ -160,24 +163,12 @@ public class TorontoPPP {
 	return m;
     }
 
-    static class CoMap extends HashMap<Integer, MutableDouble> { 
-
-	synchronized void addCo(Integer docno, double inc) {
-		MutableDouble z=get(docno);
-		if (z==null) {
-		    put(docno,  new MutableDouble(inc));
-		} else {
-		    z.add(inc);
-		}
-	    }
-    }
-
-
     
     /** This produces the same type of data as PPPFeedback.getRocchioUpdateCoeff() */
     private static HashMap<Integer,MutableDouble> getRocchioUpdateCoeff(ArxivScoreDoc[] sd, int uDocno) {
 	
-	CoMap updateCo = new CoMap();
+	// docno is the key
+	CoMap<Integer> updateCo = new CoMap<Integer>();
 	
 	boolean over=false;
 	for(int j=0; !over && j<sd.length; j++) {
@@ -188,6 +179,61 @@ public class TorontoPPP {
 	    updateCo.addCo( docno, inc);
 	}
 	return updateCo;
+    }
+
+
+    /** A simpler method, uses the sum of uploaded documents */
+    static void initP3Sum(EntityManager em,  
+				  ArticleAnalyzer3 aa, IndexSearcher searcher, User u) 
+    throws IOException {
+	UserProfile upro =  new UserProfile(aa);
+
+	String msg="";
+	String uname = u.getUser_name();
+
+	int maxlen = 10000;
+
+	// User-uploaded examples 
+	ScoreDoc[] uuSd = Common.findAllUserFiles(searcher, uname);
+
+	int nUploaded = uuSd.length; 
+
+	Logging.info("TorontoPPP("+uname+"): computing norms for the " + nUploaded +" uploaded docs");
+	ArxivScoreDoc[] sd = new ArxivScoreDoc[nUploaded];
+	// contributions 
+	CoMap<Integer> updateCo = new CoMap<Integer>();
+
+	for(int k=0; k < nUploaded; k++) {
+	    int docno =  uuSd[k].doc;
+	    // zero score for tie-breaking
+	    sd[k] = new ArxivScoreDoc( docno, 0.0); 	    
+	    updateCo.addCo( docno, 1.0);
+	    aa.computeNorms(docno);
+	}
+
+	Vector<ArticleEntry>	    entries = upro.packageEntries(sd);	    
+	Logging.info("TorontoPPP("+uname+"), will some these docs: " + listReport(entries,updateCo));
+
+	// apply the feedback to the user profile
+	upro.rocchioUpdate2(updateCo );
+
+	Logging.info("TorontoPPP("+uname+"), has constructed the sum");
+
+	upro.setTermsFromHQ();
+
+	// save the profile
+	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
+	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
+
+	outputFile.setLastActionId(0);
+
+	em.getTransaction().begin(); 
+	em.persist(outputFile);
+	em.getTransaction().commit();
+	Logging.info("TorontoPPP("+uname+"), saved user profile: " + outputFile);
+ 
+	// prepare suggestion list based on the final profile
+	DailyPPP.makeP3Sug( em,  aa, searcher, u);
     }
 
 
@@ -219,16 +265,21 @@ public class TorontoPPP {
 
 
 	String cmd = argv[0];
-	if (cmd.equals("init")) {
+	if (cmd.equals("init1") ||
+	    cmd.equals("init2") ) {
 	    if (onlyUser==null) throw new IllegalArgumentException("No user specified");
 
 	    EntityManager em  = Main.getEM();
 	    IndexReader reader = Common.newReader();
 	    
+	    boolean doPseudoFb = cmd.equals("init1");
+
 	    String [] fields = ArticleAnalyzer.upFields;
 	    final String [] xFields =  {ArxivFields.ARTICLE};
 
-	    ArticleAnalyzer aa =  new ArticleAnalyzer2( reader, xFields);
+	    ArticleAnalyzer aa = doPseudoFb?
+		new ArticleAnalyzer2( reader, xFields) :
+		new ArticleAnalyzer3( reader, xFields);
 	    IndexSearcher searcher = new IndexSearcher( reader );
 
 	    final User.Program program = User.Program.PPP;
@@ -237,9 +288,11 @@ public class TorontoPPP {
 	    if (u==null) throw new IllegalArgumentException("User " + onlyUser + " does not exist");
 	    if (!u.getProgram().equals(program)) throw new IllegalArgumentException("User " + onlyUser + " is not enrolled in program " + program);
 
-	    UserProfile upro =  new UserProfile(aa);
-
-	    makeP3SugX( em,   upro,  aa,  searcher, u);
+	    if (doPseudoFb) {
+		initP3SimulatedFeedback( em,  aa,  searcher, u);
+	    } else  {
+		initP3Sum( em,  (ArticleAnalyzer3)aa,  searcher, u);
+	    }
 	    
 	    /*
 	    throw new IllegalArgumentException("not needed!");

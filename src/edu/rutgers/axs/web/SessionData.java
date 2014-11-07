@@ -13,6 +13,9 @@ import javax.persistence.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.sb.SBRGenerator;
 import edu.rutgers.axs.upload.UploadProcessingThread;
+import edu.rutgers.axs.recommender.TorontoPPPThread;
+import edu.rutgers.axs.recommender.UserProfile;
+import edu.rutgers.axs.recommender.Stoplist;
 
 
 /** A single instance of this class is associated with a particular
@@ -48,6 +51,7 @@ public class SessionData {
     /** The most recent uploaded document processsing thread (for the Toronto
 	system) in this session. */
     UploadProcessingThread upThread = null;
+    TorontoPPPThread upInitThread = null;
 
     /** Used to record the ArXiv article ID of an article linked from
 	a viewed page, or of any other article that the SB user does
@@ -194,6 +198,24 @@ public class SessionData {
 	    //edu.rutgers.axs.sql.Logging.info("Prop["+k+"]='"+p.get(k)+"'");}
 
 	return ourProperties;
+    }
+
+    static private boolean stoplistLoaded = false;
+
+
+    /** Loads a stoplist file, which sits under WEB-INF in the web app's 
+	directory.
+	<P> FIXME: The assumption is that all applications that need a stoplist
+	need the same stoplist...
+	<p> FIXME: This ought to be synchronized on a static lock var.
+    */
+    void loadStoplist() throws IOException {
+	if (!stoplistLoaded) {
+	    String path = "WEB-INF/stop200.txt";
+	    InputStream is=getServletContext().getResourceAsStream(path);
+	    UserProfile.setStoplist(new Stoplist(is));
+	    stoplistLoaded = true;
+	}
     }
 
 
