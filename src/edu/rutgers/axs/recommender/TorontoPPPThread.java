@@ -71,7 +71,7 @@ public class TorontoPPPThread extends BackgroundThread {
 		error("User " + user + " is not enrolled in program " + program);
 	    }
 
-	    TorontoPPP.initP3Sum( em,  (ArticleAnalyzer3)aa,  searcher, u);
+	    TorontoPPP.initP3Sum( em,  (ArticleAnalyzer3)aa,  searcher, u, this);
 	
 	} catch(Exception ex) {
 	    String errmsg = ex.getMessage();

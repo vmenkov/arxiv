@@ -16,6 +16,7 @@ import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.search.*;
+import edu.rutgers.axs.html.ProgressIndicator;
 
 /** Used to maintain a variety of used profiles for TJ's methods, in
     particular SET_BASED and PPP (aka 3PR). A user profile is stored
@@ -315,7 +316,7 @@ public class UserProfile {
 	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 
 	DataFile uproFile=  new DataFile(user, taskId, type);
-	int version = (dfc instanceof ArticleAnalyzer2) ? 2 : 1;
+	int version = (dfc instanceof ArticleAnalyzer1) ? 1 : 2;
 	uproFile.setLastActionId( lastActionId);
 	uproFile.setVersion(version);
 	this.save(uproFile.getFile());
@@ -855,8 +856,9 @@ public class UserProfile {
 
     /**Similar to rocchioUpdate(), but uses docno rather than AID
        @param updateCo The map that takes the Lucene docno as key
+       @param pin If not null, used to inform the user of the progress of the operation
      */
-    void rocchioUpdate2(HashMap<Integer,? extends Number> updateCo ) throws IOException {
+    void rocchioUpdate2(HashMap<Integer,? extends Number> updateCo, ProgressIndicator pin) throws IOException {
 	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 
 	int cnt=0;
@@ -865,9 +867,10 @@ public class UserProfile {
 	    HashMap<String, ?extends Number> h = dfc.getCoef(docno.intValue());
 	    for(Map.Entry<String, ?extends Number> e: h.entrySet()) {
 		double q = e.getValue().doubleValue();
-		add1( e.getKey(), w*q);
+		add1( e.getKey(), w*q);		
 	    }
 	    cnt++;
+	    if (pin != null) pin.addK(1);
 	}
 
 	removeUselessTerms(); // just in case

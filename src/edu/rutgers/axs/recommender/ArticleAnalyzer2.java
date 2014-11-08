@@ -17,7 +17,7 @@ import edu.rutgers.axs.sql.*;
 /** Another way to compute article stats: Everything is computed on
     startup.
  */
-public class ArticleAnalyzer2 extends  ArticleAnalyzer {
+public class ArticleAnalyzer2 extends  ArticleAnalyzer23 {
 
     static final boolean verbose = true;
 
@@ -85,7 +85,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	return idf(q[0], q[1]);
     }
 
-    private double idf(String field, String text) throws IOException {
+    double idf(String field, String text) throws IOException {
 
 	if (field.equals(CONCAT)) {
 	    Integer val = concatDfTable.get(text);
@@ -403,79 +403,6 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer {
 	return  getCoef23(docno);
     }
 
-    /** Computes various dot products that are used to initialize
-	a TjA1Entry structure for Algorithm 1. 
-
-	<p>FIXME: Strictly speaking, we should verify for each term
-	that it is not a stopword or excludable term. However, for
-	efficiency's sake, we don't do it, in the expectation that the
-	user profile (which should have been computed the same day or
-	a few days ago, using the appropriate stopword list and
-	"useless term" exclusion rules) will not contain such terms.
-	This aproach will break, however, if the stopword list changes,
-	and the user profile ends up dragging in terms that were
-	"useful" in the past, but are considered useless now.
-
-       @param hq  User profile vector (UserProfile.hq)
-     */
-    TjA1EntryData prepareTjA1EntryData(int docno,
-				       HashMap<String, UserProfile.TwoVal> hq,
-				       Map<String,Integer> termMapper)
-	throws IOException {
-
-	final int nt=termMapper.size();
-	TjA1EntryData tj = new TjA1EntryData(nt);
-
-	double boostConcat = 1.0 / norms[fields.length][docno];
-
-	for(int j=0; j< fields.length;  j++) {	
-	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
-	    if (tfv==null) {
-		//Logging.warning("No tfv for docno="+docno+", field="+fields[j]);
-		continue;
-	    }
-
-	    //System.out.println("--Terms--");
-	    int[] freqs=tfv.getTermFrequencies();
-	    String[] terms=tfv.getTerms();	    
-
-	    double boost = 1.0 / norms[j][docno];
-
-	    for(int i=0; i<terms.length; i++) {
-		String key=mkKey(fields[j], terms[i]);	       
-		UserProfile.TwoVal q= hq.get(key);
-		if (q!=null && norms[j][docno]>0) {
-		    // term position in upro.terms[]
-		    int iterm = termMapper.get(key).intValue();		    
-
-		    double z = freqs[i] * boost;
-		    double idf = idf(fields[j], terms[i]);	       
-
-		    tj.sum1 += z * q.w1 *idf;
-		    double w2q =  z * idf * q.w2 * q.w2 ;
-		    if (w2q<0) throw new AssertionError("w2q<0: this is impossible!");
-		    (q.w2 >= 0 ? tj.w2plus: tj.w2minus)[iterm] += w2q;
-		}
-
-		//-- the concat field
-		key=mkKey(CONCAT, terms[i]);	       
-		q= hq.get(key);
-		if (q!=null && norms[fields.length][docno]>0 ) {
-		    int iterm = termMapper.get(key).intValue();
-		    double z = freqs[i] * boostConcat;
-		    double idf = idf(CONCAT, terms[i]);	       
-		    tj.sum1 += z * q.w1 *idf;
-		    double w2q =  z * idf * q.w2 * q.w2 ;
-		    if (w2q<0) throw new AssertionError("w2q<0: this is impossible!");
-		    (q.w2 >= 0 ? tj.w2plus: tj.w2minus)[iterm] += w2q;
-
-		}
-	    }
-	}
-	return tj;
-    }
-
-  
     private static int printMissing = 0;
 
     static public void main(String[] argv) throws IOException {

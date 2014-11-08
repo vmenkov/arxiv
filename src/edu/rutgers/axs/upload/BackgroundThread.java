@@ -65,7 +65,7 @@ public abstract class BackgroundThread extends Thread {
 
     /** Displayable progress indicator. Only used during the
 	processing of HTML docs */
-    ProgressIndicator pin = null;
+    public ProgressIndicator pin = null;
 
     /** An HTML table that displays a graphic progress indicator */
     public String getProgressIndicatorHTML(String cp) {

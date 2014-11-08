@@ -17,6 +17,7 @@ import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.upload.*;
 import edu.rutgers.axs.indexer.*;
+import edu.rutgers.axs.html.ProgressIndicator;
 
 
 /** Code for initializing 3PR (aka PPP) user profiles using user-uploaded
@@ -124,7 +125,7 @@ public class TorontoPPP {
 
 
 	    // apply the feedback to the user profile
-	    upro.rocchioUpdate2(updateCo );
+	    upro.rocchioUpdate2(updateCo ,null);
  	    upro.setTermsFromHQ();
 
 	}
@@ -184,7 +185,8 @@ public class TorontoPPP {
 
     /** A simpler method, uses the sum of uploaded documents */
     static void initP3Sum(EntityManager em,  
-				  ArticleAnalyzer3 aa, IndexSearcher searcher, User u) 
+			  ArticleAnalyzer3 aa, IndexSearcher searcher, User u,
+			  BackgroundThread thread) 
     throws IOException {
 	UserProfile upro =  new UserProfile(aa);
 
@@ -193,10 +195,18 @@ public class TorontoPPP {
 
 	int maxlen = 10000;
 
+	//	final int R = 5;
+
 	// User-uploaded examples 
 	ScoreDoc[] uuSd = Common.findAllUserFiles(searcher, uname);
 
 	int nUploaded = uuSd.length; 
+
+	ProgressIndicator pin = null;
+	if (thread != null) {
+	    int n = 2 * nUploaded;
+	    pin = thread.pin = new ProgressIndicator(n);
+	}
 
 	Logging.info("TorontoPPP("+uname+"): computing norms for the " + nUploaded +" uploaded docs");
 	ArxivScoreDoc[] sd = new ArxivScoreDoc[nUploaded];
@@ -209,13 +219,16 @@ public class TorontoPPP {
 	    sd[k] = new ArxivScoreDoc( docno, 0.0); 	    
 	    updateCo.addCo( docno, 1.0);
 	    aa.computeNorms(docno);
+	    if (pin != null) {
+		pin.setK(k+1);
+	    }
 	}
 
 	Vector<ArticleEntry>	    entries = upro.packageEntries(sd);	    
 	Logging.info("TorontoPPP("+uname+"), will some these docs: " + listReport(entries,updateCo));
 
 	// apply the feedback to the user profile
-	upro.rocchioUpdate2(updateCo );
+	upro.rocchioUpdate2(updateCo, pin);
 
 	Logging.info("TorontoPPP("+uname+"), has constructed the sum");
 
@@ -291,7 +304,7 @@ public class TorontoPPP {
 	    if (doPseudoFb) {
 		initP3SimulatedFeedback( em,  aa,  searcher, u);
 	    } else  {
-		initP3Sum( em,  (ArticleAnalyzer3)aa,  searcher, u);
+		initP3Sum( em,  (ArticleAnalyzer3)aa,  searcher, u, null);
 	    }
 	    
 	    /*

@@ -14,6 +14,9 @@ public class ProgressIndicator {
     public void setK(int _k) {
 	k = _k;
     }
+    public void addK(int x) {
+	k += x;
+    }
 
     /** Generates a progress bar, using HTML TABLE syntax
 	<p>The image came from 

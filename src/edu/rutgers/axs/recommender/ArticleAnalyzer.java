@@ -121,75 +121,19 @@ public abstract class ArticleAnalyzer {
        @param hq  User profile vector (UserProfile.hq)
      */
     abstract TjA1EntryData prepareTjA1EntryData(int docno,
-				       HashMap<String, UserProfile.TwoVal> hq,
-				       Map<String,Integer> termMapper)
-	throws IOException;
+    				       HashMap<String, UserProfile.TwoVal> hq,
+    				       Map<String,Integer> termMapper)
+    	throws IOException;
 
     abstract Term keyToTerm(String key); //throws IOException 
 
     /** Overridden in AA1 */
-    CompactArticleStatsArray getCasa() {
-	throw new IllegalArgumentException("AA2 does not need CompactArticleStatsArray!");
-    }
- 
+    abstract CompactArticleStatsArray getCasa();
 
     /** For AA2 and AA3 only. This method exists so that we can have the
      same getCoef code */
-    double getFieldNorm(int docno, int fieldNo) throws IOException {
-	throw new UnsupportedOperationException("This method is only used in AA2 and AA3");
- 
-    }
-
-    /** The common getCoef code for AA2 and AA3.
-
-	Computes a (weighted) term frequency vector for a specified
-	document.  The refined representation is used; the data for
-	each "real" field being retrieved from Lucene, and the DF
-	for the additional CONCAT field being obtained by summation.
-
-	@param docno Lucene's internal integer ID for the document,
-
-	@return The raw frequency vector (which is normalized, but does 
-	not incorporate the idf)
-    */
-   
-    public HashMap<String,  MutableDouble> getCoef23(int docno) 
-	throws IOException {
-
-	HashMap<String, MutableDouble> h = new HashMap<String,MutableDouble>();
-
-	final int nf =fields.length;
-	TermFreqVector [] tfvs = new TermFreqVector[nf];
-
-	for(int j=0; j<nf;  j++) {	    
-	    String name= fields[j];
-	    TermFreqVector tfv= tfvs[j]=reader.getTermFreqVector(docno, name);
-	    if (tfv==null) continue;
-	    
-	    int[] freqs=tfv.getTermFrequencies();
-	    String[] terms=tfv.getTerms();	    
-	    for(int i=0; i<terms.length; i++) {	
-
-		Term term = new Term(name, terms[i]);
-		int df = reader.docFreq(term);
-		if (df < minDf || UserProfile.isUseless(term)) {
-		    continue;// skip very rare words, non-words, and stop words
-		}
-
-		String key = ArticleAnalyzer2.mkKey(term);
-
-		double z =  freqs[i] / getFieldNorm(docno,j);
-		h.put( key, new MutableDouble(z));
-
-		key =  ArticleAnalyzer2.mkKey(CONCAT, terms[i]);
-		z =  freqs[i] / getFieldNorm(docno, nf);
-		MutableDouble val = h.get(key);
-		if (val==null) h.put(key, new MutableDouble(z));
-		else val.add(z);
-	    }	
-	}
-	return h;
-    }
-
+    //    double getFieldNorm(int docno, int fieldNo) throws IOException {
+    //	throw new UnsupportedOperationException("This method is only used in AA2 and AA3"); 
+    //    }
 
 }

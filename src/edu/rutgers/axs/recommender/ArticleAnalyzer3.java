@@ -17,7 +17,7 @@ import edu.rutgers.axs.sql.*;
 /** Another way to compute article stats: only the norms of
     needed docs are computed.
  */
-public class ArticleAnalyzer3 extends  ArticleAnalyzer {
+public class ArticleAnalyzer3 extends  ArticleAnalyzer23 {
 
     HashMap<Integer, double[]> norms = new  HashMap<Integer, double[]>();
     double getFieldNorm(int docno, int fieldNo)  throws IOException{
@@ -39,7 +39,7 @@ public class ArticleAnalyzer3 extends  ArticleAnalyzer {
 	In AA3, it's exactly same as in AA2.
 	@param key "field:text"
      */
-    public double idf(String key) throws IOException {
+    double idf(String key) throws IOException {
 	String[] q = key.split(":");
 	if (q.length != 2) throw new IllegalArgumentException("Calling AA2.idf() expects a qualified term (f:t); received "+key);
 	return idf(q[0], q[1]);
@@ -109,6 +109,7 @@ public class ArticleAnalyzer3 extends  ArticleAnalyzer {
 	q[nf] =  Math.sqrt(s);	
 	//	Integer key = new Integer(docno);
 	norms.put(docno, q);
+	System.out.println("Done norms for " + docno);
     }
 
     /** Stores DF for terms */
