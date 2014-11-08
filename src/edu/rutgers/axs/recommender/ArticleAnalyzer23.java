@@ -27,36 +27,6 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 	super(_reader, _fields);
     }
 
-    /** Computes <em>idf = 1 + log ( numDocs/docFreq+1)</em>, much
-	like it is done in Lucene's own searcher as well. 
-	@term May mean a particular word in AA1, or field:word in AA2/AA3
-    */
-    //    abstract public double idf(String term) throws IOException;
-
-    //    public abstract HashMap<String, ?extends Number> getCoef(int docno) throws IOException;
-
-
-  /** Computes various dot products that are used to initialize
-	a TjA1Entry structure for Algorithm 1. 
-
-	<p>FIXME: Strictly speaking, we should verify for each term
-	that it is not a stopword or excludable term. However, for
-	efficiency's sake, we don't do it, in the expectation that the
-	user profile (which should have been computed the same day or
-	a few days ago, using the appropriate stopword list and
-	"useless term" exclusion rules) will not contain such terms.
-	This aproach will break, however, if the stopword list changes,
-	and the user profile ends up dragging in terms that were
-	"useful" in the past, but are considered useless now.
-
-       @param hq  User profile vector (UserProfile.hq)
-     */
-    //    abstract TjA1EntryData prepareTjA1EntryData(int docno,
-    //				       HashMap<String, UserProfile.TwoVal> hq,
-    //				       Map<String,Integer> termMapper)
-    //	throws IOException;
-
-
     /** Computes various dot products that are used to initialize
 	a TjA1Entry structure for Algorithm 1. 
 
@@ -80,7 +50,9 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 	final int nt=termMapper.size();
 	TjA1EntryData tj = new TjA1EntryData(nt);
 
-	double boostConcat = 1.0 / getFieldNorm(docno,fields.length);
+	double[] nr = getFieldNorms(docno);
+
+	double boostConcat = 1.0 / nr[fields.length];
 
 	for(int j=0; j< fields.length;  j++) {	
 	    TermFreqVector tfv=reader.getTermFreqVector(docno, fields[j]);
@@ -93,12 +65,12 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 	    int[] freqs=tfv.getTermFrequencies();
 	    String[] terms=tfv.getTerms();	    
 
-	    double boost = 1.0 / getFieldNorm(docno,j);
+	    double boost = 1.0 / nr[j];
 
 	    for(int i=0; i<terms.length; i++) {
 		String key=mkKey(fields[j], terms[i]);	       
 		UserProfile.TwoVal q= hq.get(key);
-		if (q!=null && getFieldNorm(docno,j)>0) {
+		if (q!=null && nr[j]>0) {
 		    // term position in upro.terms[]
 		    int iterm = termMapper.get(key).intValue();		    
 
@@ -114,7 +86,7 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 		//-- the concat field
 		key=mkKey(CONCAT, terms[i]);	       
 		q= hq.get(key);
-		if (q!=null && getFieldNorm(docno,fields.length)>0 ) {
+		if (q!=null && nr[fields.length]>0 ) {
 		    int iterm = termMapper.get(key).intValue();
 		    double z = freqs[i] * boostConcat;
 		    double idf = idf(CONCAT, terms[i]);	       
@@ -129,18 +101,25 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 	return tj;
     }
 
-    //    abstract Term keyToTerm(String key); //throws IOException 
-
+   
     /** Overridden in AA1 */
-    CompactArticleStatsArray getCasa() {
-	throw new IllegalArgumentException("AA2/AA3 do not need CompactArticleStatsArray!");
-    }
+    //    CompactArticleStatsArray getCasa() {
+    //	throw new UnsupportedOperationException("AA2/AA3 do not need CompactArticleStatsArray!");
+    //    }
  
 
     /** For AA2 and AA3 only. This method exists so that we can have the
      same getCoef code */
     abstract double getFieldNorm(int docno, int fieldNo) throws IOException;
 
+    final double[] getFieldNorms(int docno) throws IOException {
+	final int nf =fields.length;
+	double[] nr = new double[nf+1];
+	for(int j=0; j<nf+1;  j++) {	    
+	    nr[j] = getFieldNorm(docno,j);
+	}
+	return nr;
+    }
 
     /** The common getCoef code for AA2 and AA3.
 
@@ -163,6 +142,8 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 	final int nf =fields.length;
 	TermFreqVector [] tfvs = new TermFreqVector[nf];
 
+	double[] nr = getFieldNorms(docno);
+
 	for(int j=0; j<nf;  j++) {	    
 	    String name= fields[j];
 	    TermFreqVector tfv= tfvs[j]=reader.getTermFreqVector(docno, name);
@@ -180,11 +161,11 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 
 		String key = ArticleAnalyzer2.mkKey(term);
 
-		double z =  freqs[i] / getFieldNorm(docno,j);
+		double z =  freqs[i] / nr[j];
 		h.put( key, new MutableDouble(z));
 
 		key =  ArticleAnalyzer2.mkKey(CONCAT, terms[i]);
-		z =  freqs[i] / getFieldNorm(docno, nf);
+		z =  freqs[i] / nr[nf];
 		MutableDouble val = h.get(key);
 		if (val==null) h.put(key, new MutableDouble(z));
 		else val.add(z);
@@ -194,6 +175,15 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
     }
 
     abstract double idf(String field, String text) throws IOException;
+
+    /** Make a key for a particular qualified term in UserProfile */
+    static String mkKey(String field, String text) {
+	return field + ":" + text;
+    }
+    static String mkKey(Term t) {
+	return mkKey(t.field(), t.text());
+    }
+
 
 
 }

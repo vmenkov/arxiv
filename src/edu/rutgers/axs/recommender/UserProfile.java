@@ -467,7 +467,7 @@ public class UserProfile {
 	luceneRawSearch(int maxDocs, 
 			EntityManager em, int days, boolean useLog) throws IOException {
 
-	if (dfc==null) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
+	if (dfc==null || !(dfc instanceof ArticleAnalyzer1)) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
 	if (days>0) {
 	    return luceneRawSearchDateRange(maxDocs, em, days, useLog);
 	}
@@ -475,7 +475,7 @@ public class UserProfile {
 	int numdocs0 = dfc.reader.numDocs(), maxdoc=dfc.reader.maxDoc() ;
 	Logging.info("UP: numdocs=" + numdocs0 + ", maxdoc=" + maxdoc);
 	double scores[] = new double[maxdoc];	
-	CompactArticleStatsArray   allStats = dfc.getCasa();
+	CompactArticleStatsArray   allStats = ((ArticleAnalyzer1)dfc).getCasa();
 	if (allStats ==null) throw new IllegalArgumentException();
 
 	int tcnt=0,	missingStatsCnt=0;
@@ -538,9 +538,9 @@ public class UserProfile {
 			 boolean useLog) throws IOException {
 
 	if (dfc==null || !(dfc instanceof ArticleAnalyzer1)) throw new IllegalArgumentException("This method should not be called in the 'Light' UserProfile");
-	if (dfc.getCasa()==null) throw new IllegalArgumentException("AA.catAndDateSearch() called without initializing AA.CASA first!");
-
 	ArticleAnalyzer1 dfc1 = ( ArticleAnalyzer1)dfc;
+	if (dfc1.getCasa()==null) throw new IllegalArgumentException("AA.catAndDateSearch() called without initializing AA.CASA first!");
+
 
 
 	Date since = SearchResults.daysAgo( days );
@@ -560,7 +560,7 @@ public class UserProfile {
 	for(int i=0; i< scoreDocs.length ; i++) {
 	    int docno = scoreDocs[i].doc;
 
-	    if (docno > dfc.getCasa().size()) {
+	    if (docno > dfc1.getCasa().size()) {
 		Logging.warning("linSim: no stats for docno=" + docno + " (out of range)");
 		missingStatsCnt ++;
 		continue;
@@ -568,7 +568,7 @@ public class UserProfile {
 
 	    double sim = useLog? 
 		dfc1.logSim(docno, hq) :
-		dfc1.linSim(docno, dfc.getCasa(), hq);
+		dfc1.linSim(docno, dfc1.getCasa(), hq);
 
 	    if (sim>0) 	scores[nnzc++]= new ArxivScoreDoc(docno, sim);
 	}
@@ -615,7 +615,7 @@ public class UserProfile {
 	int  nnzc=0;
 	int missingStatsCnt =0;
 
-	CompactArticleStatsArray   allStats = dfc.getCasa();
+	CompactArticleStatsArray   allStats = dfc1.getCasa();
 	if (allStats ==null) throw new IllegalArgumentException();
 
 	for(int i=0; i< scoreDocs.length ; i++) {

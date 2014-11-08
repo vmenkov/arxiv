@@ -46,8 +46,8 @@ class TjAlgorithm1 {
 	tjEntries = new TjA1Entry[sd.length];
 
 	for(int i=0; i<sd.length; i++) {
-	    if (upro.dfc instanceof ArticleAnalyzer2 || upro.dfc instanceof ArticleAnalyzer3) { // no restriction
-	    } else if (sd[i].doc > upro.dfc.getCasa().size()) continue;
+	    if (upro.dfc instanceof ArticleAnalyzer1 &&
+		sd[i].doc > ((ArticleAnalyzer1)upro.dfc).getCasa().size()) continue;
 	    TjA1Entry tje=new TjA1Entry(sd[i],upro,termMapper,nonlinear);
 	    tjEntries[storedCnt++] = tje;
 	}

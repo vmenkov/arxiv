@@ -371,14 +371,6 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer23 {
 	}
     }
 
-    /** Make a key for a particular qualified term in UserProfile */
-    static String mkKey(String field, String text) {
-	return field + ":" + text;
-    }
-    static String mkKey(Term t) {
-	return mkKey(t.field(), t.text());
-    }
-
     Term keyToTerm(String key) //throws IOException 
     {
 	String[] q = key.split(":");

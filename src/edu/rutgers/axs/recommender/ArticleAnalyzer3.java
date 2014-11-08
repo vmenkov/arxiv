@@ -39,7 +39,7 @@ public class ArticleAnalyzer3 extends  ArticleAnalyzer23 {
 	In AA3, it's exactly same as in AA2.
 	@param key "field:text"
      */
-    double idf(String key) throws IOException {
+    public double idf(String key) throws IOException {
 	String[] q = key.split(":");
 	if (q.length != 2) throw new IllegalArgumentException("Calling AA2.idf() expects a qualified term (f:t); received "+key);
 	return idf(q[0], q[1]);
@@ -51,7 +51,7 @@ public class ArticleAnalyzer3 extends  ArticleAnalyzer23 {
 	pre-filled arrat concatDfTable. Here, for CONCAT we just use
 	the max of the df in all fields.
     */
-    private double idf(String field, String text) throws IOException {
+    double idf(String field, String text) throws IOException {
 	int df = 0;	
 	if (field.equals(CONCAT)) {
 	    final int nf =fields.length;

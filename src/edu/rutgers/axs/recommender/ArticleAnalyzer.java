@@ -39,7 +39,6 @@ public abstract class ArticleAnalyzer {
 	return reader;
     }
 
-
     final String [] fields;
 
     /*
@@ -103,9 +102,7 @@ public abstract class ArticleAnalyzer {
      */
     static final boolean useSqrt = false;
 
-
-
-  /** Computes various dot products that are used to initialize
+    /** Computes various dot products that are used to initialize
 	a TjA1Entry structure for Algorithm 1. 
 
 	<p>FIXME: Strictly speaking, we should verify for each term
@@ -128,12 +125,5 @@ public abstract class ArticleAnalyzer {
     abstract Term keyToTerm(String key); //throws IOException 
 
     /** Overridden in AA1 */
-    abstract CompactArticleStatsArray getCasa();
-
-    /** For AA2 and AA3 only. This method exists so that we can have the
-     same getCoef code */
-    //    double getFieldNorm(int docno, int fieldNo) throws IOException {
-    //	throw new UnsupportedOperationException("This method is only used in AA2 and AA3"); 
-    //    }
-
+    //abstract CompactArticleStatsArray getCasa();
 }
