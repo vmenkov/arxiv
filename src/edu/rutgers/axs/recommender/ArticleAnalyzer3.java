@@ -140,17 +140,7 @@ public class ArticleAnalyzer3 extends  ArticleAnalyzer23 {
 	return sum;
     }
     
-    /** This method is not needed in AA3, as it is never used with the full 
-	Algo 1.
-     */
-    TjA1EntryData prepareTjA1EntryData(int docno,
-				       HashMap<String, UserProfile.TwoVal> hq,
-				       Map<String,Integer> termMapper)
-    //throws IOException 
-    {
-	throw new UnsupportedOperationException();
-    }
-
+  
     public HashMap<String,  MutableDouble> getCoef(int docno) 
 	throws IOException {
 	return  getCoef23( docno);

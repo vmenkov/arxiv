@@ -100,12 +100,6 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
 	}
 	return tj;
     }
-
-   
-    /** Overridden in AA1 */
-    //    CompactArticleStatsArray getCasa() {
-    //	throw new UnsupportedOperationException("AA2/AA3 do not need CompactArticleStatsArray!");
-    //    }
  
 
     /** For AA2 and AA3 only. This method exists so that we can have the
@@ -183,7 +177,6 @@ public abstract class ArticleAnalyzer23 extends ArticleAnalyzer {
     static String mkKey(Term t) {
 	return mkKey(t.field(), t.text());
     }
-
 
 
 }

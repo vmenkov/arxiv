@@ -320,7 +320,7 @@ public class EditUser extends Participation  {
 	try {
 	    int days0 = r.getDays();
 	    Tools.editEntity(EntryFormTag.PREFIX, r, request);
-	    if (r.getDays()<=0 || r.getDays()>90) r.setDays(Search.DEFAULT_DAYS);
+	    if (r.getDays()<=0 || r.getDays()>365) r.setDays(Search.DEFAULT_DAYS);
 	    if (r.getDays() != days0)  changeCnt++;
 
 	    // Set subject categories

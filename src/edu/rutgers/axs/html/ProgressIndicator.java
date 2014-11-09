@@ -7,9 +7,11 @@ import java.util.*;
 public class ProgressIndicator {
     private int k, n;
     final int L = 400;
-    public ProgressIndicator(int _n) {
+    boolean pct;
+    public ProgressIndicator(int _n, boolean _pct) {
 	n = _n;
 	k = 0;
+	pct = _pct;
     }
     public void setK(int _k) {
 	k = _k;
@@ -35,8 +37,10 @@ http://www.kathleens-graphics.com/Animated%20Gifs/animals/green%20turtle%20walki
 	b.append("<tr>");
 	b.append("<td colspan=1 bgcolor=\"#101010\" style=\"width:"+w1+"px\"></td>");
 	b.append("<td colspan=1 bgcolor=\"#d0d0d0\" style=\"width:"+w2+"px\"></td>");
-	b.append("<td colspan=1 bgcolor=\"#ffffff\">"+ k +" link"+(k>1?"s":"")+
-		 " out of "+ n +  "</td>");
+
+	String text = pct ?	    (k * 100) / n  + "%" :
+	    ""+ k +" link"+(k>1?"s":"")+ " out of "+ n;
+	b.append("<td colspan=1 bgcolor=\"#ffffff\">"+ text +  "</td>");
 	b.append("<tr>\n");
 	b.append("</table>\n");
 	return b.toString();

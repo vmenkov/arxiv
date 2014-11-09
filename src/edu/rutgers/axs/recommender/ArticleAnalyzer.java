@@ -41,12 +41,6 @@ public abstract class ArticleAnalyzer {
 
     final String [] fields;
 
-    /*
-    public ArticleAnalyzer() throws IOException {
-	this(   Common.newReader(), upFields);
-    }
-    */
-
     public ArticleAnalyzer(	IndexReader _reader,String [] _fields ) {
 	fields = _fields;
 	reader =_reader;
@@ -58,7 +52,7 @@ public abstract class ArticleAnalyzer {
     */
     abstract public double idf(String term) throws IOException;
 
- /** Gets a TF vector for a document from the Lucene data store. This is
+    /** Gets a TF vector for a document from the Lucene data store. This is
 	used e.g. when initializing and updating user profiles. The vector
 	does not include IDF, but is divided by the doc norm.
 	@param aid Arxiv article ID.
@@ -124,6 +118,4 @@ public abstract class ArticleAnalyzer {
 
     abstract Term keyToTerm(String key); //throws IOException 
 
-    /** Overridden in AA1 */
-    //abstract CompactArticleStatsArray getCasa();
 }

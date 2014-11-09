@@ -222,7 +222,7 @@ public class DailyPPP {
 	     the dot product with the user profile)
 	</ul>
      */
-    static void makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u) 
+    static int makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u) 
     throws IOException {
 	String msg="";
 	Vector<DataFile> ptr = new  Vector<DataFile>(0);
@@ -331,7 +331,7 @@ public class DailyPPP {
 	em.persist(outputFile);
 	em.getTransaction().commit();
 	Logging.info("Saved sug list: " + outputFile);
- 
+	return entries.size();
     }
 
     /** Sets the ID of the new DataFile, if appropriate.

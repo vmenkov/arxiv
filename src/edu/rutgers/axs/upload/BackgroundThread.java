@@ -36,11 +36,11 @@ public abstract class BackgroundThread extends Thread {
 	trailing LF attached yet. */
     protected String progressTextMore = null;
 
-    protected void progress(String text) {
+    public void progress(String text) {
 	progress(text, false, false);
     }
 
-    protected void error(String text) {
+    public void error(String text) {
 	progress(text, true, false);
     }
 

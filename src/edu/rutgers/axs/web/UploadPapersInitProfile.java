@@ -29,6 +29,9 @@ import edu.rutgers.axs.recommender.TorontoPPPThread;
 
 /** The "Toronto system": profile initialization, once PDF documents
     have been uploaded by UploadPapers.
+
+
+    FIXME: need a check for "do we need it now?" (Maybe profile is already available...)
 */
 public class UploadPapersInitProfile  extends ResultsBase {
 
@@ -64,7 +67,7 @@ public class UploadPapersInitProfile  extends ResultsBase {
                 wantReload = true;
                 checkTitle = "Processing in progress...";
                 checkText =
-                    "Processing thread state = " + sd.upInitThread.getState()+ "\n"+
+                    "Processing thread state = "+sd.upInitThread.getState()+"\n"+
                     sd.upInitThread.getProgressText();
                 reloadURL = getReloadURL(true);
                 checkProgressIndicator=sd.upInitThread.getProgressIndicatorHTML(cp);
@@ -109,8 +112,9 @@ public class UploadPapersInitProfile  extends ResultsBase {
    /** Generates the URL for the "Continue" button (and/or the "refresh" tag)
      */
     private String getReloadURL(boolean check) {
-	String s= cp + "/personal/uploadPapersInitProfile.jsp" ;
-	if (check) s +=  "?check=true";
+	String s= cp +
+	    (check ?   "/personal/uploadPapersInitProfile.jsp?check=true" :
+	     "/index.jsp");
 	return s;
     }
 

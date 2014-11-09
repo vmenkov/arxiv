@@ -241,9 +241,10 @@ public class UserProfile {
 
     /** Load the terms[] array as the keys of hq, sorted by w1*idf
      */
-    void setTermsFromHQ() {
+    void setTermsFromHQ() throws IOException {
 	terms = hq.keySet().toArray(new String[0]);
-	Arrays.sort(terms, getByDescVal());
+	//Arrays.sort(terms, getByDescVal());
+	sortTermsDesc(terms);
     }
 
     /** Reads the profile from a file, and set the lastActionId from the 
@@ -370,6 +371,31 @@ public class UserProfile {
     
     private Comparator<String> getByDescVal() {
 	return new  TermsByDescVal();
+    }
+
+    /** Descending order */
+    private static class TermSortPair implements Comparable<TermSortPair> {
+	String term;
+	double val;
+	public int compareTo(TermSortPair b) {
+	    return (val < b.val) ? 1 : val==b.val ? 0 : -1;
+	}
+	TermSortPair(String _term, double _val)  {
+	    term = _term;
+	    val = _val;
+	}
+    }
+
+    void sortTermsDesc(String [] terms)  throws IOException{
+	TermSortPair[] q = new TermSortPair[terms.length];
+	for(int i=0; i<terms.length; i++) {
+	    double val = hq.get(terms[i]).w1 * dfc.idf(terms[i]);
+	    q[i] = new TermSortPair( terms[i], val);
+	}
+	Arrays.sort(q);
+	for(int i=0; i<terms.length; i++) {
+	    terms[i] = q[i].term;
+	}	    
     }
 
     /** Creates a Lucene query that looks for any and all terms
@@ -673,7 +699,8 @@ public class UserProfile {
 	double scores[] = new double[maxdoc];	
 	
 	// Sort by value, in descending order
-	Arrays.sort(terms, getByDescVal());
+	//Arrays.sort(terms, getByDescVal());
+	sortTermsDesc(terms);
 	
 	// norms for fields that were stored in Lucene
 	byte norms[][] = new byte[ ArticleAnalyzer.upFields.length][];
@@ -817,7 +844,9 @@ public class UserProfile {
 	}
 	// updates terms[]
 	terms = hq.keySet().toArray(new String[0]);
-	Arrays.sort(terms, getByDescVal());
+	//	Arrays.sort(terms, getByDescVal());
+	sortTermsDesc(terms);
+
 	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
 	return ups;
     }
@@ -850,7 +879,8 @@ public class UserProfile {
 
 	// updates terms[]
 	terms = hq.keySet().toArray(new String[0]);
-	Arrays.sort(terms, getByDescVal());
+	// Arrays.sort(terms, getByDescVal());
+	sortTermsDesc(terms);
 	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
     }
 
@@ -881,7 +911,8 @@ public class UserProfile {
 
 	// updates terms[]
 	terms = hq.keySet().toArray(new String[0]);
-	Arrays.sort(terms, getByDescVal());
+	//Arrays.sort(terms, getByDescVal());
+	sortTermsDesc(terms);
 	Logging.info( "Updated vocabulary for the user profile has " + terms.length + " terms");
     }
 

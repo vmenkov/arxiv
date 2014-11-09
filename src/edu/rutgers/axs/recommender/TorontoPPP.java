@@ -204,10 +204,11 @@ public class TorontoPPP {
 
 	ProgressIndicator pin = null;
 	if (thread != null) {
-	    int n = 2 * nUploaded;
-	    pin = thread.pin = new ProgressIndicator(n);
+	    int n = 4 * nUploaded;
+	    pin = thread.pin = new ProgressIndicator(n, true);
 	}
 
+	thread.progress("Computing document stats...");
 	Logging.info("TorontoPPP("+uname+"): computing norms for the " + nUploaded +" uploaded docs");
 	ArxivScoreDoc[] sd = new ArxivScoreDoc[nUploaded];
 	// contributions 
@@ -223,30 +224,41 @@ public class TorontoPPP {
 		pin.setK(k+1);
 	    }
 	}
+	pin.setK(nUploaded);
 
+	thread.progress("Summing up...");
 	Vector<ArticleEntry>	    entries = upro.packageEntries(sd);	    
 	Logging.info("TorontoPPP("+uname+"), will some these docs: " + listReport(entries,updateCo));
 
 	// apply the feedback to the user profile
 	upro.rocchioUpdate2(updateCo, pin);
+	pin.setK(2 * nUploaded);
 
 	Logging.info("TorontoPPP("+uname+"), has constructed the sum");
 
 	upro.setTermsFromHQ();
-
+	Logging.info("TorontoPPP("+uname+"), has set terms from HQ");
+ 
+	thread.progress("Saving user profile vector...");
 	// save the profile
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
 	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
+	Logging.info("TorontoPPP("+uname+"), saved user profile: " + outputFile);
 
 	outputFile.setLastActionId(0);
 
 	em.getTransaction().begin(); 
 	em.persist(outputFile);
 	em.getTransaction().commit();
-	Logging.info("TorontoPPP("+uname+"), saved user profile: " + outputFile);
- 
+	Logging.info("TorontoPPP("+uname+"), persisted user profile DF object");
+ 	pin.setK(3*nUploaded);
+
 	// prepare suggestion list based on the final profile
-	DailyPPP.makeP3Sug( em,  aa, searcher, u);
+	thread.progress("Preparing personalized recommendations...");
+	int nsug = DailyPPP.makeP3Sug( em,  aa, searcher, u);
+	thread.progress("Completed recommendation generation; " + nsug + " articles listed");
+	pin.setK(4*nUploaded);
+
     }
 
 
@@ -305,13 +317,7 @@ public class TorontoPPP {
 		initP3SimulatedFeedback( em,  aa,  searcher, u);
 	    } else  {
 		initP3Sum( em,  (ArticleAnalyzer3)aa,  searcher, u, null);
-	    }
-	    
-	    /*
-	    throw new IllegalArgumentException("not needed!");
-	} else if (cmd.equals("update")) {
-	    updates();
-	    */
+	    }   
 	} else {
 	    System.out.println("Unknown command: " + cmd);
 	}

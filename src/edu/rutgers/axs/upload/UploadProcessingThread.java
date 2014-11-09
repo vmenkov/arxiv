@@ -142,7 +142,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	int nLinks = outliner.getLinks().size();
 	progress("Will follow all " + nLinks + " links found in the HTML document, looking for PDF documents. (May skip some of them if duplicate, though)");
-	pin = new ProgressIndicator(nLinks);
+	pin = new ProgressIndicator(nLinks, false);
 	HashSet<URL> doneLinks = new 	HashSet<URL>();
 	int cnt=0;
 	for(URL url: outliner.getLinks()) {

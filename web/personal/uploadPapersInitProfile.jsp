@@ -18,15 +18,12 @@
 
 <% 
    if (main.error) {   %>  <%@include file="../include/error.jsp" %>
-
-
 <%   } else if (main.check) {      %>
 <h1><%= main.checkTitle %></h1>
 <%= main.checkProgressIndicator %>
 <pre>
 <%= main.checkText %>
 </pre>
-
 <hr>
 <p>
 <% if (main.wantReload) { %>
