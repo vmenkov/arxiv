@@ -3,7 +3,6 @@ package edu.rutgers.axs.web;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-//import java.text.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -266,7 +265,6 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    setEx(_e);
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
-	    //em.close(); 
 	}
     }
 
@@ -507,9 +505,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    int docno = e.getCorrectDocno(searcher);
 	    Document doc = reader.document(docno);
 	    e.populateOtherFields(doc);
-	}
-	searcher.close();
-	reader.close();
+	} 
+	ensureClosedReader(searcher);
 
 	// Save the presented section of the suggestion list in the
 	// database, and set ActionSource appropriately (to be

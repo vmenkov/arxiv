@@ -10,6 +10,11 @@ import javax.persistence.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.IndexSearcher;
+
+
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.html.QS;
@@ -264,6 +269,16 @@ public class ResultsBase {
 	} catch (Exception _e) {}
     }
 
+    /** Closes the searcher *and* the underlying reader. Just put this
+	in everyu "finally" clause! */
+    public static void ensureClosedReader(IndexSearcher searcher) {
+	if (searcher==null) return;
+	try {
+	    IndexReader reader = searcher.getIndexReader();
+	    searcher.close();
+	    reader.close();
+	} catch (Exception _e) {}
+    }
 
     public  String urlAbstract( String id) {
 	return ServletConstants.articleServletUrl(cp, id, Action.Op.VIEW_ABSTRACT, asrc);

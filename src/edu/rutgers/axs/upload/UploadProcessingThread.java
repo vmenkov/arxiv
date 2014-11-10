@@ -400,7 +400,8 @@ public class UploadProcessingThread extends BackgroundThread {
 	return null;
     }
 
-    /** Uses PDFMiner to convert a PDF file to text */
+    /** Uses PDFMiner to convert a PDF file to text; after that,
+	imports the file's content into Lucene. */
     private DataFile pdf2txt(DataFile pdf) {
 	File pdfFile = pdf.getFile();
 	String pdfFileName = pdfFile.getName();

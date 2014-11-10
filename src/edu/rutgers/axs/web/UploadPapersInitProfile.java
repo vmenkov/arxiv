@@ -4,17 +4,11 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
-import java.net.*;
-import java.nio.charset.Charset;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 
 import javax.persistence.*;
-
-import org.apache.commons.fileupload.*;
-import org.apache.commons.fileupload.servlet.*;
-import org.apache.commons.fileupload.disk.*;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -26,6 +20,7 @@ import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.upload.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.recommender.TorontoPPPThread;
+import edu.rutgers.axs.recommender.DailyPPP;
 
 /** The "Toronto system": profile initialization, once PDF documents
     have been uploaded by UploadPapers.
@@ -35,8 +30,9 @@ import edu.rutgers.axs.recommender.TorontoPPPThread;
 */
 public class UploadPapersInitProfile  extends ResultsBase {
 
-    /** The "check=true" in the query string means that the user want to check
-        the status of the current load process */
+    /** The "check=true" in the query string means that the user want
+        to check the status of the current load process. Otherwise, it
+        is a request to initiate a new process.  */
     public boolean check=false;
 
     /** To be displayed when check=true */
@@ -56,7 +52,7 @@ public class UploadPapersInitProfile  extends ResultsBase {
 
 	check = getBoolean("check", check);
 
-	if (check) {
+	if (check) { 
             if (sd.upInitThread == null) {
                 checkTitle = "No processing is taking place";
                 checkText = "No processing is taking place right now or was taking place recently";
@@ -86,12 +82,34 @@ public class UploadPapersInitProfile  extends ResultsBase {
             return;
 	}
 
+	EntityManager em = sd.getEM();
+	IndexSearcher searcher=null;
+
 	try {
+	    User actor = User.findByName(em, user);
+	    User.Program program = actor.getProgram();
+	    if (program==null || program != User.Program.PPP) {
+		throw new WebException("User " + user + " is not enrolled into experiment plan " + User.Program.PPP + ". Presently, there is no mechanism to for initializing user profiles from uploaded documents for users in experiment plan " + program);
+	    } 
+
+	    // check if there is a recent profile file already
+	    DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
+	    DataFile existingProfile = DataFile.getLatestFileByVersion(em, user, ptype,  DailyPPP.allowedFileVersions());
+	    if (existingProfile != null) {
+		Date dfTime = existingProfile.getTime();
+		IndexReader reader=Common.newReader();
+		searcher = new IndexSearcher( reader );
+		Date latestUpload = mostRecentUploadDate(searcher, user);
+		if (latestUpload!=null && latestUpload.before( dfTime)) {
+		    throw new WebException("User " + user + " already has a user profile (id="+existingProfile.getId()+", "+dfTime+"), which has been computed more recently than the latest document upload ("+latestUpload+"). To view your recommendations, go to the <a href=\""+cp+"/index.jsp\">main page</a>!" );
+		}
+	    }
+	    
+
 	    sd.loadStoplist();
 	    sd.upInitThread = new TorontoPPPThread(user);
 	    sd.upInitThread.start();
-           
-
+        
             if (sd.upInitThread != null && sd.upInitThread.getState() != Thread.State.TERMINATED) {
                 check=true;
                 wantReload = true;
@@ -105,8 +123,11 @@ public class UploadPapersInitProfile  extends ResultsBase {
  
 	} catch(  Exception ex) {
 	    setEx(ex);
+	} finally {
+	    ResultsBase.ensureClosed( em, true);
+	    ensureClosedReader(searcher);
 	}
-
+  
    }
 
    /** Generates the URL for the "Continue" button (and/or the "refresh" tag)
@@ -118,5 +139,33 @@ public class UploadPapersInitProfile  extends ResultsBase {
 	return s;
     }
 
+    /** Selector for the date field that we set in the importer */
+    final private static FieldSelector fieldSelectorDate = 
+	new OneFieldSelector(UploadImporter.DATE_FIELD);
+
+    /** Look at all docs uploaded by this user in Lucene data store, and
+	return the date of the most recent upload. 
+	@return The date of the most recent doc upload (actually, of the doc importation into Lucene), or null if none found.
+    */
+    private static Date mostRecentUploadDate(IndexSearcher searcher, String uname) 
+    throws IOException {
+	// User-uploaded examples 
+	ScoreDoc[] uuSd = Common.findAllUserFiles(searcher, uname);
+	Date latest = null;
+	for(ScoreDoc sd: uuSd) {
+	    int docno = sd.doc;
+	    Document doc = searcher.getIndexReader().document(docno, fieldSelectorDate);
+	    String m =  "Check doc=" +docno;
+	    if (doc==null) continue;
+	    Date date=UploadImporter.getUploadDate( doc);
+	    m += "; " + doc.get(ArxivFields.UPLOAD_FILE) + "; " + date;
+	    if (latest==null || date!=null && date.after(latest)) {
+		latest=date;
+		m += "; LATEST";
+	    }
+	    //Logging.info(m);
+	}
+	return latest;
+    }
 
 }
