@@ -26,7 +26,7 @@ import edu.rutgers.axs.recommender.DailyPPP;
     have been uploaded by UploadPapers.
 
 
-    FIXME: need a check for "do we need it now?" (Maybe profile is already available...)
+    FIXME: need a check for "do we need it now?" (Maybe profile is alreqady available...)
 */
 public class UploadPapersInitProfile  extends ResultsBase {
 
@@ -57,8 +57,13 @@ public class UploadPapersInitProfile  extends ResultsBase {
                 checkTitle = "No processing is taking place";
                 checkText = "No processing is taking place right now or was taking place recently";
             } else if (sd.upInitThread.getState() == Thread.State.TERMINATED) {
-                checkTitle = "Processing completed";
-                checkText = sd.upInitThread.getProgressText();
+		if (sd.upInitThread.error) {
+		    checkTitle = "Error occurred";
+		    checkText = sd.upInitThread.getProgressText();
+		} else {
+		    checkTitle = "Processing completed";
+		    checkText = sd.upInitThread.getProgressText();
+		}
             } else {
                 wantReload = true;
                 checkTitle = "Processing in progress...";
@@ -82,6 +87,7 @@ public class UploadPapersInitProfile  extends ResultsBase {
             return;
 	}
 
+	// starting a new profile initialization process
 	EntityManager em = sd.getEM();
 	IndexSearcher searcher=null;
 
@@ -104,8 +110,7 @@ public class UploadPapersInitProfile  extends ResultsBase {
 		    throw new WebException("User " + user + " already has a user profile (id="+existingProfile.getId()+", "+dfTime+"), which has been computed more recently than the latest document upload ("+latestUpload+"). To view your recommendations, go to the <a href=\""+cp+"/index.jsp\">main page</a>!" );
 		}
 	    }
-	    
-
+   
 	    sd.loadStoplist();
 	    sd.upInitThread = new TorontoPPPThread(user);
 	    sd.upInitThread.start();
@@ -120,14 +125,12 @@ public class UploadPapersInitProfile  extends ResultsBase {
                 reloadURL = getReloadURL(true);
                 checkProgressIndicator=sd.upInitThread.getProgressIndicatorHTML(cp);
             }
- 
 	} catch(  Exception ex) {
 	    setEx(ex);
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
 	    ensureClosedReader(searcher);
-	}
-  
+	}  
    }
 
    /** Generates the URL for the "Continue" button (and/or the "refresh" tag)
