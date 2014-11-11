@@ -32,6 +32,12 @@ public class ProgressIndicator {
 	setK((int)(r * n));
     }
  
+    public SectionProgressIndicator mkSectionProgressIndicator(double from, double to, int _n) {
+	return new SectionProgressIndicator(this,
+					    (int)(n*from),
+					    (int)(n*to), _n);
+    }
+
 
     /** Generates a progress bar, using HTML TABLE syntax
 	<p>The image came from 

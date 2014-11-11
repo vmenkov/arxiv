@@ -292,7 +292,7 @@ public class TaskMaster {
 		    searcher.close();
 		    // rank by TJ Algo 1
 		    TjAlgorithm1 algo = new TjAlgorithm1();
-		    sd = algo.rank( upro, sd, em, maxDocs, true);
+		    sd = algo.rank( upro, sd, em, maxDocs, true, null);
 		    
 		    // FIXME: is there a better place for the day-setting?
 		    boolean isTrivial = (upro.terms.length==0);

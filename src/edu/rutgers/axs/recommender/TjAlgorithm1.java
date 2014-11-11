@@ -14,6 +14,7 @@ import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.Search;
 import edu.rutgers.axs.web.ArticleEntry;
+import edu.rutgers.axs.html.*;
 
 /** Thorsten's Algorithm 1 */
 class TjAlgorithm1 {
@@ -35,7 +36,7 @@ class TjAlgorithm1 {
     ArxivScoreDoc[] 
 	rank( UserProfile upro,    ArxivScoreDoc[] sd,
 	      EntityManager em, int maxDocs,
-	      boolean nonlinear)  throws IOException{
+	      boolean nonlinear, ProgressIndicator pin)  throws IOException{
 
 	Logging.info("A1(nonlinear=" + nonlinear+"); sd.length="+ sd.length);
 
@@ -50,7 +51,11 @@ class TjAlgorithm1 {
 		sd[i].doc > ((ArticleAnalyzer1)upro.dfc).getCasa().size()) continue;
 	    TjA1Entry tje=new TjA1Entry(sd[i],upro,termMapper,nonlinear);
 	    tjEntries[storedCnt++] = tje;
+
+	    if (pin!=null) pin.setKReal( (0.5 * i) / sd.length);
 	}
+
+
 
 	double gamma = upro.getGamma(0);
 	Arrays.sort(tjEntries, 0, storedCnt,new TjA1Entry.DescendingUBComparator(gamma));
@@ -71,8 +76,6 @@ class TjAlgorithm1 {
 		utility=u;
 
 		//if (Double.isInfinite(utility)) throw new AssertionError("utility=inf: imax="+imax); // here
-
-
 	    }
 	}
 
@@ -133,6 +136,12 @@ class TjAlgorithm1 {
 	    
 	    TjA1Entry.DescendingUBComparator cmp=new TjA1Entry.DescendingUBComparator(gamma);
 	    finishSort(tjEntries, usedCnt, undisturbed, storedCnt, cmp);
+
+	    double progress= Math.max( ((double)results.size())/maxDocs, ((double)usedCnt)/storedCnt);
+
+	    if (pin!=null) pin.setKReal( 0.5 + 0.5 * progress);
+
+
 	}
 
 	return results.toArray(new ArxivScoreDoc[0]);

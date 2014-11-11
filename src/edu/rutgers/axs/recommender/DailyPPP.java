@@ -16,7 +16,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.indexer.Common;
-import edu.rutgers.axs.html.ProgressIndicator;
+import edu.rutgers.axs.html.*;
 
 /** The nightly updater for Thorsten's 3PR (a.k.a. PPP) experiment plan.
     
@@ -222,6 +222,10 @@ public class DailyPPP {
 	<li> Ranking based on TJ's Algorithm 1 (in practice, simply
 	     the dot product with the user profile)
 	</ul>
+
+	79% = f( 0.16 )
+	97% = f( 0.88 )
+
      */
     static int makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u, ProgressIndicator pin) 
     throws IOException {
@@ -267,7 +271,10 @@ public class DailyPPP {
 	//searcher.close();
 	TjAlgorithm1 algo = new TjAlgorithm1();
 	// rank by TJ Algo 1
-	sd = algo.rank( upro, sd,  em, maxDocs, false);
+
+	SectionProgressIndicator spin = 
+	    pin.mkSectionProgressIndicator(0.20, 0.80, 1000);
+	sd = algo.rank( upro, sd,  em, maxDocs, false, spin);
 
 	if (pin!=null) pin.setKReal( 0.80);
 		
@@ -327,6 +334,8 @@ public class DailyPPP {
 	outputFile.setPppTopOrphan( topOrphan);
 	double p = 0.5; // probability of swap
 	perturb( entries, p, topOrphan, gen);
+
+	if (pin!=null) pin.setKReal( 0.95);
 
 	// save the sug list to a text file
 	ArticleEntry.save(entries, outputFile.getFile());

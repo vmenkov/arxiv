@@ -113,7 +113,7 @@ public class TorontoPPP {
 	    //searcher.close();
 	    TjAlgorithm1 algo = new TjAlgorithm1();
 	    // rank by TJ Algo 1
-	    sd = algo.rank( upro, sd,  em, standardSugListSize, false);
+	    sd = algo.rank( upro, sd,  em, standardSugListSize, false, null);
 		
 	    // simulated feedback
 	    HashMap<Integer,MutableDouble> updateCo = getRocchioUpdateCoeff(sd, uDocno);
