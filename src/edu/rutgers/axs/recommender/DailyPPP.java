@@ -16,6 +16,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.indexer.Common;
+import edu.rutgers.axs.html.ProgressIndicator;
 
 /** The nightly updater for Thorsten's 3PR (a.k.a. PPP) experiment plan.
     
@@ -110,7 +111,7 @@ public class DailyPPP {
 	}
 	if (doSug) {
 	    Logging.info("Updating suggestions for user " + user);
-	    makeP3Sug(em, aa, searcher, user);
+	    makeP3Sug(em, aa, searcher, user, null);
 	} else {
 	    Logging.info("Skip updating suggestions for user " + user);
 	}
@@ -222,7 +223,7 @@ public class DailyPPP {
 	     the dot product with the user profile)
 	</ul>
      */
-    static int makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u) 
+    static int makeP3Sug(EntityManager em,  ArticleAnalyzer aa, IndexSearcher searcher, User u, ProgressIndicator pin) 
     throws IOException {
 	String msg="";
 	Vector<DataFile> ptr = new  Vector<DataFile>(0);
@@ -253,7 +254,9 @@ public class DailyPPP {
 	int maxlen = 10000;
 	SearchResults sr = 
 	    SubjectSearchResults.orderedSearch(searcher,u,since, forcedToDate, maxlen);
-	
+
+	if (pin!=null) pin.setKReal( 0.20);
+       
 	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
 
 	Date reportedToDate = (forcedToDate!=null)? forcedToDate: new Date();
@@ -265,6 +268,8 @@ public class DailyPPP {
 	TjAlgorithm1 algo = new TjAlgorithm1();
 	// rank by TJ Algo 1
 	sd = algo.rank( upro, sd,  em, maxDocs, false);
+
+	if (pin!=null) pin.setKReal( 0.80);
 		
 	Vector<ArticleEntry> entries = upro.packageEntries(sd);
 
@@ -281,6 +286,7 @@ public class DailyPPP {
 	ArticleEntry.refreshOrder(sr.entries);
 
 	Logging.info("since="+since+", |sd|=" +sd.length+", |entries|=" + entries.size());
+	if (pin!=null) pin.setKReal( 0.90);
 
 	m = "applyUserSpec  = (";
 	for(int i=0; i<4 && i<entries.size(); i++) {

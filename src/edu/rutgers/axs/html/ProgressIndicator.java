@@ -5,20 +5,33 @@ import java.util.*;
 
 /** A simple progress indicator, for displaying in updatable pages */
 public class ProgressIndicator {
-    private int k, n;
+    /** Size of the display bar on the screen */
     final int L = 400;
+    /** Current progress (k) out of the range (n) */
+    protected int k;
+    /** The range of this indicator */
+    final int n;
+    /** This flag controls the text message in the indicator display */
     boolean pct;
+    /** @param _n The range of the progress value */
     public ProgressIndicator(int _n, boolean _pct) {
 	n = _n;
 	k = 0;
 	pct = _pct;
     }
-    public void setK(int _k) {
+    /** @param k Progress indicator position, between 0 and n */
+      public void setK(int _k) {
 	k = _k;
     }
     public void addK(int x) {
 	k += x;
     }
+
+    /** @param r Progress indicator position, between 0.0 and 1.0 */
+    public void setKReal(double r) {
+	setK((int)(r * n));
+    }
+ 
 
     /** Generates a progress bar, using HTML TABLE syntax
 	<p>The image came from 

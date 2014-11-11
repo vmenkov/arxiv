@@ -17,7 +17,7 @@ import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.upload.*;
 import edu.rutgers.axs.indexer.*;
-import edu.rutgers.axs.html.ProgressIndicator;
+import edu.rutgers.axs.html.*;
 
 
 /** Code for initializing 3PR (aka PPP) user profiles using user-uploaded
@@ -143,7 +143,7 @@ public class TorontoPPP {
  
 
 	// prepare suggestion list based on the final profile
-	DailyPPP.makeP3Sug( em,  aa, searcher, u);
+	DailyPPP.makeP3Sug( em,  aa, searcher, u, null);
 
     }
 
@@ -239,6 +239,8 @@ public class TorontoPPP {
 	upro.setTermsFromHQ();
 	Logging.info("TorontoPPP("+uname+"), has set terms from HQ");
 
+	if (pin != null) pin.setK((int)(2.5 * nUploaded));
+
 	if (thread != null) thread.progress("Saving user profile vector...");
 	// save the profile
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
@@ -255,7 +257,11 @@ public class TorontoPPP {
 
 	// prepare suggestion list based on the final profile
 	if (thread != null) thread.progress("Preparing personalized recommendations...");
-	int nsug = DailyPPP.makeP3Sug( em,  aa, searcher, u);
+
+	SectionProgressIndicator spin = (pin==null)? null:
+	    new SectionProgressIndicator(pin, 3*nUploaded, 4*nUploaded, 1000);
+
+	int nsug = DailyPPP.makeP3Sug( em,  aa, searcher, u, spin);
 	if (thread != null) thread.progress("Completed recommendation generation; " + nsug + " articles listed");
 	if (pin != null) pin.setK(4*nUploaded);
 
