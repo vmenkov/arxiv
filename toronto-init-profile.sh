@@ -1,10 +1,21 @@
 #!/bin/csh
 
-#-- This script runs nightly, updating user profiles and sugg lists for all users  in the PPP experiment plan
+#-- This script initializes user profile for one user based on his
+#-- uploaded docs
 
+if ("$1" == "") then
+    echo "Usage: $0 user_name [home_dir]"
+    exit
+endif
 
+if ("$2" == "") then
+else
+    set home=$2
+    echo "Setting home to $home"
+endif
 
-set opt="-DOSMOT_CONFIG=."
+echo home=$home
+
 
 set lib=$home/arxiv/lib
 
@@ -15,12 +26,25 @@ set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/co
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
+#-- looking for javax.persistence.Persistence
+#-- ??
 
-set opt="-cp ${cp} ${opt} -Drefined=true"
+set stoplist=${home}/arxiv/arxiv/WEB-INF/stop200.txt 
+
+set opt="-DOSMOT_CONFIG=."
+set opt="-cp ${cp} ${opt} -Drefined=true  -Dstoplist=${stoplist}"
+
+#echo PATH=$PATH
+#which java
+#setenv JAVA_HOME /usr/local/java/jdk1.6.0_30
+#which java
 
 echo "opt=$opt"
 
-/usr/bin/time  java  $opt -Duser=vmenkov edu.rutgers.axs.recommender.TorontoPPP init2
+#echo /usr/bin/time ${JAVA_HOME}/bin/java  $opt -Duser=$1 edu.rutgers.axs.recommender.TorontoPPP init2
+
+/usr/bin/time java  $opt -Duser=$1 edu.rutgers.axs.recommender.TorontoPPP init2
+
 
 
 

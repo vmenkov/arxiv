@@ -9,7 +9,6 @@
 <link rel="stylesheet" type="text/css" href="../_technical/styles/styles_all.css" />
 <title>Your Account
 </title>
-<jsp:include page="../include/date-head-include.html" />
 </head>
 <body>
 <%   if (main.error) {   %>  <%@include file="../include/error.jsp" %>

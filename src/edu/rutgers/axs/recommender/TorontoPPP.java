@@ -206,9 +206,9 @@ public class TorontoPPP {
 	if (thread != null) {
 	    int n = 4 * nUploaded;
 	    pin = thread.pin = new ProgressIndicator(n, true);
+	    thread.progress("Computing document stats...");
 	}
 
-	thread.progress("Computing document stats...");
 	Logging.info("TorontoPPP("+uname+"): computing norms for the " + nUploaded +" uploaded docs");
 	ArxivScoreDoc[] sd = new ArxivScoreDoc[nUploaded];
 	// contributions 
@@ -224,22 +224,22 @@ public class TorontoPPP {
 		pin.setK(k+1);
 	    }
 	}
-	pin.setK(nUploaded);
+	if (pin != null) pin.setK(nUploaded);
 
-	thread.progress("Summing up...");
+	if (thread != null) thread.progress("Summing up...");
 	Vector<ArticleEntry>	    entries = upro.packageEntries(sd);	    
 	Logging.info("TorontoPPP("+uname+"), will some these docs: " + listReport(entries,updateCo));
 
 	// apply the feedback to the user profile
 	upro.rocchioUpdate2(updateCo, pin);
-	pin.setK(2 * nUploaded);
+	if (pin != null) pin.setK(2 * nUploaded);
 
 	Logging.info("TorontoPPP("+uname+"), has constructed the sum");
 
 	upro.setTermsFromHQ();
 	Logging.info("TorontoPPP("+uname+"), has set terms from HQ");
- 
-	thread.progress("Saving user profile vector...");
+
+	if (thread != null) thread.progress("Saving user profile vector...");
 	// save the profile
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
 	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
@@ -251,13 +251,13 @@ public class TorontoPPP {
 	em.persist(outputFile);
 	em.getTransaction().commit();
 	Logging.info("TorontoPPP("+uname+"), persisted user profile DF object");
- 	pin.setK(3*nUploaded);
+ 	if (pin != null) pin.setK(3*nUploaded);
 
 	// prepare suggestion list based on the final profile
-	thread.progress("Preparing personalized recommendations...");
+	if (thread != null) thread.progress("Preparing personalized recommendations...");
 	int nsug = DailyPPP.makeP3Sug( em,  aa, searcher, u);
-	thread.progress("Completed recommendation generation; " + nsug + " articles listed");
-	pin.setK(4*nUploaded);
+	if (thread != null) thread.progress("Completed recommendation generation; " + nsug + " articles listed");
+	if (pin != null) pin.setK(4*nUploaded);
 
     }
 

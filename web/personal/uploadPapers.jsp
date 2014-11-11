@@ -12,7 +12,6 @@
 <meta http-equiv="refresh" content="2; url=<%=main.reloadURL%>"/>
 <%}%>
 <title>Uploading personal papers</title>
-<jsp:include page="../include/date-head-include.html" />
 </head>
 <body>
 
