@@ -16,9 +16,10 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.Logging;
 
  /** The application for pulling data from the main arxiv server using
-     the OAI interface, and saving them as a CSV file, for David Blei and
-     Laurent (2013-12-15). This is based on ArxivImporter, but is streamlined
-     into a separate, much simpler application.
+     the OAI interface, and saving them as a CSV file, for David Blei
+     and Laurent Charlin (2013-12-15). This class is based on
+     ArxivImporter, but is streamlined into a separate, much simpler
+     application.
 
      <p>For details, see the email threads:
      <ul>
@@ -55,10 +56,18 @@ public class ArxivToCsv {
 
     static private XMLtoCSV  xml2csvMap = XMLtoCSV.makeMap(fields);
 
-    /** Pulls in all pages, or all pages in a date range.
+    /** Pulls in all pages, or all pages in a date range. The "from"
+	and "until" parameters correspond to the parametres of the
+	same name in the OAI2 request's query string; the values they
+	control are apparently shown as the "datestamp" field of each
+	document entry in the retrieved
 	@param tok start harvesting from the beginning (if null), or from this resumption token (otherwise)
 	@param max if max non-negative, then ...; -1 means "all"
-	@param from "YYYY-MM-DD", passed to OAI2 from=... option
+	@param from "YYYY-MM-DD" (inclusively), passed to OAI2 from=... option
+	@param until "YYYY-MM-DD" (inclusively), passed to OAI2 until=... option
+	
+	
+
      */
     public void importAll(String tok, int max,  String from, String until, PrintWriter w)  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;
@@ -82,10 +91,11 @@ public class ArxivToCsv {
 
   /** Parses an OAI-PMH element, and triggers appropriate operations.
       
-      <p>The XML element bein parsed is "OAI-PMH". It typically has child 
-      elements "responseDate", "request", and "ListRecords"; it is the latter
-      which contains all the data we need (as a sequence of "record" elements,
-      followed by a "resumptionToken" element).
+      <p>The XML element being parsed is "OAI-PMH". It typically has
+      child elements "responseDate", "request", and "ListRecords". It
+      is the "ListRecords" element which contains all the data we need
+      (as a sequence of "record" elements, followed by a
+      "resumptionToken" element).
 
       <p>In case of an error, an "error" element is found instea of
       "ListRecords".
@@ -93,18 +103,17 @@ public class ArxivToCsv {
       @return the resumption token
     */
     private String parseResponse(Element e, PrintWriter w)  throws IOException {
-	//org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
 	XMLUtil.assertElement(e,"OAI-PMH");
 	Element listRecordsE = null, getRecordE = null;
-	for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
+	for(Node n=e.getFirstChild(); n!=null; n=n.getNextSibling()) {
 	    if (n instanceof Element && n.getNodeName().equals("ListRecords")) {
-		listRecordsE = ( Element )n;
+		listRecordsE = (Element)n;
 		break;
 	    } else if (n instanceof Element && n.getNodeName().equals("GetRecord")) {
-		getRecordE = ( Element )n;
+		getRecordE = (Element)n;
 		break;
 	    } else if (n instanceof Element && n.getNodeName().equals("error")) {
-		Element err = ( Element )n;
+		Element err = (Element)n;
 		System.out.println("Received an error response: " + err);
 		break;
 	    }
@@ -114,7 +123,7 @@ public class ArxivToCsv {
 	Element outer = (listRecordsE != null) ? listRecordsE:  getRecordE;
 	if (outer == null) return token; // empty response
 
-	for(Node n = outer.getFirstChild(); n!=null; n = n.getNextSibling()) {
+	for(Node n=outer.getFirstChild(); n!=null; n=n.getNextSibling()) {
 	    if (!(n instanceof Element)) continue;
 	    String name = n.getNodeName();
 	    if (name.equals( ArxivImporter.Tags.RECORD)) {
@@ -159,8 +168,8 @@ public class ArxivToCsv {
 
     }
 
-    /** Parses a "record" XML elements. Expected children are "header"
-	and "metadata".
+    /** Parses a "record" XML elements. The expected children are
+	"header" and "metadata" elements.
      */
     public static HashMap<String,String> parseRecordElement(Element e)  throws IOException {
 	Element header = XMLUtil.findChild(e, ArxivImporter.Tags.HEADER, false);
@@ -208,39 +217,48 @@ public class ArxivToCsv {
 
    static void usage(String m) {
 	System.out.println("Arxiv-to-CSV Tool");
-	System.out.println("Usage: java [options] ArxivToCsv all [max-page-cnt]");
+	System.out.println("Usage: java [options] ArxivToCsv [max-page-cnt]");
 	System.out.println("Options:");
-	System.out.println(" [-Dtoken=xxx]");
-
+	System.out.println(" [-Dout=detail.csv]   : out file");
+	System.out.println(" [-Dfrom=2013-01-01]  : first day of the date range (inclusive), in the YYYY-MM-DD format");
+	System.out.println(" [-Duntil=2014-12-31] : last day of the date range (inclusive), in the YYYY-MM-DD format");
+	System.out.println("\nExample: to download all documents with datestamp in 2013 and save them into file details-2013.csv, run the program as follows:");
+	System.out.println("java -Dfrom=2013-01-01 -Duntil=2013-12-31 -Dout=details-2013.csv ArxivToCsv all [max-page-cnt]");
+	
 	if (m!=null) {
 	    System.out.println(m);
 	}
 	System.exit(1);
-    }
+   }
 
+    
     static public void main(String[] argv) throws IOException, SAXException,
 						  java.text.ParseException
- {
-	if (argv.length==0) usage();
+    {
+	//if (argv.length==0) usage();
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
+	String outfile=ht.getOption("out", "details.csv");
 	String from=ArxivImporter.getFrom(ht); // based on "from" and "days"
 	String until=ArxivImporter.getUntil(ht); // based on "until"
-
+     
 	ArxivToCsv imp =new  ArxivToCsv();
-
-	if (argv.length==0) return;
-	final String cmd =argv[0];
-
-	PrintWriter fw = new PrintWriter(new FileWriter("details.csv"));
+	
+	int ja=0;
+	if (argv.length==0) usage();
+	final String cmd =argv[ja++];
+	
+	PrintWriter fw = new PrintWriter(new FileWriter(outfile));
 	fw.println(headerToString());
 	fw.flush();
-
-	if ( cmd.equals("all")) {
+	
+	if ( cmd.equals("help")) {
+	    usage();
+	} else if (cmd.equals("csv")) {
 	    int max=-1;
-	    if (argv.length>1) {
+	    if (ja<argv.length) {
 		try {
-		    max	=Integer.parseInt(argv[1]);
+		    max	=Integer.parseInt(argv[ja++]);
 		} catch(Exception ex) {}
 	    }
 	    System.out.println("Processing web data, up to "+max + " pages; from=" + from +  " until=" + until);
@@ -251,5 +269,5 @@ public class ArxivToCsv {
 	System.out.println("imported "+imp.pcnt+" docs");
 	fw.close();
     }
-
+    
 }

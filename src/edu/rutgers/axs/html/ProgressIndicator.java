@@ -3,7 +3,25 @@ package edu.rutgers.axs.html;
 import java.io.*;
 import java.util.*;
 
-/** A simple progress indicator, for displaying in updatable pages */
+/** A simple progress indicator, for displaying in updatable pages. A
+    ProgressIndicator object serves as a form of one-way interthread
+    communication: it allows a background thread (typically, one that
+    carries out some complicated computation) to report on its
+    progress to threads that serve HTTP requests. 
+
+    <P>A ProgressIndicator is typically used in a BackgroundThread
+    object. A BackgroundThread is created in a servlet's service()
+    method (or in an equivalent method invoked when the server servces
+    a JSP page), and a reference to it is saved as a session
+    property. Subsequent requests within the same web session will be
+    able to access the saved BackgroundThread and the
+    ProgressIndicator object living in it.
+
+    <P>During its operation, the BackgroundThread keeps modifying the
+    ProgressIndicator's "position" (the value of k), which can then be
+    accessed by servlet calls and graphically rendered (in HTML) by
+    ProgressIndicator.toHTML().
+ */
 public class ProgressIndicator {
     /** Size of the display bar on the screen */
     final int L = 400;
@@ -19,19 +37,29 @@ public class ProgressIndicator {
 	k = 0;
 	pct = _pct;
     }
-    /** @param k Progress indicator position, between 0 and n */
-      public void setK(int _k) {
+    
+    /** Sets the current progress indicator  position.
+	@param k Progress indicator position, between 0 and n */
+    public void setK(int _k) {
 	k = _k;
     }
+    /** Advances the current progress indicator  position by a 
+	specified value.
+     */
     public void addK(int x) {
 	k += x;
     }
 
-    /** @param r Progress indicator position, between 0.0 and 1.0 */
+    /**  Sets the current progress indicator  position.
+	 @param r Progress indicator position, between 0.0 and 1.0 */
     public void setKReal(double r) {
 	setK((int)(r * n));
     }
- 
+
+    /** Creates a re-scaled ProgressIndicator object which can
+	be conveniently used by a subroutine called from 
+	BackgroundThread's main method.
+     */
     public SectionProgressIndicator mkSectionProgressIndicator(double from, double to, int _n) {
 	return new SectionProgressIndicator(this,
 					    (int)(n*from),

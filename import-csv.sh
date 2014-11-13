@@ -1,8 +1,18 @@
 #!/bin/csh
 
-# Usage examples:
-# ./import.sh files 'http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:1211.0003'
+# Usage example:
+# import-csv.sh 2013 details-2013.csv
 
+#-- the directory where this script lives
+set scriptdir=`dirname $0`
+
+#-- the assumption is that the script lives in ~xxx/arxiv/arxiv (where
+#-- xxx is the name of the user who has everything set up right), so
+#-- that scriptdir/../.. is ~xxx. 
+
+set home=$scriptdir/../..
+
+echo "Using home=$home"
 
 set opt="-DOSMOT_CONFIG=."
 
@@ -20,14 +30,27 @@ set opt="-cp ${cp} ${opt}"
 #set opt="-cp ${cp} ${opt} -Ddays=7"
 # -Dfrom=2012-01-16
 
-echo "opt=$opt"
+# echo "opt=$opt"
 
 if ("$1" == "") then
-    echo 'Usage: import-csv.sh all [maxCnt]'
+    echo 'Usage: import-csv.sh year [outputfile]'
     exit
+else
+    set year=$1
 endif
 
-/usr/bin/time  java $opt edu.rutgers.axs.indexer.ArxivToCsv $1 "$2" "$3" "$4"
+set from=${year}-01-01
+set until=${year}-12-31
+
+if ("$2" == "") then
+    set out=details-${year}.csv
+else
+    set out=$2
+endif
+
+echo "Will request metadata for articles with time stamps from $from thru $until, and save them to file $out"
+
+/usr/bin/time java $opt -Dout=$out -Dfrom=$from -Duntil=$until edu.rutgers.axs.indexer.ArxivToCsv csv
 
 
 
