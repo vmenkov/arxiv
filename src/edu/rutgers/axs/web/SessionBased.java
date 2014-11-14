@@ -100,14 +100,14 @@ public class SessionBased  extends ResultsBase {
     /** Creates a snippet  of HTML describing one article entry. 
 
 	<ul>
-	<li> title
+	<li> title 
+	<li> date (as per Oct 2014 meeting) 
 	<li> subject
 	<li> first 2 authors, ..., last
 	</ul>
 
     */
     public String resultsDivHTMLLite(ArticleEntry e, double largest) {
-
 	String rt = "[" + e.idline + "; score="+e.score+ "; "+
 	    e.formatDate()+"]";
 	if (e.researcherCommline!=null && e.researcherCommline.length()>0) {
@@ -158,7 +158,9 @@ public class SessionBased  extends ResultsBase {
             "<table style=\"width:100%\"><tr><td>\n" +
 	    "<a name=\""+ aName +"\" title=\""+ rt +
 	    "\" onclick=\""  + js + "\">\n" +
-	    e.i + ". " + e.titline + "</a></td></tr>\n" +
+	    e.i + ". " + e.titline + "</a> ("+
+	    e.formatDate() + ")" +
+	    "</td></tr>\n" +
 	    "<tr><td colspan=2>" +
 	    abbreviateAuthline(e.authline)+" &mdash; \n"+
 	    abbreviateSubj(e.subj)+"</td>\n" +

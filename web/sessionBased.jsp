@@ -71,7 +71,7 @@
 <% if (main.user==null) { %> 
 If you enjoy Session-Based Recommendations, please 
 <a name="register" title="Sign up with My.ArXiv!"
-onclick="javascript:window.opener.location.href='participation.jsp?code=SET_BASED_o1yaw7gslplj';">sign-up</a> to preserve your suggestions and gain additional options! (Or <a name="register" title="Sign up with My.ArXiv!"
+onclick="javascript:window.opener.location.href='participation.jsp?code=PPP_3vk9gbb5h6g5';">sign-up</a> to preserve your suggestions and gain additional options! (Or <a name="register" title="Sign up with My.ArXiv!"
 onclick="javascript:window.opener.location.href='login2.jsp';">log in</a>, if
 you are already registered). 
 <% } %>
