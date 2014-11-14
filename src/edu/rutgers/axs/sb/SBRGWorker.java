@@ -101,7 +101,7 @@ class SBRGWorker  {
     /** Looks up the JVM thread ID for the current thread (the SBRGThread within whose
 	context this worker works)
      */
-    private long getId() { 
+    static private long getId() { 
 	return Thread.currentThread().getId(); 
     }
 
@@ -264,7 +264,11 @@ class SBRGWorker  {
 	subject categories. This is used in our baseline method. */
     static private ScoreDoc[] computeArticleBasedListSubjects(IndexSearcher searcher, String aid, int maxlen) throws Exception {
 
-	int docno= Common.find(searcher, aid);
+	int docno= Common.findOrZero(searcher, aid);
+	if (docno == 0) {
+	    Logging.warning("SBRGThread " + getId() + ": ignoring article " + aid + " which is not (yet?) in Lucene");
+	    return new  ScoreDoc[0];
+	}
 	Document doc = searcher.doc(docno);
 
 	String catJoined =doc.get(ArxivFields.CATEGORY);

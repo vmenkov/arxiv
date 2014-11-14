@@ -106,15 +106,16 @@ public class ArxivToCsv {
 	XMLUtil.assertElement(e,"OAI-PMH");
 	Element listRecordsE = null, getRecordE = null;
 	for(Node n=e.getFirstChild(); n!=null; n=n.getNextSibling()) {
-	    if (n instanceof Element && n.getNodeName().equals("ListRecords")) {
+	    if (!(n instanceof Element)) continue;
+	    if (n.getNodeName().equals("ListRecords")) {
 		listRecordsE = (Element)n;
 		break;
-	    } else if (n instanceof Element && n.getNodeName().equals("GetRecord")) {
+	    } else if (n.getNodeName().equals("GetRecord")) {
 		getRecordE = (Element)n;
 		break;
-	    } else if (n instanceof Element && n.getNodeName().equals("error")) {
+	    } else if (n.getNodeName().equals("error")) {
 		Element err = (Element)n;
-		System.out.println("Received an error response: " + err);
+		System.out.println("Received an error response: "+err);
 		break;
 	    }
 	}
@@ -222,6 +223,7 @@ public class ArxivToCsv {
 	System.out.println(" [-Dout=detail.csv]   : out file");
 	System.out.println(" [-Dfrom=2013-01-01]  : first day of the date range (inclusive), in the YYYY-MM-DD format");
 	System.out.println(" [-Duntil=2014-12-31] : last day of the date range (inclusive), in the YYYY-MM-DD format");
+	System.out.println(" [-Ddays=7]           : an alternative to 'from', specifies the first day of the date range as being so many days ago");
 	System.out.println("\nExample: to download all documents with datestamp in 2013 and save them into file details-2013.csv, run the program as follows:");
 	System.out.println("java -Dfrom=2013-01-01 -Duntil=2013-12-31 -Dout=details-2013.csv ArxivToCsv all [max-page-cnt]");
 	
@@ -238,6 +240,7 @@ public class ArxivToCsv {
 	//if (argv.length==0) usage();
 	ParseConfig ht = new ParseConfig();
 	String tok=ht.getOption("token", null);
+	// The name of the output file
 	String outfile=ht.getOption("out", "details.csv");
 	String from=ArxivImporter.getFrom(ht); // based on "from" and "days"
 	String until=ArxivImporter.getUntil(ht); // based on "until"
