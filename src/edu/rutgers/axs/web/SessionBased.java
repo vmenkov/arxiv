@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
+import java.net.URL;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -222,5 +223,30 @@ public class SessionBased  extends ResultsBase {
 	return (q.length<=3) ? subj :    q[0] + " " + q[1] +" ...";
     }
 
+    /** Returns a suitable sign-up URL. (The invitation code is picked
+	from the Invitation Manager from the appropriate server).
+    */
+    public String getParticipationUrl() {
+	StringBuffer u = request.getRequestURL();
+
+	String s =  cp + "/participation.jsp";
+
+	try {
+	    URL url = new URL(u.toString());
+	    String host = url.getHost();
+
+	    if (host.equals("my.arxiv.org"))   s += "?code=PPP_3vk9gbb5h6g5";
+	    else if (host.equals("localhost")) s += "?code=PPP_q5dzzwg7yukl";
+	} catch( java.net.MalformedURLException ex) {
+	    Logging.warning("Cannot parse my own request URL: " + u);
+	}
+
+	return s;
+
+	//String hostname =  EmailSug.determineHostname();
+	//boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu")
+	//   && !hostname.endsWith("cactuar.scilsnet.rutgers.edu");
+
+    }
 
 }

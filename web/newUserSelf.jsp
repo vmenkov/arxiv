@@ -37,12 +37,42 @@
 </table>
 </p>
 
-<!-- link to "upload articles" (Toronto system) page will go here -->
+<% 
+   if (main.needTorontoLink) {   %>  
 
 <p>
-Now you can 
-<a href="<%=main.cp%>/login2.jsp?sp=/index.jsp">Log in with your new user name and password</a> to continue browsing.
+<form action="<%=main.cp%>/login2.jsp">
+To help My.ArXiv find articles of interest to you, you can upload a few documents that you know <strong>are</strong> interesting. Those can be papers you have read on ArXiv.org or elsewhere, or even some papers you wrote yourself.
+<input type="hidden" name="sp" value="/personal/uploadPapers.jsp">
+<input type="submit" value="I want to upload some papers">
+</form>
 </p>
+
+<p>
+<form action="<%=main.cp%>/login2.jsp">
+<input type="hidden" name="sp" value="/index.jsp">
+</form>
+Or 
+<input type="submit" value="Continue without uploading papers">
+</form>
+</p>
+
+<p>In either case, you will be asked for your new login name and password.</p>
+
+<%   }  else {   %>
+
+<p>
+Click on the button below to log in with your new user name and password to continue browsing.
+<form action="<%=main.cp%>/login2.jsp">
+<input type="hidden" name="sp" value="/index.jsp">
+<input type="submit" value="Continue">
+</form>
+</p>
+
+<!-- a href="<%=main.cp%>/login2.jsp?sp=/index.jsp">Log in with your new user name and password</a -->
+
+<%   }   %>
+
 
 <!-- p>
 <ul>

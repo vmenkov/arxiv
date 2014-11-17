@@ -102,4 +102,6 @@ public class LoginServlet extends HttpServlet {
 	}
     }
 
+    //    static recordSession() {    }
+
 }

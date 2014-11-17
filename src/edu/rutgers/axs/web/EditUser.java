@@ -39,7 +39,12 @@ public class EditUser extends Participation  {
 
     final static String EE4_PREFIX="ree4";
 
-
+    /** If true, the web page will have a link to the doc upload
+	page. This is enabled in the CREATE_SELF situation, when
+	other eligibility rules are satisfied.
+    */
+    public boolean needTorontoLink = false;
+    
     /** A versatile method for editing a user's record in the SQL
 	database. The method is invoked from a variety of web pages,
 	both those accessible to the user himself (self-service) and
@@ -253,7 +258,10 @@ public class EditUser extends Participation  {
 		em.getTransaction().commit();
 	    }
 
-
+	    if (mode==Mode.CREATE_SELF && r.getProgram() == User.Program.PPP) {
+		// invite the user to upload some papers
+		needTorontoLink = true;
+	    }
 
 	    // read back
 	    //em = sd.getEM();	    

@@ -29,6 +29,16 @@ import edu.rutgers.axs.sql.Logging;
      "adding meta-data to abstracts.dat",  starting 2013-12-12
      </ul>
 
+     <p>What is the best time of day to run this application if you
+     want to get the recently uploaded articles as soon as they are
+     released? This, apparently, is around 20:15 (or, to be safe,
+     20:30) New York time.  PG writes (2012-11-19): "the pages are
+     updated on the five days /M/Tu/W/Th at 20:00 EDT/EST, currently
+     we're on EST so that's a five hour difference and they're updated
+     at 01:00 GMT. in the summer we're on EDT and they're updated at
+     00:00 GMT". "5 days/wk S-Th at 20:15 should work (or perhaps
+     20:30)"
+
  */
 public class ArxivToCsv {
 
@@ -58,16 +68,18 @@ public class ArxivToCsv {
 
     /** Pulls in all pages, or all pages in a date range. The "from"
 	and "until" parameters correspond to the parametres of the
-	same name in the OAI2 request's query string; the values they
-	control are apparently shown as the "datestamp" field of each
-	document entry in the retrieved
+	same name in the OAI2 request's query string. The date values
+	these parameters refer to are the ones shown as the
+	"datestamp" field of each document entry in the retrieved. (On
+	the semantics of this fiels, as explained by Dr. Ginsparg, see
+	the email thread "Semantics of the "datestamp" field in ArXiv's
+	OAI2", dated 2013-12-18).
+
 	@param tok start harvesting from the beginning (if null), or from this resumption token (otherwise)
 	@param max if max non-negative, then ...; -1 means "all"
 	@param from "YYYY-MM-DD" (inclusively), passed to OAI2 from=... option
 	@param until "YYYY-MM-DD" (inclusively), passed to OAI2 until=... option
-	
-	
-
+       	
      */
     public void importAll(String tok, int max,  String from, String until, PrintWriter w)  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;

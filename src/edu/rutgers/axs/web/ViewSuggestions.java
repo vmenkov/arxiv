@@ -666,7 +666,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    //"; served at "+new Date()+".\n"; 
 
 	    Date since = df.getSince();
-	    s +=  "It contains some articles of possible interest to you selected from ";
+	    s +=  " It contains some articles of possible interest to you selected from ";
 	    if (since!=null) {
 		s += "those released since " + since +".";
 	    } else {

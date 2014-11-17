@@ -91,6 +91,8 @@ public class EmailSug extends ResultsBase {
     }
 
   
+    /** Creates an object that will be used to send an email msg to
+	the specified user. */
     private EmailSug(User _r) {
 	r = _r;
 	uname = r.getUser_name();
@@ -225,7 +227,8 @@ public class EmailSug extends ResultsBase {
 	    text +=  s;
 	    i++;
 	    /*text = text + "<p>" 
-	      + i + ".<br>" + "<a href=" + link + ">" + e.titline + "</a>" + "<br>" 
+	      + i + ".<br>" + "<a href=" + link + ">" + e.titline + "</a> ("+
+	      e.formatDate() + ")<br>" 
 	      + e.authline + "<br>Subjects: " + e.subjline + "</p>";*/
 	    
 	}
@@ -404,7 +407,7 @@ public class EmailSug extends ResultsBase {
 	    //researcherSpan(rt)+ 
 	    //e.idline + "; "+e.formatDate()+"\n" +
 	    "<b>" +
-	    e.titline + "</b></font><br>\n" +
+	    e.titline + "</b></font> (" + e.formatDate() + ")<br>\n"  +
 	    e.authline+ "<br>\n" +
 	    e.subjline+ "<br>\n" +
 	    "[" + a( url, "View online") + "]\n";
@@ -412,6 +415,14 @@ public class EmailSug extends ResultsBase {
 		return s;	
     }
 
+    /** Does this user need an email messag esent to him today? 
+
+	// FIXME: this just looks at the date when the latest email
+	message was sent, but does not check whether the currently
+	available sug list is substantially different from the
+	one sent in that message. We probably should do that check too!
+	(2014-11-15)
+     */
     private boolean needEmail(EntityManager em) {
 	int emailDays = r.getEmailDays();
 	if (emailDays==0) {
@@ -457,6 +468,7 @@ public class EmailSug extends ResultsBase {
 	return (email.indexOf("@") > 0);
     }
 
+    /** Sends emails with sug lists to all users who need them. */
     private static void doAllEmails(EntityManager em, User.Program program, boolean force) {
 	List<Integer> lu = User.selectByProgram(em, program);
 
