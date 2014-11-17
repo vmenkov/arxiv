@@ -284,8 +284,8 @@ public class HistoryClustering {
 	usageFrom=getDateStringOption(ht,"usageFrom");
 	usageTo  =getDateStringOption(ht,"usageTo");
 
-	articleDateFrom = ht.getOptionDate("articleDateFrom", "20100101");
-	articleDateTo = ht.getOptionDate("articleDateTo", "20120101");
+	articleDateFrom = ht.getOptionDate("articleDateFrom", "2010-01-01");
+	articleDateTo = ht.getOptionDate("articleDateTo", "2012-01-01");
 
 	System.out.println("Reading pre-split usage files dated " +
 			   usageFrom + " to " + usageTo);
