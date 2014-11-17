@@ -128,18 +128,10 @@ public class SessionBased  extends ResultsBase {
 
 	String js = "javascript:window.opener.location.href='" +url+ "';";
 
-	//When a new article is added to the list, it will be highlighted a different color.
+       
 	//This code snipet will determine to highlight the given article
-	String colorCode = "#ffffff";
-	if(e.age > 3) e.age = 3;
-
-	switch(e.age) {
-	case 1: colorCode = "#e0e0e0"; break;
-	case 2: colorCode = "#d8d8d8"; break;
-	case 3: colorCode = "#d0d0d0"; break;
-	default: colorCode = "#ffffff"; break;
-	}
-
+	final String colorCode = "#ffffff";
+	
 	String colorBack =  "<div class=\"result\" id=\"" + e.resultsDivId() + "\" style=\"background-color:" + colorCode + "\">\n"; 
 	String divBackColor = "style=\"background-color:" + colorCode + "\"";
 

@@ -75,10 +75,7 @@ onclick="javascript:window.opener.location.href='<%=main.getParticipationUrl()%>
 onclick="javascript:window.opener.location.href='login2.jsp';">log in</a>, if
 you are already registered). 
 <% } %>
-
-The list below well automatically update as you visit more pages. As
-articles get older, they will turn darker grey over time.  You can
-reorder the list by dragging article entries up or down.
+You can reorder the list by dragging article entries up or down.
 </p>
 
 <% double largest = 0; 
