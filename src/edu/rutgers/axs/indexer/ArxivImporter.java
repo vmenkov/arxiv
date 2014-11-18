@@ -449,37 +449,43 @@ public class ArxivImporter {
     }
 
 
+    /** This primarily handles the server's return code HTTP_UNAVAILABLE (503),
+	which comes with the Retry-After code. (As per the OAI2 standard,
+	the server may ask us to wait and to retry). In addition, we also do 
+	a limited amount of retries for code 500 (HTTP_INTERNAL_ERROR), which 
+	very occasionally happens too.
+    */
     private static boolean mustRetry(HttpURLConnection conn )throws IOException {
 	int code = conn.getResponseCode();
-	if (code!=HttpURLConnection.HTTP_UNAVAILABLE  ) return false;
+	if (code==HttpURLConnection.HTTP_OK) return false;
 
-	String ra = conn.getHeaderField("Retry-After");
-	//conn.close();
-	System.out.println("got code "+code+", Retry-After="+ra);
-	int interval=-1; // in seconds
-	int padding=5; // pad the interval with so many seconds
-	Date d = null;
-	   
-	try {
-	    interval	=Integer.parseInt(ra);
-	} catch(Exception ex) {}
 	long msec1= System.currentTimeMillis();
-	long msec2=msec1;
+	long msec2= msec1+ 1000 * 120; // default long wait	
+	if (code==HttpURLConnection.HTTP_UNAVAILABLE) {
+
+	    String ra = conn.getHeaderField("Retry-After");
+	    System.out.println("got code "+code+", Retry-After="+ra);
+	    int padding=5; // pad the interval with so many seconds
 	
-	if (interval>=0) {
-	    msec2=msec1+ 1000 * (interval+padding);
-	} else {
+	    int interval=-1; // in seconds
 	    try {
-		SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-		d = format.parse(ra);
-		msec2=d.getTime();  	
-		if (msec2<= msec1) {
-		     msec2=msec1+ 1000*60;
-		}
-	    } catch(Exception ex) {
-		msec2=msec1+ 1000 * 60;
+		interval = Integer.parseInt(ra);
+	    } catch(Exception ex) {}
+	
+	    if (interval>=0) {
+		msec2=msec1+ 1000 * (interval+padding);
+	    } else {
+		try {
+		    SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+		    Date d = format.parse(ra);
+		    long q = d.getTime();  
+		    if (q > msec1) msec2 = q;
+		} catch(Exception ex) {}
 	    }
-	}
+	} else if (code==HttpURLConnection.HTTP_INTERNAL_ERROR) {
+	    // Very rarely, HTTP_INTERNAL_ERROR (code 500) is also reported
+	    System.out.println("got code "+code+", let's retry just in case");
+	} else return false;
 
 	do {
 	    try {
@@ -501,6 +507,8 @@ public class ArxivImporter {
 	final long necessaryIntervalMsec = 1000 * 21L;
 
 	HttpURLConnection conn;
+	final int maxAttemptCnt = 3;
+	int attemptCnt = 0;
 	do {
 	    Date now = new Date();	    
 	    if (lastRequestTime!=null) {
@@ -520,7 +528,7 @@ public class ArxivImporter {
 	    conn = (HttpURLConnection)url.openConnection();  
 	    conn.setFollowRedirects(true) ;
 	    conn.setRequestProperty("User-Agent", "arXiv_xs-Importer/0.1");
-	} while( mustRetry(conn));
+	} while( ++attemptCnt < maxAttemptCnt && mustRetry(conn));
 
 	int code = conn.getResponseCode();
  

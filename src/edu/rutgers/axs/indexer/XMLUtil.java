@@ -1,16 +1,10 @@
 package edu.rutgers.axs.indexer;
 
-//import java.util.Collection;
-//import java.util.Iterator;
-
 import java.util.*;
-//import java.text.SimpleDateFormat;
-//import java.util.regex.*;
 import java.io.*;
 
 // stuff for handling XML
 import org.apache.xerces.parsers.DOMParser;
-//import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 import org.xml.sax.InputSource;
 
