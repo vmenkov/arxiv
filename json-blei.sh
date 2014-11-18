@@ -3,7 +3,18 @@
 #-- Converts JSON files to space-separated files for use by David
 #-- Blei's team, as per David Blei's request (2013-10-11)
 
+if ("$1" == "") then
+    echo usage "$0 yyyy"
+    exit 1
+else
+    set year=$1
+    echo "Setting year to $year"
+endif
+
 set opt="-Xmx4096m -DOSMOT_CONFIG=."
+
+#-- home will resolve to ~vm293, regardless of who runs the script
+set home=`dirname $0`/../..
 
 set lib=$home/arxiv/lib
 set tclib=/usr/local/tomcat/lib
@@ -12,9 +23,6 @@ set cp="$tclib/servlet-api.jar:$tclib/catalina.jar:$lib/axs.jar:$lib/colt.jar:$l
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:../lucene/lucene-3.3.0/contrib/benchmark/lib/commons-logging-1.0.4.jar"
 set cp="${cp}:/usr/local/tomcat/bin/tomcat-juli.jar"
-
-# on cactuar
-set cp="${cp}:../tomcat-lib-to-copy/catalina.jar"
 
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
@@ -31,7 +39,14 @@ set outdir=/data/arxiv/blei/usage1
 
 foreach d (/data/json/usage) 
 echo "Directory $d"
-set files=`(cd $d; ls 20??/??????_usage.json.gz)` 
+
+if (-e $d/$year) then
+else
+    echo "Directory $d/$year does not exist!"
+    exit 1
+endif
+
+set files=`(cd $d; ls $year/??????_usage.json.gz)` 
 
 foreach g ($files)
     set f="$d/$g"
