@@ -462,7 +462,7 @@ public class ArxivImporter {
 	long msec1= System.currentTimeMillis();
 	long msec2= msec1+ 1000 * 120; // default long wait	
 	if (code==HttpURLConnection.HTTP_UNAVAILABLE) {
-
+	    // this usually is a typical OAI2 retry message
 	    String ra = conn.getHeaderField("Retry-After");
 	    System.out.println("got code "+code+", Retry-After="+ra);
 	    int padding=5; // pad the interval with so many seconds
@@ -507,7 +507,7 @@ public class ArxivImporter {
 	final long necessaryIntervalMsec = 1000 * 21L;
 
 	HttpURLConnection conn;
-	final int maxAttemptCnt = 3;
+	final int maxAttemptCnt = 10;
 	int attemptCnt = 0;
 	do {
 	    Date now = new Date();	    
