@@ -28,10 +28,18 @@ import edu.rutgers.axs.indexer.ArxivFields;
     public int getId() {        return id;    }
     public void setId(int x) {        id=x;    }
 
+    /** Document clustering for EE4 */
     @Basic  @Display(editable=true, order=2)
         private int ee4classId;    
     public int getEe4classId() {        return ee4classId;    }
-    public void settEe4classId(int x) {        ee4classId=x;    }
+    public void setEe4classId(int x) {        ee4classId=x;    }
+
+    /** Document clustering for EE5 */
+    @Basic  @Display(editable=true, order=2)
+        private int ee5classId;    
+    public int getEe5classId() {        return ee5classId;    }
+    public void setEe5classId(int x) {        ee5classId=x;    }
+
 
    /** ArXiv Article ID.
 

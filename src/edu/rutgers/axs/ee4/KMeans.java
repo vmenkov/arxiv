@@ -191,7 +191,7 @@ public class KMeans {
 	Document doc = reader.document(docno);
 	String aid = doc.get(ArxivFields.PAPER);
 	Article a = Article.findByAid(  em, aid);
-	a.settEe4classId(cid);
+	a.setEe4classId(cid);
 	em.persist(a);
     }
 

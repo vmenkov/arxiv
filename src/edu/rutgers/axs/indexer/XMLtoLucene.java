@@ -88,7 +88,7 @@ class XMLtoLucene {
 	// Disposition plan
 	Xml2Lucene q = map.get(name0);
 	if (q==null) {
-	    Logger.log("There are no instructions for processing XML element '"+name0+"'; ignoring it and any children");
+	    if (XMLtoHash.debug) Logger.log("There are no instructions for processing XML element '"+name0+"'; ignoring it and any children");
 	    return;
 	}
 	if ((q.flags & Flags.IGNORE)!=0) return;

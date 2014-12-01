@@ -15,7 +15,7 @@ import org.xml.sax.SAXException;
 
 public class XMLtoHash   {
     
-    private static final boolean debug = false;
+    static final boolean debug = false;
 
     /** Flags for Xml2Lucene objects */
     static class Flags {

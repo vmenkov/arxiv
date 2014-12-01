@@ -207,6 +207,7 @@ public class Indexer {
     /** Reads a text file or GZipped text file.
 	@param doc_file File name. It can be a text file, or a "*.gz"
 	GZipped text file.
+	@return The full text of the document's body
      */
     static String parseDocFile(String doc_file) throws IOException {
 
@@ -525,9 +526,9 @@ public class Indexer {
      */
     static File locateBodyFile( String id,  String bodySrcRoot) {
  	String doc_file = Cache.getFilename(id , bodySrcRoot);
-	System.out.println("id="+id+", body at " + doc_file);
+	//System.out.println("id="+id+", body at " + doc_file);
  	if (doc_file==null) {
-	    System.out.println("No Document file " + doc_file + " missing.");
+	    System.out.println("Document id " + id + " cannot be mapped to a cache path");
 	    return null;
 	} 
 	String doc_file_gz = doc_file + GZ;

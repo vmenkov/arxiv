@@ -1,6 +1,6 @@
 #!/bin/csh
 
-#-----------------------------------------------------------------------------
+#---------------------------------------------------------------------
 #-- This script is run daily from the crontab. It runs the following
 #-- 3 programs, sequentially:
 #-- * ArxivImporter, which pulls new articles from arxiv.org;
@@ -12,7 +12,7 @@
 # the 1st command-line argument), which is used as a base for finding
 # jar files etc. This is for the convenience of running the script as
 # a different user (e.g. with crontab)
-# -----------------------------------------------------------------------------
+#----------------------------------------------------------------------
 
 /bin/date
 

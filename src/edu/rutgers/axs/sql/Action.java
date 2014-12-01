@@ -250,9 +250,10 @@ import  edu.rutgers.axs.web.SessionData;
 	    BERNOULLI_EXPLORATION,	    BERNOULLI_EXPLOITATION,
 	    /** Peter Frazier's Exploration Engine ver 4 */
 	    MAIN_EE4,  MAIN_EE4_MIX,
+	    MAIN_EE5,  MAIN_EE5_MIX,
 
 	    /** Body of the email messages */
-	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4, EMAIL_EE4_MIX,
+	    EMAIL_SL, EMAIL_MIX, EMAIL_EE4, EMAIL_EE4_MIX, EMAIL_EE5, EMAIL_EE5_MIX,
 	    
 	    /** Session-based recommendation list (typically, offered
 		to anon users) */

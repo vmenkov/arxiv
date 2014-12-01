@@ -6,7 +6,6 @@ import javax.persistence.*;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
-//import edu.rutgers.axs.web.EditUser;
 import edu.rutgers.axs.web.Tools;
 import edu.rutgers.axs.web.WebException;
 

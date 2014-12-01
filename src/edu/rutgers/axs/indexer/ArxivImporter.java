@@ -138,8 +138,10 @@ public class ArxivImporter {
     }
 
 
-     private String  bodySrcRoot, bodyCacheRoot=Options.get("CACHE_DIRECTORY"),
-	metaCacheRoot=Options.get("METADATA_CACHE_DIRECTORY");
+     private String  
+	 bodySrcRoot = Options.get("ARXIV_TEXT_DIRECTORY"),
+	bodyCacheRoot = Options.get("CACHE_DIRECTORY"),
+	metaCacheRoot = Options.get("METADATA_CACHE_DIRECTORY");
 
     private Directory indexDirectory;
     /** Used in rewrite==false mode, to look up already existing entries */
@@ -167,7 +169,8 @@ public class ArxivImporter {
 	their cache directory into their web server's file system, as
 	per VM's request; 2012-01-16.
      */
-    boolean getBodyFromWeb(String id, File storeTo) throws IOException    {
+    static boolean getBodyFromWeb(String id, File storeTo) throws IOException    {
+	// The file path on the remote server
 	String doc_file = Cache.getFilename(id , "arXiv-cache");
 	if (doc_file==null) {
 	    System.out.println("Cannot figure remote file name for article id=" + id);
@@ -246,15 +249,18 @@ public class ArxivImporter {
 	bodySrcRoot=_bodySrcRoot;
     }
 
-    /** Finds the body file in the specified dir tree, and reads it in
-	if available. Both original files (*.txt) and gzipped ones
-	(*.*.gz) are looked for and read.
+    /** Finds the document body file in the specified dir tree, and
+	reads it in if available. Both original files (*.txt) and
+	gzipped ones (*.*.gz) are looked for and read.
 
 	@param  bodySrcRoot The root of a file directory tree in which 
 	we'll look for the document body.
-     */
-    private String readBody( String id,  String bodySrcRoot) {
- 
+
+	@return The full text of the document's body, or null if none
+	could be obtained.
+    */
+    public static String readBody( String id,  String bodySrcRoot) {
+	
 	File q =  Indexer.locateBodyFile(id,  bodySrcRoot);
 
 	if (q==null) {
@@ -413,7 +419,7 @@ public class ArxivImporter {
 	    missingBodyIdList.add(paper);
 	}
 
-	System.out.println("id="+paper+", date=" + doc.get(ArxivFields.DATE));//+", Doc = " + doc);
+	System.out.println("id="+paper+", date=" + doc.get(ArxivFields.DATE) +", body " + (whole_doc!=null ? "available" : "not available"));
 	
 	// Create a SQL database entry, if it does not exist yet
 	Article.getArticleAlways( em,  paper);
@@ -712,7 +718,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
     static boolean  optimize=true;
     static boolean fixCatsOnly = false;
-
+  
     /** Options:
 	<pre>
 	-Dtoken=xxxx   Resume from the specified resumption page
@@ -737,8 +743,15 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
 	ArxivImporter imp =new  ArxivImporter();
 
-	imp.metaCacheRoot=  ht.getOption("meta", imp.metaCacheRoot);
-	imp.setBodySrcRoot( ht.getOption("bodies", "../arXiv-text/"));
+	imp.metaCacheRoot =  ht.getOption("meta", imp.metaCacheRoot);
+	if (!(new File(imp.metaCacheRoot)).isDirectory()) {
+	    System.out.println("Cache directory " + imp.metaCacheRoot + " does not exist!");
+	    System.exit(1);
+	}
+	imp.setBodySrcRoot( ht.getOption("bodies", imp.bodySrcRoot));
+	if (!(new File(imp.bodySrcRoot)).isDirectory()) {
+	    System.out.println("Warning: body src root directory " + imp.bodySrcRoot + " does not exist!");
+	}
 
 	if (argv.length==0) return;
 	final String cmd =argv[0];

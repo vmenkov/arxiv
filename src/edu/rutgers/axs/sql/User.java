@@ -167,6 +167,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    BERNOULLI_EXPLOITATION,
 	    /** Peter Frazeer's Exploration Engine v4 */
 	    EE4,
+	    EE5,
 	    /** Thorsten Joachim's Perturbed Preference Perceptron */
 	    PPP,
 	    /** This is not an actual program, but simply a code to 

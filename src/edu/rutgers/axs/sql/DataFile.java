@@ -90,6 +90,7 @@ import edu.rutgers.axs.ParseConfig;
 	    BERNOULLI_SUGGESTIONS,
 	    /** Peter Frazier's Explolration Engine ver 4 */
 	    EE4_SUGGESTIONS,
+	    EE5_SUGGESTIONS,
 	    /**  Thorsten's Perturbed Preference Perceptron */
 	    PPP_USER_PROFILE,
 	    PPP_SUGGESTIONS,

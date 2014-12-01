@@ -14,6 +14,8 @@ import edu.cornell.cs.osmot.logger.Logger;
  * 
  * @author Filip Radlinski
  * @version 1.1, May 2005
+ *
+ * Slight changes (for my.arxiv) by Vladimir Menkov, 2012-2014
  */
 @SuppressWarnings("unchecked")
 public class Options {
@@ -43,8 +45,12 @@ public class Options {
     private static String requiredBlankableOptions[] = { 
 	"SEARCHER_BASE_VISIBLE_URL"};
 	
-    private static String paths[] = { "INDEX_DIRECTORY", "LOG_DIRECTORY",
-				      "CACHE_DIRECTORY" };
+    private static String paths[] = {"INDEX_DIRECTORY", 
+				     "LOG_DIRECTORY",
+				     "CACHE_DIRECTORY",
+				     "METADATA_CACHE_DIRECTORY",
+				     "ARXIV_TEXT_DIRECTORY"
+    };
 
     public static boolean debug = false;
 
