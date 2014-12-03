@@ -21,6 +21,11 @@ import edu.rutgers.axs.sql.Logging;
      ArxivImporter, but is streamlined into a separate, much simpler
      application.
 
+     <p>Unlike ArxivImporter, this application is only concerned with
+     the metadata (which are available via the OAI2 interface), and
+     does not handle document bodies (which are obtained by a more
+     convoluted process).
+
      <p>For details, see the email threads:
      <ul>
      <li>
@@ -42,7 +47,7 @@ import edu.rutgers.axs.sql.Logging;
  */
 public class ArxivToCsv {
 
-    /*
+    /*  Fields requested by Laurent: <pre>
 -id     
 - paper title
 - authors (& affiliations when available)
@@ -51,13 +56,14 @@ public class ArxivToCsv {
 - DOI
 - journal ref
 - abstract
+</pre>
 */
     static final String [] fields = {
 	"id",
 	"created",
 	"updated",
-	"title",
-	ArxivFields.AUTHORS, //"authors",
+	ArxivFields.TITLE, 
+	ArxivFields.AUTHORS, 
 	"categories",
 	"doi",
 	"journal-ref",

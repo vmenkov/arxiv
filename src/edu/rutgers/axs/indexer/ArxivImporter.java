@@ -165,9 +165,17 @@ public class ArxivImporter {
     }
 
     /** Pulls in the article body over HTTP from
-	search1.rutgers.edu. (This is enabled by them soft-linking
-	their cache directory into their web server's file system, as
-	per VM's request; 2012-01-16.
+	search1.rutgers.edu. (This is enabled by Thorsten's people
+	soft-linking their cache directory into their web server's
+	file system, as per VM's request; 2012-01-16.)
+
+	<P>Eventually, this ad hoc process should be replaced by simply
+	reading the file from some directory on our own server,
+	to which Paul Ginsparg's people will upload them regularly
+	using rsync).
+
+	@param id Arxiv Article ID
+	@param storeTo Disk file to write the article body to
      */
     static boolean getBodyFromWeb(String id, File storeTo) throws IOException    {
 	// The file path on the remote server
@@ -178,10 +186,10 @@ public class ArxivImporter {
 	} 
 	String lURLString= "http://search.arxiv.org:8081/" + doc_file;
 	URL lURL    =new URL( lURLString);
-	//	Logging.info("FilterServlet requesting URL " + lURL);
+	//	Logging.info("ArxivImporter requesting URL " + lURL);
 	HttpURLConnection lURLConnection;
 	try {
-	    lURLConnection=(HttpURLConnection)lURL.openConnection();	
+	    lURLConnection=(HttpURLConnection)lURL.openConnection();
 	    lURLConnection.setFollowRedirects(false); 
 	    lURLConnection.connect();
 	}  catch(Exception ex) {
@@ -195,7 +203,7 @@ public class ArxivImporter {
 	int code = lURLConnection.getResponseCode();
 	String gotResponseMsg = lURLConnection.getResponseMessage();
 
-	//	Logging.info("code = " + code +", msg=" + gotResponseMsg);
+	//Logging.info("code = " + code +", msg=" + gotResponseMsg);
 
 	if (code != HttpURLConnection.HTTP_OK) {
 	    String msg = "Response code=" + code + " for url " + lURL;
@@ -249,10 +257,13 @@ public class ArxivImporter {
 	bodySrcRoot=_bodySrcRoot;
     }
 
-    /** Finds the document body file in the specified dir tree, and
-	reads it in if available. Both original files (*.txt) and
-	gzipped ones (*.*.gz) are looked for and read.
-
+    /** Finds the document body file in the specified dir tree
+	(document body cache), and reads it in if available. Both
+	original files (*.txt) and gzipped ones (*.*.gz) are looked
+	for and read. If the file is not in the specified cache
+	directory tree, this method also tries to download it to that
+	directory tree from Thorsten's team's server.
+	
 	@param  bodySrcRoot The root of a file directory tree in which 
 	we'll look for the document body.
 
@@ -389,10 +400,9 @@ public class ArxivImporter {
 			System.out.println("Lucene entry exists, but no cached data, for doc id=" + paper);
 		    }
 		} else if (fixCatsOnly) {
-		    // special mode: for articles already present, we rewrite
-		    // them only when the format of categories to be stored
-		    // should be changed
-
+		    // special mode: for articles already present, we
+		    // rewrite them only when the format of categories
+		    // to be stored should be changed
 
 		    if (catsMatch(doc, docno, reader)) {
 			System.out.println("skip already stored doc with matching cats, id=" + paper);
@@ -403,13 +413,13 @@ public class ArxivImporter {
 	    }
 	}
 	    
-
 	String whole_doc = readBody(paper, bodySrcRoot);
    
 	if (whole_doc!=null) {
-	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
+	    // this used Field.Store.NO before 2014-12-02
+	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 
-	    // Rercord current time as the date the document was indexed 
+	    // Record current time as the date the document was indexed
 	    doc.add(new Field(ArxivFields.DATE_INDEXED,
 			      DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND),
 			      Field.Store.YES, Field.Index.NOT_ANALYZED));		

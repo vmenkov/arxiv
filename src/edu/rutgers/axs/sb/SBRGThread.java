@@ -80,8 +80,14 @@ class SBRGThread extends Thread {
 	} finally {
 	    ResultsBase.ensureClosed( em, true);
 	    try {
-		if (searcher!=null) searcher.close();
-		if (reader!=null) reader.close();
+		if (searcher!=null) {
+		    searcher.close();
+		    searcher=null;
+		}
+		if (reader!=null) {
+		    reader.close();
+		    reader=null;
+		}
 	    } catch(IOException ex) {}
 	    endTime = new Date();
 	    parent.completeRun();
@@ -171,6 +177,10 @@ class SBRGThread extends Thread {
 	nearCompletion = true;
     }
 
+    public String toString() {
+	return "[SBRG thread " + getId() + "; " + parent.toString() +
+	    "]";
+    }
  
 }
 
