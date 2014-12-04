@@ -17,7 +17,7 @@ import edu.rutgers.axs.sql.*;
     in the Lucene data store for multiple articles, and keeping
     track of them all.
 */
-class Categorizer {
+public class Categorizer {
     static final boolean primaryOnly=true;
 
     /** Are we converting from minor to major categories? */
@@ -28,7 +28,7 @@ class Categorizer {
        (e.g. "physics.bio-ph" to "physics"), thus resulting in a
        "coarser" categorization.
      */
-    Categorizer(boolean _toMajor) {
+    public Categorizer(boolean _toMajor) {
 	toMajor = _toMajor;
     }
     
@@ -41,7 +41,7 @@ class Categorizer {
     int cnt=0, unassignedCnt=0;	
     
     
-    Categories.Cat categorize(int docno, Document doc) {
+    public Categories.Cat categorize(int docno, Document doc) {
 
 	String aid = doc.get(ArxivFields.PAPER);
 	String cats = doc.get(ArxivFields.CATEGORY);

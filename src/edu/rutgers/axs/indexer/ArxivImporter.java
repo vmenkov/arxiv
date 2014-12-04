@@ -257,12 +257,23 @@ public class ArxivImporter {
 	bodySrcRoot=_bodySrcRoot;
     }
 
+    public static String readBodyFromCache(String id, String bodySrcRoot) {
+	return readBody( id, bodySrcRoot, false);
+    }
+
     /** Finds the document body file in the specified dir tree
 	(document body cache), and reads it in if available. Both
 	original files (*.txt) and gzipped ones (*.*.gz) are looked
-	for and read. If the file is not in the specified cache
-	directory tree, this method also tries to download it to that
-	directory tree from Thorsten's team's server.
+	for and read. 
+
+	@param canUpdateCache If this parameter is true, and the file
+	is not in the specified cache directory tree, this method also
+	tries to download it to that directory tree from Thorsten's
+	team's server. (Therefore, updating of the cache from the web
+	is a side effect of this method; it should not be called
+	unless you are also following up with importing the document
+	into Lucene.  Otherwise, the "isCached" test will be mislead
+	in the future ArxivImporter runs!)
 	
 	@param  bodySrcRoot The root of a file directory tree in which 
 	we'll look for the document body.
@@ -270,11 +281,12 @@ public class ArxivImporter {
 	@return The full text of the document's body, or null if none
 	could be obtained.
     */
-    public static String readBody( String id,  String bodySrcRoot) {
+    private static String readBody( String id,  String bodySrcRoot,
+				   boolean canUpdateCache) {
 	
 	File q =  Indexer.locateBodyFile(id,  bodySrcRoot);
 
-	if (q==null) {
+	if (q==null && canUpdateCache) {
 	    // can we get it from the web?
 	    String doc_file = Cache.getFilename(id , bodySrcRoot);
 	    q = new File( doc_file);
@@ -413,7 +425,7 @@ public class ArxivImporter {
 	    }
 	}
 	    
-	String whole_doc = readBody(paper, bodySrcRoot);
+	String whole_doc = readBody(paper, bodySrcRoot, true);
    
 	if (whole_doc!=null) {
 	    // this used Field.Store.NO before 2014-12-02

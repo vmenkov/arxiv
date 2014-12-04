@@ -1,0 +1,73 @@
+<body>
+Peter Frazier and Xiaoting Zhao's Exploration Engine ver 5 (EE5).
+
+<h2>Algorithmiscs</h2>
+
+<p>The algorithms involved are outlined in documents prepared by Peter
+Frazier and Xiaoting Zhao: EE5_documentation.pdf
+newCluster_documentation.pdf Oct7_2014_notes.pdf practical_paper.pdf
+submission_draft.pdf
+
+<h2>Overview of operations</h2>
+
+<h3>Initialization</h3>
+
+<P>This is to be carried out every time word clustering (word2vec) and
+document clustering has been re-run by Xiaoting's application, perhaps
+once every few months.   
+</p>
+
+<ul>
+  <li>Doc cluster initialization: fill the table EE5DocClass. (This is just a formality: we set cluster ID and alpha0, beta0).
+  <li>Read the article-to-doc-cluster assignment. 
+    <ul>
+      <li>Article.setEe5classId() for each document.
+    </ul>
+</ul>
+
+<h3>On a daily run</h3>
+
+The main application is <tt>edu.rutgers.axs.ee5.Daily</tt>
+
+<ul>
+  <li>Update article submission statistics per cluster (EE5DocClass.setL()) 
+
+  <li>Read the P vectors (doc-cluster to vector in vector cluser space);
+    (1,000 clusters *(L=1024)) = 10^6 values.  Keep in an in-memory structure.
+
+  <li>Read the word (multigram) to cluster assignment map (Z).   Keep in an in-memory structure. (perhaps 10^6 words, each one mapped to one word cluster). The list of keys of this map provides the master (multigram) vocabulary.
+
+  <li>Identify all docs without cluster assignment (new docs), as we do in EE4. (<tt>Daily.updateClassInfo()</tt>)
+
+  <li>For each such document:
+    <ul>
+      <li>Convert the document (sequence of words) to a sequence of multigrams, 
+	based on the master vocabulary. The greedy rule (always pick the longest
+	word), illustrated in Alex Alemi's script (parse_vocab.py) will be used.
+      <li>Treating the so processed document as a "bag of multigrams",
+	represent it as a vector in multigram space. 
+      <li>Convert doc to a vector in word vector space, using Z
+      <li>Find the nearest doc cluster index (as per the maximization rule in  newCluster_documentation.pdf)
+      <li>Article.setEe5classId()
+    </ul>
+      
+  <li>For each user in experiment plan EE5:  Daily.makeEE5Sug()
+    <ul>
+      <li> updateUserVote(): like in EE4    
+      <li> updateSugList(): use the c(alpha, beta,...) matrices from Xiaoting
+    </ul>
+
+</ul>
+
+<h2>Notes</h2>
+<p>Vocabulary, from http://cerbo.ccmr.cornell.edu/tmp/vocab.txt . All
+lowercased; includes Latin letters, digits, and underscores (for multiwords).
+<pre>
+% wc vocab.txt
+ 1285315  1285315 17906517 vocab.txt
+% grep -c _ vocab.txt
+759020
+</pre>
+
+
+</body>

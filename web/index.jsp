@@ -170,7 +170,7 @@ window.onload = StartScripts;
 
       <% } else { %>
     
-      <a class="button" href="#sug" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Recommended for you</a>
+      <a class="button" href="index.jsp#sug" target="_self"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Recommended for you</a>
 
       <a class="button" href="personal/viewFolder.jsp"><span style="color:#ee0000">&nbsp;&diams;&nbsp;</span>Your personal folder&nbsp;<span id="folderSize">(<%=main.folderSize%>)</span></a>
 
