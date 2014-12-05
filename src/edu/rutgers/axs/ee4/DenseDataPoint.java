@@ -5,7 +5,7 @@ import java.io.*;
 import java.text.*;
 
 /** A dense vector, for use in KMeans */
-class DenseDataPoint extends DataPoint {
+public class DenseDataPoint extends DataPoint {
 
     DenseDataPoint(int n) {
 	values = new double[n];
