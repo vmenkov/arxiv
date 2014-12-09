@@ -4,7 +4,6 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
-
 import java.util.*;
 import java.io.*;
 
@@ -16,6 +15,7 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.recommender.*;
+import edu.rutgers.axs.ee4.DenseDataPoint;
 
 
 /** Daily updates for the underlying data structure, and
@@ -29,23 +29,24 @@ public class Daily {
      */
     static void updates() throws IOException {
 
-	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
-	ArticleAnalyzer z = new ArticleAnalyzer1();
-	IndexReader reader = z.getReader();
+	//ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
+	//ArticleAnalyzer z = new ArticleAnalyzer1();
+	//IndexReader reader = z.getReader();
+	IndexReader reader = Common.newReader();
 
 	EntityManager em  = Main.getEM();
 	    
 	final int days = EE5DocClass.TIME_HORIZON_DAY;
 	Date since = SearchResults.daysAgo( days );
 
-	HashMap<Integer,EE5DocClass> id2dc= updateClassStats(em,z,since);
+	EE5DocClass.CidMapper cidMap = updateClassStats(em,reader,since);
 	List<Integer> lu = User.selectByProgram( em, User.Program.EE5);
 
 	IndexSearcher searcher = new IndexSearcher( reader );
 	for(int uid: lu) {
 	    try {
 		User user = (User)em.find(User.class, uid);
-		makeEE5Sug(em, searcher, since, id2dc, user);
+		makeEE5Sug(em, searcher, since, cidMap, user);
 	    } catch(Exception ex) {
 		Logging.error(ex.toString());
 		System.out.println(ex);
@@ -56,23 +57,23 @@ public class Daily {
     }
 
     /** 2014-10-28: restricted query to true ArXiv docs (not uploads) */
-    private static HashMap<Integer,EE5DocClass> updateClassStats(EntityManager em, ArticleAnalyzer z, Date since)  throws IOException {
+    private static EE5DocClass.CidMapper updateClassStats(EntityManager em, IndexReader reader, Date since)  throws IOException {
 	org.apache.lucene.search.Query q= 
 	    Queries.andQuery(Queries.mkSinceDateQuery(since),
 			     Queries.hasAidQuery());
 
-	IndexSearcher searcher = new IndexSearcher( z.getReader() );
-	TopDocs    top = searcher.search(q, maxlen);
+	IndexSearcher searcher = new IndexSearcher(reader);
+	TopDocs top = searcher.search(q, maxlen);
 	System.out.println("Looking back to " + since + "; found " + 
 			   top.scoreDocs.length +  " papers");
-
-	// list classes
-	HashMap<Integer,EE5DocClass> id2dc = readDocClasses(em);
+	
+	// list document clusters
+	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 	// classify all recent docs
-	updateClassInfo(em,z,top.scoreDocs, id2dc);
+	updateClassInfo(em,reader,top.scoreDocs, cidMap);
 	// ... and not-yet-classified but viewed old docs
 	//classifyUnclassified( em, searcher);
-	return  id2dc;
+	return  cidMap;
     }
 
 
@@ -82,12 +83,12 @@ public class Daily {
      either should use it either in the daily update script *after*
      all judged docs have been classified, or in a new-user scenario,
      when there is no judgment history anyway. */
-    private static DataFile makeEE5Sug(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE5DocClass> id2dc, User user) throws IOException {
+    private static DataFile makeEE5Sug(EntityManager em,  IndexSearcher searcher, Date since, EE5DocClass.CidMapper cidMap, User user) throws IOException {
 	int uid = user.getId();
 	EE5User ee5u = EE5User.getAlways( em, uid, true);
-	int lai = updateUserVote(em, id2dc, user, ee5u);
+	int lai = updateUserVote(em, cidMap.id2dc, user, ee5u);
 	boolean nofile = false;
-	return updateSugList(em, searcher, since, id2dc, user, ee5u, lai, nofile);
+	return updateSugList(em, searcher, since, cidMap.id2dc, user, ee5u, lai, nofile);
     }
 
     /** This version is invoked from the web server, for newly created users
@@ -96,7 +97,7 @@ public class Daily {
 	final int days = EE5DocClass.TIME_HORIZON_DAY; 
 	Date since = SearchResults.daysAgo( days );
 	// list classes
-	HashMap<Integer,EE5DocClass> id2dc = readDocClasses(em);
+	HashMap<Integer,EE5DocClass> id2dc = (new EE5DocClass.CidMapper(em)).id2dc;
 
 	int uid = user.getId();
 	EE5User ee5u = EE5User.getAlways( em, uid, true);
@@ -105,29 +106,20 @@ public class Daily {
 	return updateSugList(em, searcher, since, id2dc, user, ee5u, lai, nofile);
     }
 
-    static private HashMap<Integer,EE5DocClass> readDocClasses(EntityManager em) {
-	List<EE5DocClass> docClasses = EE5DocClass.getAll(em);
-	HashMap<Integer,EE5DocClass> id2dc = new HashMap<Integer,EE5DocClass>();
-	for(EE5DocClass c: docClasses) {
-	    id2dc.put(new Integer(c.getId()), c);
-	}
-	return id2dc;
-    }
-
+  
     /** Sets stat values in document class entries ( EE5DocClass table in the SQL server). 
 
 	<p>We set the initial alpha=1, beta=19, as per ZXT, 2013-02-21
 
-	@param scoreDocs The list of all recent docs for the last T
-	weeks. (The correct range is important, so that we can update
-	m correctly)
+	@param scoreDocs The list of all recent docs for the last
+	TIME_HORIZON_DAY days. (The correct range is important, so
+	that we can update m correctly)
     */
-    static void updateClassInfo(EntityManager em, ArticleAnalyzer z, ScoreDoc[] scoreDocs, HashMap<Integer,EE5DocClass> id2dc)
+    static void updateClassInfo(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs, EE5DocClass.CidMapper cidMap)
 	throws IOException
     {
 	int maxCid = 0;
-
-	for(EE5DocClass c: id2dc.values()) {
+	for(EE5DocClass c: cidMap.id2dc.values()) {
 	    maxCid = Math.max(maxCid, c.getId());
 	    c.setAlpha0(1.0);
 	    c.setBeta0(19.0);
@@ -135,14 +127,11 @@ public class Daily {
 	
 	int mT[] = new int[ maxCid + 1];
 
-	/*
-	KMeans.classifyNewDocs(em, z, scoreDocs, mT);
-	System.out.println("mT = " +  KMeansClustering.arrToString(mT));
-	*/
-
+	Classifier.classifyNewDocs(em, reader, scoreDocs,
+				   cidMap, mT); 
 
 	em.getTransaction().begin();
-	for(EE5DocClass c: id2dc.values()) {
+	for(EE5DocClass c: cidMap.id2dc.values()) {
 	    int cid = c.getId();
 	    double lx = (double)mT[cid]/(double)EE5DocClass.TIME_HORIZON_DAY;
 	    c.setL( lx ); // average *daily* number, as per the specs
@@ -385,11 +374,61 @@ public class Daily {
 	}
     }
 
+   /** A one-off method, to create all document classes
+	in the EE5DocClass table. */
+    static void initClasses(EntityManager em) throws IOException {
+
+	int oldCnt = EE5DocClass.count(em);
+	if (oldCnt > 0) {
+	    throw new IllegalArgumentException("Cannot run initialization, because some objects ("+oldCnt +" of them) already exist in the table EE5DocClass. Please delete that table, and run 'init' again!");
+	}
+		
+	String cats[] = Files.listCats();
+	System.out.println("Found cluster dirs for " + cats.length + " categories");
+	Arrays.sort(cats);
+	HashMap<String, Integer> clusterCnt=new HashMap<String, Integer>();
+
+	for(String cat: cats) {
+	    File f = Files.getDocClusterFile(cat);
+	    // FIXME: should die
+	    if (!f.exists()) {
+		throw new IllegalArgumentException("No cluster file "+f+" exists!");
+	    }
+	    Vector<DenseDataPoint> pvecs = Classifier.readPVectors(f,0);
+	    int locCnt = pvecs.size();
+	    clusterCnt.put(cat, new Integer(locCnt));
+	}
+
+	em.getTransaction().begin();
+	int crtCnt=0;
+	int cid=0;
+	for(String cat: cats) {
+	    int m = clusterCnt.get(cat).intValue();
+	    for(int j=0; j<m; j++) {
+		cid++;
+		EE5DocClass c = new EE5DocClass();
+		c.setId(cid);
+		c.setCategory(cat);
+		c.setLocalCid(j);
+		em.persist(c);
+		crtCnt++;
+	    }
+	}
+	em.getTransaction().commit();		
+	System.out.println("Created "+crtCnt+" classes");
+    }
+
+
+    private static void init()  throws IOException {
+	EntityManager em  = Main.getEM();
+	initClasses(em);
+	em.close();
+    }
+
   
     /** When the system is first set up, run
 	<pre>
 	Daily init
-	Daily updateClassStats
 	</pre>
 
 	After that, run
@@ -412,7 +451,7 @@ public class Daily {
 
 	String cmd = argv[0];
 	if (cmd.equals("init")) {
-	    throw new IllegalArgumentException("Please run KMeans instead!");
+	    init();
 	} else if (cmd.equals("update")) {
 	    updates();
 	} else {

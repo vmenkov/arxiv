@@ -1,15 +1,14 @@
 package edu.rutgers.axs.ee5;
 
+import java.io.*;
+import java.util.*;
+import java.util.regex.*;
+
+import javax.persistence.*;
+
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-
-
-import java.util.*;
-import java.util.regex.*;
-import java.io.*;
-
-import javax.persistence.*;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
@@ -24,19 +23,26 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
  */
 public class Classifier {
 
-      /** Classifies new docs, using the stored P files
-	@param z
-	@param scoreDocs list of documents to classify
-	@param mT output parameter; number of docs per class
+      /** Classifies new docs, using the stored P files.
+
+	 <p>FIXME: Presently this method reclassifies all docs within
+	 the stated time horizon (the one used to measure the average
+	 article submission rate for each cluster). This can be
+	 finessed by only classifying those docs that have not been
+	 previously classified, as well as reclassifying those that
+	 had been previously classified based on incomplete data (no
+	 article body). We'd need to properly compute mT in this case,
+	 making use of pre-recorded values.
+
+	@param scoreDocs list of documents to classify. Contains all recent docs within the standard time horizon
+	@param mT output parameter; number of docs per class. 
     */
-    static void classifyNewDocs(EntityManager em, ArticleAnalyzer z, ScoreDoc[] scoreDocs,
-				//, HashMap<Integer,EE4DocClass> id2dc
+    static void classifyNewDocs(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
+				EE5DocClass.CidMapper cidMap,
 				int mT[]
 				) throws IOException {
 
-
-
-	File f = new File("/home/vmenkov/arxiv/ee5/kmeans1024.csv");
+	File f = Files.getWordClusterFile();
 	if (!f.canRead()) {
 	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
 	}
@@ -44,7 +50,6 @@ public class Classifier {
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
 
-	IndexReader reader = z.getReader();
 	Categorizer catz = new Categorizer(false);
 
 	for(ScoreDoc sd: scoreDocs) {
@@ -58,64 +63,48 @@ public class Classifier {
 
 	for(String cat: catz.catMembers.keySet()) {
 	    
+	    System.out.println("cat=" + cat);
+	    f = Files.getDocClusterFile(cat);
+	    // FIXME: should die
+	    if (!f.exists()) {
+		Logging.warning("No cluster vector files provided for category " + cat +"; skipping");
+		continue;
+	    } 
 
-	    /*
-	    // init empty dictionary
-	    DocSet dic = new DocSet();
-
-	    // read stored cluster center point files, filling the dictionary
-	    // in the process.
-	    File catdir =  getCatDirPath(cat);
-	    if (!catdir.exists()) throw new IOException("Category directory " + catdir + " does not exist. Has a new category been added?");
-	    File[] cfiles = catdir.listFiles();
-	    int cids [] = new int[cfiles.length];
-	    int nc=0;
-	    for(File cf: cfiles) {
-		String fname = cf.getName();
-		Matcher m = p.matcher(fname);
-		if (!m.matches()) {
-		    System.out.println("Ignore file " + cf + ", because it is not named like a center file");
-		    continue;
-		}
-		cids[nc++] = Integer.parseInt( m.group(1));
-	    }
-
-	    Arrays.sort(cids, 0, nc);
-	    System.out.println("Found " + nc + " center files in " + catdir);
-	    DenseDataPoint centers[] = new DenseDataPoint[nc];
-	    for(int i=0; i<nc; i++) {
-		File f= new File(catdir, "" +cids[i] + ".dat");
-		centers[i] =new DenseDataPoint(dic, f);
-	    }
-
-	    // Read the new data points to be classified, using the same
-	    // dictionary (expanding it in the process)
+	    Vector<DenseDataPoint> pvecs = readPVectors(f,L);
+	    Vector<DenseDataPoint> logPvecs = computeLogP(pvecs);
+	  
+	    // Read the new data points to be classified
 	    Vector<Integer> vdocno = catz.catMembers.get(cat);
-	    Vector<SparseDataPoint> vdoc = new Vector<SparseDataPoint>();
+	    Vector<DenseDataPoint> vdoc = new Vector<DenseDataPoint>();
+
+	    Logging.info("Classifying "+vdocno.size()+" recent articles in category " + cat);
+
 	    //System.out.println("Reading vectors...");
 	    int cnt=0;
+	    Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
 	    for(int docno: vdocno) {
-		SparseDataPoint q = new SparseDataPoint(z.getCoef(docno), dic, z);
-		q.normalize();
+		DenseDataPoint q = readArticle(docno, L, voc, reader);
 		vdoc.add(q);
 		cnt++;
+		int localCid = assignArticleToCluster(q, logPvecs, L);
+		EE5DocClass cluster = cidMap.getCluster(cat, localCid);
+		assignedClusters.add(cluster);
+		Logging.info("article no. " + docno + " assigned to cluster "+ cluster);
 	    }
-	    // "classify" each point based on which existing cluster center
-	    // is closest to it
-	    KMeansClustering clu = new KMeansClustering(dic.size(), vdoc, centers);
-	    clu.voronoiAssignment();  //   asg <-- centers
 
+	    Logging.info("Recording cluster assignments for "+vdocno.size()+" recent articles in category " + cat);
 	    em.getTransaction().begin();
 	    int pos=0;
 	    for(int docno: vdocno) {
-		int cid = cids[clu.asg[pos]];		
-		mT[cid] ++;
+		EE5DocClass cluster = assignedClusters.elementAt(pos);
+		int cid = cluster.getId();
+		mT[ cid]++;
 		recordClass(docno, reader, em, cid);
 		pos ++;
 		caCnt++;
 	    }
 	    em.getTransaction().commit();
-	    */
 	}
 
 	/*
@@ -143,8 +132,8 @@ public class Classifier {
        cat astro_ph_GA, 
     */
     
-    /** Reads "P vectors" each of them describes an article cluster
-	within a given article category. Each vector is in
+    /** Reads the "P vectors"; each of them describes an article
+	cluster within a given article category. Each vector is in
 	L-dimensional space of word2vec word clusters.
 
 	<p>
@@ -154,9 +143,12 @@ public class Classifier {
 	0 8.88931e-05 9.65938e-06 5.11056e-05 8.26743e-06 ...
 	</pre>
 
+	@param L the expected dimension of P vectors. If L=0 is
+	supplied, the value is inferred from the file
      */
-    Vector<DenseDataPoint> readPVectors(File f, int L) {
+    static Vector<DenseDataPoint> readPVectors(File f, int L) throws IOException {
 	Vector<DenseDataPoint> v = new Vector<DenseDataPoint>();
+	Logging.info("Reading P vector file " + f);
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
  	String s;
@@ -166,23 +158,98 @@ public class Classifier {
 	    s = s.trim();	
 	    if (s.equals("") || s.startsWith("#")) continue;	    
 	    String q[] = s.split("\\s+");
-	    if (q==null || q.length != L+1) {
+	    if (L==0) {
+		L=q.length-1;
+		Logging.info("set L=" + L);
+	    }
+	    if (q==null || q.length<2 || q.length != L+1) {
 		throw new IOException("Cannot parse line " + linecnt + " in the P file " + f + " : " + s);
 	    }
-	    int cid = Integer.parseInt(q[1]);
+	    int cid = Integer.parseInt(q[0]);
 	    double z[] = new double[L];
-	    for(j=0; j<L; j++) {
+	    for(int j=0; j<L; j++) {
 		z[j] = Double.parseDouble(q[j+1]);
 	    }
 	    DenseDataPoint p = new DenseDataPoint(z);
-	    v.setElement(cid, p);
+	    if (cid>=v.size()) v.setSize(cid+1);
+	    v.set(cid, p);
 	}
 	for(int k=0; k<v.size(); k++) {
-	    
-	}
-	
+	    if (v.elementAt(k)==null) {
+		throw new IOException("There is no P vector for cid=" + k + " in the P file " + f);
+	    }
+	}	
 	return v;
     }
       
+    /** Fields whose content we use to cluster documents */
+    final static String fields[] = {
+	ArxivFields.TITLE,
+	ArxivFields.AUTHORS,
+	ArxivFields.ABSTRACT,
+	ArxivFields.ARTICLE
+    };
+    
+    /** Reads in all relevant fields of the specified article from
+	Lucene, and converts them into a single vector in the
+	L-dimensional word2vec word cluster space.
+     */
+    static DenseDataPoint readArticle(int docno, int L, Vocabulary voc, IndexReader reader) throws IOException {
+	Document doc = reader.document(docno);
+	boolean missingBody  = false;
+	double[] v = new double[L];
+	for(String field: fields) {
+	    String s = doc.get(field);
+	    if (s==null) {
+		if (field.equals(ArxivFields.ARTICLE))missingBody=true;
+		continue;
+	    }
+	    voc.textToVector(s, v);	    
+	}
+	return new DenseDataPoint(v);
+    }
+
+    private static Vector<DenseDataPoint> computeLogP(Vector<DenseDataPoint> pvec) {
+	Vector<DenseDataPoint> logp = new Vector<DenseDataPoint>(pvec.size());
+	for(DenseDataPoint p: pvec) {
+	    logp.add( p.log());
+	}
+	return logp;
+    }
+
+    /** Assigns a given article to one of the K document clusters.
+
+	@param article A document represented as a vector in the
+	L-dimensional word2vec word cluster space
+	@param logPvec The K logarithmized "P vectors", which describe
+	the K document clusters
+     */
+    static int assignArticleToCluster(DenseDataPoint article,
+				      Vector<DenseDataPoint> logPvec,
+				      int L) {
+	double bestloglik = 0;
+	int bestk= -1;
+	for(int k=0; k<logPvec.size(); k++) {
+	    DenseDataPoint logp = logPvec.elementAt(k);
+	    double loglik = article.dotProduct(logp);
+	    if (bestk<0 || loglik>bestloglik) {
+		bestk=k;
+		bestloglik=loglik;
+	    }
+	}
+	return bestk;
+    }
+
+    /** Sets the class field on the specified article's Article object
+	in the database, and persists it. This method should be called
+	from inside a transaction. */
+    static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid) throws IOException {
+	Document doc = reader.document(docno);
+	String aid = doc.get(ArxivFields.PAPER);
+	Article a = Article.findByAid(  em, aid);
+	a.setEe5classId(cid);
+	em.persist(a);
+    }
+
 
 }

@@ -693,7 +693,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
      */
     public int actionCnt(EntityManager em, long maxId) {
 
-	String qs= 	    "select count(a) from Action a where a.user.id=:uid" ;
+	String qs=  "select count(a) from Action a where a.user.id=:uid" ;
 	if (maxId>=0) qs += " and a.id<=:m";
 	Query q = em.createQuery(qs);
 	

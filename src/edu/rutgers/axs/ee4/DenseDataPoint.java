@@ -17,7 +17,7 @@ public class DenseDataPoint extends DataPoint {
 	add(x);
     }  
 
-    DenseDataPoint(double[] v) {
+    public DenseDataPoint(double[] v) {
 	values = v;
     }
 
@@ -44,7 +44,7 @@ public class DenseDataPoint extends DataPoint {
 	one may have more positions than the other, in which case
 	extra positions are ignored.
      */
-    double dotProduct(DataPoint a) {
+    public double dotProduct(DataPoint a) {
        double sum=0;
        if (a instanceof SparseDataPoint) {
 	   SparseDataPoint x = (SparseDataPoint)a;
@@ -99,6 +99,19 @@ public class DenseDataPoint extends DataPoint {
 	    values[i] = v.elementAt(i).doubleValue();
 	}
 	//Logging.info("Read " + linecnt + " lines, " + vterms
+    }
+
+
+    /** Creates a DenseDataPoint object each element of which
+	is a natural logarithm of the corresponding element
+	of this data point.
+     */
+    public DenseDataPoint log() {
+	double[] q = new double[values.length];
+	for(int i=0; i<values.length; i++) {
+	    q[i] = Math.log(values[i]);
+	}
+	return new DenseDataPoint(q);
     }
 
 

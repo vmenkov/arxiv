@@ -62,6 +62,9 @@
         <class>edu.rutgers.axs.sql.EE4User</class>
         <class>edu.rutgers.axs.sql.EE4DocClass</class>
         <class>edu.rutgers.axs.sql.EE4Uci</class>
+        <class>edu.rutgers.axs.sql.EE5User</class>
+        <class>edu.rutgers.axs.sql.EE5DocClass</class>
+        <class>edu.rutgers.axs.sql.EE5Uci</class>
         <class>edu.rutgers.axs.sql.Session</class>
 
         <properties>

@@ -34,7 +34,7 @@ public class Categorizer {
     
     private static final int NS = 100;
     
-    /** The stored integers are Lucene doc ids */
+    /** Maps full category name to a vector of Lucene doc ids */
     public HashMap<String, Vector<Integer>> catMembers = new HashMap<String, Vector<Integer>>();
     Vector<Integer> nocatMembers= new Vector<Integer>();
     int multiplicityCnt[] = new int[NS];

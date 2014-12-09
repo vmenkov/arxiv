@@ -269,6 +269,9 @@ code; but not anymore. -->
       <include name="EE4User.class" />
       <include name="EE4DocClass.class" />
       <include name="EE4Uci.class" />
+      <include name="EE5User.class" />
+      <include name="EE5DocClass.class" />
+      <include name="EE5Uci.class" />
       <include name="Session.class" />
     </fileset>
   </openjpac>
