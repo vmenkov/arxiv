@@ -85,10 +85,10 @@ class CStarLookup {
 		CstarAB cstarAB = cstarXi[q.j0 + k].getCstarAB( alpha0,  beta0);
 		double c = cstarAB.getC(da, db, u);
 		sum += c * q.weights[k];
-		msg += "(xi"+cstarXi[q.j0 + k].xi  +": "+(float)c+"*"+(float)q.weights[k]+")";
+		//msg += "(xi"+cstarXi[q.j0 + k].xi  +": "+(float)c+"*"+(float)q.weights[k]+")";
 	    }
 	    msg += "] => " + sum;
-	    System.out.println(msg);
+	    //System.out.println(msg);
 	    return sum;
 	}
    
@@ -172,14 +172,14 @@ class CStarLookup {
 
 	    if (recentDa != da || recentDb != db) {
 		int index = elementIndex(da,db,0);
-		System.out.println("da="+da+", db="+db+", index=" + index);
+		//System.out.println("da="+da+", db="+db+", index=" + index);
 		raf.seek(RandomAccessConverter.SIZEOF * index);
 		String msg="";
 		for(int i=0; i<=R; i++) {
 		    recentReads[i] = raf.readFloat();
 		    msg += " " + recentReads[i];
 		}
-		System.out.println("da="+da+", db="+db+", index=" + index+", vals=("+msg+")");
+		//System.out.println("da="+da+", db="+db+", index=" + index+", vals=("+msg+")");
 		recentDa = da;
 		recentDb = db;
 	    }

@@ -1,0 +1,38 @@
+#!/bin/csh
+
+# Usage examples:
+# ee5-daily.sh init
+# ee5-daily.sh update
+
+
+set opt="-DOSMOT_CONFIG=."
+
+set lib=$home/arxiv/lib
+
+# lucene-core-1.9.1.jar
+
+set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/commons-fileupload-1.2.1.jar:$lib/commons-io-1.4.jar:$lib/lucene-core-3.3.0.jar:$lib/mysql-connector-java-3.1.12-bin.jar:$lib/nutch-0.7.jar"
+
+set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
+set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
+
+
+set opt="-cp ${cp} ${opt}"
+
+echo "opt=$opt"
+
+set d=/data/arxiv/ee5/20141201/cstar
+set files=`(cd $d; ls *.out)`
+
+foreach x ($files) 
+    set y=`basename $x '.out'`
+    set z=${y}.bin
+    echo "Converting $x to $z"
+    /usr/bin/time  java $opt edu.rutgers.axs.ee5.RandomAccessConverter $d/$x $d/$z
+end
+
+
+
+
+
+
