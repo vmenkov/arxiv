@@ -201,6 +201,9 @@ public class Daily {
 	specified user.  For each (user,page) pair, only the most
 	recent action (of one of the requisite types) is considered as
 	the user's current "vote" on that page.
+
+	<P>This method is identical to the one in ee4.Daily.
+
 	@return the last (most recent) action id used in the update
     */
     static int updateUserVote(EntityManager em, HashMap<Integer,EE5DocClass> id2dc, User u, 	EE5User ee5u) throws IOException {
@@ -273,6 +276,7 @@ public class Daily {
     private static DataFile updateSugList(EntityManager em,  IndexSearcher searcher, Date since, HashMap<Integer,EE5DocClass> id2dc, User u, EE5User ee5u, int lai, final boolean nofile)
 	throws IOException
      {
+	 Logging.info("Preparing EE5 suggestions for user " + u);
 	 HashMap<Integer,EE5Uci> h = ee5u.getUciAsHashMap();
 
 	 String[] cats = u.getCats().toArray(new String[0]);
@@ -285,48 +289,63 @@ public class Daily {
 	 //sr.randomlyBreakTies();
 
 	 Vector<ArxivScoreDoc> results= new Vector<ArxivScoreDoc>();
-	 Vector<String> comments = new  Vector<String>();
+
+	 CStarLookup csLookup = new CStarLookup(1000, 10);
+
+	 int maxCid = EE5DocClass.maxId(em);
+	 // keeping track of how many docs from each cluster we have already 
+	 // processed
+	 int rankInCluster[] = new int[maxCid+1];
+
+	 HashMap<Integer, String> commentsHash= new HashMap<Integer, String>();
 
 	 for(ScoreDoc sd: sr.scoreDocs) {
 	     Document doc = searcher.doc(sd.doc);
 	     String aid = doc.get(ArxivFields.PAPER);
 	     Article a = Article.getArticleAlways(em,aid);
 	     final int cid = a.getEe5classId();
+	     if (cid == 0) continue; // skip unclassified docs
 	     EE5DocClass c = id2dc.get(new Integer(cid));
 	     EE5Uci ee5uci = h.get(new Integer(cid));
+	     if (ee5uci == null) throw new IllegalArgumentException("No EE5Uci srecord is available for cid=" + cid);
 	     double alpha=ee5uci.getAlpha(),  beta=ee5uci.getBeta(); 
 	    
-	     /*
-	     EE5Uci.Stats stats = ee5uci.getStats(c.getM(), ee5u.getCCode());
-	     double score = alpha/(alpha + beta);
-	     if (stats.admit) { // add to list
-		 //		 results.add(new ArxivScoreDoc(sd).setScore(score));
-		 results.add(new ArxivScoreDoc(sd).setScore(stats.cStar));
-		 comments.add("Cluster "+cid+", " + alpha+"/("+alpha+"+"+beta+")>mu=" +stats.mu +", c* = " + stats.cStar);
-		 //		 Logging.info("Daily.USL: added, score=" + score);
+	     int rank = ++rankInCluster[cid]; // 1-based rank
+	     double gamma = CStarLookup.onlyGamma;
+
+	     double lx = c.getL(); // average *daily* number
+	     double xi = 1.0 / (1.0 + lx);
+	     double cstar = csLookup.lookup(gamma, xi, alpha, beta, rank);
+
+	     final boolean admit = true;
+	     if (admit) {
+		 results.add(new ArxivScoreDoc(sd).setScore(cstar));
+		 String cmt="Cluster "+cid+", xi=" + (float)xi +", u=" +rank+", cstar=" + (float)cstar;
+		 commentsHash.put(sd.doc, cmt);
+		 //  Logging.info("Daily.USL: added, cstar=" + cstar);
 	     } else {
-		 //		 Logging.info("Daily.USL: not added, score=" + score);
+		 //  Logging.info("Daily.USL: not added, cstar=" + cstar);
 	     }
-	     if (results.size() >=  MAX_SUG) {
-		 Logging.info("Daily.USL: truncating sug list at " + MAX_SUG);
-		 break;
-	     }
-	     ********/
+	     //	     if (results.size() >=  MAX_SUG) {
+	     //		 Logging.info("Daily.USL: truncating sug list at " + MAX_SUG);
+	     //	 break;
+	     //}
 	 }
+
+	 ArxivScoreDoc[] topResults = ArxivScoreDoc.getTopResults(results, MAX_SUG);
+
+	 String comments[] = new  String[topResults.length];
+	 for(int i=0; i<topResults.length; i++) {
+	     comments[i] = commentsHash.get(topResults[i].doc);
+	 }
+
 	 em.getTransaction().begin();	
 	 DataFile outputFile=new DataFile(u.getUser_name(), 0, DataFile.Type.EE5_SUGGESTIONS);
 	 outputFile.setSince(since);
 	 outputFile.setLastActionId(lai);
 	 Vector<ArticleEntry> entries = 
-	     ArxivScoreDoc.packageEntries(results.toArray(new ArxivScoreDoc[0]), comments.toArray(new String[0]), searcher.getIndexReader());
-	 ArticleEntry[] tmp = (ArticleEntry[])entries.toArray(new ArticleEntry[0]);
-	 // stable sort
-	 Arrays.sort(tmp);
-	 // randomly reorder docs within each cluster
-	 randomlyBreakTies(tmp);
-	 entries = new Vector<ArticleEntry>();
-	 for(ArticleEntry ae: tmp) {	 entries.add(ae);}
-
+	     ArxivScoreDoc.packageEntries(topResults, comments, searcher.getIndexReader());
+	
 	 Logging.info("Daily.USL: |entries|=" + entries.size());
 
 	 if (nofile) { 
@@ -374,34 +393,74 @@ public class Daily {
 	}
     }
 
+    /**
+       @param gamma 0.99
+     */
+    static double cstar(int u, double alphaX, double betaX, 
+		 double gamma, double xiX,
+		 double alpha0, double beta0) {
+	return 0;
+    }
+
    /** A one-off method, to create all document classes
-	in the EE5DocClass table. */
+	in the EE5DocClass table. 
+
+	<p> FIXME: also need to create singleton (trivial) clusters
+	for all known categories for which there are no data files
+	available. This is mostly for testing.
+   */
     static void initClasses(EntityManager em) throws IOException {
 
 	int oldCnt = EE5DocClass.count(em);
 	if (oldCnt > 0) {
 	    throw new IllegalArgumentException("Cannot run initialization, because some objects ("+oldCnt +" of them) already exist in the table EE5DocClass. Please delete that table, and run 'init' again!");
 	}
-		
-	String cats[] = Files.listCats();
-	System.out.println("Found cluster dirs for " + cats.length + " categories");
-	Arrays.sort(cats);
-	HashMap<String, Integer> clusterCnt=new HashMap<String, Integer>();
+	
+	
+	Vector<String> allCats = Categories.listAllStorableCats();
+	HashSet<String> allCatSet = new HashSet<String>();
+	allCatSet.addAll(allCats);
 
-	for(String cat: cats) {
-	    File f = Files.getDocClusterFile(cat);
-	    // FIXME: should die
-	    if (!f.exists()) {
-		throw new IllegalArgumentException("No cluster file "+f+" exists!");
+	String fileCats[] = Files.listCats();
+	System.out.println("Found cluster dirs for " + fileCats.length + " categories");
+	
+	int errcnt=0;
+	for(String cat: fileCats) {
+	    if (!allCatSet.contains(cat)) {
+		Logging.error("There is a cluster definition directory for unknown category " + cat);
+		errcnt ++;
 	    }
-	    Vector<DenseDataPoint> pvecs = Classifier.readPVectors(f,0);
-	    int locCnt = pvecs.size();
-	    clusterCnt.put(cat, new Integer(locCnt));
+	}
+
+	if (errcnt > 0) {
+	    throw new IllegalArgumentException("There are " + errcnt + " cluste rdefinition files in "+Files.getDocClusterDir()+" referring to otherwise unknown categories (see messages above). Please make sure that the directory names there match cat names in sql/Categories.java!");
+	}
+	
+	// default number of clusters per cat is 1 (a trivial cluster)
+	HashMap<String, Integer> clusterCnt=new HashMap<String, Integer>();
+	for(String cat: allCats) {
+	    clusterCnt.put(cat, new Integer(1));
+	}
+
+	for(String cat: fileCats) {
+	    File f = Files.getDocClusterFile(cat);
+	    if (!f.exists()) {
+		throw new IllegalArgumentException("No cluster file "+f+" exists! Empty directory? Just delete it!");
+		//Logging.warning("No cluster file "+f+" exists! Creating a single cluster for category " + cat);
+		//locCnt = 1;
+	    } else {
+		Vector<DenseDataPoint> pvecs = Classifier.readPVectors(f,0);
+		int locCnt = pvecs.size();
+		clusterCnt.put(cat, new Integer(locCnt));
+	    }
 	}
 
 	em.getTransaction().begin();
 	int crtCnt=0;
 	int cid=0;
+	String cats[] = (String[])allCats.toArray(new String[allCats.size()]);
+	Arrays.sort(cats);
+	
 	for(String cat: cats) {
 	    int m = clusterCnt.get(cat).intValue();
 	    for(int j=0; j<m; j++) {
@@ -415,10 +474,16 @@ public class Daily {
 	    }
 	}
 	em.getTransaction().commit();		
-	System.out.println("Created "+crtCnt+" classes");
+	Logging.info("Created "+crtCnt+" cluster objects");
+	if (fileCats.length<cats.length) {
+	    Logging.warning("Out of " + cats.length + " categories, only "+
+			     fileCats.length + " cats had clustering data provided; for the other " + (cats.length-fileCats.length) + " cats, trivial clusters have been created");
+	} else {
+	    Logging.info("All " + cats.length + " categories had clustering data provided");
+	}
     }
 
-
+    /** A one-off procedure; creating cluster objects in the database */
     private static void init()  throws IOException {
 	EntityManager em  = Main.getEM();
 	initClasses(em);

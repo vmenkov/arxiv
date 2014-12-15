@@ -34,13 +34,17 @@ public class Categorizer {
     
     private static final int NS = 100;
     
-    /** Maps full category name to a vector of Lucene doc ids */
+    /** Maps full category name to a vector of Lucene doc ids of articles
+	that belong to that category    */
     public HashMap<String, Vector<Integer>> catMembers = new HashMap<String, Vector<Integer>>();
-    Vector<Integer> nocatMembers= new Vector<Integer>();
+    public Vector<Integer> nocatMembers= new Vector<Integer>();
     int multiplicityCnt[] = new int[NS];
     int cnt=0, unassignedCnt=0;	
     
-    
+    /** Adds information about one more document to the categorizer 
+	@param docno Lucene doc id of an article
+	@param doc The actual article, already retrived from Lucene
+     */
     public Categories.Cat categorize(int docno, Document doc) {
 
 	String aid = doc.get(ArxivFields.PAPER);

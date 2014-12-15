@@ -67,7 +67,7 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
        e.g. by a search) into a vector of ArticleEntry objects,
        suitable for saving into a suggestion list file.
 
-       @param comments Optional comments (to be shown to researchers)
+       @param comments Array of optional comments (to be shown to researchers). Null values are allowed, and ignored.
      */
     static public Vector<ArticleEntry> packageEntries(ArxivScoreDoc[] scores, String comments[], IndexReader reader)  
 	throws IOException    {
@@ -85,5 +85,15 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	}	
 	return entries;
     }
-  
+ 
+    /** Sorts the values in the vector, and returns the M top values.
+	<p> If M &ll; v.size(), a more efficient algorithm can be employed
+	instead of complete sorting.
+     */
+    public static ArxivScoreDoc[] getTopResults(Vector<ArxivScoreDoc> v, int M) {
+	ArxivScoreDoc[] a = (ArxivScoreDoc[])v.toArray(new ArxivScoreDoc[v.size()]);
+	Arrays.sort(a);
+	return (a.length <= M) ? a : Arrays.copyOf(a, M);
+    }
+ 
 }

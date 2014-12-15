@@ -144,6 +144,8 @@ import edu.rutgers.axs.ParseConfig;
 		return "algo1sug1";
 	    } else if (this == EE4_SUGGESTIONS) {
 		return "ee4sug";
+	    } else if (this == EE5_SUGGESTIONS) {
+		return "ee5sug";
 	    } else if (this == PPP_USER_PROFILE) {
 		return "p3profile";
 	    } else if (this == PPP_SUGGESTIONS) {

@@ -164,6 +164,25 @@ and a.src = edu.rutgers.axs.sql.Action$Source.MAIN_MIX
 evironment
 
 <tr>
+<td>
+select a, le from Action a, PresentedList li, in(li.docs) le 
+where li.user.user_name='vmenkov' 
+and li.id=a.presentedListId and a.article.aid=le.aid
+and a.src = edu.rutgers.axs.sql.Action$Source.SB
+<td>
+<td>View all actions of a particular user that were effected from an SB
+evironment (i.e, user clicking on links in the SB pop-up window)
+
+<tr>
+<td>
+select count(x), x.session from Action x where x.time > '2014-01-01'
+group by x.session having count(x)>1
+<td>
+<td> How many actions have there been by actors who were not afraid to
+"enter into a conversation" (i.e., accepted and reused cookies, so
+that we had sessions longer than 1 op)?
+
+<tr>
 <th colspan=3>The <tt>EnteredQuery</tt> table
 <tr>
 <td>select x from Action x where x.user.user_name='vmenkov'

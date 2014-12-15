@@ -64,33 +64,38 @@ public class Classifier {
 	for(String cat: catz.catMembers.keySet()) {
 	    
 	    System.out.println("cat=" + cat);
-	    f = Files.getDocClusterFile(cat);
-	    // FIXME: should die
-	    if (!f.exists()) {
-		Logging.warning("No cluster vector files provided for category " + cat +"; skipping");
-		continue;
-	    } 
 
-	    Vector<DenseDataPoint> pvecs = readPVectors(f,L);
-	    Vector<DenseDataPoint> logPvecs = computeLogP(pvecs);
-	  
 	    // Read the new data points to be classified
 	    Vector<Integer> vdocno = catz.catMembers.get(cat);
-	    Vector<DenseDataPoint> vdoc = new Vector<DenseDataPoint>();
 
 	    Logging.info("Classifying "+vdocno.size()+" recent articles in category " + cat);
 
-	    //System.out.println("Reading vectors...");
 	    int cnt=0;
 	    Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
-	    for(int docno: vdocno) {
-		DenseDataPoint q = readArticle(docno, L, voc, reader);
-		vdoc.add(q);
-		cnt++;
-		int localCid = assignArticleToCluster(q, logPvecs, L);
+	    f = Files.getDocClusterFile(cat);
+	    // FIXME: in production, should just die here.
+	    if (!f.exists()) {
+		Logging.warning("No cluster vector files provided for category " + cat +"; assigning entire cat to a single cluster");
+		
+		int localCid = 0;
 		EE5DocClass cluster = cidMap.getCluster(cat, localCid);
-		assignedClusters.add(cluster);
-		Logging.info("article no. " + docno + " assigned to cluster "+ cluster);
+		for(int docno: vdocno) {
+		    cnt++;
+		    assignedClusters.add(cluster);
+		    Logging.info("article no. " + docno + " assigned to trivial cluster "+ cluster);
+		}
+	    } else {
+		Vector<DenseDataPoint> pvecs = readPVectors(f,L);
+		Vector<DenseDataPoint> logPvecs = computeLogP(pvecs);	  
+		//System.out.println("Reading vectors...");
+		for(int docno: vdocno) {
+		    cnt++;
+		    DenseDataPoint q = readArticle(docno, L, voc, reader);
+		    int localCid = assignArticleToCluster(q, logPvecs, L);
+		    EE5DocClass cluster = cidMap.getCluster(cat, localCid);
+		    assignedClusters.add(cluster);
+		    Logging.info("article no. " + docno + " assigned to cluster "+ cluster);
+		}
 	    }
 
 	    Logging.info("Recording cluster assignments for "+vdocno.size()+" recent articles in category " + cat);
@@ -107,7 +112,6 @@ public class Classifier {
 	    em.getTransaction().commit();
 	}
 
-	/*
 	em.getTransaction().begin();
 	for(int docno: catz.nocatMembers) {
 	    int cid = 0;
@@ -116,9 +120,7 @@ public class Classifier {
 	em.getTransaction().commit();
 
 	System.out.println("Clustering applied to new docs in all "+ catz.catMembers.size()+" categories; " + 
-			   //id0 + " clusters created; " + 
 			   caCnt + " articles classified, and " + catz.nocatMembers.size() + " more are unclassifiable");
-	*/
 
     }
 

@@ -2,20 +2,16 @@ package edu.rutgers.axs.sql;
 
 import java.io.*;
 import java.util.*;
-import java.text.*;
 import java.net.*;
 import javax.persistence.*;
 import javax.servlet.http.*;
 
-import org.apache.openjpa.persistence.jdbc.*;
-
 import org.apache.lucene.index.*;
 
+/** Information about an HttpSession stored in the SQL server. 
 
-//import org.apache.lucene.document.*;
-
-
-/** Information about an HttpSession stored in the SQL server. */
+    <p> FIXME: We probabluy also record the IP from which the first
+request in teh session came.  */
 @Entity  
      public class Session extends OurTable 
 {
@@ -42,7 +38,6 @@ import org.apache.lucene.index.*;
     @Column(nullable=true)
       @Display(editable=false,order=3) 
 	User user;
- 
 
     public User getUser() {
 	return user;
@@ -52,7 +47,6 @@ import org.apache.lucene.index.*;
 	user=c;
     }
     
-
     /** The value from HttpSession.getCreationTime() */
    @Display(editable=false, order=2) 
 	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=false)
