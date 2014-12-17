@@ -19,6 +19,7 @@ import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.recommender.Scheduler;
 import edu.rutgers.axs.recommender.DailyPPP;
 import edu.rutgers.axs.ee4.Daily;
+//import edu.rutgers.axs.ee5.Daily;
 import edu.rutgers.axs.search.SubjectSearchResults;
 
 /** This class is responsible for the retrieval, formatting, and
@@ -188,7 +189,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    } else if (program==User.Program.SET_BASED || program==User.Program.PPP) { // fine!
 	    } else if (program.needBernoulli()) {
 		throw new WebException("User "+actor+" is enrolled into Bernoulli plan, not set-based!");
-	    } else if (program==User.Program.EE4) {
+	    } else if (program==User.Program.EE4 || program==User.Program.EE5) {
 		if (!mainPage) throw new WebException("For users in program " + program +", suggestion list can only be viewed in the user's main page");
 	    } else {
 		throw new WebException("This tool does not support suggestion list view for program=" + program);
@@ -363,10 +364,11 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	// disregard most of params
 	User.Program program = actor.getProgram();
 	teamDraft= (program==User.Program.SET_BASED|| program==User.Program.PPP
-		    || program==User.Program.EE4) 
+		    || program==User.Program.EE4  || program==User.Program.EE5) 
 	    && actor.getDay()==User.Day.EVAL;
 	basedon=null;
 	mode = (program==User.Program.EE4)? DataFile.Type.EE4_SUGGESTIONS :
+	    (program==User.Program.EE5)? DataFile.Type.EE5_SUGGESTIONS :
 	    (program==User.Program.SET_BASED)? DataFile.Type.TJ_ALGO_1_SUGGESTIONS_1 :
 	    DataFile.Type.PPP_SUGGESTIONS;
 	    
@@ -466,7 +468,10 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 		// The on-the-fly mode: simply generate and use cat search results for now
 		sr = catSearch(searcher, since);    
 	    } else if (mode== DataFile.Type.EE4_SUGGESTIONS) {
-		df = Daily.makeEE4SugForNewUser(em,  searcher,  actor);
+		df = edu.rutgers.axs.ee4.Daily.makeEE4SugForNewUser(em,  searcher,  actor);
+		sr = new SearchResults(df, searcher);
+	    } else if (mode== DataFile.Type.EE5_SUGGESTIONS) {
+		df = edu.rutgers.axs.ee5.Daily.makeEE5SugForNewUser(em,  searcher,  actor);
 		sr = new SearchResults(df, searcher);
 	    } else {
 		throw new WebException("Sorry, your suggestion list has not been computed yet! (mode="+mode+")");
@@ -514,6 +519,8 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	Action.Source mpType = 
 	    (mode==DataFile.Type.EE4_SUGGESTIONS?  
 	     (teamDraft? Action.Source.MAIN_EE4_MIX: Action.Source.MAIN_EE4):
+	     mode==DataFile.Type.EE5_SUGGESTIONS?  
+	     (teamDraft? Action.Source.MAIN_EE5_MIX: Action.Source.MAIN_EE5):
 	     (teamDraft? Action.Source.MAIN_MIX : Action.Source.MAIN_SL));
   
 	Action.Source srcType =
@@ -808,6 +815,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
 	    } else if (program.needBernoulli()) {
 		throw new WebException("User "+actor+" is enrolled into Bernoulli plan, not set-based!");
 	    } else if (program==User.Program.EE4) {
+	    } else if (program==User.Program.EE5) {
 	    } else {
 		throw new WebException("This tool does not support suggestion list view for program=" + program);
 	    }

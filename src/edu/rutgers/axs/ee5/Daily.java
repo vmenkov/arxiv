@@ -94,6 +94,7 @@ public class Daily {
     /** This version is invoked from the web server, for newly created users
      */
    public static DataFile makeEE5SugForNewUser(EntityManager em,  IndexSearcher searcher,  User user) throws IOException {
+
 	final int days = EE5DocClass.TIME_HORIZON_DAY; 
 	Date since = SearchResults.daysAgo( days );
 	// list classes

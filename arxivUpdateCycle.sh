@@ -2,11 +2,15 @@
 
 #---------------------------------------------------------------------
 #-- This script is run daily from the crontab. It runs the following
-#-- 3 programs, sequentially:
+#-- programs, sequentially:
 #-- * ArxivImporter, which pulls new articles from arxiv.org;
 #-- * ArticleAnalyzer, which updates article stats in the database
+#-- * Bernoulli, which updates suggestions for the user in the EE3 program
+#-- * ee4.Daily, which updates suggestions for the user in the EE4 program
+#-- * ee5.Daily, which updates suggestions for the user in the EE5 program
+#-- * EmailSug, which sends updated suggestion list to subscribers
 #-- * TaskMaster, which will keep running for the next 24 hours, serving
-#---  suggestion list generation requests.
+#--   suggestion list generation requests for users in the SET_BASED program
 #
 # There is a provision to explicitly specify the value of $home (via
 # the 1st command-line argument), which is used as a base for finding

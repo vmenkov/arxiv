@@ -7,7 +7,9 @@ import edu.rutgers.axs.web.Tools;
 
 /**
 
+Check often here, http://jp.arxiv.org/new/ , for new cats!
 
+<p>
 As per Simeon Warner, 2012-12-07:
 
 <pre>
@@ -256,7 +258,9 @@ addMinor("stat","ME","Methodology");
 addMinor("stat","OT","Other Statistics");
 addMinor("stat","TH","Statistics Theory");
 addMinor("q-fin","CP","Computational Finance");
+addMinor("q-fin","EC","Economics");
 addMinor("q-fin","GN","General Finance");
+addMinor("q-fin","MF","Mathematical Finance");
 addMinor("q-fin","PM","Portfolio Management");
 addMinor("q-fin","PR","Pricing of Securities");
 addMinor("q-fin","RM","Risk Management");

@@ -103,6 +103,10 @@ public class Classifier {
 	    int pos=0;
 	    for(int docno: vdocno) {
 		EE5DocClass cluster = assignedClusters.elementAt(pos);
+		if (cluster==null) {
+		    Logging.warning("There was no cluster assignment for article no. " + docno +"! Need to update cat list and re-init clusters?");
+		    continue;
+		}
 		int cid = cluster.getId();
 		mT[ cid]++;
 		recordClass(docno, reader, em, cid);
