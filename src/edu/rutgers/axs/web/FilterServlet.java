@@ -196,8 +196,10 @@ public class FilterServlet extends  BaseArxivServlet  {
 		u = (user!=null) ? User.findByName(em, user) : null;
 
 		Logging.info("FS: pi="+pi+", recording as " + actionable);
+		// no commit needed, since we're inside a transaction already
+		Article art=Article.getArticleAlways(em, actionable.aid,false);
 		Action a = sd.addNewAction(em, u, actionable.op, 
-					   actionable.aid, null, asrc);
+					   art, null, asrc);
 
 		if (u!=null) {
 		    skeletonAE = ArticleEntry.getDummyArticleEntry(actionable.aid, 1);

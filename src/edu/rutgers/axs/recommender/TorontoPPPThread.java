@@ -68,10 +68,10 @@ public class TorontoPPPThread extends BackgroundThread {
 		return;
 	    }
 	    if (!u.getProgram().equals(program)) {
-		error("User " + user + " is not enrolled in program " + program);
+		error("User " +user+ " is not enrolled in program " + program);
 	    }
 
-	    TorontoPPP.initP3Sum( em,  (ArticleAnalyzer3)aa,  searcher, u, this);
+	    TorontoPPP.initP3Sum( em, (ArticleAnalyzer3)aa,  searcher, u, this);
 	    //progress("Completed recommendation list generation");
 
 	} catch(Exception ex) {

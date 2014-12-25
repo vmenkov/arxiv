@@ -131,7 +131,11 @@ import  edu.rutgers.axs.web.SessionData;
 
 	    /** User reorders list items in a recommendation list,
 		using the jQuery "Sortable" feature.   */
-	    REORDER;
+	    REORDER,
+	    /** User uploads a document. In this case, the Article link
+		refers to a user-uploaded document in Lucene, rather than
+		an ArXiv article. */
+	    UPLOAD;
 
 	/** Data types for which FilterServlet does not "filter", but
 	 * redirects to the source, as per Simeon Warner, 2012-01-04 */
@@ -335,6 +339,8 @@ import  edu.rutgers.axs.web.SessionData;
     public void setPresentedListId(long val) {     presentedListId    = val;    }
     public long getPresentedListId() {        return  presentedListId;    }
 
+    /** @param a An ActionSource object describing the "context" of the action.
+	Must be non-null */
     public void setActionSource(ActionSource a) {
 	setSrc(a.src);
 	setPresentedListId(a.presentedListId);
@@ -385,7 +391,10 @@ import  edu.rutgers.axs.web.SessionData;
 
     /**
        @param u The user object. May be null, in case of anon actions.
-       @param sd Used to obtain session info.
+       @param sd Used to obtain session info. This is never null in
+       the web app; but it may be null in some command-line
+       applications that are used for a one-off "data repair"
+       (retroactively adding entries to the Action table).
      */
     public  Action(User u, SessionData sd, Article _article, Op _op){     
 	setUser(u);
@@ -394,7 +403,9 @@ import  edu.rutgers.axs.web.SessionData;
 	}
 	setArticle(_article);
 	setOp(_op);
-	setSession(sd.getSqlSessionId());
+	if (sd!=null) {
+	    setSession(sd.getSqlSessionId());
+	}
 	Date now = new Date();
 	setTime(now);
     }

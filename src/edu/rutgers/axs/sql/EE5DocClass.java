@@ -75,8 +75,8 @@ import java.lang.annotation.*;
     }
 
 
-    /** Auxiliary structure which contains information of all
-	classes. It is used to map local cluster ID within a category to
+    /** Auxiliary structure which contains information of all document
+	clusters. It is used to map a local cluster ID within a category to
 	a global cluster ID */
     public static class CidMapper {
 
@@ -88,7 +88,7 @@ import java.lang.annotation.*;
 	private HashMap<String, Vector<EE5DocClass>> h = new HashMap<String, Vector<EE5DocClass>>();
 
 	/** Reads in the entire EE5DocClass table */
-	static private HashMap<Integer,EE5DocClass> readDocClasses(EntityManager em) {
+	static public HashMap<Integer,EE5DocClass> readDocClasses(EntityManager em) {
 	    List<EE5DocClass> docClasses = EE5DocClass.getAll(em);
 	    HashMap<Integer,EE5DocClass> id2dc = new HashMap<Integer,EE5DocClass>();
 	    for(EE5DocClass c: docClasses) {
@@ -128,6 +128,16 @@ import java.lang.annotation.*;
 	    Vector<EE5DocClass> v = h.get(cat);
 	    if (v==null) throw new IllegalArgumentException("No clustering information for category " + cat + " is recorded in EE5DocClass. Do you need to re-run init?");
 	    return v.elementAt(localCid);
+	}
+
+	/** Max class ID found in this table */
+	public int maxId() {
+	    int m = 0;
+	    for(Integer x:  id2dc.keySet()) {
+		int id = x.intValue();
+		if (id>m) m = id;
+	    }
+	    return m;
 	}
 
     }

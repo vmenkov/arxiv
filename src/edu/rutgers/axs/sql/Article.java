@@ -28,37 +28,71 @@ import edu.rutgers.axs.indexer.ArxivFields;
     public int getId() {        return id;    }
     public void setId(int x) {        id=x;    }
 
-    /** Document clustering for EE4 */
+    /** Document cluster assignment for EE4 */
     @Basic  @Display(editable=true, order=2)
         private int ee4classId;    
     public int getEe4classId() {        return ee4classId;    }
     public void setEe4classId(int x) {        ee4classId=x;    }
 
-    /** Document clustering for EE5 */
+    /** Document cluster assignment for EE5 */
     @Basic  @Display(editable=true, order=2)
         private int ee5classId;    
     public int getEe5classId() {        return ee5classId;    }
     public void setEe5classId(int x) {        ee5classId=x;    }
 
 
-   /** ArXiv Article ID.
+   /** ArXiv Article ID. This is used to locate the article in the Lucene
+       doc store.
+       
+       <p>For user-uploaded docs this field contains null.
 
-	See 
+       <p>See 
 http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guide_mapping_jpa.html#ref_guide_mapping_jpa_unique about the '@Index' and '@Unique' annotation.
 */
-    @Basic      @Column(length=16) @Index(unique=true)
+    @Basic      @Column(length=16)	@Index(unique=true)
 	@Display(editable=false, order=2,
 		 link="../FilterServlet/my.src:RESEARCH/abs/")
 	String aid=null;
     public String getAid() { return aid; }
     public void setAid(String x) { aid=x;}
 
-  /** Find the matching record.
-     @return The Article object with  the matching name, or null if none is found */
+    /** Uploader's user name (for user-uploaded docs only) */
+    @Basic      @Column(length=15)
+	@Display(editable=false, order=3)
+	String user=null;
+    public String getUser() { return user; }
+    public void setUser(String x) { user=x;}
+
+   /** Uploaded file's file name (for user-uploaded docs only). It can
+       be used, together with the user field, to locate the document
+       in Lucene doc store.  For ArXiv articles this field is null. */
+    @Basic      @Column(length=80)
+	@Display(editable=false, order=4)
+	String file=null;
+    public String getFile() { return file; }
+    public void setFile(String x) { file=x;}
+
+    /** Find the matching record.
+	@return The Article object with the matching name, or null if none is found */
 @SuppressWarnings("unchecked")
     public static Article findByAid( EntityManager em, String _aid) {
 	Query q = em.createQuery("select m from Article m where m.aid=:c");
 	q.setParameter("c", _aid);
+	List<Article> res = (List<Article>)q.getResultList();
+	if (res.size() != 0) {
+	    return  res.iterator().next();
+	} else {
+	    return null;
+	}
+    }    
+
+    /** Find the matching record for a user-uploaded doc.
+	@return The Article object with the matching name, or null if none is found */
+    @SuppressWarnings("unchecked")
+	public static Article findUploaded( EntityManager em, String user, String file) {
+	Query q = em.createQuery("select m from Article m where m.user=:u and m.file=:f");
+	q.setParameter("u", user);
+	q.setParameter("f", file);
 	List<Article> res = (List<Article>)q.getResultList();
 	if (res.size() != 0) {
 	    return  res.iterator().next();
@@ -74,7 +108,8 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	setAid( aid);
     }
 
-    /** Looks up an existing entry, or creates a new one */
+    /** Looks up an existing entry, or creates a new one, for a
+	specified ArXiv ID. */
     static public Article getArticleAlways(EntityManager em, String aid) {
 	return getArticleAlways(em, aid, true);
     }   
@@ -94,7 +129,52 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	return a;
     }
 
-   /** A one-off process, initializing this table from ArticleStats. 
+    static public Article getUUDocAlways(EntityManager em, Document doc) {
+	String uname = doc.get(ArxivFields.UPLOAD_USER);
+	String file = doc.get(ArxivFields.UPLOAD_FILE);
+	return Article.getUUDocAlways(em, uname, file);
+    }
+
+    static public Article getUUDocAlways(EntityManager em, String uname, String file) {
+	em.getTransaction().begin(); 
+	Article a = Article.findUploaded(em, uname, file);
+	if (a==null) {
+	    a = new Article();
+	    a.setUser(uname);
+	    a.setFile(file);
+	    em.persist(a);		
+	    Logging.info("Created entry for article " + a);
+	}
+	em.getTransaction().commit(); 
+	return a;
+    }
+
+    /** Checks if the other object is also an Article object describing the
+	same Lucene document. The comparison is based on the fact that
+	in our data store the ArXiv ID is a unique identifier for ArXiv 
+	articles, and the (user, file) tuple is a  unique identifier for
+	user-uploaded documents.
+     */
+    public boolean equals(Object _o) {
+	if (!(_o instanceof Article)) return false;
+	Article o = (Article)_o;
+	return  (getAid()!=null) ?
+	    same(getAid(), o.getAid()) :
+	    same(getUser(), o.getUser()) && same(getFile(), o.getFile());
+    }
+       
+    private static boolean same(String x, String y) {
+	return x==y || x!=null  && y!=null && x.equals(y);
+    }
+
+    public String toString() { 
+	String s = "["+getId()+"]";
+	return (getAid() != null) ? s + "arXiv:" + getAid()  :
+	    s + "UU:" + getUser() + ":" + getFile();	    	
+    }
+
+   /** A one-off process, initializing this table from ArticleStats. This
+       is not needed in subsequent server operation.
      */
     static void initFromArticleStats() {
 	EntityManager em  = Main.getEM();

@@ -228,7 +228,7 @@ public class TorontoPPP {
 
 	if (thread != null) thread.progress("Summing up...");
 	Vector<ArticleEntry>	    entries = upro.packageEntries(sd);	    
-	Logging.info("TorontoPPP("+uname+"), will some these docs: " + listReport(entries,updateCo));
+	Logging.info("TorontoPPP("+uname+"), will sum these docs: " + listReport(entries,updateCo));
 
 	// apply the feedback to the user profile
 	upro.rocchioUpdate2(updateCo, pin);
@@ -245,7 +245,7 @@ public class TorontoPPP {
 	// save the profile
 	final DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
 	DataFile outputFile=upro.saveToFile(uname, 0, ptype);
-	Logging.info("TorontoPPP("+uname+"), saved user profile: " + outputFile);
+	Logging.info("TorontoPPP("+uname+"), saved user profile: "+ outputFile);
 
 	outputFile.setLastActionId(0);
 

@@ -83,7 +83,7 @@ public class UploadPapers  extends ResultsBase {
 				fileName+"'</p>";
 			}
 
-			sd.upThread = new UploadProcessingThread(user, df);
+			sd.upThread = new UploadProcessingThread(sd, user, df);
 			sd.upThread.start();
 		
 		    } else if (fileNameLC.endsWith(".html") ||
@@ -94,7 +94,7 @@ public class UploadPapers  extends ResultsBase {
 			if (outliner != null) {
 			    // start asynchronous processing of the links
 			    //UploadProcessingThread 
-			    sd.upThread = new UploadProcessingThread(user, outliner);
+			    sd.upThread = new UploadProcessingThread(sd, user, outliner);
 			    sd.upThread.start();
 			}
 		    } else {
@@ -207,7 +207,7 @@ public class UploadPapers  extends ResultsBase {
 		    }
 		    URL lURL = new URL(url);
 
-		    sd.upThread = new UploadProcessingThread(user, lURL);
+		    sd.upThread = new UploadProcessingThread(sd, user, lURL);
 		    sd.upThread.start();
 		    //		    Vector<DataFile> results = UploadProcessingThread.pullPage(user, lURL, false);
 		    //		    uploadCnt += results.size();
@@ -215,7 +215,7 @@ public class UploadPapers  extends ResultsBase {
 	    }
 	    
 
-	    if (sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED) {
+	    if (sd.upThread!=null && sd.upThread.getState()!=Thread.State.TERMINATED) {
 		check=true;
 		wantReload = true;
 		checkTitle = "Uploading in progress";
@@ -225,8 +225,6 @@ public class UploadPapers  extends ResultsBase {
 		reloadURL = getReloadURL(true);		
 		checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
 	    }
-
-
 	  
 	} catch(  Exception ex) {
 	    setEx(ex);
@@ -237,7 +235,14 @@ public class UploadPapers  extends ResultsBase {
     private static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
-    /** @param convertedToTxt Show converted text files (rather than PDF files)
+    /** Produces a long message describing the content of this user's
+	upload directory. (Actually, there are 2 directories for each
+	user: one of the actually uploaded PDF files, and the other
+	for the text files into which these PDF files are converted
+	immediately after uploading. This method can display the
+	content of either directory).
+	@param convertedToTxt List the converted text files (rather
+	than the original PDF files)
      */
     public String dirInfo(boolean convertedToTxt) {
 	

@@ -46,7 +46,7 @@ public class Daily {
 	for(int uid: lu) {
 	    try {
 		User user = (User)em.find(User.class, uid);
-		makeEE5Sug(em, searcher, since, cidMap, user);
+		makeEE5Sug(em, searcher, since, cidMap.id2dc, user);
 	    } catch(Exception ex) {
 		Logging.error(ex.toString());
 		System.out.println(ex);
@@ -83,12 +83,15 @@ public class Daily {
      either should use it either in the daily update script *after*
      all judged docs have been classified, or in a new-user scenario,
      when there is no judgment history anyway. */
-    private static DataFile makeEE5Sug(EntityManager em,  IndexSearcher searcher, Date since, EE5DocClass.CidMapper cidMap, User user) throws IOException {
+    static DataFile makeEE5Sug(EntityManager em,  IndexSearcher searcher, Date since, 
+				       HashMap<Integer,EE5DocClass> id2dc,
+				       //EE5DocClass.CidMapper cidMap, 
+				       User user) throws IOException {
 	int uid = user.getId();
 	EE5User ee5u = EE5User.getAlways( em, uid, true);
-	int lai = updateUserVote(em, cidMap.id2dc, user, ee5u);
+	int lai = updateUserVote(em, id2dc, user, ee5u);
 	boolean nofile = false;
-	return updateSugList(em, searcher, since, cidMap.id2dc, user, ee5u, lai, nofile);
+	return updateSugList(em, searcher, since, id2dc, user, ee5u, lai, nofile);
     }
 
     /** This version is invoked from the web server, for newly created users
@@ -145,7 +148,8 @@ public class Daily {
 	article? <br>
 	0 - ignore, +-1 - med, +-2 - high */
     private static int actionPriority(Action.Op op) {
-	if (op==Action.Op.INTERESTING_AND_NEW || op.isToFolder()) return 2;
+	if (op==Action.Op.INTERESTING_AND_NEW || op.isToFolder() ||
+	    op==Action.Op.UPLOAD) return 2;
 	else if (op==Action.Op.DONT_SHOW_AGAIN ||
 		 op==Action.Op.REMOVE_FROM_MY_FOLDER) return -2;
 	else if (op==Action.Op.EXPAND_ABSTRACT||
@@ -159,7 +163,7 @@ public class Daily {
     }
 
     /** Does action a override action b? Return the most "relevant" one 
-     (higher-priority, or more recent) */
+	(higher-priority, or more recent) */
     private static Action mostRelevant(Action a, Action b) {	
 	int aval = actionPriority(a.getOp()), bval=actionPriority(b.getOp());
 	if (Math.abs(aval) > Math.abs(bval)) return a;
@@ -192,6 +196,9 @@ public class Daily {
 		System.out.println("Mixed list action " + a + " ignored");
 
 	    return ple!=null && ple.getFromA();
+	} else if (a.getOp()==Action.Op.UPLOAD) {
+	    System.out.println("Upload action " + a + " accepted");
+	    return true;
 	} else {
 	    System.out.println("Action " + a + " ignored");
 	    return false;
@@ -207,7 +214,7 @@ public class Daily {
 
 	@return the last (most recent) action id used in the update
     */
-    static int updateUserVote(EntityManager em, HashMap<Integer,EE5DocClass> id2dc, User u, 	EE5User ee5u) throws IOException {
+    static int updateUserVote(EntityManager em, HashMap<Integer,EE5DocClass> id2dc, User u, EE5User ee5u) throws IOException {
 
 	System.out.println("updateUserVote(user=" + u);
 	Set<Action> sa = u.getActions();
@@ -434,7 +441,7 @@ public class Daily {
 	}
 
 	if (errcnt > 0) {
-	    throw new IllegalArgumentException("There are " + errcnt + " cluste rdefinition files in "+Files.getDocClusterDir()+" referring to otherwise unknown categories (see messages above). Please make sure that the directory names there match cat names in sql/Categories.java!");
+	    throw new IllegalArgumentException("There are " + errcnt + " cluster definition files in "+Files.getDocClusterDir()+" referring to otherwise unknown categories (see messages above). This won't do! Please make sure that the directory names there match cat names in sql/Categories.java!");
 	}
 	
 	// default number of clusters per cat is 1 (a trivial cluster)

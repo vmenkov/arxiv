@@ -94,18 +94,19 @@ public class JudgmentServlet extends BaseArxivServlet {
 		em.getTransaction().commit(); 
 		
 	    } else if (op!=Action.Op.NONE) {
-		String id = request.getParameter(ID);
-		if (id==null) throw new WebException("No aticle id supplied");
+		String aid = request.getParameter(ID);
+		if (aid==null) throw new WebException("No aticle id supplied");
 		// Record the user's desire not to see it page again. This is only used in SB.
 		if (op.isHideSB()) {
-		    Logging.info("Marking page " + id + " as one to be hidden in session " +  sd.getSqlSessionId());
-		    sd.recordLinkedAid(id);
+		    Logging.info("Marking page " + aid + " as one to be hidden in session " +  sd.getSqlSessionId());
+		    sd.recordLinkedAid(aid);
 		}
 		
 		// Begin a new local transaction so that we can persist a new entity	
 		em.getTransaction().begin();
 		// record the action and the new PresentedList object
-		Action a= sd.addNewAction(em, u, op, id, null, asrc);
+		Article art = Article.getArticleAlways(em, aid,false);
+		Action a = sd.addNewAction(em, u, op, art, null, asrc);
 		//em.persist(u);	       
 		em.getTransaction().commit(); 
 	    }

@@ -12,8 +12,9 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.sb.SBRGenerator;
+import edu.rutgers.axs.upload.BackgroundThread;
 import edu.rutgers.axs.upload.UploadProcessingThread;
-import edu.rutgers.axs.recommender.TorontoPPPThread;
+//import edu.rutgers.axs.recommender.TorontoPPPThread;
 import edu.rutgers.axs.recommender.UserProfile;
 import edu.rutgers.axs.recommender.Stoplist;
 
@@ -51,7 +52,8 @@ public class SessionData {
     /** The most recent uploaded document processsing thread (for the Toronto
 	system) in this session. */
     UploadProcessingThread upThread = null;
-    TorontoPPPThread upInitThread = null;
+    //    TorontoPPPThread or TorontoEE5Thread 
+    BackgroundThread upInitThread = null;
 
     /** Used to record the ArXiv article ID of an article linked from
 	a viewed page, or of any other article that the SB user does
@@ -375,52 +377,62 @@ public class SessionData {
 	
 	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
 	@param u User object. May be null (for anon user actions)
-	@param aid The ArXiv ID of the article on which the action was
-	carried out. (This may be null, for several
-	non-article-specific action types, such as NEXT_PAGE, PREV_PAGE,
-	and REORDER)
-	@param reorderedAids The list of articles reordered by the user. This is supplied for the REORDER action (instead of a single article ID)
-
+	@param art An Article object referring to the document on
+	which the action was carried out.  Usually, this refers to an
+	ArXiv article, or, for UPLOAD operation, to a user-uploaded
+	document. This parameter is for several non-article-specific
+	action types, such as NEXT_PAGE, PREV_PAGE, and REORDER.
+	@param reorderedAids The list of articles reordered by the
+	user. This is supplied for the REORDER action (where art=null)
 	@throws WebException On illegal argument combinations
     */
     public Action addNewAction(EntityManager em,  User u, Action.Op op, 
-			       String aid, String reorderedAids[],
-			       ActionSource asrc) throws WebException {
-	Article a=null;
+			       Article art, String reorderedAids[],
+			       ActionSource asrc)  {
+	return addNewAction(em, u,  op, art, reorderedAids, asrc, this);
+    }
+
+    /** Similar to its non-static sibling, this method is only needed
+	to be used when we need to retroactively create an Action entry
+	from a command-line application.
+     */
+    public static Action addNewAction(EntityManager em,  User u, Action.Op op, 
+				      Article art, String reorderedAids[],
+				      ActionSource asrc, SessionData sd)  {
+
 	long newPLid = 0; // for REORDER op only
-	if (aid==null) { // article ID is usually required, except for..
+	long sid = (sd==null)? 0: sd.sqlSessionId;
+	if (art==null) { // article ID is usually required, except for..
 	    if (op==Action.Op.REORDER) {
 		// have a user-reordered list to save
 		long oplid = asrc.presentedListId;
-		if (oplid==0) throw new WebException("No original presented list ID is supplied");
+		if (oplid==0) throw new IllegalArgumentException("No original presented list ID is supplied");
 
 		PresentedList original=(PresentedList)em.find(PresentedList.class,oplid);
-		if (original==null)  throw new WebException("No presented list for the supplied ID=" + oplid + " can be found!");
-		PresentedList newPL = saveReorderedPresentedList(em,original,u,reorderedAids,sqlSessionId); 
+		if (original==null)  throw new IllegalArgumentException("No presented list for the supplied ID=" + oplid + " can be found!");
+		if (sd==null) throw new IllegalArgumentException("Cannot create a REORDER action outside of a web app!");
+		PresentedList newPL = sd.saveReorderedPresentedList(em,original,u,reorderedAids,sid); 
 		newPLid = newPL.getId();
 
 		// on SB lists, make in-memory record in the SB generator,
 		// for furture use in "maintain stable order" procedures
 		if (original.getType()==Action.Source.SB) {
-		    sbrg.receiveReorderedList(oplid, reorderedAids);
+		    sd.sbrg.receiveReorderedList(oplid, reorderedAids);
 		}
-
-
 	    } else if (op==Action.Op.NEXT_PAGE || op==Action.Op.PREV_PAGE) {
 	    } else {
 		throw new IllegalArgumentException("Cannot create an action with op code " + op + " without an article ID!");
 	    }
-	} else {
-	    // no commit needed here, since we're inside a transaction already
-	    a = Article.getArticleAlways(em,aid,false); 
 	}
-	Action r = new Action(u, this, a, op); 
+	Action r = new Action(u, sd, art, op); 
 	r.setActionSource(asrc);
         if (u!=null) u.addAction(r); 
 	if (op==Action.Op.REORDER) r.setNewPresentedListId(newPLid);
 	em.persist(r);
 	if (u!=null) r.bernoulliFeedback(em); // only affects Bernoulli users
-	sbrg.addAction(r); // updates the session history for sb
+	if (sd!=null && op!=Action.Op.UPLOAD) {
+	    sd.sbrg.addAction(r); // updates the session history for sb
+	}
 	return r;
     }
 

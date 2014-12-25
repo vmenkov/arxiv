@@ -258,8 +258,11 @@ public class EditUser extends Participation  {
 		em.getTransaction().commit();
 	    }
 
-	    if (mode==Mode.CREATE_SELF && r.getProgram() == User.Program.PPP) {
-		// invite the user to upload some papers
+	    if (mode==Mode.CREATE_SELF && 
+		(r.getProgram() == User.Program.PPP ||
+		 r.getProgram() == User.Program.EE5)) {
+		// invite the user to upload some papers, so that we
+		// can initialize his profile
 		needTorontoLink = true;
 	    }
 

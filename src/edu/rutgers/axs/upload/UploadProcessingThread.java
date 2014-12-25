@@ -6,12 +6,13 @@ import java.text.*;
 import java.net.*;
 import java.nio.charset.Charset;
 import java.util.regex.*;
-//import javax.persistence.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.persistence.*;
 
 import org.apache.lucene.index.*;
+import org.apache.lucene.document.Document;
 
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.ParseConfig;
@@ -33,6 +34,7 @@ public class UploadProcessingThread extends BackgroundThread {
     private HTMLParser.Outliner outliner;
     private final URL startURL;
     private final DataFile startDf;
+    private final SessionData sd;
 
     int pdfCnt = 0, convCnt = 0;
 
@@ -52,7 +54,8 @@ public class UploadProcessingThread extends BackgroundThread {
 
     /** Creates a thread which will follow the links listed in the Outliner structure
      */
-    public UploadProcessingThread(String _user, HTMLParser.Outliner _outliner) {
+    public UploadProcessingThread(SessionData _sd, String _user, HTMLParser.Outliner _outliner) {
+	sd = _sd;
 	user = _user;
 	outliner = _outliner;
 	startURL = null;
@@ -62,7 +65,8 @@ public class UploadProcessingThread extends BackgroundThread {
     /** Creates a thread which will get a document from a specified
 	URL, and, if it is HTML, will follow the links in it as well.
      */
-    public UploadProcessingThread(String _user, URL url) {
+    public UploadProcessingThread(SessionData _sd, String _user, URL url) {
+	sd = _sd;
 	user = _user;
 	outliner = null;
 	startURL = url;
@@ -71,7 +75,8 @@ public class UploadProcessingThread extends BackgroundThread {
 
     /** Creates a thread that will run pdf2txt conversion for a single pre-read
 	file */
-    public UploadProcessingThread(String _user, DataFile df) {
+    public UploadProcessingThread(SessionData _sd, String _user, DataFile df) {
+	sd = _sd;
 	user = _user;
 	outliner = null;
 	startURL = null;
@@ -86,13 +91,14 @@ public class UploadProcessingThread extends BackgroundThread {
 	generation. */
     public void run()  {
 	startTime = new Date();
+	EntityManager em = sd.getEM();
 	try {
 
 	    writer = UploadImporter.makeWriter();
 
 	    if (startDf != null) {
 		pdfCnt = 1;
-		DataFile txt = pdf2txt(startDf);
+		DataFile txt = pdf2txt(em, startDf);
 		if (txt != null) {
 		    convCnt ++;
 		}
@@ -104,14 +110,14 @@ public class UploadProcessingThread extends BackgroundThread {
 		DataFile pdf = pullPage(user, startURL, false);
 		if (pdf != null) {
 		    pdfCnt ++;
-		    DataFile txt = pdf2txt(pdf);
+		    DataFile txt = pdf2txt(em, pdf);
 		    if (txt != null) convCnt ++;
 		} 
 		//progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
 	    }
 
 	    // outliner may have been supplied in the constructor or set in pullPage()
-	    processOutliner();
+	    processOutliner(em);
 	    
 	} catch(Exception ex) {
 	    String errmsg = ex.getMessage();
@@ -123,13 +129,15 @@ public class UploadProcessingThread extends BackgroundThread {
 		    writer.close();
 		} catch(IOException ex) {}
 	    }
+	    ResultsBase.ensureClosed( em, true);
 	    endTime = new Date();
 	}
 
     }
 
-    /** Gets the PDF focuments from the URLs listed in this thread's outliner object */
-    private void processOutliner() {
+    /** Gets the PDF focuments from all URLs listed in this thread's
+	Outliner object */
+    private void processOutliner(EntityManager em) {
 	if (outliner==null) return;
 	if (outliner.getErrors().size()>0) {
 	    progress("During processing of the HTML document " + outliner.getErrors().size() + " errors were encountered");
@@ -153,7 +161,7 @@ public class UploadProcessingThread extends BackgroundThread {
 		DataFile pdf = pullPage(user, url, true);
 		if (pdf != null) {
 		    pdfCnt ++;
-		    DataFile txt = pdf2txt(pdf);
+		    DataFile txt = pdf2txt(em, pdf);
 		    if (txt != null) convCnt ++;
 		} else {
 		    // error is reported inside pullPage()
@@ -402,7 +410,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
     /** Uses PDFMiner to convert a PDF file to text; after that,
 	imports the file's content into Lucene. */
-    private DataFile pdf2txt(DataFile pdf) {
+    private DataFile pdf2txt(EntityManager em, DataFile pdf) {
 	File pdfFile = pdf.getFile();
 	String pdfFileName = pdfFile.getName();
 	try {
@@ -452,8 +460,12 @@ public class UploadProcessingThread extends BackgroundThread {
 	    }
 
 	    progress("Converted " + pdfFile + " to " + txtDf.getPath());
-	    UploadImporter.importFile(user, txtDf.getFile(), writer);
+	    Document doc=UploadImporter.importFile(user,txtDf.getFile(),writer);
+	    Article art =  Article.getUUDocAlways(em, doc);
+	    User u = User.findByName(em, user);
+	    ActionSource asrc = new ActionSource(Action.Source.UNKNOWN, 0);
 
+	    Action a=sd.addNewAction(em, u, Action.Op.UPLOAD, art, null, asrc);
 	    return txtDf;
 
 	} catch (IOException ex) {

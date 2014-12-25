@@ -21,7 +21,11 @@ import edu.rutgers.axs.upload.*;
 //import edu.rutgers.axs.indexer.Common;
 
 /** Code for accessing the content of documents that have been uploaded by users
-    and converted to text */
+    and converted to text. 
+
+    <p> This class now has little use, since, once uploaded docs have
+    been indexed, we typically access them via Lucene.
+ */
 public class AccessUploads {
    
     /** Returns the list of documents that have been uploaded by a specified

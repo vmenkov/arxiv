@@ -14,6 +14,12 @@ import edu.rutgers.axs.ParseConfig;
 /** Each DataFile instance contains information about one external
     data file. Such data file may store e.g. a user profile, or a
     suggestion list.
+
+    <p>Typically, DataFile objects are persisted in the SQL database.
+    The one exception are DataFile objects that we create when processing
+    user-uploaded files. Those presently (2014-12) are not persisted;
+    when we need to find these documents, we simply use the file
+    system or the Lucene doc store.
  */
 @SuppressWarnings("unchecked")
 @Entity
@@ -252,9 +258,9 @@ import edu.rutgers.axs.ParseConfig;
 	Normally it includes a subdirectory name (which is determined
 	by the file's type or role in the algorithm), and the file's unique
 	name.
-	// FIXME: 64 chars may be too short, once the users start PDF uploads!
+	// FIXME: 80 chars may still be too short, once the users start PDF uploads!
      */
-    @Basic      @Column(length=64) @Display(order=9, editable=false)
+    @Basic      @Column(length=80) @Display(order=9, editable=false)
 	String thisFile;
     public String getThisFile() { return thisFile; }
     public void setThisFile( String x) { thisFile = x; }

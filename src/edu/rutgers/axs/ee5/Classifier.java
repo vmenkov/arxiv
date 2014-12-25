@@ -39,8 +39,7 @@ public class Classifier {
     */
     static void classifyNewDocs(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
 				EE5DocClass.CidMapper cidMap,
-				int mT[]
-				) throws IOException {
+				int mT[]) throws IOException {
 
 	File f = Files.getWordClusterFile();
 	if (!f.canRead()) {
@@ -99,21 +98,8 @@ public class Classifier {
 	    }
 
 	    Logging.info("Recording cluster assignments for "+vdocno.size()+" recent articles in category " + cat);
-	    em.getTransaction().begin();
-	    int pos=0;
-	    for(int docno: vdocno) {
-		EE5DocClass cluster = assignedClusters.elementAt(pos);
-		if (cluster==null) {
-		    Logging.warning("There was no cluster assignment for article no. " + docno +"! Need to update cat list and re-init clusters?");
-		    continue;
-		}
-		int cid = cluster.getId();
-		mT[ cid]++;
-		recordClass(docno, reader, em, cid);
-		pos ++;
-		caCnt++;
-	    }
-	    em.getTransaction().commit();
+
+	    caCnt += recordClusterAssignments(em,reader,vdocno,assignedClusters,mT);   
 	}
 
 	em.getTransaction().begin();
@@ -127,6 +113,94 @@ public class Classifier {
 			   caCnt + " articles classified, and " + catz.nocatMembers.size() + " more are unclassifiable");
 
     }
+
+    /** Similar to classifyNewDocs(), this method processes documents
+	in a "category-blind" fashion. That is, it does not make use
+	of the category field in Lucene records, and thus can be used
+	with documents that don't have category information. (This is
+	the case with user-uploaded docs). Therefore, instead of
+	assigning each document to a cluster within a known category,
+	it has to choose the best cluster out of all clusters in all
+	categories.
+     */
+    static void classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
+				EE5DocClass.CidMapper cidMap,
+				int mT[]) throws IOException {
+
+	File f = Files.getWordClusterFile();
+	if (!f.canRead()) {
+	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
+	}
+	Vocabulary voc = new Vocabulary(f, 0);
+	final int L = voc.L;
+	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
+
+	int maxCid = cidMap.maxId();
+	// an array, possibly with gaps, of logarithmized P-vecs for all clusters
+	// for which such vectors have been supplied to us
+	Vector<DenseDataPoint> cid2logPvec = new Vector<DenseDataPoint>(maxCid+1);
+
+	Vector<String> allCats = Categories.listAllStorableCats();
+	Vector<String> usedCats = new Vector<String>();
+	for(String cat: allCats) {
+	    f = Files.getDocClusterFile(cat);
+	    if (!f.exists()) {
+		Logging.warning("No cluster vector files provided for category " + cat +"; exclding this category from assignment candidate list");
+		continue;
+	    }
+	    usedCats.add(cat);
+	    Vector<DenseDataPoint> pvecs = readPVectors(f,L);
+	    Vector<DenseDataPoint> logPvecs = computeLogP(pvecs);	  
+	    int i=0;
+	    for(DenseDataPoint x: logPvecs) {		
+		int cid = cidMap.getCluster(cat, i++).getId();
+		cid2logPvec.set(cid,x);
+	    }
+	}
+
+	// Read the new data points to be classified
+	Vector<Integer> vdocno = new Vector<Integer>();
+	for(ScoreDoc sd: scoreDocs) vdocno.add(sd.doc);
+
+	Logging.info("Classifying "+vdocno.size()+" documents in a category-blind fashion");
+
+	int cnt=0;
+	Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
+	for(int docno: vdocno) {
+	    cnt++;
+	    DenseDataPoint q = readArticle(docno, L, voc, reader);
+	    int cid = assignArticleToCluster(q, cid2logPvec, L);
+	    EE5DocClass cluster = cidMap.id2dc.get(cid);
+	    assignedClusters.add(cluster);
+	    Logging.info("Document no. "+docno+" assigned to cluster "+cluster);
+	}
+
+	Logging.info("Recording cluster assignments for "+vdocno.size()+" documents");
+
+	int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, mT);
+
+	System.out.println("Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents");
+    }
+
+    private static int recordClusterAssignments(EntityManager em, IndexReader reader, Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, int mT[])  throws IOException {
+ 	em.getTransaction().begin();
+	int pos=0;
+	int caCnt=0;
+	for(int docno: vdocno) {
+	    EE5DocClass cluster = assignedClusters.elementAt(pos);
+	    if (cluster==null) {
+		Logging.warning("There was no cluster assignment for article no. " +docno+"! Need to update cat list and re-init clusters?");
+		continue;
+	    }
+	    int cid = cluster.getId();
+	    mT[ cid]++;
+	    recordClass(docno, reader, em, cid);
+	    pos ++;
+	    caCnt++;
+	}
+	em.getTransaction().commit();
+	return caCnt;
+   }
 
     /**
        [vm293@en-myarxiv02 iter_950]$ pwd
@@ -224,11 +298,21 @@ public class Classifier {
     }
 
     /** Assigns a given article to one of the K document clusters.
+	The clusters don't have to be from the same document 
+	category.
 
 	@param article A document represented as a vector in the
 	L-dimensional word2vec word cluster space
-	@param logPvec The K logarithmized "P vectors", which describe
-	the K document clusters
+	@param logPvec Contains the K logarithmized "P vectors", which
+	describe the K document clusters. The array can contain gaps
+	(null values), indicating that we do not have a P vector for a
+	particular cluster. (This would only happen when we are
+	choosing the optimal cluster over multiple categories, but
+	some of these categories do not have a clustering scheme supplied.)
+
+	@return index into the array logPvec, indicating the position of 
+	the best cluster. If logPvec is empty, or only contains nulls, -1
+	will be returned.
      */
     static int assignArticleToCluster(DenseDataPoint article,
 				      Vector<DenseDataPoint> logPvec,
@@ -237,6 +321,7 @@ public class Classifier {
 	int bestk= -1;
 	for(int k=0; k<logPvec.size(); k++) {
 	    DenseDataPoint logp = logPvec.elementAt(k);
+	    if (logp == null) continue; // a gap
 	    double loglik = article.dotProduct(logp);
 	    if (bestk<0 || loglik>bestloglik) {
 		bestk=k;

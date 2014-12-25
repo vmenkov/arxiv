@@ -21,11 +21,12 @@ import edu.rutgers.axs.upload.*;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.recommender.TorontoPPPThread;
 import edu.rutgers.axs.recommender.DailyPPP;
+import edu.rutgers.axs.ee5.TorontoEE5Thread;
 
-/** The "Toronto system": profile initialization, once PDF documents
+/** The "Toronto system": user profile initialization, once PDF documents
     have been uploaded by UploadPapers.
 
-
+    <p>
     FIXME: need a check for "do we need it now?" (Maybe profile is alreqady available...)
 */
 public class UploadPapersInitProfile  extends ResultsBase {
@@ -94,25 +95,29 @@ public class UploadPapersInitProfile  extends ResultsBase {
 	try {
 	    User actor = User.findByName(em, user);
 	    User.Program program = actor.getProgram();
-	    if (program==null || program != User.Program.PPP) {
-		throw new WebException("User " + user + " is not enrolled into experiment plan " + User.Program.PPP + ". Presently, there is no mechanism to for initializing user profiles from uploaded documents for users in experiment plan " + program);
+	    if (program==null || program != User.Program.PPP
+		&& program != User.Program.EE5) {
+		throw new WebException("User " + user + " is not enrolled into experiment plan " + User.Program.PPP + " or "+User.Program.EE5+". Presently, there is no mechanism for initializing user profiles from uploaded documents for users in experiment plan " + program);
 	    } 
 
-	    // check if there is a recent profile file already
-	    DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
-	    DataFile existingProfile = DataFile.getLatestFileByVersion(em, user, ptype,  DailyPPP.allowedFileVersions());
-	    if (existingProfile != null) {
-		Date dfTime = existingProfile.getTime();
-		IndexReader reader=Common.newReader();
-		searcher = new IndexSearcher( reader );
-		Date latestUpload = mostRecentUploadDate(searcher, user);
-		if (latestUpload!=null && latestUpload.before( dfTime)) {
-		    throw new WebException("User " + user + " already has a user profile (id="+existingProfile.getId()+", "+dfTime+"), which has been computed more recently than the latest document upload ("+latestUpload+"). To view your recommendations, go to the <a href=\""+cp+"/index.jsp\">main page</a>!" );
+	    // for PPP users, we check if there is a recent profile file already
+	    if (program == User.Program.PPP) {
+		DataFile.Type ptype = DataFile.Type.PPP_USER_PROFILE;
+		DataFile existingProfile = DataFile.getLatestFileByVersion(em, user, ptype,  DailyPPP.allowedFileVersions());
+		if (existingProfile != null) {
+		    Date dfTime = existingProfile.getTime();
+		    IndexReader reader=Common.newReader();
+		    searcher = new IndexSearcher( reader );
+		    Date latestUpload = mostRecentUploadDate(searcher, user);
+		    if (latestUpload!=null && latestUpload.before( dfTime)) {
+			throw new WebException("User " + user + " already has a user profile (id="+existingProfile.getId()+", "+dfTime+"), which has been computed more recently than the latest document upload ("+latestUpload+"). To view your recommendations, go to the <a href=\""+cp+"/index.jsp\">main page</a>!" );
+		    }
 		}
 	    }
    
 	    sd.loadStoplist();
-	    sd.upInitThread = new TorontoPPPThread(user);
+	    sd.upInitThread = (program == User.Program.PPP)?
+		new TorontoPPPThread(user) : 	new TorontoEE5Thread(user);
 	    sd.upInitThread.start();
         
             if (sd.upInitThread != null && sd.upInitThread.getState() != Thread.State.TERMINATED) {
