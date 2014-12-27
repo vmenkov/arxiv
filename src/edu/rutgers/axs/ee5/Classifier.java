@@ -23,6 +23,8 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
  */
 public class Classifier {
 
+    static final boolean debug = false;
+
       /** Classifies new docs, using the stored P files.
 
 	 <p>FIXME: Presently this method reclassifies all docs within
@@ -77,7 +79,7 @@ public class Classifier {
 		for(int docno: vdocno) {
 		    cnt++;
 		    assignedClusters.add(cluster);
-		    Logging.info("article no. " + docno + " assigned to trivial cluster "+ cluster);
+		    if (debug) Logging.info("article no. " + docno + " assigned to trivial cluster "+ cluster);
 		}
 	    } else {
 		Vector<DenseDataPoint> pvecs = readPVectors(f,L);
