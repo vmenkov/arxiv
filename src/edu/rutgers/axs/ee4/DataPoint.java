@@ -29,19 +29,46 @@ class DataPoint {
 	return sum;
     }
     /** Computes the 2-norm of the vector */
-    double norm() {
+    public double norm() {
 	return Math.sqrt(norm2());
     }
 
-    /** Normalizes this vector "in place" */
-    void normalize() {
+    /** Normalizes this vector "in place" (using L2 norm) */
+    public void normalize() {
 	multiply( 1.0 / norm());
     }
 
-    void multiply(double c) {
+    public void multiply(double c) {
 	for(int i=0; i<values.length; i++) {
 	    values[i] *= c;
 	}
+    }
+
+    /** Normalizes this vector "in place" (using L1 norm). Assumes
+     all components are non-negative. */
+    public void l1normalize() {
+	multiply( 1.0 / l1norm());
+    }
+
+
+    /** The sum of abs values of all elements. If all elements are
+	non-negative, this will be the same as the sum of them.
+     */
+    public double l1norm() {
+ 	double s = 0;
+	for(double q: values) {
+	    s += Math.abs(q);		 
+	}
+	return s;
+    }
+
+    /** How many stored values are actually non-zeros? */
+    public int nonzeroCount() {
+	int cnt=0;
+	for(double q: values) {
+	    if (q!=0) cnt++;
+	}
+	return cnt; 	
     }
 
 }

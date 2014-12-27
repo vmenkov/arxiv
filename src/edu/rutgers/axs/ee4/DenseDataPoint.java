@@ -7,7 +7,7 @@ import java.text.*;
 /** A dense vector, for use in KMeans */
 public class DenseDataPoint extends DataPoint {
 
-    DenseDataPoint(int n) {
+    public DenseDataPoint(int n) {
 	values = new double[n];
     }
 
@@ -22,7 +22,7 @@ public class DenseDataPoint extends DataPoint {
     }
 
 
-    void add(DataPoint a) {
+    public void add(DataPoint a) {
 	if (a instanceof SparseDataPoint) {
 	   SparseDataPoint x = (SparseDataPoint)a;
 	   for(int i=0; i<x.features.length; i++) {
@@ -114,5 +114,26 @@ public class DenseDataPoint extends DataPoint {
 	return new DenseDataPoint(q);
     }
 
+    /** Prints the values out in space-separated format, with a leading space.
+	@return " v1 v2 v3 ... vL"
+    */
+    public void print(PrintWriter w) {
+	for(double v: values) {
+	    w.print(" " + v);
+	}
+    }
+
+    /** Same as above, with fewer digits */
+    public void printFloat(PrintWriter w) {
+	for(double v: values) {
+	    w.print(" " + (float)v);
+	}
+    }
+
+    static public DenseDataPoint allOnes(int n) {
+	DenseDataPoint p = new DenseDataPoint(n);
+	for(int i=0; i<n; i++) p.values[i] = 1.0;
+	return p;
+    }
 
 }

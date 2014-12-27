@@ -29,11 +29,7 @@ public class Daily {
      */
     static void updates() throws IOException {
 
-	//ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
-	//ArticleAnalyzer z = new ArticleAnalyzer1();
-	//IndexReader reader = z.getReader();
 	IndexReader reader = Common.newReader();
-
 	EntityManager em  = Main.getEM();
 	    
 	final int days = EE5DocClass.TIME_HORIZON_DAY;
@@ -122,13 +118,11 @@ public class Daily {
     static void updateClassInfo(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs, EE5DocClass.CidMapper cidMap)
 	throws IOException
     {
-	int maxCid = 0;
 	for(EE5DocClass c: cidMap.id2dc.values()) {
-	    maxCid = Math.max(maxCid, c.getId());
 	    c.setAlpha0(1.0);
 	    c.setBeta0(19.0);
 	}
-	
+	int maxCid = cidMap.maxId();	
 	int mT[] = new int[ maxCid + 1];
 
 	Classifier.classifyNewDocs(em, reader, scoreDocs,

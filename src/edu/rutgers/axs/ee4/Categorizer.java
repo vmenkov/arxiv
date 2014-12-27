@@ -44,6 +44,7 @@ public class Categorizer {
     /** Adds information about one more document to the categorizer 
 	@param docno Lucene doc id of an article
 	@param doc The actual article, already retrived from Lucene
+	@return The primary category (the first cat in the cat list of the doc)
      */
     public Categories.Cat categorize(int docno, Document doc) {
 

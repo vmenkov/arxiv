@@ -22,7 +22,6 @@ class Files {
 	return new File(docclusterdir);
     }
 
-
     /** Category-specific file that lists all clusters in the
 	category, and describes each one by an L-dimensional
 	vector in the word2vec word cluster space. */       

@@ -41,11 +41,7 @@ public class Classifier {
 				EE5DocClass.CidMapper cidMap,
 				int mT[]) throws IOException {
 
-	File f = Files.getWordClusterFile();
-	if (!f.canRead()) {
-	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
-	}
-	Vocabulary voc = new Vocabulary(f, 0);
+	Vocabulary voc = readVocabulary();
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
 
@@ -71,7 +67,7 @@ public class Classifier {
 
 	    int cnt=0;
 	    Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
-	    f = Files.getDocClusterFile(cat);
+	    File f = Files.getDocClusterFile(cat);
 	    // FIXME: in production, should just die here.
 	    if (!f.exists()) {
 		Logging.warning("No cluster vector files provided for category " + cat +"; assigning entire cat to a single cluster");
@@ -99,6 +95,7 @@ public class Classifier {
 
 	    Logging.info("Recording cluster assignments for "+vdocno.size()+" recent articles in category " + cat);
 
+	    countClusterAssignments(assignedClusters, mT);
 	    caCnt += recordClusterAssignments(em,reader,vdocno,assignedClusters,mT);   
 	}
 
@@ -122,28 +119,30 @@ public class Classifier {
 	assigning each document to a cluster within a known category,
 	it has to choose the best cluster out of all clusters in all
 	categories.
+
+	@param scoreDocs list of documents to classify
+	@param mT output parameter: mT[i] will be set to the 
+	number of docs in the i-th cluster found in scoreDocs
+	@param nowrite If true, this method does not store the new 
      */
     static void classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
-				EE5DocClass.CidMapper cidMap,
-				int mT[]) throws IOException {
+					     EE5DocClass.CidMapper cidMap,
+					     int mT[], boolean nowrite) throws IOException {
 
-	File f = Files.getWordClusterFile();
-	if (!f.canRead()) {
-	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
-	}
-	Vocabulary voc = new Vocabulary(f, 0);
+	Vocabulary voc = readVocabulary();
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
 
 	int maxCid = cidMap.maxId();
-	// an array, possibly with gaps, of logarithmized P-vecs for all clusters
-	// for which such vectors have been supplied to us
-	Vector<DenseDataPoint> cid2logPvec = new Vector<DenseDataPoint>(maxCid+1);
+	// an array, possibly with gaps, of logarithmized P-vecs for
+	// all clusters for which such vectors have been supplied to us
+	Vector<DenseDataPoint> cid2logPvec=new Vector<DenseDataPoint>(maxCid+1);
+	cid2logPvec.setSize(maxCid+1);
 
 	Vector<String> allCats = Categories.listAllStorableCats();
 	Vector<String> usedCats = new Vector<String>();
 	for(String cat: allCats) {
-	    f = Files.getDocClusterFile(cat);
+	    File f = Files.getDocClusterFile(cat);
 	    if (!f.exists()) {
 		Logging.warning("No cluster vector files provided for category " + cat +"; exclding this category from assignment candidate list");
 		continue;
@@ -154,7 +153,7 @@ public class Classifier {
 	    int i=0;
 	    for(DenseDataPoint x: logPvecs) {		
 		int cid = cidMap.getCluster(cat, i++).getId();
-		cid2logPvec.set(cid,x);
+		cid2logPvec.set(cid,x);  // ??
 	    }
 	}
 
@@ -162,7 +161,7 @@ public class Classifier {
 	Vector<Integer> vdocno = new Vector<Integer>();
 	for(ScoreDoc sd: scoreDocs) vdocno.add(sd.doc);
 
-	Logging.info("Classifying "+vdocno.size()+" documents in a category-blind fashion");
+	Logging.info("Classifying "+vdocno.size()+" documents in a category-blind fashion, among "+ nonNullCnt(cid2logPvec) + " clusters in " +  usedCats.size() + " categories");
 
 	int cnt=0;
 	Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
@@ -172,17 +171,40 @@ public class Classifier {
 	    int cid = assignArticleToCluster(q, cid2logPvec, L);
 	    EE5DocClass cluster = cidMap.id2dc.get(cid);
 	    assignedClusters.add(cluster);
-	    Logging.info("Document no. "+docno+" assigned to cluster "+cluster);
+	    Logging.info("Document no. "+docno+" assigned to cluster "+cluster+", cid="+cid);
 	}
 
-	Logging.info("Recording cluster assignments for "+vdocno.size()+" documents");
+	countClusterAssignments(assignedClusters, mT);
+	if (!nowrite) {
+	    Logging.info("Recording cluster assignments for "+vdocno.size()+" documents");
 
-	int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, mT);
+	    int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, mT);
 
-	System.out.println("Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents");
+	    System.out.println("Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents");
+	}
+
     }
 
-    private static int recordClusterAssignments(EntityManager em, IndexReader reader, Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, int mT[])  throws IOException {
+    private static int nonNullCnt(Vector v) {
+	int cnt=0;
+	for(Object q: v) {
+	    if (q!=null) cnt++;
+	}
+	return cnt;
+    }
+
+    private static void countClusterAssignments(Vector<EE5DocClass> assignedClusters, int mT[])  throws IOException {
+      for(EE5DocClass cluster: assignedClusters) {
+	  if (cluster==null) {
+	      Logging.warning("There was no cluster assignment for one of the articles! Need to update cat list and re-init clusters?");
+	      continue;
+	  }
+	  int cid = cluster.getId();
+	  mT[ cid]++;
+      }
+   }
+
+   private static int recordClusterAssignments(EntityManager em, IndexReader reader, Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, int mT[])  throws IOException {
  	em.getTransaction().begin();
 	int pos=0;
 	int caCnt=0;
@@ -228,7 +250,7 @@ public class Classifier {
      */
     static Vector<DenseDataPoint> readPVectors(File f, int L) throws IOException {
 	Vector<DenseDataPoint> v = new Vector<DenseDataPoint>();
-	Logging.info("Reading P vector file " + f);
+	//Logging.info("Reading P vector file " + f);
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
  	String s;
@@ -276,6 +298,11 @@ public class Classifier {
      */
     static DenseDataPoint readArticle(int docno, int L, Vocabulary voc, IndexReader reader) throws IOException {
 	Document doc = reader.document(docno);
+	return readArticle(doc, L, voc);
+    }
+
+    static DenseDataPoint readArticle(Document doc, int L, Vocabulary voc) throws IOException {
+
 	boolean missingBody  = false;
 	double[] v = new double[L];
 	for(String field: fields) {
@@ -319,15 +346,18 @@ public class Classifier {
 				      int L) {
 	double bestloglik = 0;
 	int bestk= -1;
+	StringBuffer msg=new StringBuffer();
 	for(int k=0; k<logPvec.size(); k++) {
 	    DenseDataPoint logp = logPvec.elementAt(k);
 	    if (logp == null) continue; // a gap
 	    double loglik = article.dotProduct(logp);
+	    //msg.append("(ll("+k+")="+loglik+")");
 	    if (bestk<0 || loglik>bestloglik) {
 		bestk=k;
 		bestloglik=loglik;
 	    }
 	}
+	//Logging.info(msg.toString());
 	return bestk;
     }
 
@@ -342,5 +372,12 @@ public class Classifier {
 	em.persist(a);
     }
 
+    static Vocabulary readVocabulary()  throws IOException{
+	File f = Files.getWordClusterFile();
+	if (!f.canRead()) {
+	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
+	}
+	return new Vocabulary(f, 0);
+    }
 
 }
