@@ -68,7 +68,9 @@ public class Classifier {
 	    Logging.info("Classifying "+vdocno.size()+" recent articles in category " + cat);
 
 	    int cnt=0;
+	    int caCnt=0;
 	    Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
+	    Vector<Boolean> missingBody =new Vector<Boolean>();
 	    File f = Files.getDocClusterFile(cat);
 	    // FIXME: in production, should just die here.
 	    if (!f.exists()) {
@@ -87,18 +89,32 @@ public class Classifier {
 		//System.out.println("Reading vectors...");
 		for(int docno: vdocno) {
 		    cnt++;
-		    DenseDataPoint q = readArticle(docno, L, voc, reader);
+		    ArticleDenseDataPoint q=readArticle(docno, L, voc, reader);
 		    int localCid = assignArticleToCluster(q, logPvecs, L);
 		    EE5DocClass cluster = cidMap.getCluster(cat, localCid);
+		    if (cluster==null) {
+			throw new IllegalArgumentException("No cluster entry found in the database for cat="+cat+", localCid=" + localCid + ". Need to update cat list and re-init clusters?");
+		    }
+
+		    em.getTransaction().begin();
+		    int pos=0;
+		    int cid = cluster.getId();
+		    mT[ cid]++;
+		    recordClass(docno, reader, em, cid);
+		    caCnt++;
+		    }
+		    em.getTransaction().commit();
+
 		    assignedClusters.add(cluster);
+		    missingBody.add(q.missingBody);
 		    Logging.info("article no. " + docno + " assigned to cluster "+ cluster);
 		}
 	    }
 
-	    Logging.info("Recording cluster assignments for "+vdocno.size()+" recent articles in category " + cat);
+	    Logging.info("Recorded cluster assignments for "+caCnt + " recent articles in category " + cat);
 
 	    countClusterAssignments(assignedClusters, mT);
-	    caCnt += recordClusterAssignments(em,reader,vdocno,assignedClusters,mT);   
+	    //	    caCnt += recordClusterAssignments(em,reader,vdocno,assignedClusters,mT);   
 	}
 
 	em.getTransaction().begin();
@@ -169,7 +185,7 @@ public class Classifier {
 	Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
 	for(int docno: vdocno) {
 	    cnt++;
-	    DenseDataPoint q = readArticle(docno, L, voc, reader);
+	    ArticleDenseDataPoint q = readArticle(docno, L, voc, reader);
 	    int cid = assignArticleToCluster(q, cid2logPvec, L);
 	    EE5DocClass cluster = cidMap.id2dc.get(cid);
 	    assignedClusters.add(cluster);
@@ -298,12 +314,12 @@ public class Classifier {
 	Lucene, and converts them into a single vector in the
 	L-dimensional word2vec word cluster space.
      */
-    static DenseDataPoint readArticle(int docno, int L, Vocabulary voc, IndexReader reader) throws IOException {
+    static ArticleDenseDataPoint readArticle(int docno, int L, Vocabulary voc, IndexReader reader) throws IOException {
 	Document doc = reader.document(docno);
 	return readArticle(doc, L, voc);
     }
 
-    static DenseDataPoint readArticle(Document doc, int L, Vocabulary voc) throws IOException {
+    static ArticleDenseDataPoint readArticle(Document doc, int L, Vocabulary voc) throws IOException {
 
 	boolean missingBody  = false;
 	double[] v = new double[L];
@@ -315,7 +331,7 @@ public class Classifier {
 	    }
 	    voc.textToVector(s, v);	    
 	}
-	return new DenseDataPoint(v);
+	return new ArticleDenseDataPoint(v, missingBody);
     }
 
     private static Vector<DenseDataPoint> computeLogP(Vector<DenseDataPoint> pvec) {
@@ -368,8 +384,7 @@ public class Classifier {
 	from inside a transaction. */
     static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid) throws IOException {
 	Document doc = reader.document(docno);
-	String aid = doc.get(ArxivFields.PAPER);
-	Article a = Article.findByAid(  em, aid);
+	Article a = Article.findAny(em, doc);
 	a.setEe5classId(cid);
 	em.persist(a);
     }
@@ -380,6 +395,20 @@ public class Classifier {
 	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
 	}
 	return new Vocabulary(f, 0);
+    }
+
+    /** Represents the content of the article as a DenseDataPoint,
+	as well as some additional information about the provenance of 
+	the data.
+     */
+    static private class ArticleDenseDataPoint extends DenseDataPoint {
+	/** True if the vector was based only on the metadata, because
+	    the article body was not stored in the database */
+	final boolean missingBody;
+	ArticleDenseDataPoint(double z[], boolean _missingBody) {
+	    super(z);
+	    missingBody = _missingBody;
+	}
     }
 
 }

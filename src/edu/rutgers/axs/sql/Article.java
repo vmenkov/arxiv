@@ -72,7 +72,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
     public String getFile() { return file; }
     public void setFile(String x) { file=x;}
 
-    /** Find the matching record.
+    /** Find the matching record for an ArXiv article.
 	@return The Article object with the matching name, or null if none is found */
 @SuppressWarnings("unchecked")
     public static Article findByAid( EntityManager em, String _aid) {
@@ -86,7 +86,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	}
     }    
 
-    /** Find the matching record for a user-uploaded doc.
+    /** Finds the matching record for a user-uploaded doc.
 	@return The Article object with the matching name, or null if none is found */
     @SuppressWarnings("unchecked")
 	public static Article findUploaded( EntityManager em, String user, String file) {
@@ -100,6 +100,17 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	    return null;
 	}
     }    
+
+    /** Finds the matching record for an ArXiv article or a user-uploaded doc (based on whichever fields are set in the document).
+  	@return The Article object with the matching attributes, or null if none is found */
+    public static Article findAny(EntityManager em, Document doc) throws IOException {
+	String aid = doc.get(ArxivFields.PAPER);
+	Article a = null;
+	if (aid!=null)  return Article.findByAid(em, aid);
+	String user = doc.get(ArxivFields.UPLOAD_USER);
+	String file = doc.get(ArxivFields.UPLOAD_FILE);
+	return Article.findUploaded(em, user, file);
+    }
 
     Article() {}
 

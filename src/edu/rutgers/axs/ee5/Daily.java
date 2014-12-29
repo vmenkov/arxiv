@@ -19,7 +19,8 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
 
 
 /** Daily updates for the underlying data structure, and
-    recommendation generation, for Peter Frazier's Exploration Engine ver. 4.
+    recommendation generation, for Peter Frazier's Exploration Engine
+    ver. 5 (EE5).
  */
 public class Daily {
 
@@ -404,14 +405,16 @@ public class Daily {
 	return 0;
     }
 
-   /** A one-off method, to create all document classes
-	in the EE5DocClass table. 
+   /** A one-off method, to create an entry in the EE5DocClass table
+       for each document class. This needs to be invoked every time we
+       switch to a different clustering scheme.
 
-	<p> FIXME: also need to create singleton (trivial) clusters
-	for all known categories for which there are no data files
-	available. This is mostly for testing.
+	<p> To find the the number of clusters per category, this
+	method looks at the stored P-vectors. In the absence of such
+	vectors for a particular category, we create a singleton
+	(trivial) cluster for that category.
    */
-    static void initClasses(EntityManager em) throws IOException {
+    private static void initClasses(EntityManager em) throws IOException {
 
 	int oldCnt = EE5DocClass.count(em);
 	if (oldCnt > 0) {
@@ -485,7 +488,31 @@ public class Daily {
 	}
     }
 
-    /** A one-off procedure; creating cluster objects in the database */
+    /** Delete all EE5 clustering data and document-class assignments
+	from the database.
+     */
+    private static void deleteAll()  throws IOException {
+	EntityManager em  = Main.getEM();
+	String queries[] = {
+	    "delete from EE5DocClass",
+	    "update Article set ee5classId=0"
+	};
+	for(String query: queries) {
+	    javax.persistence.Query q = em.createQuery(query);
+	    Logging.info("Query: " + query);
+	    int n= q.executeUpdate();
+	    Logging.info("" + n + " rows updated");
+	}
+	em.close();
+   }
+
+
+
+    /** A one-off procedure, which needs to be invoked after a new
+	clustering scheme has been installed. It will create
+	EE5DocClass objects in the database for each cluster
+	in the clustering scheme.
+    */
     private static void init()  throws IOException {
 	EntityManager em  = Main.getEM();
 	initClasses(em);
