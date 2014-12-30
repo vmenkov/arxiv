@@ -35,10 +35,21 @@ import edu.rutgers.axs.indexer.ArxivFields;
     public void setEe4classId(int x) {        ee4classId=x;    }
 
     /** Document cluster assignment for EE5 */
-    @Basic  @Display(editable=true, order=2)
+    @Basic  @Display(editable=true, order=3)
         private int ee5classId;    
     public int getEe5classId() {        return ee5classId;    }
     public void setEe5classId(int x) {        ee5classId=x;    }
+
+    /** This flag is set to true if the document body was 
+	not available when cluster assignment for EE5 
+	was carried out. This means that if the document
+	body becomes available in Lucene, we may want to 
+	re-assign the document.
+     */
+    @Basic  @Display(editable=true, order=4)
+        private boolean ee5missingBody;    
+    public boolean getEe5missingBody() { return ee5missingBody;    }
+    public void setEe5missingBody(boolean x) {  ee5missingBody=x;  }
 
 
    /** ArXiv Article ID. This is used to locate the article in the Lucene
@@ -58,7 +69,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 
     /** Uploader's user name (for user-uploaded docs only) */
     @Basic      @Column(length=15)
-	@Display(editable=false, order=3)
+	@Display(editable=false, order=9)
 	String user=null;
     public String getUser() { return user; }
     public void setUser(String x) { user=x;}
@@ -67,7 +78,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
        be used, together with the user field, to locate the document
        in Lucene doc store.  For ArXiv articles this field is null. */
     @Basic      @Column(length=80)
-	@Display(editable=false, order=4)
+	@Display(editable=false, order=10)
 	String file=null;
     public String getFile() { return file; }
     public void setFile(String x) { file=x;}

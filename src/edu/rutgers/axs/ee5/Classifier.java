@@ -388,7 +388,7 @@ public class Classifier {
     /** Sets the class field on the specified article's Article object
 	in the database, and persists it. This method should be called
 	from inside a transaction. */
-    static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid, boolean misssingBody) throws IOException {
+    static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid, boolean missingBody) throws IOException {
 	Document doc = reader.document(docno);
 	Article a = Article.findAny(em, doc);
 	a.setEe5classId(cid);
