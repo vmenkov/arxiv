@@ -39,8 +39,8 @@ public class Common {
      @throws IOException if not found, or on Lucene errors
     */
     static public int find(IndexSearcher s, String aid) throws IOException {
-	int docno = findOrZero(s, aid);
-        if (docno == 0) {
+	int docno = findOrMinus(s, aid);
+        if (docno < 0) {
             //System.out.println("No document found with paper="+aid);
             throw new IOException("No document found with paper="+aid);
         } else return docno;
@@ -56,15 +56,15 @@ public class Common {
 
 
    /** Find a document by article ID, using a given searcher. 
-     @return Lucene internal doc id, or 0 if none found.
+     @return Lucene internal doc id (which may be 0!), or -1 if none found.
      @throws IOException On Lucene errors (the index is not there, etc; this is passed fro IndexSearcher.search)
     */
-    static public int findOrZero(IndexSearcher s, String aid) throws IOException {
+    static public int findOrMinus(IndexSearcher s, String aid) throws IOException {
 	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));
 	//System.out.println("query=("+tq+")");
 	TopDocs 	 top = s.search(tq, 1);
 	ScoreDoc[] 	scoreDocs = top.scoreDocs;
-	return  (scoreDocs.length < 1) ? 0 : scoreDocs[0].doc;
+	return  (scoreDocs.length < 1) ? -1 : scoreDocs[0].doc;
     }
 
     /** Add (or subtract) so many days to the given date */

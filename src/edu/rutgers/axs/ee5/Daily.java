@@ -547,7 +547,7 @@ public class Daily {
 	String cmd = argv[0];
 	if (cmd.equals("delete")) {
 	    deleteAll();
-	} else if (cmd.equals("update")) {
+	} else if (cmd.equals("init")) {
 	    init();
 	} else if (cmd.equals("update")) {
 	    updates();

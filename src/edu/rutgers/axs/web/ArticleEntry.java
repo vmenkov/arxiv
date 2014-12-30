@@ -165,8 +165,8 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
 	ArticleEntry dummy =  getDummyArticleEntry( aid,  pos);
 	try {
 	    if (s==null) return dummy;
-	    int docno = Common.findOrZero(s, aid);
-	    if (docno == 0) return dummy;
+	    int docno = Common.findOrMinus(s, aid);
+	    if (docno < 0) return dummy;
 	    Document doc = s.doc(docno);
 	    if (doc==null) return dummy;
 	    return new	ArticleEntry(pos, doc, docno);

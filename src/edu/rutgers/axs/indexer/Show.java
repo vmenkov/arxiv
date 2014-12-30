@@ -52,6 +52,10 @@ class Show {
 
     /** Interpret a given string (a command line argument) as an
 	integer Lucene doc number or as a string ArXiv doc id.
+
+	<p> Strings in format "UU:user:file" are interpreted as
+	user-uploaded docs.
+
      */
     int figureDocno(String v) throws IOException  {
 	// is it numeric?
@@ -59,6 +63,13 @@ class Show {
 	    int docno = Integer.parseInt(v);
 	    if  (v.equals("" + docno)) return docno;  // numeric id requested
 	} catch(Exception ex) {}
+
+	String [] q = v.toLowerCase().split(":");
+	if (q.length==3 && q[0].equals("uu")) {
+	    IndexSearcher s = new IndexSearcher( reader );
+	    return Common.findUserFile(s, q[1], q[2]);
+	}
+
 	return find(v);
     }
 
@@ -66,7 +77,6 @@ class Show {
 
     /** Finds Lucene document (its internal integer id) by Arxiv id */
     private int find(String id) throws IOException{
-
 	IndexSearcher s = new IndexSearcher( reader );
 	return Common.find(s, id);
    }

@@ -679,18 +679,22 @@ public class Indexer {
 	    Show show = new Show();
 	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
 		int docno=show.figureDocno(it.next());
+		System.out.println("docno=" + docno);
 		show.show(docno); 
 	    }
 	} else if (args[0].equals("showtitle")) {
 	    Show show = new Show();
 	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
 		int docno=show.figureDocno(it.next());// is it numeric?
+
+		System.out.println("docno=" + docno);
 		show.showTitle(docno); 
 	    }
 	} else if (args[0].equals("showabstract")) {
 	    Show show = new Show();
 	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
 		int docno=show.figureDocno(it.next());// is it numeric?
+		System.out.println("docno=" + docno);
 		show.showAbstract(docno); 
 	    }
 	} else if (args[0].equals("showcoef")) {
@@ -709,6 +713,7 @@ public class Indexer {
 	    Show show = new Show();
 	    for(ArgvIterator it=new ArgvIterator(args,1); it.hasNext();){
 		int docno=show.figureDocno(it.next());
+		System.out.println("docno=" + docno);
 		show.showCoef(docno); 
 	    }
 	} else if (args[0].equals("showcoef2")) {  // CSV format
@@ -761,8 +766,12 @@ public class Indexer {
 	System.err.println("\tIndexer selfupdate                 Reparse everything in the cache.");
 	System.err.println("\tIndexer fields                     Print the list of fields in the index.");
 	System.err.println("\nAdditional:");
-	System.err.println("\tshow docid                         View a particular document's indexed data");
-	System.err.println("\tshowcoef docid                     View a particular document's indexed data");
+	System.err.println("\tshow doc                         View a particular document's indexed data");
+	System.err.println("\tshowcoef doc                     View a particular document's indexed data");
+
+	System.err.println();
+	System.err.println("'doc' in examples above may be an ArXiv article aid (e.g. 0704.0001), a reference to a user-uploaded article (e.g. uu:vmenkov:some_paper), or a Lucene internal numeric id (12345678)");
+
 	System.exit(-1);
 			
     }

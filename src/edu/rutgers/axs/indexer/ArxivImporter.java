@@ -399,8 +399,8 @@ public class ArxivImporter {
 	if (!rewrite || fixCatsOnly) {
 	    // see if the doc already exists (both the Lucene entry, and the cached body and metadata)
 
-	    int docno = Common.findOrZero(searcher, paper);
-	    if (docno >0) {
+	    int docno = Common.findOrMinus(searcher, paper);
+	    if (docno >= 0) {
 		boolean isCached = metacache.fileExists(paper) && 
 		    bodycache.fileOrGzExists(paper);
 
