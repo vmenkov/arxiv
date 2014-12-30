@@ -33,7 +33,7 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
  */
 public class TrivialCentroids {
     
-    static final int nYears = 3;
+    //    static final int nYears = 3;
 
     /** Reads some document examples for each category, l1-normalizes
 	them, computes the category's centroid, and saves it.
@@ -47,6 +47,8 @@ public class TrivialCentroids {
 
 	Vocabulary voc = Classifier.readVocabulary();
 	final int L = voc.L;
+
+	final int nYears = 10;
 
 	final int maxlen = 10000;
 	Date since = SearchResults.daysAgo( nYears * 365);
@@ -163,6 +165,7 @@ public class TrivialCentroids {
 	Vocabulary voc = Classifier.readVocabulary();
 	final int L = voc.L;
 
+	final int nYears = 3;
 	final int maxlen = 10000;
 	Date since = SearchResults.daysAgo( nYears * 365);
 

@@ -489,13 +489,14 @@ public class Daily {
     }
 
     /** Delete all EE5 clustering data and document-class assignments
-	from the database.
+	from the database. This should be done whenever a new clustering
+	scheme is deployed, before cluster assignment is redone on all documents
      */
     private static void deleteAll()  throws IOException {
 	EntityManager em  = Main.getEM();
 	String queries[] = {
 	    "delete from EE5DocClass",
-	    "update Article set ee5classId=0"
+	    "update Article set ee5classId=0, ee5missedBody=false"
 	};
 	for(String query: queries) {
 	    javax.persistence.Query q = em.createQuery(query);
@@ -544,7 +545,9 @@ public class Daily {
 
 
 	String cmd = argv[0];
-	if (cmd.equals("init")) {
+	if (cmd.equals("delete")) {
+	    deleteAll();
+	} else if (cmd.equals("update")) {
 	    init();
 	} else if (cmd.equals("update")) {
 	    updates();

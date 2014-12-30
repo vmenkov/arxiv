@@ -55,7 +55,6 @@ public class Classifier {
 	    catz.categorize(docno, doc);
 	}
 	
-	//final Pattern p = Pattern.compile("([0-9]+)\\.dat");
 	int caCnt=0;
 
 	for(String cat: catz.catMembers.keySet()) {
@@ -68,7 +67,6 @@ public class Classifier {
 	    Logging.info("Classifying "+vdocno.size()+" recent articles in category " + cat);
 
 	    int cnt=0;
-	    int caCnt=0;
 	    Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
 	    Vector<Boolean> missingBody =new Vector<Boolean>();
 	    File f = Files.getDocClusterFile(cat);
@@ -80,6 +78,13 @@ public class Classifier {
 		EE5DocClass cluster = cidMap.getCluster(cat, localCid);
 		for(int docno: vdocno) {
 		    cnt++;
+
+		    em.getTransaction().begin();
+		    int cid = cluster.getId();
+		    mT[ cid]++;
+		    recordClass(docno, reader, em, cid, false);
+		    em.getTransaction().commit();
+
 		    assignedClusters.add(cluster);
 		    if (debug) Logging.info("article no. " + docno + " assigned to trivial cluster "+ cluster);
 		}
@@ -89,7 +94,7 @@ public class Classifier {
 		//System.out.println("Reading vectors...");
 		for(int docno: vdocno) {
 		    cnt++;
-		    ArticleDenseDataPoint q=readArticle(docno, L, voc, reader);
+ 		    ArticleDenseDataPoint q=readArticle(docno, L, voc, reader);
 		    int localCid = assignArticleToCluster(q, logPvecs, L);
 		    EE5DocClass cluster = cidMap.getCluster(cat, localCid);
 		    if (cluster==null) {
@@ -97,12 +102,9 @@ public class Classifier {
 		    }
 
 		    em.getTransaction().begin();
-		    int pos=0;
 		    int cid = cluster.getId();
 		    mT[ cid]++;
-		    recordClass(docno, reader, em, cid);
-		    caCnt++;
-		    }
+		    recordClass(docno, reader, em, cid, q.missingBody);
 		    em.getTransaction().commit();
 
 		    assignedClusters.add(cluster);
@@ -111,22 +113,23 @@ public class Classifier {
 		}
 	    }
 
-	    Logging.info("Recorded cluster assignments for "+caCnt + " recent articles in category " + cat);
+	    caCnt += cnt;
+	    Logging.info("Recorded cluster assignments for "+cnt + " recent articles in category " + cat);
 
 	    countClusterAssignments(assignedClusters, mT);
-	    //	    caCnt += recordClusterAssignments(em,reader,vdocno,assignedClusters,mT);   
+	    //	    caCnt += recordClusterAssignments(em,reader,vdocno,assignedClusters,missingBody, mT);   
 	}
 
 	em.getTransaction().begin();
 	for(int docno: catz.nocatMembers) {
 	    int cid = 0;
-	    recordClass(docno, reader, em, cid);
+	    recordClass(docno, reader, em, cid, false);
 	}
 	em.getTransaction().commit();
-
+	
 	System.out.println("Clustering applied to new docs in all "+ catz.catMembers.size()+" categories; " + 
 			   caCnt + " articles classified, and " + catz.nocatMembers.size() + " more are unclassifiable");
-
+	
     }
 
     /** Similar to classifyNewDocs(), this method processes documents
@@ -183,21 +186,21 @@ public class Classifier {
 
 	int cnt=0;
 	Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
+	Vector<Boolean> missingBody =new Vector<Boolean>();
 	for(int docno: vdocno) {
 	    cnt++;
 	    ArticleDenseDataPoint q = readArticle(docno, L, voc, reader);
 	    int cid = assignArticleToCluster(q, cid2logPvec, L);
 	    EE5DocClass cluster = cidMap.id2dc.get(cid);
 	    assignedClusters.add(cluster);
+	    missingBody.add(q.missingBody);
 	    Logging.info("Document no. "+docno+" assigned to cluster "+cluster+", cid="+cid);
 	}
 
 	countClusterAssignments(assignedClusters, mT);
 	if (!nowrite) {
 	    Logging.info("Recording cluster assignments for "+vdocno.size()+" documents");
-
-	    int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, mT);
-
+	    int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, missingBody, mT);
 	    System.out.println("Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents");
 	}
 
@@ -222,7 +225,9 @@ public class Classifier {
       }
    }
 
-   private static int recordClusterAssignments(EntityManager em, IndexReader reader, Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, int mT[])  throws IOException {
+    
+   private static int recordClusterAssignments(EntityManager em, IndexReader reader, Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, 
+					       Vector<Boolean> missingBody, int mT[])  throws IOException {
  	em.getTransaction().begin();
 	int pos=0;
 	int caCnt=0;
@@ -234,13 +239,14 @@ public class Classifier {
 	    }
 	    int cid = cluster.getId();
 	    mT[ cid]++;
-	    recordClass(docno, reader, em, cid);
+	    recordClass(docno, reader, em, cid, missingBody.elementAt(pos).booleanValue());
 	    pos ++;
 	    caCnt++;
 	}
 	em.getTransaction().commit();
 	return caCnt;
    }
+    
 
     /**
        [vm293@en-myarxiv02 iter_950]$ pwd
@@ -382,10 +388,11 @@ public class Classifier {
     /** Sets the class field on the specified article's Article object
 	in the database, and persists it. This method should be called
 	from inside a transaction. */
-    static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid) throws IOException {
+    static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid, boolean misssingBody) throws IOException {
 	Document doc = reader.document(docno);
 	Article a = Article.findAny(em, doc);
 	a.setEe5classId(cid);
+	a.setEe5missingBody(missingBody);
 	em.persist(a);
     }
 

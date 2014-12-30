@@ -22,13 +22,14 @@ set opt="-cp ${cp} ${opt}"
 echo "opt=$opt"
 
 set d=/data/arxiv/ee5/20141201/cstar
+set b=/data/arxiv/ee5/20141201/cstarbin
 set files=`(cd $d; ls *.out)`
 
 foreach x ($files) 
     set y=`basename $x '.out'`
     set z=${y}.bin
     echo "Converting $x to $z"
-    /usr/bin/time  java $opt edu.rutgers.axs.ee5.RandomAccessConverter $d/$x $d/$z
+    /usr/bin/time  java $opt edu.rutgers.axs.ee5.RandomAccessConverter $d/$x $b/$z
 end
 
 
