@@ -212,10 +212,8 @@ public class TrivialCentroids {
 	    Logging.info(msg1);
 
 	    ScoreDoc[] scoreDocs = (ScoreDoc[])testableSd.toArray(new ScoreDoc[usedCnt]);
-	    int maxCid = cidMap.maxId();	
-	    int mT[] = new int[ maxCid + 1];
-	    Classifier.classifyNewDocsCategoryBlind( em, reader, scoreDocs,
-						     cidMap, mT, true);
+	    int mT[] = Classifier.classifyNewDocsCategoryBlind( em, reader, scoreDocs,
+								cidMap, true);
 
 	    // compute per-category totals
 	    Pair[] catAndCnt = new Pair[allCats.size()];

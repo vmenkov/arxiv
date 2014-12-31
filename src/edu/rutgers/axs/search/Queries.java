@@ -78,10 +78,18 @@ public class Queries {
 
     /** Creates a query that returns true on any ArXiv document (that is
 	a document that has an ArXiv ID, i.e. the "paper" field). This can be
-	used to distinguish ArXiv documents from user-uploaded documents.
+	used to distinguish ArXiv articles from user-uploaded documents.
      */
     public static TermRangeQuery hasAidQuery() {
 	return new TermRangeQuery(ArxivFields.PAPER,null,null,true,true);
+    }
+
+    /** Creates a query that returns true on any user-uploaded document (that is
+	a document that has the name of the uploader, i.e. the "user" field). This can be
+	used to distinguish user-uploaded documents from ArXiv articles.
+     */
+    public static TermRangeQuery hasUserQuery() {
+	return new TermRangeQuery(ArxivFields.UPLOAD_USER,null,null,true,true);
     }
 
 }

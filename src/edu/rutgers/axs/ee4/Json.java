@@ -127,7 +127,7 @@ public class Json {
 		try {
 		    docno = Common.find(searcher, aid);
 		} catch(IOException ex) {}
-		if (docno <= 0) {
+		if (docno < 0) {
 		    invalidAidCnt++;
 		} else {
 		    Document doc = reader.document(docno);

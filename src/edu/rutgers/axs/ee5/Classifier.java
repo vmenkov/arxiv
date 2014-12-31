@@ -37,12 +37,13 @@ public class Classifier {
 	 making use of pre-recorded values.
 
 	@param scoreDocs list of documents to classify. Contains all recent docs within the standard time horizon
-	@param mT output parameter; number of docs per class. 
+	@return Array mT[]; number of docs per class. 
     */
-    static void classifyNewDocs(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
-				EE5DocClass.CidMapper cidMap,
-				int mT[]) throws IOException {
+    static int [] classifyDocuments(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
+				  EE5DocClass.CidMapper cidMap) throws IOException {
 
+	int maxCid = cidMap.maxId();	
+	int mT[] = new int[ maxCid + 1];
 	Vocabulary voc = readVocabulary();
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
@@ -55,7 +56,7 @@ public class Classifier {
 	    catz.categorize(docno, doc);
 	}
 	
-	int caCnt=0;
+	int allCnt=0, allReuseCnt=0;
 
 	for(String cat: catz.catMembers.keySet()) {
 	    
@@ -64,11 +65,9 @@ public class Classifier {
 	    // Read the new data points to be classified
 	    Vector<Integer> vdocno = catz.catMembers.get(cat);
 
-	    Logging.info("Classifying "+vdocno.size()+" recent articles in category " + cat);
+	    Logging.info("Classifying "+vdocno.size()+" recent articles in category "+cat);
 
-	    int cnt=0;
-	    Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
-	    Vector<Boolean> missingBody =new Vector<Boolean>();
+	    int cnt=0, reuseCnt=0;
 	    File f = Files.getDocClusterFile(cat);
 	    // FIXME: in production, should just die here.
 	    if (!f.exists()) {
@@ -78,14 +77,11 @@ public class Classifier {
 		EE5DocClass cluster = cidMap.getCluster(cat, localCid);
 		for(int docno: vdocno) {
 		    cnt++;
-
 		    em.getTransaction().begin();
 		    int cid = cluster.getId();
 		    mT[ cid]++;
 		    recordClass(docno, reader, em, cid, false);
 		    em.getTransaction().commit();
-
-		    assignedClusters.add(cluster);
 		    if (debug) Logging.info("article no. " + docno + " assigned to trivial cluster "+ cluster);
 		}
 	    } else {
@@ -93,31 +89,39 @@ public class Classifier {
 		Vector<DenseDataPoint> logPvecs = computeLogP(pvecs);	  
 		//System.out.println("Reading vectors...");
 		for(int docno: vdocno) {
-		    cnt++;
- 		    ArticleDenseDataPoint q=readArticle(docno, L, voc, reader);
-		    int localCid = assignArticleToCluster(q, logPvecs, L);
-		    EE5DocClass cluster = cidMap.getCluster(cat, localCid);
-		    if (cluster==null) {
-			throw new IllegalArgumentException("No cluster entry found in the database for cat="+cat+", localCid=" + localCid + ". Need to update cat list and re-init clusters?");
-		    }
-
 		    em.getTransaction().begin();
-		    int cid = cluster.getId();
-		    mT[ cid]++;
-		    recordClass(docno, reader, em, cid, q.missingBody);
-		    em.getTransaction().commit();
 
-		    assignedClusters.add(cluster);
-		    missingBody.add(q.missingBody);
-		    Logging.info("article no. " + docno + " assigned to cluster "+ cluster);
+		    Document doc = reader.document(docno);
+		    Article a = Article.findAny(em, doc);   
+		    int cid =a.getEe5classId();
+		    boolean needAssignment = (cid==0) || 
+			(a.getEe5missingBody() && doc.get(ArxivFields.ARTICLE)!=null);
+
+		    if (needAssignment) {
+			cnt++;
+			ArticleDenseDataPoint q=readArticle(doc, L, voc);
+			int localCid = assignArticleToCluster(q, logPvecs, L);
+			EE5DocClass cluster = cidMap.getCluster(cat, localCid);
+			if (cluster==null) {
+			    throw new IllegalArgumentException("No cluster entry found in the database for cat="+cat+", localCid=" + localCid + ". Need to update cat list and re-init clusters?");
+			}
+			cid = cluster.getId();
+			a.setEe5classId(cid);
+			a.setEe5missingBody(q.missingBody);
+			em.persist(a);
+			Logging.info("article no. " + docno + " assigned to cluster "+ cluster);
+		    } else {
+			reuseCnt++;
+		    }
+		    mT[cid]++;
+		    em.getTransaction().commit();
 		}
 	    }
 
-	    caCnt += cnt;
-	    Logging.info("Recorded cluster assignments for "+cnt + " recent articles in category " + cat);
+	    allCnt += cnt;
+	    allReuseCnt += reuseCnt;
+	    Logging.info("Recorded new cluster assignments for "+cnt + " and kept " + reuseCnt + " old assignments for recent articles in category " + cat);
 
-	    countClusterAssignments(assignedClusters, mT);
-	    //	    caCnt += recordClusterAssignments(em,reader,vdocno,assignedClusters,missingBody, mT);   
 	}
 
 	em.getTransaction().begin();
@@ -127,8 +131,9 @@ public class Classifier {
 	}
 	em.getTransaction().commit();
 	
-	System.out.println("Clustering applied to new docs in all "+ catz.catMembers.size()+" categories; " + 
-			   caCnt + " articles classified, and " + catz.nocatMembers.size() + " more are unclassifiable");
+	System.out.println("Cluster assignment applied to new docs in all "+ catz.catMembers.size()+" categories. " + 
+			   allCnt + " articles assigned to clusters, "+allReuseCnt+" articles kept with old assignments, and " + catz.nocatMembers.size() + " more are unclassifiable");
+	return mT;
 	
     }
 
@@ -142,19 +147,20 @@ public class Classifier {
 	categories.
 
 	@param scoreDocs list of documents to classify
-	@param mT output parameter: mT[i] will be set to the 
-	number of docs in the i-th cluster found in scoreDocs
 	@param nowrite If true, this method does not store the new 
+
+	@return Array mT[]: mT[i] will be set to the number of docs in the i-th cluster found in scoreDocs
      */
-    static void classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
+    static int[] classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
 					     EE5DocClass.CidMapper cidMap,
-					     int mT[], boolean nowrite) throws IOException {
+					     boolean nowrite) throws IOException {
+	int maxCid = cidMap.maxId();	
+	int mT[] = new int[ maxCid + 1];
 
 	Vocabulary voc = readVocabulary();
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
 
-	int maxCid = cidMap.maxId();
 	// an array, possibly with gaps, of logarithmized P-vecs for
 	// all clusters for which such vectors have been supplied to us
 	Vector<DenseDataPoint> cid2logPvec=new Vector<DenseDataPoint>(maxCid+1);
@@ -203,7 +209,7 @@ public class Classifier {
 	    int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, missingBody, mT);
 	    System.out.println("Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents");
 	}
-
+	return mT;
     }
 
     private static int nonNullCnt(Vector v) {

@@ -24,22 +24,30 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
  */
 public class Daily {
 
-    static private final int maxlen = 100000;
+    static private final int maxlen = 1000000;
 
     /** The main "daily updates" method. Calls all other methods.
      */
     static void updates() throws IOException {
 
 	IndexReader reader = Common.newReader();
+	IndexSearcher searcher = new IndexSearcher(reader);
 	EntityManager em  = Main.getEM();
 	    
 	final int days = EE5DocClass.TIME_HORIZON_DAY;
 	Date since = SearchResults.daysAgo( days );
 
-	EE5DocClass.CidMapper cidMap = updateClassStats(em,reader,since);
+	// list document clusters
+	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
+	// assign recent ArXiv articles to clusters
+
+	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
+	// classify all recent docs
+	int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
+	recordSubmissionRates(em, cidMap, mT);
+
 	List<Integer> lu = User.selectByProgram( em, User.Program.EE5);
 
-	IndexSearcher searcher = new IndexSearcher( reader );
 	for(int uid: lu) {
 	    try {
 		User user = (User)em.find(User.class, uid);
@@ -53,24 +61,54 @@ public class Daily {
 	em.close();
     }
 
-    /** 2014-10-28: restricted query to true ArXiv docs (not uploads) */
-    private static EE5DocClass.CidMapper updateClassStats(EntityManager em, IndexReader reader, Date since)  throws IOException {
+    /** Retrieve a specified set of documents stored in the Lucene
+	data store, and assign each document to the appropriate cluster.
+
+	@param since Retrieve all ArXiv articles submitted since this date.
+     */
+    private static int[] updateClusters(EntityManager em, IndexSearcher searcher,
+					EE5DocClass.CidMapper cidMap, Date since) throws IOException {
+	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
+	// classify all recent docs
+	int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
+	return mT;
+    }
+
+    /** Retrieve a specified set of documents stored in the Lucene
+	data store.
+
+	@param since Retrieve all ArXiv articles submitted since this date.
+     */
+    private static ScoreDoc[] getRecentArticles(EntityManager em, IndexSearcher searcher, Date since) throws IOException {
 	org.apache.lucene.search.Query q= 
 	    Queries.andQuery(Queries.mkSinceDateQuery(since),
 			     Queries.hasAidQuery());
 
-	IndexSearcher searcher = new IndexSearcher(reader);
 	TopDocs top = searcher.search(q, maxlen);
+
 	System.out.println("Looking back to " + since + "; found " + 
-			   top.scoreDocs.length +  " papers");
+			   top.scoreDocs.length + " papers");
 	
-	// list document clusters
-	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
-	// classify all recent docs
-	updateClassInfo(em,reader,top.scoreDocs, cidMap);
-	// ... and not-yet-classified but viewed old docs
-	//classifyUnclassified( em, searcher);
-	return  cidMap;
+	return top.scoreDocs;
+    }
+
+    /** Updates the per-cluster submission rate recorded in the SQL database.
+
+	@param mT Recently-compute per-cluster submission totals over
+	the last TIME_HORIZON_DAY days. (The correct range is
+	important, so that we can compute the average daily rate correctly)
+    */
+    static void recordSubmissionRates(EntityManager em, EE5DocClass.CidMapper cidMap, int mT[])
+	throws IOException
+    {
+	em.getTransaction().begin();
+	for(EE5DocClass c: cidMap.id2dc.values()) {
+	    int cid = c.getId();
+	    double lx = (double)mT[cid]/(double)EE5DocClass.TIME_HORIZON_DAY;
+	    c.setL( lx ); // average *daily* number, as per the specs
+	    em.persist(c);
+	}
+	em.getTransaction().commit();	
     }
 
 
@@ -108,37 +146,6 @@ public class Daily {
     }
 
   
-    /** Sets stat values in document class entries ( EE5DocClass table in the SQL server). 
-
-	<p>We set the initial alpha=1, beta=19, as per ZXT, 2013-02-21
-
-	@param scoreDocs The list of all recent docs for the last
-	TIME_HORIZON_DAY days. (The correct range is important, so
-	that we can update m correctly)
-    */
-    static void updateClassInfo(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs, EE5DocClass.CidMapper cidMap)
-	throws IOException
-    {
-	for(EE5DocClass c: cidMap.id2dc.values()) {
-	    c.setAlpha0(1.0);
-	    c.setBeta0(19.0);
-	}
-	int maxCid = cidMap.maxId();	
-	int mT[] = new int[ maxCid + 1];
-
-	Classifier.classifyNewDocs(em, reader, scoreDocs,
-				   cidMap, mT); 
-
-	em.getTransaction().begin();
-	for(EE5DocClass c: cidMap.id2dc.values()) {
-	    int cid = c.getId();
-	    double lx = (double)mT[cid]/(double)EE5DocClass.TIME_HORIZON_DAY;
-	    c.setL( lx ); // average *daily* number, as per the specs
-	    em.persist(c);
-	}
-	em.getTransaction().commit();	
-    }
-
     /** How important is this action for the user's "opinion" on the 
 	article? <br>
 	0 - ignore, +-1 - med, +-2 - high */
@@ -405,22 +412,28 @@ public class Daily {
 	return 0;
     }
 
-   /** A one-off method, to create an entry in the EE5DocClass table
-       for each document class. This needs to be invoked every time we
-       switch to a different clustering scheme.
+   /** A one-off method, to create and initialize an entry in the
+       EE5DocClass table for each document class. This method needs to
+       be invoked every time we switch to a different clustering
+       scheme, since the number of clusters in each category may
+       become different, and so will the global cluster numbering
+       scheme.
 
 	<p> To find the the number of clusters per category, this
 	method looks at the stored P-vectors. In the absence of such
 	vectors for a particular category, we create a singleton
 	(trivial) cluster for that category.
+
+	<p>For each cluster, we set the initial alpha=1, beta=19, as
+	per ZXT, 2013-02-21
+
    */
-    private static void initClasses(EntityManager em) throws IOException {
+    private static void initClusters(EntityManager em) throws IOException {
 
 	int oldCnt = EE5DocClass.count(em);
 	if (oldCnt > 0) {
 	    throw new IllegalArgumentException("Cannot run initialization, because some objects ("+oldCnt +" of them) already exist in the table EE5DocClass. Please delete that table, and run 'init' again!");
 	}
-	
 	
 	Vector<String> allCats = Categories.listAllStorableCats();
 	HashSet<String> allCatSet = new HashSet<String>();
@@ -474,6 +487,8 @@ public class Daily {
 		c.setId(cid);
 		c.setCategory(cat);
 		c.setLocalCid(j);
+		c.setAlpha0(1.0);
+		c.setBeta0(19.0);
 		em.persist(c);
 		crtCnt++;
 	    }
@@ -488,35 +503,57 @@ public class Daily {
 	}
     }
 
-    /** Delete all EE5 clustering data and document-class assignments
+    /** Deletes all EE5 clustering data and document-class assignments
 	from the database. This should be done whenever a new clustering
 	scheme is deployed, before cluster assignment is redone on all documents
      */
     private static void deleteAll()  throws IOException {
 	EntityManager em  = Main.getEM();
 	String queries[] = {
-	    "delete from EE5DocClass",
-	    "update Article set ee5classId=0, ee5missedBody=false"
+	    "delete from EE5DocClass c",
+	    "update Article a set a.ee5classId=0, a.ee5missingBody=false"
 	};
 	for(String query: queries) {
 	    javax.persistence.Query q = em.createQuery(query);
 	    Logging.info("Query: " + query);
+	    em.getTransaction().begin();
 	    int n= q.executeUpdate();
+	    em.getTransaction().commit();
 	    Logging.info("" + n + " rows updated");
 	}
 	em.close();
-   }
-
+    }
 
 
     /** A one-off procedure, which needs to be invoked after a new
 	clustering scheme has been installed. It will create
-	EE5DocClass objects in the database for each cluster
-	in the clustering scheme.
+	EE5DocClass objects in the database for each cluster in the
+	clustering scheme. After that, it will re-run cluster
+	assignments on all documents that are potentially useful for
+	EE5 recommendation generation. This includes all ArXiv
+	articles that EE5 users may have seen in the past in their
+	suggestion lists (so we go for all articles uploaded since
+	2013-01-01), as well as all user-uploaded documents.
     */
     private static void init()  throws IOException {
+	IndexReader reader = Common.newReader();
+	IndexSearcher searcher = new IndexSearcher(reader);
+
 	EntityManager em  = Main.getEM();
-	initClasses(em);
+	initClusters(em);
+	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
+
+	// months are 0-based
+	Date since = (new GregorianCalendar(2013, 0, 1)).getTime();
+	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
+	Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
+
+	org.apache.lucene.search.Query q = Queries.hasUserQuery();
+	sd = searcher.search(q, maxlen).scoreDocs;
+	System.out.println("Found " + sd.length + " user-uploaded docs to (re)classify");
+	Classifier.classifyNewDocsCategoryBlind(em, reader, sd, cidMap, true);
+
+	reader.close();
 	em.close();
     }
 

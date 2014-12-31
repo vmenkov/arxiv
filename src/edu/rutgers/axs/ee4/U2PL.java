@@ -162,8 +162,8 @@ class U2PL  {
 	}
 
 	// Validate the article ID
-	int docno = Common.find(searcher, aid);
-	if (docno<=0) return false;
+	int docno = Common.findOrMinus(searcher, aid);
+	if (docno<0) return false;
 	Document doc = reader.document(docno, fieldSelectorDate);
 	if (doc==null) return false;
 	String dateString = doc.get(ArxivFields.DATE);

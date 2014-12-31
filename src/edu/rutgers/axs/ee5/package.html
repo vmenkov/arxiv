@@ -8,26 +8,108 @@ Frazier and Xiaoting Zhao: EE5_documentation.pdf
 newCluster_documentation.pdf Oct7_2014_notes.pdf practical_paper.pdf
 submission_draft.pdf
 
+<h2>Persistent data structures</h2>
+
+<p>There are several EE5-related tables in the database (typically,
+each one corresponding to the eponymous class
+in <a href="../sql/">edu.rutgers.axs.sql</a>). These are the relevant JPA classes:
+
+<ul>
+<li>EE5DocClass : basic information about the document clusters in the
+current document clustering scheme. Each entry in this table links the
+cluster's (global) ID with the pair (cateegory_name, local_id), where
+local_id is the sequential number (0-based) of the cluster within the
+list of clusters for the category.
+
+<li>EE5User : there is one entry in this table for each user (and, thus a User object) entolled in the EE5 program. It is used to link the user with the set of his EE5Uci objects.
+
+<li>EE5Uci : each EE5Uci objects describes the "user-cluster affinity"
+for a particular user and a particular document cluster. The stored
+values are the alpha and beta for this (user, doc_cluster)
+pair. Presently, there is actually no particular need to persist these
+values, since they all are re-computed during the daily update (when
+each user's entire history is reviewed) and used later during the same
+update session.
+
+</ul>
+
+<p>Besides the above tables, an important piece of EE5-related information is found in 
+the table Article. In each Article object we have two fields:
+<ul>
+<li><tt>Article.ee5classId</tt>, which stores the (global) cluster ID, as of the most recent clustering scheme;
+<li><tt>Article.ee5missingBody</tt>: a boolean field which is set to true if <tt>Article.ee5classId</tt> was set based on the article's metadata only, without the article's body being available.
+</ul>
+
 <h2>Overview of operations</h2>
+
+<h3>Delete All</h3>
+
+
+<P>The "Delete All" operation is to be carried out every time word
+clustering (word2vec) and document clustering has been re-run by
+Xiaoting's application, and a new clustering scheme (the set of
+P-vectors for each categoy) is installed.
+
+<p>The deletion is done to ensure that the data associated with the
+previous clustering scheme won't interfere with newly generated data.
+</p>
+
+<p>These operations delete from the MySQL database the
+information associated with the current clustering scheme.  In
+particular, all data from the table EE5DocClass are erased; the as the
+EE5-related fields of the Article table are reset.  Although the old
+EE5Uci data become irrelevant on the installation of a new clustering scheme,
+we don't delete them here, since they will be replaced on the next Update run anyway.
+
+<pre>
+./ee5-daily.sh delete
+</pre>
 
 <h3>Initialization</h3>
 
-<P>This is to be carried out every time word clustering (word2vec) and
-document clustering has been re-run by Xiaoting's application, perhaps
-once every few months.   
+<P>Preceded by the "Delete All" operations, the Initialization is to
+be carried out every time word clustering (word2vec) and document
+clustering has been re-run by Xiaoting's application, perhaps once
+every few months.
 </p>
 
 <ul>
   <li>Doc cluster initialization: fill the table EE5DocClass. (This is just a formality: we set cluster ID and alpha0, beta0).
-  <li>Read the article-to-doc-cluster assignment. 
+  <li>Read the article-to-doc-cluster assignment, if it has been supplied.
     <ul>
       <li>Article.setEe5classId() for each document.
     </ul>
+  <li>In the absence of pre-computed cluster assignment data, our
+    application itself will assign documents to clusters. In
+    principle, we can re-run cluster assignment on all 1,000,000+
+    documents in My.ArXiv. In practice, though, we never use cluster
+    assignment information for ArXiv articles that are so old that
+    they have never been shown to any EE5 users (or to EE4 users that
+    have later been converted to EE5). Thus, only processing articles
+    that have been submitted since 2013-01-01 is probably quite sufficient.
+    <ul>
+      <li>Article.setEe5classId(...) 
+      <li>Article.setMissingBody(...) 
+    </ul>
 </ul>
+
+<pre>
+./ee5-daily.sh init
+</pre
 
 <h3>On a daily run</h3>
 
+<pre>
+./ee5-daily.sh update
+</pre
+
+<p>
 The main application is <tt>edu.rutgers.axs.ee5.Daily</tt>
+
+<p>The update process should run every night, as soon as ArxivImporter
+finishes. It will assign new articles to clusters, update per-cluster
+statistics, and generate new suggestion lists for all users in the EE5
+experiment plan.
 
 <ul>
   <li>Update article submission statistics per cluster (EE5DocClass.setL()) 
