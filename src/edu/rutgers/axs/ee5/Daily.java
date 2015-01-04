@@ -26,7 +26,13 @@ public class Daily {
 
     static private final int maxlen = 1000000;
 
-    /** The main "daily updates" method. Calls all other methods.
+    /** The main "daily updates" method. Calls all other methods. Operations involved 
+	are:
+	<ul>
+	<li>Classify (assign to clusters) recent articles
+	<li>Compute and record average daily submission rates for all doc clusters
+	<li>Create suggestion lists for all EE5 users
+	</ul>
      */
     static void updates() throws IOException {
 
@@ -535,7 +541,7 @@ public class Daily {
 	suggestion lists (so we go for all articles uploaded since
 	2013-01-01), as well as all user-uploaded documents.
     */
-    private static void init()  throws IOException {
+    private static void init(Date since)  throws IOException {
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
 
@@ -543,14 +549,13 @@ public class Daily {
 	initClusters(em);
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
-	// months are 0-based
-	Date since = (new GregorianCalendar(2013, 0, 1)).getTime();
+	Logging.info("(Re)Classifying documents dated since " + since);
 	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
 	Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
 
 	org.apache.lucene.search.Query q = Queries.hasUserQuery();
 	sd = searcher.search(q, maxlen).scoreDocs;
-	System.out.println("Found " + sd.length + " user-uploaded docs to (re)classify");
+	Logging.info("Found " + sd.length + " user-uploaded docs to (re)classify");
 	Classifier.classifyNewDocsCategoryBlind(em, reader, sd, cidMap, true, null);
 
 	reader.close();
@@ -569,7 +574,7 @@ public class Daily {
 	</pre>
 	every night
      */
-    static public void main(String[] argv) throws IOException {
+    static public void main(String[] argv) throws IOException, java.text.ParseException {
 	ParseConfig ht = new ParseConfig();      
 	String stoplist = "WEB-INF/stop200.txt";
 	stoplist = ht.getOption("stoplist",stoplist);
@@ -585,7 +590,8 @@ public class Daily {
 	if (cmd.equals("delete")) {
 	    deleteAll();
 	} else if (cmd.equals("init")) {
-	    init();
+	    Date since = ht.getOptionDate("since", "2013-01-01");
+	    init(since);
 	} else if (cmd.equals("update")) {
 	    updates();
 	} else {

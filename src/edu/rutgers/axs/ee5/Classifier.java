@@ -196,7 +196,7 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	    }
 	    cnt++;
 	    Logging.info("Loaded " +  logPvecs.size() + " vectors for cat=" + cat +"; cnt=" + cnt);
-	    pin.setK(cnt);
+	    if (pin!=null) pin.setK(cnt);
 	}
 	if (thread!=null) thread.progress("Has read in cluster descriptions");
 

@@ -98,7 +98,7 @@ class Vocabulary {
 		firstWordToMultiwords.put(key,z=new Vector<Multiword>());
 	    }
 	    z.add(m);	
-	    if (linecnt % 100000 == 0) Logging.info("Voc: linecent=" + linecnt);
+	    if (linecnt % 100000 == 0) Logging.info("Voc: linecnt=" + linecnt);
 	}
 	r.close();
 	L = _L;
