@@ -32,7 +32,7 @@ import edu.rutgers.axs.sql.Logging;
 import edu.rutgers.axs.sql.Main;
 import edu.rutgers.axs.web.SearchResults;
 
-/** Importing files uploaded by users (the "Toronto System") */
+/** Importing files uploaded by users in the Lucene datastore (the "Toronto System") */
 public class UploadImporter {
     
     private static String getFileNameBase(File f) {
@@ -75,10 +75,9 @@ public class UploadImporter {
 	//doc.add(new Field(ArxivFields.DATE,  now,
 	//		  Field.Store.YES, Field.Index.NOT_ANALYZED));
 
-	
 	String whole_doc = Indexer.parseDocFile(f.getCanonicalPath());
 
-	doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.NO, Field.Index.ANALYZED,  Field.TermVector.YES));
+	doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	// Record current time as the date the document was indexed 
 	doc.add(new Field(DATE_FIELD,
@@ -90,14 +89,12 @@ public class UploadImporter {
 
 	Logging.info("UploadImporter: indexed "+user+":"+ fileNameBase+", date=" + doc.get(DATE_FIELD) +"; len=" + len );
 	
-	// write data to Lucene
-
+	// delete any old Lucene object with the same name, and write the new one
 	writer.deleteDocuments(Common.userFileQuery(user,fileNameBase));
 	writer.addDocument(doc);
 
 	//	writer.commit();
 	return doc;
-
     }
 
     /** Retrieves the importing date recorded in the Lucene document */

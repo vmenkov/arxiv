@@ -4,6 +4,7 @@ import java.util.*;
 
 import edu.rutgers.axs.web.EditUser;
 import edu.rutgers.axs.web.Tools;
+import edu.rutgers.axs.ee5.Classifier;
 
 /**
 
@@ -350,8 +351,7 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
     /** Creates set of radio buttons reflecting the ArXiv categories
     the specified user is interested in. 
 
-
-    @param u A user entry. If null, then no boxes will be checked . */
+    @param u A user entry. If null, then no boxes will be checked  */
     static public String mkCatBoxes(User u) {
 	//final String space = "&nbsp;&nbsp;";
 	StringBuffer b = new StringBuffer();
@@ -383,6 +383,37 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
 	b.append("</table>\n");
 	return b.toString();
     }
+
+
+    /** Prepares a special-purpose box set for the "add discovered categories" feature
+	in EE5 */
+    static public String mkCatBoxes2(User u, Classifier.CategoryAssignmentReport report) {
+	if (u==null) throw new IllegalArgumentException("mkCatBoxes2: no user specified!");
+
+	Vector<String> allCats = Categories.listAllStorableCats();
+
+	//final String space = "&nbsp;&nbsp;";
+	StringBuffer b = new StringBuffer();
+	b.append("<table border=\"0\">\n");
+	for(String name: allCats) {
+	    Cat cat = findActiveCat(name);    
+	    if (u.hasCat(name)) {
+		b.append( "<tr><td valign=top><strong>[X] " + name + "</strong> <td valign=top>(" + cat.desc+
+			  ") <td valign=top> Already in your profile" + 
+			  "</tr>\n");
+	    } else if (report.containsKey(name)) {		
+		b.append( "<tr><td valign=top><strong>" +Tools.checkbox(EditUser.CAT_PREFIX + name, 
+							     "on", name, true)
+			  + "</strong> <td valign=top>(" + cat.desc+ 
+			  ") <td valign=top> Suggested because of articles you have uploaded : " +
+			  report.why(name) +
+			  "</tr>\n");
+	    }
+	}
+	b.append("</table>\n");
+	return b.toString();
+    }
+
 
     /** Checks if this is one of the "abolished" categories, and returns
 	the modern substitute, if known. */

@@ -37,11 +37,13 @@ public class EditUser extends Participation  {
     /** Boolean parameter in user-creation process */
     public final static String SURVEY="survey";
 
+    /** Prefix used for EE4-specific parameters */
     final static String EE4_PREFIX="ree4";
 
     /** If true, the web page will have a link to the doc upload
 	page. This is enabled in the CREATE_SELF situation, when
-	other eligibility rules are satisfied.
+	other eligibility rules (enrollment in specific experiment 
+	plans) are satisfied.
     */
     public boolean needTorontoLink = false;
     
@@ -361,8 +363,7 @@ public class EditUser extends Participation  {
 	    setEx(ex);
 	}		
 	Logging.info("EditUser: changeCnt=" + changeCnt);
-	return (changeCnt!=0);
-	    
+	return (changeCnt!=0);	    
     }
 
     /** Various params that may come from HTML forms */

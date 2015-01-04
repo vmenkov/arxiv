@@ -258,9 +258,10 @@ import edu.rutgers.axs.ParseConfig;
 	Normally it includes a subdirectory name (which is determined
 	by the file's type or role in the algorithm), and the file's unique
 	name.
-	// FIXME: 80 chars may still be too short, once the users start PDF uploads!
+
+	We set the length to 256 chars, to be safer once the users start PDF uploads!
      */
-    @Basic      @Column(length=80) @Display(order=9, editable=false)
+    @Basic      @Column(length=256) @Display(order=9, editable=false)
 	String thisFile;
     public String getThisFile() { return thisFile; }
     public void setThisFile( String x) { thisFile = x; }

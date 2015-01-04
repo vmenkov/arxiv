@@ -34,9 +34,9 @@ public class Common {
 	}
     }
 
-    /** Find a document by article ID, using a given searcher.
+    /** Finds a document by its ArXiv article ID
      @return Lucene internal doc id.
-     @throws IOException if not found, or on Lucene errors
+     @throws IOException if no document with the specified ID was  found, or on Lucene errors
     */
     static public int find(IndexSearcher s, String aid) throws IOException {
 	int docno = findOrMinus(s, aid);
@@ -46,8 +46,9 @@ public class Common {
         } else return docno;
     }
 
-    /** Finds a document in the Lucene index by its ArXiv ID.
-	@param aid ArXiv ID
+    /** Finds a document by its ArXiv article ID
+	@return Lucene internal doc id.
+	@throws IOException if no document with the specified ID was  found, or on Lucene errors
      */
     static public int find(IndexReader reader, String aid) throws IOException{
 	IndexSearcher s = new IndexSearcher( reader );
@@ -56,7 +57,7 @@ public class Common {
 
 
    /** Find a document by article ID, using a given searcher. 
-     @return Lucene internal doc id (which may be 0!), or -1 if none found.
+     @return Lucene internal doc id (which is a non-negative number; it may be 0!), or -1 if none found.
      @throws IOException On Lucene errors (the index is not there, etc; this is passed fro IndexSearcher.search)
     */
     static public int findOrMinus(IndexSearcher s, String aid) throws IOException {
@@ -83,13 +84,13 @@ public class Common {
 
 
     /** Finds a specific uploaded document 
-	@return Lucene doc no or 0 if none found
+	@return Lucene document number (a non-negative integer), or -1 if none found
      */
     static public int findUserFile(IndexSearcher s, String user, String file) throws IOException{
 	Query q = userFileQuery(user,file);
 	TopDocs  top = s.search(q, 1);
 	ScoreDoc[] scoreDocs = top.scoreDocs;
-	return  (scoreDocs.length < 1) ? 0 : scoreDocs[0].doc;
+	return  (scoreDocs.length < 1) ? -1 : scoreDocs[0].doc;
     }
 
     static public ScoreDoc[] findAllUserFiles(IndexSearcher s, String user) throws IOException{

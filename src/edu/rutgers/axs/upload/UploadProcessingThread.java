@@ -20,13 +20,15 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.indexer.UploadImporter;
 import edu.rutgers.axs.html.ProgressIndicator;
 
-/** An UploadProcessingThread object is created to handle all the operations
-    that need to be carried out when the user uploads one or several files.
-    The class has several constructors, one of which is used depending on 
-    what kind of upload mode was used (direct upload from the user's desktop,
-    or file loading from a URL). All actual work is carried out in the run()
-    method; a reference to the thread is stored in the SessionData object,
-    whereby the thread's progress can be monitored from later HTTP requests.
+/** An UploadProcessingThread object is created to handle all the
+    operations that need to be carried out when the user uploads one
+    or several files.  This class has several constructors, one of
+    which is used depending on what kind of upload mode was used
+    (direct upload from the user's desktop, or file loading from a
+    URL). All actual work is carried out in the run() method; a
+    reference to the thread is stored in the current user session's
+    SessionData object, whereby the thread's progress can be monitored
+    from later HTTP requests.
  */
 public class UploadProcessingThread extends BackgroundThread {
     
@@ -98,7 +100,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	    if (startDf != null) {
 		pdfCnt = 1;
-		DataFile txt = pdf2txt(em, startDf);
+		DataFile txt = importPdf(em, startDf);
 		if (txt != null) {
 		    convCnt ++;
 		}
@@ -110,7 +112,7 @@ public class UploadProcessingThread extends BackgroundThread {
 		DataFile pdf = pullPage(user, startURL, false);
 		if (pdf != null) {
 		    pdfCnt ++;
-		    DataFile txt = pdf2txt(em, pdf);
+		    DataFile txt = importPdf(em, pdf);
 		    if (txt != null) convCnt ++;
 		} 
 		//progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
@@ -161,7 +163,7 @@ public class UploadProcessingThread extends BackgroundThread {
 		DataFile pdf = pullPage(user, url, true);
 		if (pdf != null) {
 		    pdfCnt ++;
-		    DataFile txt = pdf2txt(em, pdf);
+		    DataFile txt = importPdf(em, pdf);
 		    if (txt != null) convCnt ++;
 		} else {
 		    // error is reported inside pullPage()
@@ -398,6 +400,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	return f;
     }
 
+    /** Looks up the location of the script pdf2txt.py.  */
     private static File findScript() {
 	final String [] dirs = {"/usr/bin", "/usr/local/bin"};
 	for(String x: dirs) {
@@ -408,15 +411,22 @@ public class UploadProcessingThread extends BackgroundThread {
 	return null;
     }
 
-    /** Uses PDFMiner to convert a PDF file to text; after that,
-	imports the file's content into Lucene. */
-    private DataFile pdf2txt(EntityManager em, DataFile pdf) {
+    /** The complete processing sequence for a recently uploaded PDF
+	file. Uses PDFMiner to convert a PDF file to text; after that,
+	imports the file's content into the Lucene datastore, and
+	creates an Article object and an Action object in the SQL
+	database.
+
+ 	@param pdf A DataFile object with the information (mostly, file name) about a recently uploaded PDF file.
+	@return A DataFile object with  the information (mostly, file name) about the text file produced during the conversion, or null on an error
+    */
+    private DataFile importPdf(EntityManager em, DataFile pdf) {
 	File pdfFile = pdf.getFile();
 	String pdfFileName = pdfFile.getName();
 	try {
 	    final String suffix = ".pdf";
 	    if (!pdfFileName.toLowerCase().endsWith(suffix)) {
-		error("File name " + pdfFileName + " does not have expected suffix '.pdf'; won't convert");
+		error("File name " +pdfFileName+ " does not have expected suffix '.pdf'; won't convert");
 		return null;
 	    }
 	    String txtFileName = pdfFileName.substring(0, pdfFileName.length() - suffix.length()) + ".txt";
@@ -455,17 +465,21 @@ public class UploadProcessingThread extends BackgroundThread {
 	    } catch(java.lang.InterruptedException ex) {}
 	    int ev = proc.exitValue();
 	    if (ev!=0) {
-		error("Error reported when converting " + pdfFile + " to " + txtDf.getPath());
+		error("Error reported when converting " +pdfFile+ " to "+txtDf.getPath());
 		return null;
 	    }
 
 	    progress("Converted " + pdfFile + " to " + txtDf.getPath());
 	    Document doc=UploadImporter.importFile(user,txtDf.getFile(),writer);
 	    Article art =  Article.getUUDocAlways(em, doc);
+	    progress("Retrieved (or created) article entry " + art);
 	    User u = User.findByName(em, user);
 	    ActionSource asrc = new ActionSource(Action.Source.UNKNOWN, 0);
 
+	    em.getTransaction().begin(); 
 	    Action a=sd.addNewAction(em, u, Action.Op.UPLOAD, art, null, asrc);
+	    progress("Added Action " + a);
+	    em.getTransaction().commit(); 
 	    return txtDf;
 
 	} catch (IOException ex) {

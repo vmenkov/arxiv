@@ -188,8 +188,8 @@ public class TorontoPPP {
 			  ArticleAnalyzer3 aa, IndexSearcher searcher, User u,
 			  BackgroundThread thread) 
     throws IOException {
-	UserProfile upro =  new UserProfile(aa);
 
+	UserProfile upro =  new UserProfile(aa);
 	String msg="";
 	String uname = u.getUser_name();
 

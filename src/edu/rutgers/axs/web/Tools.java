@@ -80,12 +80,12 @@ public class Tools {
 	@param type must be "radio" or "checkbox"
      */
     public static String radioOrBox(String name, String type, Object value, Object text, boolean selected) {
-	return  radioOrBox( name,  type,  value,  text, selected, null);
+	return  radioOrBox( name,  type,  value,  text, selected,  null);
     }
 
     /** Creates an HTML "input" element of the "radio" or "checkbox" type.
 	@param type must be "radio" or "checkbox"
-	@param style Is meant to control presentation; items that the user needs to read aloud may be rendered differently.
+	@param style Is meant to control presentation. For example, in a system providing canned scripts to telephone operators, items that the user needs to read aloud may be rendered differently.
      */
     public static String radioOrBox(String name, String type, Object value, Object text, boolean selected, String style) {
 	String s = 

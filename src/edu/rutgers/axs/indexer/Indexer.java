@@ -704,9 +704,9 @@ public class Indexer {
 		    char[] ca = (char[]) x;
 		    String q="";
 		    for(char c: ca) q+= c;
-		    System.out.println("["+q+"]" );
+		    System.out.print("["+q+"]" );
 		} else {
-		    System.out.println( x.getClass() + ": " + x + "; ");
+		    System.out.print( x.getClass() + ": " + x + "; ");
 		}
 	    }
 	    System.out.println();

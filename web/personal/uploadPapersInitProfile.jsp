@@ -16,8 +16,41 @@
 <body>
 
 <% 
-   if (main.error) {   %>  <%@include file="../include/error.jsp" %>
-<%   } else if (main.check) {      %>
+   if (main.error || main.status == UploadPapersInitProfile.Status.DONE_ERROR) {   %> 
+ <%@include file="../include/error.jsp" %>
+<%  } else if (main.status == UploadPapersInitProfile.Status.NONE) {  %>
+
+<h1><%= main.checkTitle %></h1>
+<pre>
+<%= main.checkText %>
+</pre>
+
+<p>
+You can go to the main <a href="uploadPapers.jsp">Document upload page</a> to upload more papers, or to the <a href="../index.jsp">My.ArXiv main page</a> to view your current recommendation list, if any.
+</p>
+
+<%  } else if (main.status == UploadPapersInitProfile.Status.DONE_NEED_APPROVAL) {  %>
+
+<h1>Additional categories of interest</h1>
+
+<p>Based on the content of the papers you have uploaded, we suggest that you add the following categories to the list of your categories of interest. If you don't want to add some or all of these categories, please un-check the boxes next to them.
+</p>
+
+<form method="post" action="uploadPapersInitProfile.jsp">
+<input type="hidden" name="stageTwo" value="true">
+<p><%= main.catBoxes %>
+</p>
+
+<!-- p><%= main.newCatReport %></p -->
+
+<form method="post" action="uploadPapersInitProfile.jsp">
+<input type="hidden" name="stageTwo" value="true">
+<input type="submit" value="Continue with the checked categories">
+</form>
+
+
+<%  } else if (main.status == UploadPapersInitProfile.Status.RUNNING) {   %>
+
 <h1><%= main.checkTitle %></h1>
 <%= main.checkProgressIndicator %>
 <pre>
@@ -36,17 +69,19 @@ If it does not, click the button below to continue:
 <input onClick="location.href='<%=main.reloadURL%>'" type=button value="Continue">
 </form>
      
-<%   } else {    %>
+<%   } else if (main.status == UploadPapersInitProfile.Status.DONE_ALL) {    %>
 
 <h1>Processing personal papers</h1>
 
-
-<p>Your personalized recommendations have been generated. Please go to the main page to view them.</p>
-
-<p>Go to the "<a href="../index.jsp">Main page</a>
+<p>Your personalized recommendations have been generated. 
+Please go to the <strong><a href="../index.jsp">My.ArXiv Main page</a></strong> to view them.</p>
 
 
-<%   }      %>
+<%   }  else {    %>
+<h1>Not sure what goes on!</h1>
+<p>Status = <%= main.status %> </p>
+<%   }    %>
+
 
 
 <!--

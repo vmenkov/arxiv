@@ -15,7 +15,8 @@ import org.apache.lucene.document.*;
 import edu.rutgers.axs.indexer.ArxivFields;
 
 
-/** Very basic information about an ArXiv article. */
+/** Very basic information about an ArXiv article or a user-uploaded document stored
+    in the Lucene datastore. */
 @Entity  
    @Table(uniqueConstraints=@UniqueConstraint(name="article_id_cnstrt",columnNames="id"))
     public class Article extends OurTable 
@@ -76,8 +77,12 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 
    /** Uploaded file's file name (for user-uploaded docs only). It can
        be used, together with the user field, to locate the document
-       in Lucene doc store.  For ArXiv articles this field is null. */
-    @Basic      @Column(length=80)
+       in Lucene doc store.  For ArXiv articles this field is null. 
+
+       FIXME: bad things happen if the length of the file name is longer
+       than this limit. Some checks could be imposed...
+   */
+    @Basic      @Column(length=256)
 	@Display(editable=false, order=10)
 	String file=null;
     public String getFile() { return file; }
@@ -194,6 +199,16 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 	return (getAid() != null) ? s + "arXiv:" + getAid()  :
 	    s + "UU:" + getUser() + ":" + getFile();	    	
     }
+
+    /** A short human-readable identifier of a Lucene document */
+    public static String shortName(Document doc) throws IOException {
+	String aid = doc.get(ArxivFields.PAPER);
+	if (aid!=null)  return aid;
+	String user = doc.get(ArxivFields.UPLOAD_USER);
+	String file = doc.get(ArxivFields.UPLOAD_FILE);
+	return   "UU:" + user + ":" + file;
+    }
+
 
    /** A one-off process, initializing this table from ArticleStats. This
        is not needed in subsequent server operation.

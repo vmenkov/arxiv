@@ -108,6 +108,23 @@ sudo yum install httpd
 sudo service httpd start
 </pre>
 
+<h6>Tomcat memory settings</h6>
+
+<p>Tomcat's default heap size (128 Mb) has long been sufficient for
+our web app's normal operations. However, with the addition of memory
+intensive EE5 classifier for user-uploaded documents (December 2014), 
+we started receiving OutOfMemoryError errors. The solution, as per advice at 
+https://community.jaspersoft.com/questions/819581/solvedjasperreports-server-handler-processing-failed-nested-exception , was to raise the -Xmx value in JAVA_OPTS, as set
+in  /etc/default/tomcat6:
+<pre>
+CC2239-Ubuntu:/etc/default> diff tomcat6 tomcat6.orig 
+21c21
+&lt; JAVA_OPTS="-Djava.awt.headless=true -Xmx512m -XX:+UseConcMarkSweepGC"
+---
+&gt; JAVA_OPTS="-Djava.awt.headless=true -Xmx128m -XX:+UseConcMarkSweepGC"
+</pre>
+
+<h6>Using Tomcat with Apache</h6>
 
 <p>In order for Apache to redirect all requests to Tomcat, we add the
 following lines to /etc/httpd/conf/httpd.conf:

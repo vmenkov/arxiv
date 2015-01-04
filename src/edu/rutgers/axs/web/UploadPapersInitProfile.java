@@ -22,12 +22,21 @@ import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.recommender.TorontoPPPThread;
 import edu.rutgers.axs.recommender.DailyPPP;
 import edu.rutgers.axs.ee5.TorontoEE5Thread;
+import edu.rutgers.axs.ee5.Classifier;
 
 /** The "Toronto system": user profile initialization, once PDF documents
     have been uploaded by UploadPapers.
 
+    <p>This is the back end for personal/uploadPapersInitProfile.jsp.
+    That page can be invoked with a variety of query-string
+    parameters, and different actions are carried out on different
+    requests. In particular, check=true means that we have started a
+    background thread on an earlier request (a few seconds or minutes ago),
+    and now want to show the updated status of the background thread processing
+    to the user.
+
     <p>
-    FIXME: need a check for "do we need it now?" (Maybe profile is alreqady available...)
+    FIXME: need a check for "do we need it now?" (Maybe profile is already available...)
 */
 public class UploadPapersInitProfile  extends ResultsBase {
 
@@ -35,6 +44,9 @@ public class UploadPapersInitProfile  extends ResultsBase {
         to check the status of the current load process. Otherwise, it
         is a request to initiate a new process.  */
     public boolean check=false;
+    /** This is user's request for StageTwo of EE5 processing (user sending
+	back approved cat list) */
+    public boolean stageTwo=false;
 
     /** To be displayed when check=true */
     public String checkTitle="???", checkText="?????", checkProgressIndicator="<!-- n/a -->";
@@ -46,37 +58,58 @@ public class UploadPapersInitProfile  extends ResultsBase {
     public boolean wantReload=false;
     public String reloadURL;
 
+    /** Special flag for EE5 uploads; indicates that we now show an intermediate screen
+	askin the user to approve the addition of some categories on interest (based
+	on the uploaded papers that have been processed) */
+    public boolean needCatApproval=false;
+    public Classifier.CategoryAssignmentReport newCatReport = null;
+    /** An HTML snippet with checkboxes, based on newCatReport */
+    public String catBoxes = null;
+
+    /** Possible states for this page */
+    public static enum Status {
+	/** There was a request to check the status of a running or recently
+	    completed  thread, but there was nothing to check!  Telling this to the
+	    user and asking him to go to the main upload page. */
+	NONE,
+	    /** Work thread currently running. Display current progress and auto-reload */
+	    RUNNING,
+	    /** Thread completed, but only done part of the work. The
+		user needs to respond before the second stage can
+		commence */
+	    DONE_NEED_APPROVAL,
+	    /** All done; give the user a link to main page to view sug list */
+	    DONE_ALL,
+	    /** Thread finished with an error. Nothing much can be done... */
+	    DONE_ERROR,
+	    };
+
+    public Status status = null;
+ 
+    /** There are two main kinds of requests to uploadPapersInitProfile.jsp (which result 
+	in the invocation of this constructor):
+	<ul>
+	<li>Those with check=false are meant to initiate processing.
+	<li>Those with check=true are meant to inquire about the status of the processing
+	that was started earlier, so that the status page can be updated.
+	</ul>
+     */
    public UploadPapersInitProfile(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 
 	reloadURL = getReloadURL(false);
 
 	check = getBoolean("check", check);
+	stageTwo = getBoolean("stageTwo", check);
 
 	if (check) { 
-            if (sd.upInitThread == null) {
-                checkTitle = "No processing is taking place";
-                checkText = "No processing is taking place right now or was taking place recently";
-            } else if (sd.upInitThread.getState() == Thread.State.TERMINATED) {
-		if (sd.upInitThread.error) {
-		    checkTitle = "Error occurred";
-		    checkText = sd.upInitThread.getProgressText();
-		} else {
-		    checkTitle = "Processing completed";
-		    checkText = sd.upInitThread.getProgressText();
-		}
-            } else {
-                wantReload = true;
-                checkTitle = "Processing in progress...";
-                checkText =
-                    "Processing thread state = "+sd.upInitThread.getState()+"\n"+
-                    sd.upInitThread.getProgressText();
-                reloadURL = getReloadURL(true);
-                checkProgressIndicator=sd.upInitThread.getProgressIndicatorHTML(cp);
-            }
+	    checkStatus();
             return;
-        } else if (sd.upInitThread != null && sd.upInitThread.getState() != Thread.State.TERMINATED) {
-            check = true;
+        } 
+
+	if (sd.upInitThread!=null && sd.upInitThread.getState()!=Thread.State.TERMINATED){
+	    status = Status.RUNNING;
+	    check = true;
             wantReload = false;
             checkTitle = "Processing is already going on";
             checkText =
@@ -114,22 +147,22 @@ public class UploadPapersInitProfile  extends ResultsBase {
 		    }
 		}
 	    }
-   
+	    
+	    if (stageTwo) {  // Stage Two of EE5 processing: update cats
+		if (program != User.Program.EE5) throw new IllegalArgumentException("StageTwo only exists for EE5, not for " + program + "!");
+		em.getTransaction().begin();
+		addCats( actor, request);
+		em.persist(actor);
+		em.getTransaction().commit();
+	    }
+
 	    sd.loadStoplist();
 	    sd.upInitThread = (program == User.Program.PPP)?
-		new TorontoPPPThread(user) : 	new TorontoEE5Thread(user);
+		new TorontoPPPThread(user) : new TorontoEE5Thread(user, stageTwo);
 	    sd.upInitThread.start();
-        
-            if (sd.upInitThread != null && sd.upInitThread.getState() != Thread.State.TERMINATED) {
-                check=true;
-                wantReload = true;
-                checkTitle = "Processing in progress";
-                checkText =
-                    "Processing thread state = " + sd.upInitThread.getState()+ "\n"+
-                    sd.upInitThread.getProgressText();
-                reloadURL = getReloadURL(true);
-                checkProgressIndicator=sd.upInitThread.getProgressIndicatorHTML(cp);
-            }
+	
+	    checkStatus();
+
 	} catch(  Exception ex) {
 	    setEx(ex);
 	} finally {
@@ -138,7 +171,53 @@ public class UploadPapersInitProfile  extends ResultsBase {
 	}  
    }
 
-   /** Generates the URL for the "Continue" button (and/or the "refresh" tag)
+    /** Checks the existence and status of the currently running background thread,
+	and sets all flags.
+     */
+    private void checkStatus() {
+	if (sd.upInitThread == null) {
+	    status = Status.NONE;
+	    checkTitle = "No processing is taking place";
+	    checkText = "No processing is taking place right now or was taking place recently";
+	} else if (sd.upInitThread.getState() == Thread.State.TERMINATED) {
+	    if (sd.upInitThread.error) {
+		error = true;
+		status = Status.DONE_ERROR;
+		checkTitle = "Error occurred";
+		checkText = sd.upInitThread.getProgressText();
+	    } else {
+		TorontoEE5Thread ee5t= (sd.upInitThread instanceof TorontoEE5Thread)?
+		    (TorontoEE5Thread)sd.upInitThread : null;
+		needCatApproval = (ee5t != null) && ee5t.needCatApproval;
+		
+		checkText = sd.upInitThread.getProgressText();
+		
+		if (needCatApproval) {
+		    status = Status.DONE_NEED_APPROVAL;
+		    checkTitle = "Document analysis completed";
+		    //Classifier.CategoryAssignmentReport 
+		    newCatReport = ee5t.newCatReport;
+		    catBoxes = ee5t.catBoxes;
+		} else {
+		    status = Status.DONE_ALL;
+		    checkTitle = "Processing completed";
+		}
+	    }
+	} else {
+	    status = Status.RUNNING;
+	    wantReload = true;
+	    checkTitle = "Processing in progress...";
+	    checkText =
+		"Processing thread state = "+sd.upInitThread.getState()+"\n"+
+		sd.upInitThread.getProgressText();
+	    reloadURL = getReloadURL(true);
+	    checkProgressIndicator=sd.upInitThread.getProgressIndicatorHTML(cp);
+	}
+    }
+ 
+    /** Generates the URL for the "Continue" button (and/or the "refresh" tag).
+       This is either the same "check" page (to continue monitoring status),
+       or the main page (to view the results).
      */
     private String getReloadURL(boolean check) {
 	String s= cp +
@@ -175,5 +254,31 @@ public class UploadPapersInitProfile  extends ResultsBase {
 	}
 	return latest;
     }
+
+
+    /** Adds categories to the user profile based on what's sent from the client.
+	This method is used in EE5 upload, after the user approves the list of
+	additional categories recently "discovered" by the classifier.
+
+	@return true if one or more categories have in fact been added
+     */
+    private boolean addCats(User r, HttpServletRequest request) {
+
+	int changeCnt=0;
+	Set<String> c = r.getCats();
+	if (c==null) c = new HashSet<String> ();
+	for(String name: Categories.listAllStorableCats()) {
+	    String sent=request.getParameter(EditUser.CAT_PREFIX+name);
+	    if (sent != null && !c.contains(name)) {
+		Logging.info("Adding cat " + name);
+		c.add(name);
+		changeCnt++;
+	    }
+	}
+	r.setCats(c);		
+	Logging.info("EditUser: changeCnt=" + changeCnt);
+	return (changeCnt!=0);	    
+    }
+
 
 }

@@ -1,24 +1,8 @@
 package edu.rutgers.axs.ee5;
 
-/*
-import org.apache.lucene.document.*;
-import org.apache.lucene.index.*;
-import org.apache.lucene.search.*;
-*/
-
 import java.util.*;
 import java.io.*;
-
-/*
-import javax.persistence.*;
-
-import edu.rutgers.axs.ParseConfig;
-import edu.rutgers.axs.indexer.*;
-import edu.rutgers.axs.sql.*;
-import edu.rutgers.axs.web.*;
-import edu.rutgers.axs.search.*;
-import edu.rutgers.axs.recommender.*;
-*/
+import edu.rutgers.axs.sql.Logging;
 
 /** Multiword vocabulary, as prepared by Alex Alemi */
 
@@ -51,12 +35,15 @@ class Vocabulary {
 	}
     }
 
-    final private Vector<Multiword> multiwords;
+    //    final private Vector<Multiword> multiwords;
+    /** Used to look up all multiwords starting with a particular word */
     private HashMap<String, Vector<Multiword>> firstWordToMultiwords;
     /** How many multiwords are in this vocabulary? */
     int size() { 
-	return multiwords.size();
+	//return multiwords.size();
+	return mwCnt;
     }
+    private int mwCnt=0;
 
     /**Creates a Vocabulary file based on a multiword cluster
        assignment file. 
@@ -71,7 +58,7 @@ class Vocabulary {
     */
     Vocabulary(File f, int _L) throws IOException {
 
-	multiwords = new Vector<Multiword>();
+	//multiwords = new Vector<Multiword>(2000000);
 	firstWordToMultiwords =new HashMap<String,Vector<Multiword>>();
 	FileReader fr = new FileReader(f);
 	LineNumberReader r = new LineNumberReader(fr);
@@ -103,13 +90,15 @@ class Vocabulary {
 		throw new IOException("Cannot parse line " + linecnt + " in file " + f + " : " + s);
 	    } 
 	    Multiword m = new Multiword(words,wcid);
-	    multiwords.add(m);
+	    //	    multiwords.add(m);  // OOM here! (Only when used in a web application)
+	    mwCnt++;
 	    String key = words[0];
 	    Vector<Multiword> z = firstWordToMultiwords.get(key);
 	    if (z==null) {
 		firstWordToMultiwords.put(key,z=new Vector<Multiword>());
 	    }
-	    z.add(m);	    
+	    z.add(m);	
+	    if (linecnt % 100000 == 0) Logging.info("Voc: linecent=" + linecnt);
 	}
 	r.close();
 	L = _L;

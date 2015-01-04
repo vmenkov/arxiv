@@ -14,10 +14,12 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.html.*;
 import edu.rutgers.axs.search.*;
 import edu.rutgers.axs.recommender.*;
 import edu.rutgers.axs.ee4.Categorizer;
 import edu.rutgers.axs.ee4.DenseDataPoint;
+import edu.rutgers.axs.upload.BackgroundThread;
 
 /** Document classifier.
  */
@@ -149,17 +151,20 @@ public class Classifier {
 	@param scoreDocs list of documents to classify
 	@param nowrite If true, this method does not store the new 
 
-	@return Array mT[]: mT[i] will be set to the number of docs in the i-th cluster found in scoreDocs
+//	@return Array mT[]: mT[i] will be set to the number of docs in the i-th cluster found in scoreDocs
      */
-    static int[] classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
-					     EE5DocClass.CidMapper cidMap,
-					     boolean nowrite) throws IOException {
+    static //int[] 
+	CategoryAssignmentReport
+classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
+			     EE5DocClass.CidMapper cidMap,  boolean nowrite, 
+			     BackgroundThread thread) throws IOException {
 	int maxCid = cidMap.maxId();	
 	int mT[] = new int[ maxCid + 1];
 
 	Vocabulary voc = readVocabulary();
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
+	if (thread!=null) thread.pin.setK(30);
 
 	// an array, possibly with gaps, of logarithmized P-vecs for
 	// all clusters for which such vectors have been supplied to us
@@ -168,7 +173,14 @@ public class Classifier {
 
 	Vector<String> allCats = Categories.listAllStorableCats();
 	Vector<String> usedCats = new Vector<String>();
+
+	ProgressIndicator pin = (thread==null)? null:
+	    new SectionProgressIndicator(thread.pin, 30, 50, allCats.size());
+
+	int cnt=0;
 	for(String cat: allCats) {
+	    //if (thread!=null) thread.progress("cat=" + cat);
+	    
 	    File f = Files.getDocClusterFile(cat);
 	    if (!f.exists()) {
 		Logging.warning("No cluster vector files provided for category " + cat +"; exclding this category from assignment candidate list");
@@ -182,34 +194,100 @@ public class Classifier {
 		int cid = cidMap.getCluster(cat, i++).getId();
 		cid2logPvec.set(cid,x);  // ??
 	    }
+	    cnt++;
+	    Logging.info("Loaded " +  logPvecs.size() + " vectors for cat=" + cat +"; cnt=" + cnt);
+	    pin.setK(cnt);
 	}
+	if (thread!=null) thread.progress("Has read in cluster descriptions");
 
 	// Read the new data points to be classified
 	Vector<Integer> vdocno = new Vector<Integer>();
 	for(ScoreDoc sd: scoreDocs) vdocno.add(sd.doc);
 
+	pin = (thread==null)? null:
+	    new SectionProgressIndicator(thread.pin, 50, 100, vdocno.size());
+
 	Logging.info("Classifying "+vdocno.size()+" documents in a category-blind fashion, among "+ nonNullCnt(cid2logPvec) + " clusters in " +  usedCats.size() + " categories");
 
-	int cnt=0;
+	cnt=0;
 	Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
 	Vector<Boolean> missingBody =new Vector<Boolean>();
+	Vector<String> names = new Vector<String>();
 	for(int docno: vdocno) {
 	    cnt++;
-	    ArticleDenseDataPoint q = readArticle(docno, L, voc, reader);
+	    Document doc = reader.document(docno);
+
+	    String name = doc.get(ArxivFields.PAPER);
+	    if (name==null) name=doc.get(ArxivFields.UPLOAD_FILE);
+
+	    ArticleDenseDataPoint q = readArticle(doc, L, voc);
 	    int cid = assignArticleToCluster(q, cid2logPvec, L);
 	    EE5DocClass cluster = cidMap.id2dc.get(cid);
 	    assignedClusters.add(cluster);
 	    missingBody.add(q.missingBody);
-	    Logging.info("Document no. "+docno+" assigned to cluster "+cluster+", cid="+cid);
+	    names.add(name);
+	    String msg="Document no. "+docno+" assigned to cluster "+cluster+", cid="+cid;
+	    Logging.info(msg);
+	    if (thread!=null) thread.progress(msg);
+	    if (pin != null) pin.setK(cnt);
 	}
 
 	countClusterAssignments(assignedClusters, mT);
 	if (!nowrite) {
 	    Logging.info("Recording cluster assignments for "+vdocno.size()+" documents");
 	    int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, missingBody, mT);
-	    System.out.println("Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents");
+	    String msg="Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents";	    
+	    System.out.println(msg);
+	    if (thread!=null) thread.progress(msg);
 	}
-	return mT;
+
+	CategoryAssignmentReport report = new 
+	    CategoryAssignmentReport(vdocno, assignedClusters,names, mT);
+	return report;
+    }
+
+    /** An auxiliary class used by the category-blind classifier to provide a concise
+	report about categories to which documents have been assigned.
+     */
+    static public class CategoryAssignmentReport extends HashMap<String, Vector<String>> {
+	
+	/** A silly way to package information about per-cluster stats. This
+ 	    done simply so that a classifier method would have a single object
+	    as its return value.
+	 */
+	final int mT[];
+
+	CategoryAssignmentReport(Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, Vector<String> names, int[] _mT) {
+	    mT = _mT;
+	    for(int i=0; i<vdocno.size(); i++) {
+		EE5DocClass cluster = assignedClusters.elementAt(i);
+		String cat = cluster.getCategory();
+		Vector<String> v = get(cat);
+		if (v==null) put(cat, v=new Vector<String>());
+		v.add(names.elementAt(i));
+	    }
+	}
+
+	public String toString() {
+	    String[] cats = (String[])keySet().toArray(new String[0]);
+	    Arrays.sort(cats);
+	    StringBuffer b  = new StringBuffer();
+	    for(String cat: cats) {
+		b.append("[" + cat + "(" +  why(cat) + ")] ");
+	    }
+	    return b.toString();
+	}
+
+	/** Lists the names of the documents that caused the specified category
+	    to be listed */
+	public String why(String cat) {
+	    StringBuffer b = new StringBuffer();
+	    for(String name: get(cat)) {
+		if (b.length()>0) b.append( " ");
+		b.append(name);
+	    }
+	    return b.toString();	    
+	}
     }
 
     private static int nonNullCnt(Vector v) {
@@ -292,7 +370,7 @@ public class Classifier {
 	    String q[] = s.split("\\s+");
 	    if (L==0) {
 		L=q.length-1;
-		Logging.info("set L=" + L);
+		//Logging.info("set L=" + L);
 	    }
 	    if (q==null || q.length<2 || q.length != L+1) {
 		throw new IOException("Cannot parse line " + linecnt + " in the P file " + f + " : " + s);
@@ -396,8 +474,10 @@ public class Classifier {
 	from inside a transaction. */
     static private void recordClass(int docno, IndexReader reader, EntityManager em, int cid, boolean missingBody) throws IOException {
 	Document doc = reader.document(docno);
+	if (doc == null) throw new IllegalArgumentException("No Lucene document found for docno=" + docno);
 	Article a = Article.findAny(em, doc);
-	a.setEe5classId(cid);
+	if (a==null)  throw new IllegalArgumentException("No database record found for document " + docno + "/" + Article.shortName(doc));
+	a.setEe5classId(cid);   // null
 	a.setEe5missingBody(missingBody);
 	em.persist(a);
     }
@@ -407,6 +487,7 @@ public class Classifier {
 	if (!f.canRead()) {
 	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
 	}
+	Logging.info("Reading vocabulary from file "+ f);
 	return new Vocabulary(f, 0);
     }
 

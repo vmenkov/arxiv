@@ -83,8 +83,9 @@ public class HTMLParser {
 	}
     }
 
-    /** Looks for "A" elements in the document, and saves the links
-	found in them.
+    /** An auxiliary data structure used to look for "A" elements in
+	the document, and to store the links found in them, for
+	processing later.
      */
     public static class Outliner extends HTMLEditorKit.ParserCallback {
 

@@ -551,7 +551,7 @@ public class Daily {
 	org.apache.lucene.search.Query q = Queries.hasUserQuery();
 	sd = searcher.search(q, maxlen).scoreDocs;
 	System.out.println("Found " + sd.length + " user-uploaded docs to (re)classify");
-	Classifier.classifyNewDocsCategoryBlind(em, reader, sd, cidMap, true);
+	Classifier.classifyNewDocsCategoryBlind(em, reader, sd, cidMap, true, null);
 
 	reader.close();
 	em.close();

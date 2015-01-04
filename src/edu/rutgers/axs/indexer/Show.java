@@ -31,7 +31,7 @@ class Show {
     private IndexReader reader;
     
     public Show()  throws IOException {
-	this(null, true);
+	this(null, false);
 
     }
     public Show(boolean verbose)  throws IOException {
@@ -46,28 +46,43 @@ class Show {
 	if (verbose) {
 	    int numdocs = reader.numDocs();
 	    int maxdoc = reader.maxDoc();
-	    //	    System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
+	    System.out.println("numdocs=" + numdocs+", maxdoc=" + maxdoc);
 	}
     }
 
-    /** Interpret a given string (a command line argument) as an
-	integer Lucene doc number or as a string ArXiv doc id.
+    /** Interprets a given string (a command line argument) as an
+	integer Lucene doc number, as a string ArXiv Article ID, 
+	or as a "special ID" for a user-uploaded document. This is a convenience
+	method, provided to make it possible for the user to refer to documents
+	in a variety of ways from the command line.
 
-	<p> Strings in format "UU:user:file" are interpreted as
-	user-uploaded docs.
+	<ul>
+	<li>All-digit are interpreted as Lucene's internal numerical document ID
+	<li>Strings in format "UU:user:file" are interpreted as references to
+	ser-uploaded documents stored in Lucene
+	<li>All other strings are interpreted as ArXiv article IDs.
+	</ul>
+
+	The above works because a ArXiv article ID is never composed only 
+	of digits; there is at least a dot there somewhere (e.g. "0704.0001").
+
+	@return Lucene's internal numeric document ID for the document in question
+	@throws IllegalArgumentException If no matching document is found
 
      */
     int figureDocno(String v) throws IOException  {
-	// is it numeric?
+	// is it numeric (all digits)?
 	try {
 	    int docno = Integer.parseInt(v);
 	    if  (v.equals("" + docno)) return docno;  // numeric id requested
 	} catch(Exception ex) {}
 
-	String [] q = v.toLowerCase().split(":");
-	if (q.length==3 && q[0].equals("uu")) {
+	String [] q = v.split(":");
+	if (q.length==3 && q[0].equalsIgnoreCase("uu")) {
 	    IndexSearcher s = new IndexSearcher( reader );
-	    return Common.findUserFile(s, q[1], q[2]);
+	    int docno = Common.findUserFile(s, q[1], q[2]);
+	    if (docno < 0) throw new IllegalArgumentException("No user-uploaded document " + q[1] + ":" + q[2] + " found");
+	    return docno;
 	}
 
 	return find(v);
