@@ -450,15 +450,8 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	    Runtime ru = Runtime.getRuntime();
 	    Process proc = ru.exec(cmdarray, null);
-
-	    InputStream stderr = proc.getErrorStream();
-	    LineNumberReader rerr = new LineNumberReader(new InputStreamReader(stderr));
-	    String s=null;
-	    StringBuffer sb=new StringBuffer();
-	    while((s=rerr.readLine())!=null) { 
-		sb.append(s + "\n");
-	    }
-	    if (sb.length()>0) error(sb.toString());
+	    String sb = collectProcessStderr(proc);
+	    if (sb.length()>0) error(sb);
 
 	    try {
 		proc.waitFor();
@@ -487,5 +480,19 @@ public class UploadProcessingThread extends BackgroundThread {
 	    return null;
 	}      
     }
+
+    /** Reads whatever a specified process writes to its stderr */
+    private static String collectProcessStderr(Process proc) throws java.io.IOException {
+	InputStream stderr = proc.getErrorStream();
+	LineNumberReader rerr = new LineNumberReader(new InputStreamReader(stderr));
+	String s=null;
+	StringBuffer sb=new StringBuffer();
+	while((s=rerr.readLine())!=null) { 
+	    sb.append(s + "\n");
+	}
+	return sb.toString();
+    }
+
+
 
 }

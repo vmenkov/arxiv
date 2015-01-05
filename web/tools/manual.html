@@ -206,10 +206,27 @@ select c, count(a) from EE4DocClass c, Article a where a.ee4classId=c.id group b
 <td>List all document classes, along with the number of articles in the entire ArXiv belonging to this class. Order by m<sub>c</sub>
 
 <tr>
+<th colspan=3>The <a name="Article"><tt>Article</tt></a> table - brief information about ArXiv articles and user-uploaded documents
+<tr>
 <td>
 select a from Article a where a.ee4classId=1 
 <td>
 <td>View the content of document class no. 1. Article ID ("aid") values will contain links to article detail pages.
+
+<tr>
+<td>
+select x from Article x where x.aid is null
+<td>
+<td>List all user-uploaded documents
+
+<tr>
+<td>
+select ee5.category, ee5.localCid, x from Article x, EE5DocClass ee5 where x.aid is null and x.ee5classId = ee5.id 
+<td>
+<td>List all user-uploaded documents along with the EE5 cluster (and category) to which they have been assigned
+
+
+
 
 
 <tr>

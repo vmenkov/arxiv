@@ -23,7 +23,7 @@ class DataPoint {
     /** List of values (in the same order as features). Application programs should not modify this array. */
     //public double[] getValues() { return values; }
 
-    double norm2() {
+    public double norm2() {
 	double sum=0;
 	for(double q: values) sum += q*q;
 	return sum;

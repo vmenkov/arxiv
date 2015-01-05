@@ -211,7 +211,7 @@ http://openjpa.apache.org/builds/1.0.4/apache-openjpa-1.0.4/docs/manual/ref_guid
 
 
    /** A one-off process, initializing this table from ArticleStats. This
-       is not needed in subsequent server operation.
+       is not needed in subsequent normal server operation.
      */
     static void initFromArticleStats() {
 	EntityManager em  = Main.getEM();

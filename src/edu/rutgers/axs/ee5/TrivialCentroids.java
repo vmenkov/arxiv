@@ -213,7 +213,7 @@ public class TrivialCentroids {
 
 	    ScoreDoc[] scoreDocs = (ScoreDoc[])testableSd.toArray(new ScoreDoc[usedCnt]);
 	    int mT[] = Classifier.classifyNewDocsCategoryBlind( em, reader, scoreDocs,
-								cidMap, true, null).mT;
+								cidMap, false, null).mT;
 
 	    // compute per-category totals
 	    Pair[] catAndCnt = new Pair[allCats.size()];

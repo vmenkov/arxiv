@@ -144,7 +144,7 @@ public class TorontoEE5Thread extends BackgroundThread {
 	ScoreDoc[] sd = Common.findAllUserFiles(searcher, u.getUser_name());
 	progress("Will categorize " + sd.length + " docs uploaded by user " +u);
 	Classifier.CategoryAssignmentReport report = 
-	    Classifier.classifyNewDocsCategoryBlind(em, searcher.getIndexReader(), sd, cidMap, false, this);
+	    Classifier.classifyNewDocsCategoryBlind(em, searcher.getIndexReader(), sd, cidMap, true, this);
 	int n0 = report.size();
 	for(String cat: u.getCats()) {
 	    report.remove(cat);

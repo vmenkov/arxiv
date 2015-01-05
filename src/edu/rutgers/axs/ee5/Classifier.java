@@ -149,14 +149,15 @@ public class Classifier {
 	categories.
 
 	@param scoreDocs list of documents to classify
-	@param nowrite If true, this method does not store the new 
+	@param doWrite If true, this method record the computed category
+	assignments in the database.
 
 //	@return Array mT[]: mT[i] will be set to the number of docs in the i-th cluster found in scoreDocs
      */
     static //int[] 
 	CategoryAssignmentReport
 classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
-			     EE5DocClass.CidMapper cidMap,  boolean nowrite, 
+			     EE5DocClass.CidMapper cidMap,  boolean doWrite, 
 			     BackgroundThread thread) throws IOException {
 	int maxCid = cidMap.maxId();	
 	int mT[] = new int[ maxCid + 1];
@@ -195,7 +196,7 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 		cid2logPvec.set(cid,x);  // ??
 	    }
 	    cnt++;
-	    Logging.info("Loaded " +  logPvecs.size() + " vectors for cat=" + cat +"; cnt=" + cnt);
+	    //Logging.info("Loaded " +  logPvecs.size() + " vectors for cat=" + cat +"; cnt=" + cnt);
 	    if (pin!=null) pin.setK(cnt);
 	}
 	if (thread!=null) thread.progress("Has read in cluster descriptions");
@@ -226,14 +227,14 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	    assignedClusters.add(cluster);
 	    missingBody.add(q.missingBody);
 	    names.add(name);
-	    String msg="Document no. "+docno+" assigned to cluster "+cluster+", cid="+cid;
+	    String msg="Document no. "+docno+" ("+name+") assigned to cluster "+cluster+", cid="+cid;
 	    Logging.info(msg);
 	    if (thread!=null) thread.progress(msg);
 	    if (pin != null) pin.setK(cnt);
 	}
 
 	countClusterAssignments(assignedClusters, mT);
-	if (!nowrite) {
+	if (doWrite) {
 	    Logging.info("Recording cluster assignments for "+vdocno.size()+" documents");
 	    int caCnt = recordClusterAssignments(em, reader, vdocno, assignedClusters, missingBody, mT);
 	    String msg="Category-blind clustering applied to " + vdocno.size() + " documents; assignments have been recorded for " + caCnt + " documents";	    
@@ -426,8 +427,10 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 
     private static Vector<DenseDataPoint> computeLogP(Vector<DenseDataPoint> pvec) {
 	Vector<DenseDataPoint> logp = new Vector<DenseDataPoint>(pvec.size());
+	//int i=0;
 	for(DenseDataPoint p: pvec) {
 	    logp.add( p.log());
+	    //Logging.info("|p|^2=" + p.norm2() +", |logP|^2="+logp.elementAt(i++).norm2());
 	}
 	return logp;
     }
@@ -455,17 +458,18 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	double bestloglik = 0;
 	int bestk= -1;
 	StringBuffer msg=new StringBuffer();
+	msg.append("|a|^2=" + article.norm2() +"; ");
 	for(int k=0; k<logPvec.size(); k++) {
 	    DenseDataPoint logp = logPvec.elementAt(k);
 	    if (logp == null) continue; // a gap
 	    double loglik = article.dotProduct(logp);
-	    //msg.append("(ll("+k+")="+loglik+")");
+	    //	    msg.append("(ll("+k+")="+loglik+")");
 	    if (bestk<0 || loglik>bestloglik) {
 		bestk=k;
 		bestloglik=loglik;
 	    }
 	}
-	//Logging.info(msg.toString());
+	//	Logging.info(msg.toString());
 	return bestk;
     }
 
