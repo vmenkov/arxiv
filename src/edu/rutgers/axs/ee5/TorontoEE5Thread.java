@@ -120,11 +120,12 @@ public class TorontoEE5Thread extends BackgroundThread {
 
 	} catch(OutOfMemoryError ex) {	    
 	    error("OutOfMemoryError in TorontoEE5Thread");
-	    System.out.println("[out] exception report:");
+	    System.out.println("TEE5T [out] OOM exception report:");
 	    ex.printStackTrace(System.out);
 	} catch(Exception ex) {
 	    String errmsg = ex.getMessage();
 	    error("Exception for TorontoEE5Thread " + getId() + ": " + errmsg);
+	    System.out.println("TEE5T [out] general exception report:");
 	    ex.printStackTrace(System.out);
 	} finally {
 	    ResultsBase.ensureClosed( em, true);

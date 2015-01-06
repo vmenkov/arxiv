@@ -1,13 +1,18 @@
 #!/bin/csh
 
+#----------------------------------------------------------------
 #-- Usage examples:
-# On SQL server, run "delete from EE5DocClass;"
+#-- After a new clustering scheme is installed:
+# ee5-daily.sh delete
 # ee5-daily.sh init
+#-- Nightly thereafter:
 # ee5-daily.sh update
 #
-#-- This script can (and often should) to be run under a different user, e.g:
+#-- This script can (and often should, to avoid messing with file permissions) 
+#-- be run under a different user name, e.g:
 # sudo -u tomcat6  ./ee5-daily.sh -home /home/vmenkov update
-
+# sudo -u tomcat   ./ee5-daily.sh -home /home/vm293   init
+#----------------------------------------------------------------
 
 #-- Set the home directory as per the "-home" option
 if ("$1" == "-home") then

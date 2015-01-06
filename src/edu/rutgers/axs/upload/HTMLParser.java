@@ -121,6 +121,9 @@ public class HTMLParser {
 		if (x==null) return;
 		if (x.startsWith("javascript:") || x.startsWith("mailto:")) 
 		    return;
+
+		// drop the anchor, if any
+		x = x.replaceAll("#.*", "");
 		try {
 		    URL u = new URL(baseURL, x);
 		    links.add(u);
