@@ -1,4 +1,4 @@
-package edu.rutgers.axs.indexer;
+   package edu.rutgers.axs.indexer;
 
 import java.util.*;
 import java.text.SimpleDateFormat;
@@ -138,9 +138,12 @@ public class ArxivImporter {
     }
 
 
-     private String  
+    private String  
+     /** Location of pre-loaded article bodies (bulk copy) */
 	 bodySrcRoot = Options.get("ARXIV_TEXT_DIRECTORY"),
+     /** My.ArXiv article body cache */
 	bodyCacheRoot = Options.get("CACHE_DIRECTORY"),
+     /** My.ArXiv article metadata cache */
 	metaCacheRoot = Options.get("METADATA_CACHE_DIRECTORY");
 
     private Directory indexDirectory;
@@ -288,7 +291,7 @@ public class ArxivImporter {
 
 	if (q==null && canUpdateCache) {
 	    // can we get it from the web?
-	    String doc_file = Cache.getFilename(id , bodySrcRoot);
+	    String doc_file = Cache.getFilename(id, bodySrcRoot);
 	    q = new File( doc_file);
 	    File g = q.getParentFile();
 	    if (g!=null && !g.exists()) {
@@ -405,9 +408,11 @@ public class ArxivImporter {
 		    bodycache.fileOrGzExists(paper);
 
 		if (!rewrite) {
-		    if (isCached) {
-			System.out.println("skip already stored doc, id=" + paper);
+		    if (isCached && bodyStoredInLucene(reader, docno)) {
+			System.out.println("skip already stored doc, id="+paper);
 			return;
+		    } else if (isCached) {
+			System.out.println("Lucene entry exists, but doc body not stored (even if cached), for doc id=" + paper);
 		    } else {
 			System.out.println("Lucene entry exists, but no cached data, for doc id=" + paper);
 		    }
@@ -428,13 +433,14 @@ public class ArxivImporter {
 	String whole_doc = readBody(paper, bodySrcRoot, true);
    
 	if (whole_doc!=null) {
-	    // this used Field.Store.NO before 2014-12-02
+	    // this used Field.Store.NO before 2014-12-02; Field.Store.YES
+	    // since then, for the sake of EE5
 	    doc.add(new Field(ArxivFields.ARTICLE, whole_doc, Field.Store.YES, Field.Index.ANALYZED,  Field.TermVector.YES));
 
 	    // Record current time as the date the document was indexed
 	    doc.add(new Field(ArxivFields.DATE_INDEXED,
 			      DateTools.timeToString(new Date().getTime(), DateTools.Resolution.SECOND),
-			      Field.Store.YES, Field.Index.NOT_ANALYZED));		
+			      Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    // Set article length
 	    doc.add(new Field("articleLength", Integer.toString(whole_doc.length()), Field.Store.YES, Field.Index.NOT_ANALYZED));
 	} else {
@@ -459,6 +465,14 @@ public class ArxivImporter {
 	}
     }
 
+    private static boolean bodyStoredInLucene(IndexReader reader, int docno) 
+    throws IOException {
+	Document doc = reader.document(docno);
+	String s = doc.get(ArxivFields.ARTICLE);
+	return (s!=null && s.length()>0);
+    }
+
+
     private static boolean catsMatch(org.apache.lucene.document.Document newDoc, int oldDocno, IndexReader reader) throws IOException{
 	String s = newDoc.get(ArxivFields.CATEGORY);
 	if (s==null) return false;
@@ -477,19 +491,31 @@ public class ArxivImporter {
     }
 
 
-    /** This primarily handles the server's return code HTTP_UNAVAILABLE (503),
-	which comes with the Retry-After code. (As per the OAI2 standard,
-	the server may ask us to wait and to retry). In addition, we also do 
-	a limited amount of retries for code 500 (HTTP_INTERNAL_ERROR), which 
-	very occasionally happens too.
+    /** This    primarily   handles    the   server's    return   code
+	HTTP_UNAVAILABLE  (503),  which  comes  with  the  Retry-After
+	code. (As per the OAI2 standard, the server may ask us to wait
+	and to  retry). In  addition, we also  do a limited  amount of
+	retries   for   code   500   (HTTP_INTERNAL_ERROR),   or   for
+	java.net.ConnectException     ("Connection     refused")    in
+	conn.getResponseCode(), which very occasionally happen too.
     */
-    private static boolean mustRetry(HttpURLConnection conn )throws IOException {
-	int code = conn.getResponseCode();
-	if (code==HttpURLConnection.HTTP_OK) return false;
+    private static boolean mustRetry(HttpURLConnection conn ) throws IOException {
+
+	boolean refused = false;
+	int code = 0;
+	try {
+	    code = conn.getResponseCode();
+	    if (code==HttpURLConnection.HTTP_OK) return false;
+	} catch( java.net.ConnectException ex) {
+	    refused = true;
+	}
 
 	long msec1= System.currentTimeMillis();
-	long msec2= msec1+ 1000 * 120; // default long wait	
-	if (code==HttpURLConnection.HTTP_UNAVAILABLE) {
+	long msec2= msec1 + 1000 * 120; // default long wait	
+	if (refused) {
+	    // a very occasional "java.net.ConnectException: Connection refused"
+	    System.out.println("Had a 'connection refused', let's retry just in case");
+	} else if (code==HttpURLConnection.HTTP_UNAVAILABLE) {
 	    // this usually is a typical OAI2 retry message
 	    String ra = conn.getHeaderField("Retry-After");
 	    System.out.println("got code "+code+", Retry-After="+ra);

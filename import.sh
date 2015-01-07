@@ -4,6 +4,16 @@
 # ./import.sh files 'http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:1211.0003'
 
 
+#-- Set the home directory as per the "-home" option. This is useful
+#-- if run as a different user.
+if ("$1" == "-home") then
+    shift
+    set home=$1
+    shift
+    echo "Setting home to $home"
+endif
+
+
 set opt="-DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib

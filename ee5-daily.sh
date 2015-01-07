@@ -14,7 +14,8 @@
 # sudo -u tomcat   ./ee5-daily.sh -home /home/vm293   init
 #----------------------------------------------------------------
 
-#-- Set the home directory as per the "-home" option
+#-- Set the home directory as per the "-home" option. This is useful
+#-- if run as a different user.
 if ("$1" == "-home") then
     shift
     set home=$1
