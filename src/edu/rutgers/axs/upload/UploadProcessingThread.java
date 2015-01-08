@@ -49,7 +49,10 @@ public class UploadProcessingThread extends BackgroundThread {
 	    s += progressTextMore + "\n";
 	}
 	if (endTime != null) {
-	    s += "\n\nUploading and processing completed at " + endTime;
+	    s +=( error? 
+		  "\n\nUploading/processing terminated with an error at " :
+		  "\n\nUploading and processing completed at ")  
+		+ endTime;
 	}
 	return s;
     }
@@ -125,8 +128,10 @@ public class UploadProcessingThread extends BackgroundThread {
 	    // is writing to Lucene at the moment
 	    // Lock obtain timed out: NativeFSLock@/data/arxiv/arXiv-index/write.lock
 	    String errmsg = ex.getMessage();
-	    error("Index lock exception in UploadProcessingThread " + getId() + ": " + errmsg);
+	    error("LockObtainFailedException in UploadProcessingThread " + getId() + ": " + errmsg + "\n" +
+		  "Probably, the server is busy at the moment. You may try to wait for a few minutes and then repeat the upload"  );
 	    ex.printStackTrace(System.out);
+
 
 	} catch(Exception ex) {
 	    String errmsg = ex.getMessage();

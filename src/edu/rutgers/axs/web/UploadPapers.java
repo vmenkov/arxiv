@@ -164,6 +164,9 @@ public class UploadPapers  extends ResultsBase {
 	    if (sd.upThread == null) {
 		checkTitle = "No uploading is taking place";
 		checkText = "No uploading process is taking place right now or was taking place recently";
+	    } else if (sd.upThread.error) {
+		checkTitle = "Error happened";
+		checkText = sd.upThread.getProgressText();
 	    } else if (sd.upThread.getState() == Thread.State.TERMINATED) {
 		checkTitle = "Uploading completed";
 		checkText = sd.upThread.getProgressText();
