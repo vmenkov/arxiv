@@ -89,8 +89,7 @@ public class UploadProcessingThread extends BackgroundThread {
     /** Used to import data into Lucene */
     private IndexWriter writer = null;
 
-    /** The main class for the actual recommendation list
-	generation. */
+    /** The main class for the actual document processing process.     */
     public void run()  {
 	startTime = new Date();
 	EntityManager em = sd.getEM();
@@ -121,9 +120,17 @@ public class UploadProcessingThread extends BackgroundThread {
 	    // outliner may have been supplied in the constructor or set in pullPage()
 	    processOutliner(em);
 	    
+	} catch(org.apache.lucene.store.LockObtainFailedException ex) {
+	    // this happens in makeWriter() if some other process
+	    // is writing to Lucene at the moment
+	    // Lock obtain timed out: NativeFSLock@/data/arxiv/arXiv-index/write.lock
+	    String errmsg = ex.getMessage();
+	    error("Index lock exception in UploadProcessingThread " + getId() + ": " + errmsg);
+	    ex.printStackTrace(System.out);
+
 	} catch(Exception ex) {
 	    String errmsg = ex.getMessage();
-	    error("Exception for UploadProcessingThread " + getId() + ": " + errmsg);
+	    error("Other exception in UploadProcessingThread " + getId() + ": " + errmsg);
 	    ex.printStackTrace(System.out);
 	} finally {
 	    if (writer != null) {

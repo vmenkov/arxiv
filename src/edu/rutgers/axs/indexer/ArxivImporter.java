@@ -1,4 +1,4 @@
-   package edu.rutgers.axs.indexer;
+package edu.rutgers.axs.indexer;
 
 import java.util.*;
 import java.text.SimpleDateFormat;
@@ -98,8 +98,17 @@ public class ArxivImporter {
     /** Parses an OAI-PMH element, and triggers appropriate operations.
 	@return the resumption token
     */
-    private String parseResponse(Element e, IndexWriter writer, IndexReader reader, boolean rewrite)  throws IOException {
+    private String parseResponse(Element e, 
+				 //IndexWriter writer, IndexReader reader, 
+				 boolean rewrite)  throws IOException {
 	//org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
+
+	IndexWriter writer =  makeWriter(); 
+	// FIXME: is there an easier way?
+	IndexReader reader = IndexReader.open(writer, false);
+
+	try {
+
 	XMLUtil.assertElement(e,"OAI-PMH");
 	Element listRecordsE = null, getRecordE = null;
 	for(Node n = e.getFirstChild(); n!=null; n = n.getNextSibling()) {
@@ -134,6 +143,11 @@ public class ArxivImporter {
 	    }
 	}
 	return token;
+
+	} finally {
+	    reader.close();
+	    writer.close();
+	}
 
     }
 
@@ -625,9 +639,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
     public void importAll(String tok, int max, boolean rewrite, String from, String until)  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;
 
-	IndexWriter writer =  makeWriter(); 
+	//	IndexWriter writer =  makeWriter(); 
 	// FIXME: is there an easier way?
-	IndexReader reader = IndexReader.open(writer, false);
+	//	IndexReader reader = IndexReader.open(writer, false);
 
 	try {
 
@@ -635,11 +649,14 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		String us = makeURL( tok, from, until);
 		System.out.println("At "+new Date()+", requesting: " + us);
 		Element e = getPage(us);	    
-		tok = parseResponse(e, writer, reader, rewrite);
+		tok = parseResponse(e, 
+				    //writer, reader, 
+				    rewrite);
 		pagecnt++;
 		System.out.println("done "+pagecnt+" pages, token =  " + tok);
 		if (tok==null || tok.trim().equals("")) break;
 
+		/*
 		if (pagecnt % 1 == 0) {
 		    System.out.println("At "+new Date()+", re-opening index... ");
 		    reader.close();
@@ -647,23 +664,27 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		    writer =  makeWriter(); 
 		    reader = IndexReader.open(writer, false);
 		}
+		*/
 
 	    }
 
 	    if (optimize) {
 		System.out.println("At "+new Date()+", optimizing index...");
+		IndexWriter writer = makeWriter(); 
 		writer.optimize();
 		System.out.println("At "+new Date()+", done optimizing index.");
+		writer.close();
 	    }
 	} finally {
-	    reader.close();
-	    writer.close();
+	    //	    reader.close();
+	    //	    writer.close();
 	}
     }
 
     /** This is used when we specifically want to import a single page */
-    public void importOnePage( String aid, boolean rewrite, IndexReader reader,
-			       IndexWriter writer)  throws IOException,  org.xml.sax.SAXException {
+    public void importOnePage( String aid, boolean rewrite//, 
+			       //IndexReader reader, IndexWriter writer
+			       )  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;
 
 	    String us = 
@@ -671,7 +692,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
 	    System.out.println("At "+new Date()+", requesting: " + us);
 	    Element e = getPage(us);	    
-	    parseResponse(e, writer, reader, rewrite);
+	    parseResponse(e, 
+			  //writer, reader, 
+			  rewrite);
 	    pagecnt++;
 
     }
@@ -842,13 +865,15 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		    imp.importRecord(e, writer, reader, rewrite);
 		} else {
 		    System.out.println("parseResponse");
-		    tok = imp.parseResponse(e, writer, reader, rewrite);
+		    tok = imp.parseResponse(e, //writer, reader, 
+					    rewrite);
 		    System.out.println("resumptionToken =  " + tok);
 		}
 	    }
 	    if (optimize) {
 		System.out.println("Optimizing index... ");
 		writer.optimize();
+		writer.close();
 	    }
 	    reader.close();
 	    writer.close();
@@ -877,7 +902,8 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    for(ArgvIterator it=new ArgvIterator(argv,1); it.hasNext();){
 		String aid = it.next();
 		if (aid.trim().equals("")) continue;
-		imp.importOnePage(  aid, rewrite, reader, writer);
+		imp.importOnePage(  aid, rewrite//, reader, writer
+				    );
 	    }
 	    if (optimize) {
 		System.out.println("Optimizing index... ");

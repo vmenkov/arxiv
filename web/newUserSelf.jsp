@@ -26,16 +26,16 @@
 
 <%   } else {      %>
 
-<h1>Record updated</h1>
+<h1>Account created</h1>
 
-<p>Account created for User_name = <em><%=id%></em>:</p>
+<p>Account created for User_name = <em><%=id%></em></p>
 
-<p>
+<!-- <p>
 <table border=1>
 <tr><%= u.header4cells()  %> </tr>
 <tr><%= u.to4cells()  %> </tr>
 </table>
-</p>
+</p>  -->
 
 <% 
    if (main.needTorontoLink) {   %>  
