@@ -470,20 +470,20 @@ public class UploadProcessingThread extends BackgroundThread {
 	    } catch(java.lang.InterruptedException ex) {}
 	    int ev = proc.exitValue();
 	    if (ev!=0) {
-		error("Error reported when converting " +pdfFile+ " to "+txtDf.getPath());
+		error("Error reported when converting "+pdfFile+" to "+txtDf.getPath());
 		return null;
 	    }
 
 	    progress("Converted " + pdfFile + " to " + txtDf.getPath());
 	    Document doc=UploadImporter.importFile(user,txtDf.getFile(),writer);
 	    Article art =  Article.getUUDocAlways(em, doc);
-	    progress("Retrieved (or created) article entry " + art);
+	    //progress("Retrieved (or created) article entry " + art);
 	    User u = User.findByName(em, user);
 	    ActionSource asrc = new ActionSource(Action.Source.UNKNOWN, 0);
 
 	    em.getTransaction().begin(); 
 	    Action a=sd.addNewAction(em, u, Action.Op.UPLOAD, art, null, asrc);
-	    progress("Added Action " + a);
+	    //progress("Added Action " + a);
 	    em.getTransaction().commit(); 
 	    return txtDf;
 

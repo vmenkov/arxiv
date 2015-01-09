@@ -33,7 +33,6 @@ public class UploadPapers  extends ResultsBase {
     /** How many PDF files have been uploaded on this invocation? */
     public int uploadCnt=0;
 
-   
     /** Reads a file uploaded from the web form
      */
     void readUploadedFile() {
@@ -130,11 +129,19 @@ public class UploadPapers  extends ResultsBase {
     public boolean wantReload=false;
     public String reloadURL;
 
+    /** We set it to true if the main screen should be shown to the user */
+    public boolean wantMainScreen = true;
+    /** We set it to true if the current thread's status should be shown to the user */    
+    public boolean wantStatus = false;
+
+
     /** Generates the URL for the "Continue" button (and/or the "refresh" tag)
+	@param checkAgain If true, the URL well send the user to the 
+	check status page again.
      */
-    private String getReloadURL(boolean check) {
+    private String getReloadURL(boolean checkAgain) {
 	String s= cp + "/personal/uploadPapers.jsp" ;
-	if (check) s +=  "?check=true";
+	if (checkAgain) s +=  "?check=true";
 	return s;
     }
 
@@ -156,33 +163,24 @@ public class UploadPapers  extends ResultsBase {
     public UploadPapers(HttpServletRequest _request, HttpServletResponse _response) {
 	super(_request,_response);
 
+	if (user==null) {
+	    error = true;
+	    errmsg = "Not logged in";
+	    return;
+	}
+
 	reloadURL = getReloadURL(false);
 
 	check = getBoolean("check", check);
 
-	if (check) {
-	    if (sd.upThread == null) {
-		checkTitle = "No uploading is taking place";
-		checkText = "No uploading process is taking place right now or was taking place recently";
-	    } else if (sd.upThread.error) {
-		checkTitle = "Error happened";
-		checkText = sd.upThread.getProgressText();
-	    } else if (sd.upThread.getState() == Thread.State.TERMINATED) {
-		checkTitle = "Uploading completed";
-		checkText = sd.upThread.getProgressText();
-	    } else {
-		wantReload = true;
-		checkTitle = "Uploading in progress...";
-		checkText =
-		    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
-		    sd.upThread.getProgressText();		
-		reloadURL = getReloadURL(true);
-		checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
-	    }
+	if (check) {  // The user wants to check the status of the upload process (the "check=true" URL)
+	    wantStatus = true;
+	    statusCheck();    	 
 	    return;
-	} else if (sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED) {
-	    check = true;
+	} else if (sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED) {  // The user did NOT request the check page, but the thread is already running!
+	    wantStatus = true;
 	    wantReload = false;
+	    wantMainScreen = false;
 	    checkTitle = "Wait for the previous uploading process to finish!";
 	    checkText =
 		"You cannot upload more documents until the previous uploading process has completed.\n" +
@@ -194,46 +192,86 @@ public class UploadPapers  extends ResultsBase {
 	}
 
 	try {
+	    URL lURL = null;
 	    if (ServletFileUpload.isMultipartContent(request)) {
-		// The only place this is done is in file upload
+		// File upload from the desktop
 		readUploadedFile();
-		if (!error) {
-		}
+		wantStatus = true;
+		statusCheck();
+	    } else if ((lURL=getDocumentURL())!=null) {
+		// File loading from a URL
+		sd.upThread = new UploadProcessingThread(sd, user, lURL);
+		sd.upThread.start();
+		wantStatus = true;
+		statusCheck();
 	    } else {
-		String url = getString("url", null);
-		if (url!=null) {
-		    if (url.trim().equals("")) {
-			throw new WebException("No URL specified!");
-		    }
-		    if (url.indexOf("://")<0) { // add omitted protocol
-			url = "http://" + url;
-		    }
-		    URL lURL = new URL(url);
-
-		    sd.upThread = new UploadProcessingThread(sd, user, lURL);
-		    sd.upThread.start();
-		    //		    Vector<DataFile> results = UploadProcessingThread.pullPage(user, lURL, false);
-		    //		    uploadCnt += results.size();
-		}
-	    }
-	    
-
-	    if (sd.upThread!=null && sd.upThread.getState()!=Thread.State.TERMINATED) {
-		check=true;
-		wantReload = true;
-		checkTitle = "Uploading in progress";
-		checkText =
-		    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
-		    sd.upThread.getProgressText();		
-		reloadURL = getReloadURL(true);		
-		checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
+		// The user simply wants to view the main screen
+		wantMainScreen = true;
 	    }
 	  
 	} catch(  Exception ex) {
 	    setEx(ex);
 	}
+    }
 
-   }
+    /** Checks the status of the background thread which we think is
+	running, or was running recent, and prepares all the necessary
+	reporting.
+     */
+    private void statusCheck() {
+    
+	if (sd.upThread == null) {
+	    checkTitle = "No uploading is taking place";
+	    checkText = "No uploading process is taking place right now or was taking place recently";
+	    wantMainScreen = true;
+	} else if (sd.upThread.error) {
+	    checkTitle = "Error happened";
+	    checkText = sd.upThread.getProgressText();
+	    wantMainScreen = false;
+
+	} else if (sd.upThread.getState() == Thread.State.TERMINATED) {
+	    checkTitle = "Uploading completed";
+	    checkText = sd.upThread.getProgressText();
+	    wantMainScreen = true;
+	} else {
+	    uploadingInProgress();
+	}
+	return;
+    } 
+
+
+    /** Sets the necessary flags and messages if upload processing thread is
+	running right now */
+    private void uploadingInProgress() {
+	check=true;
+	wantReload = true;
+	wantMainScreen = false;
+	checkTitle = "Uploading in progress...";
+	checkText =
+	    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
+	    sd.upThread.getProgressText();		
+	reloadURL = getReloadURL(true);		
+	checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
+    }    
+
+    /** See if there is a url=... param in the query screen, requesting
+	that a document be loaded from the web. */
+    URL getDocumentURL() throws WebException {
+	String url = getString("url", null);
+	if (url==null) return null;
+	if (url.trim().equals("")) {
+	    throw new WebException("No URL specified in the url=... parameter!");
+	}
+	if (url.indexOf("://")<0) { // add omitted protocol
+	    url = "http://" + url;
+	}
+	try {
+	    return new URL(url);
+	} catch( java.net.MalformedURLException ex) {
+	    throw new WebException("Malformed URL: " + url);
+	}
+    }
+
 
     private static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -248,10 +286,13 @@ public class UploadPapers  extends ResultsBase {
 	than the original PDF files)
      */
     public String dirInfo(boolean convertedToTxt) {
+
+	boolean showFiles = false;
 	
 	DataFile.Type type = convertedToTxt? DataFile.Type.UPLOAD_TXT:
 	    DataFile.Type.UPLOAD_PDF;
 
+	if (user==null) return "<p>Not logged in</p>";
 	File d = DataFile.getDir(user, type);
 	if (d==null) {
 	    return "<p>No files have been uploaded by user <em>" + user + "</em> so far</p>\n";
@@ -265,25 +306,30 @@ public class UploadPapers  extends ResultsBase {
 	    b.append("<p>There are no files in the directory <tt>" + d + "</tt></p>\n");
 	    return b.toString();
 	}
-	b.append("<p>The following  "+files.length+ " files have been " +
-		 (convertedToTxt ? "converted" : "uploaded") + 
-		 " so far to the directory <tt>" + d + "</tt></p>\n");
-	b.append("<table>\n");
-	for(File f: files) {
-	    b.append("<tr><td><tt>" +f.getName() + "</tt>");
-	    b.append("<td align='right'><tt>" +f.length() + " bytes</tt>");
-	    b.append("<td align='right'><tt>" +sqlDf.format(f.lastModified())+ "</tt>");
-	    b.append("</tr>\n");
+	if (showFiles) {
+	    b.append("<p>The following  "+files.length+ " files have been " +
+		     (convertedToTxt ? "converted" : "uploaded") + 
+		     " so far to the directory <tt>" + d + "</tt></p>\n");
+	    b.append("<table>\n");
+	    for(File f: files) {
+		b.append("<tr><td><tt>" +f.getName() + "</tt>");
+		b.append("<td align='right'><tt>" +f.length() + " bytes</tt>");
+		b.append("<td align='right'><tt>" +sqlDf.format(f.lastModified())+ "</tt>");
+		b.append("</tr>\n");
+	    }
+	    b.append("</table>\n");
+	} else {
+	    b.append("<p>"+files.length+ " files have been " +
+		     (convertedToTxt? "converted" : "uploaded")+ " so far\n");
 	}
-	b.append("</table>\n");
 
 	if (!convertedToTxt)	return b.toString();
 	try {
 	    IndexReader reader=Common.newReader();
 	    IndexSearcher searcher = new IndexSearcher( reader );
 	    ScoreDoc[] sd = Common.findAllUserFiles(searcher, user);
-
-	    b.append("<p>" + sd.length + " uploaded documents have been imported so far into Lucene data store");
+	    
+	    b.append("<p>" + sd.length + " uploaded documents have been made available for analysis <!-- (stored in Lucene data store) -->");
 	    b.append("<table>\n");
 	    b.append("<tr><td>Doc No.<td>Name <td> Length <td> Importing date</tr>\n");
 	    for(int i=0; i<sd.length; i++) {

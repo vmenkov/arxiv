@@ -4,10 +4,10 @@
 #
 #-- This script can (and often should) to be run under a different user, e.g:
 
-# ./trivial-centers.sh -home /home/vmenkov init ../ee5/tmp
-# ./trivial-centers.sh -home /home/vmenkov test
-# sudo -u tomcat6  ./trivial-centers.sh -home /home/vmenkov init ../ee5/tmp
-# sudo -u tomcat6  ./trivial-centers.sh -home /home/vmenkov test 
+# ./trivial-centroids.sh -home /home/vmenkov initsplit ../ee5/tmp
+# ./trivial-centroids.sh -home /home/vmenkov testsplit
+# sudo -u tomcat6  ./trivial-centroids.sh -home /home/vmenkov init ../ee5/tmp
+# sudo -u tomcat6  ./trivial-centroids.sh -home /home/vmenkov test 
 
 
 #-- Set the home directory as per the "-home" option
@@ -29,7 +29,7 @@ set cp="/usr/local/tomcat/lib/servlet-api.jar:$lib/axs.jar:$lib/colt.jar:$lib/co
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
-set opt="-cp ${cp} ${opt}"
+set opt="-cp ${cp} ${opt} -Dyears=3"
 
 echo "opt=$opt"
 

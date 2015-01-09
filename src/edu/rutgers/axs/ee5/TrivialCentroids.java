@@ -33,14 +33,12 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
  */
 public class TrivialCentroids {
     
-    //    static final int nYears = 3;
-
     /** Reads some document examples for each category, l1-normalizes
 	them, computes the category's centroid, and saves it.
 
 	@param split If true, only use designated training examples to construct the centroid. Otherwise, use all examples available (within the time depth and maxlen specified)
     */
-    private static void generateAllCentroids(File maindir, boolean split) throws IOException {
+    private static void generateAllCentroids(File maindir, int nYears, boolean split) throws IOException {
 	EntityManager em  = Main.getEM();
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -48,7 +46,7 @@ public class TrivialCentroids {
 	Vocabulary voc = Classifier.readVocabulary();
 	final int L = voc.L;
 
-	final int nYears = 10;
+	
 
 	final int maxlen = 10000;
 	Date since = SearchResults.daysAgo( nYears * 365);
@@ -156,7 +154,7 @@ public class TrivialCentroids {
 	examples. Otherwise, use all examples available (within the
 	time depth and maxlen specified)
     */
-    private static void testAllCentroids(boolean split) throws IOException {
+    private static void testAllCentroids(int nYears, boolean split) throws IOException {
 	EntityManager em  = Main.getEM();
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
@@ -165,7 +163,6 @@ public class TrivialCentroids {
 	Vocabulary voc = Classifier.readVocabulary();
 	final int L = voc.L;
 
-	final int nYears = 3;
 	final int maxlen = 10000;
 	Date since = SearchResults.daysAgo( nYears * 365);
 
@@ -258,8 +255,10 @@ public class TrivialCentroids {
 
     static void usage() {
 	System.out.println("Usage:\n");
-	System.out.println("  java TrivialCentroid init main_outdir");
-	System.out.println("  java TrivialCentroid test");
+	System.out.println("  java TrivialCentroids init main_outdir");
+	System.out.println("  java TrivialCentroids initsplit main_outdir");
+	System.out.println("  java TrivialCentroids test");
+	System.out.println("  java TrivialCentroids testsplit");
 	System.exit(1);
    }
 
@@ -271,6 +270,11 @@ public class TrivialCentroids {
 	if (argv.length<1) {
 	    usage();
 	}
+	ParseConfig ht = new ParseConfig();
+
+	final int nYears =ht.getOption("years", 3);
+	Logging.info("Time horizon=" + nYears + " years");
+
 	int ja=0;
 	String cmd = argv[ja++];
 	boolean split = needSplit(cmd);
@@ -283,9 +287,9 @@ public class TrivialCentroids {
 		throw new IOException("Directory " +maindir+ " does not exist");
 	    }	    
 	    Logging.info("Will write output files into category-specific sudirectories of " + maindir);
-	    generateAllCentroids(maindir, split);
+	    generateAllCentroids(maindir, nYears, split);
 	} else	if (cmd.equals("test") || cmd.equals("testsplit")) {
-	    testAllCentroids(split);
+	    testAllCentroids(nYears, split);
 	} else {
 	    usage();
 	}

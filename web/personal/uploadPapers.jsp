@@ -18,40 +18,36 @@
 <% 
    if (main.error) {   %>  <%@include file="../include/error.jsp" %>
 
-
-<%   } else if (main.check) {      %>
+<%   } else if (main.wantStatus) {      %>
 <h1><%= main.checkTitle %></h1>
 <%= main.checkProgressIndicator %>
 <pre>
 <%= main.checkText %>
 </pre>
 
+<% if (!main.wantMainScreen) {
+   if (main.wantReload) { %>
 <hr>
 <p>
-<% if (main.wantReload) { %>
 This page should automatically refresh within a few seconds. 
 If it does not, click the button below to continue:
-<%}%>
 </p>
+<%}%>
 
 <!-- using 'onclik' in order to pass the query string -->
 <form>
 <input onClick="location.href='<%=main.reloadURL%>'" type=button value="Continue">
 </form>
      
-<%   } else {    %>
+<%  } }
+
+if (main.wantMainScreen) {    %>
 
 <h1>Uploading personal papers</h1>
 
-
      <%if (main.uploadCnt>0) { %>
-
      <h2>Papers uploaded</h2>
-
-     <p>
-     <%= main.uploadCnt%> PDF document(s) uploaded now.
-     </p>
-
+     <p><%= main.uploadCnt%> PDF document(s) uploaded now.</p>
      <% }%>
 
 <h2>Summary of your uploading activity so far</h2>
@@ -124,9 +120,7 @@ Option 2 - upload a PDF file or an HTML file with links to PDF documents:  <br>
 <input type="submit" value="Prepare my personalized recommendations" />
 </form>
 
-
-<%   }      %>
-
+<%   }    %>
 
 <!--
 <ul>
