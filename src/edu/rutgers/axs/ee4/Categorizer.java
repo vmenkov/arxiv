@@ -1,13 +1,12 @@
 package edu.rutgers.axs.ee4;
 
-import org.apache.lucene.document.*;
-import org.apache.lucene.index.*;
-
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
 
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.*;
 
 import edu.rutgers.axs.*;
 import edu.rutgers.axs.indexer.*;
@@ -15,7 +14,8 @@ import edu.rutgers.axs.sql.*;
 
 /** This class is responsible for looking up the "category" field
     in the Lucene data store for multiple articles, and keeping
-    track of them all.
+    track of them all. It is used in EE4 and EE5, as a preliminary
+    step for the document-cluster assignment.
 */
 public class Categorizer {
     static final boolean primaryOnly=true;

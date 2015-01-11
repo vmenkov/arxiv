@@ -208,8 +208,10 @@ public class TrivialCentroids {
 	    Logging.info(msg1);
 
 	    ScoreDoc[] scoreDocs = (ScoreDoc[])testableSd.toArray(new ScoreDoc[usedCnt]);
-	    int mT[] = Classifier.classifyNewDocsCategoryBlind( em, reader, scoreDocs,
-								cidMap, false, null).mT;
+	    Classifier.CategoryAssignmentReport report =
+		Classifier.classifyNewDocsCategoryBlind(em, reader, scoreDocs,
+							cidMap, false, null);
+	    int mT[]=report.mT;
 
 	    // compute per-category totals
 	    Pair[] catAndCnt = new Pair[allCats.size()];
@@ -235,6 +237,8 @@ public class TrivialCentroids {
 	    }
 	    
 	    System.out.println(msg);
+	    int anyCnt = report.anyCatMatchCnt;
+	    System.out.println("For cat=" + cat + ", " + anyCnt + " ("+(float)anyCnt /(float)usedCnt+") assigned to 'correct' primary or secondary cat");
 	}
 	em.close();
     }
@@ -296,7 +300,7 @@ public class TrivialCentroids {
 		    throw new IOException("Directory " +maindir+ " does not exist");
 		}	    
 		Logging.info("Setting EE5 basedir=" + maindir);
-		Files.setBasedir(maindir); 
+		Files.setBasedir(maindir.getPath()); 
 	    }
 
 	    testAllCentroids(nYears, split);

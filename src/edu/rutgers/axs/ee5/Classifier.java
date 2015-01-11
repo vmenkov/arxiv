@@ -154,8 +154,7 @@ public class Classifier {
 
 //	@return Array mT[]: mT[i] will be set to the number of docs in the i-th cluster found in scoreDocs
      */
-    static //int[] 
-	CategoryAssignmentReport
+    static CategoryAssignmentReport
 classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] scoreDocs,
 			     EE5DocClass.CidMapper cidMap,  boolean doWrite, 
 			     BackgroundThread thread) throws IOException {
@@ -214,6 +213,7 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	Vector<EE5DocClass> assignedClusters=new Vector<EE5DocClass>();
 	Vector<Boolean> missingBody =new Vector<Boolean>();
 	Vector<String> names = new Vector<String>();
+	int anyCatMatchCnt = 0; // assigned cat matches primary or any secondary cat
 	for(int docno: vdocno) {
 	    cnt++;
 	    Document doc = reader.document(docno);
@@ -227,6 +227,9 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	    assignedClusters.add(cluster);
 	    missingBody.add(q.missingBody);
 	    names.add(name);
+
+	    CatInfo ci = new CatInfo(doc.get(ArxivFields.CATEGORY), false);
+	    if (ci.match(cluster.getCategory()))  anyCatMatchCnt++;
 	    String msg="Document no. "+docno+" ("+name+") assigned to cluster "+cluster+", cid="+cid;
 	    Logging.info(msg);
 	    if (thread!=null) thread.progress(msg);
@@ -243,12 +246,13 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	}
 
 	CategoryAssignmentReport report = new 
-	    CategoryAssignmentReport(vdocno, assignedClusters,names, mT);
+	    CategoryAssignmentReport(vdocno, assignedClusters,names, mT, anyCatMatchCnt);
 	return report;
     }
 
-    /** An auxiliary class used by the category-blind classifier to provide a concise
-	report about categories to which documents have been assigned.
+    /** An auxiliary class used by the category-blind classifier to
+	provide a concise report about categories to which documents
+	have been assigned.
      */
     static public class CategoryAssignmentReport extends HashMap<String, Vector<String>> {
 	
@@ -258,8 +262,15 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	 */
 	final int mT[];
 
-	CategoryAssignmentReport(Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, Vector<String> names, int[] _mT) {
+	/** For how many documents does the assigned cat matches any
+	    category on the document's ArXiv cat list (either primary
+	    or any secondary)?
+	 */
+	int anyCatMatchCnt;
+
+	CategoryAssignmentReport(Vector<Integer> vdocno, Vector<EE5DocClass> assignedClusters, Vector<String> names, int[] _mT, int _anyCatMatchCnt) {
 	    mT = _mT;
+	    anyCatMatchCnt = _anyCatMatchCnt;
 	    for(int i=0; i<vdocno.size(); i++) {
 		EE5DocClass cluster = assignedClusters.elementAt(i);
 		String cat = cluster.getCategory();

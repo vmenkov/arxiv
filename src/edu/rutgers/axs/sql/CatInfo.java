@@ -12,6 +12,12 @@ public class CatInfo {
     private boolean toMajor;
     private Vector<String> bases;
 
+    /** Creates a CatInfo object that represents the list of categories 
+	of a single document.
+	@param cats The category list string for the document, as stored
+	in Lucene
+	@param toMajor If true, convert minor categories to major (cs.ai to cs)
+     */
     public CatInfo(String cats, boolean _toMajor) {
 	this(split(cats),  _toMajor);
     }
@@ -33,7 +39,11 @@ public class CatInfo {
 	return s+")";
     }
 
-    /** Looks for an overlap of two lists */
+    /** Looks for an overlap of two lists.
+	@param otherCats A string that contains a single category
+	name, or a space-separated list of categories (as stored in
+	Lucene)
+     */
     public boolean match(String otherCats) {	    
 	String [] other =  toMajor? catBases(otherCats).toArray(new String[0]): split(otherCats);
 	for(String a: other) {
@@ -44,6 +54,9 @@ public class CatInfo {
 
     /** Splits a single, space-separated category string (as it comes from
 	Lucene) into individual cat names.
+	@param otherCats A string that contains a single category
+	name, or a space-separated list of categories (as stored in
+	Lucene)
      */
     static public	String[] split(String cats) {
 	return (cats==null)  ? new String[0] : cats.split("\\s+");

@@ -7,8 +7,10 @@ import edu.rutgers.axs.web.Tools;
 import edu.rutgers.axs.ee5.Classifier;
 
 /**
+Management of ArXiv categories.
 
-Check often here, http://jp.arxiv.org/new/ , for new cats!
+<p>
+Check often here, http://jp.arxiv.org/new/ , for new categories, and update the list of categories in this class as needed!
 
 <p>
 As per Simeon Warner, 2012-12-07:
