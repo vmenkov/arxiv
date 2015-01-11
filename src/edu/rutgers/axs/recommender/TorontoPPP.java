@@ -262,7 +262,7 @@ public class TorontoPPP {
 	    new SectionProgressIndicator(pin, 3*nUploaded, 4*nUploaded, 1000);
 
 	int nsug = DailyPPP.makeP3Sug( em,  aa, searcher, u, spin);
-	if (thread != null) thread.progress("Completed recommendation generation; " + nsug + " articles listed");
+	if (thread != null) thread.progress("Completed recommendation generation; " + nsug + " articles listed", false, false, true);
 	if (pin != null) pin.setK(4*nUploaded);
 
     }

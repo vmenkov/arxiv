@@ -40,21 +40,8 @@ public class UploadProcessingThread extends BackgroundThread {
 
     int pdfCnt = 0, convCnt = 0;
 
-    public String getProgressText() {
-	String s = (startTime == null ?
-		    "Uploading is about to start...\n" : 
-		    "Uploading and processing started at " + startTime + "\n");
-	s += progressText.toString();
-	if (progressTextMore != null) {
-	    s += progressTextMore + "\n";
-	}
-	if (endTime != null) {
-	    s +=( error? 
-		  "\n\nUploading/processing terminated with an error at " :
-		  "\n\nUploading and processing completed at ")  
-		+ endTime;
-	}
-	return s;
+    protected String taskName() {
+	return "Uploading and processing";
     }
 
     /** Creates a thread which will follow the links listed in the Outliner structure
@@ -163,7 +150,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	}
 
 	int nLinks = outliner.getLinks().size();
-	progress("Will follow all " + nLinks + " links found in the HTML document, looking for PDF documents. (May skip some of them if duplicate, though)");
+	progress("Will follow all " + nLinks + " links found in the HTML document, looking for PDF documents. (May skip some of them if duplicate, though)", false, true, false);
 	pin = new ProgressIndicator(nLinks, false);
 	HashSet<URL> doneLinks = new 	HashSet<URL>();
 	int cnt=0;
@@ -185,8 +172,8 @@ public class UploadProcessingThread extends BackgroundThread {
 	    }
 	}
 	pin.setK(cnt);
-	progress("<strong>The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.</strong>");
-	progress("<strong>The total of " + convCnt + " PDF files have been successfully converted to text</strong>");
+	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.", false, false, true);
+	progress("The total of " + convCnt + " PDF files have been successfully converted to text", false, false, true);
     }
 
 
@@ -286,7 +273,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	if (!expectPdf && pdfOnly) {
 	    //progress("No PDF file could be retrieved from " + url, false, true);
-	    progress("Ignoring document from "+lURL+" (not a PDF file)",false,true);
+	    progress("Ignoring document from "+lURL+" (not a PDF file)",false,true, false);
 	    return null;
 	}
 
@@ -308,14 +295,14 @@ public class UploadProcessingThread extends BackgroundThread {
 	if (expectPdf) {
 	    // simple bytewise copy
 	    DataFile results = savePdf(user,is,fileName);
-	    progress("Retrieved PDF file from " + lURL, false, true);
+	    progress("Retrieved PDF file from " + lURL, false, true, false);
 	    return results;
 	} else {
 	    Charset cs = getCharset(lContentType);
 	    // set the outliner for the main function to process
 	    outliner = HTMLParser.parse(lURL, is, cs);
 	    is.close();
-	    progress("Retrieved HTML file from " + lURL, false, true);
+	    progress("Retrieved HTML file from " + lURL, false, true, false);
 	    return null;
 	}
     }
@@ -445,7 +432,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	    DataFile txtDf = new DataFile(user, DataFile.Type.UPLOAD_TXT, txtFileName);
 
-	    File dir = txtDf.getFile().getParentFile();
+    File dir = txtDf.getFile().getParentFile();
 	    if (!dir.exists() && !dir.mkdirs()) {
 		error("Server error: Failed to create directory " + dir);
 		return null;
@@ -474,7 +461,7 @@ public class UploadProcessingThread extends BackgroundThread {
 		return null;
 	    }
 
-	    progress("Converted " + pdfFile + " to " + txtDf.getPath());
+	    progress("Converted " + pdfFile + " to " + txtDf.getPath(), false, true, false);
 	    Document doc=UploadImporter.importFile(user,txtDf.getFile(),writer);
 	    Article art =  Article.getUUDocAlways(em, doc);
 	    //progress("Retrieved (or created) article entry " + art);
@@ -485,6 +472,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	    Action a=sd.addNewAction(em, u, Action.Op.UPLOAD, art, null, asrc);
 	    //progress("Added Action " + a);
 	    em.getTransaction().commit(); 
+	    progress("Successfully imported " + pdfFile.getName(), false, true, true);
 	    return txtDf;
 
 	} catch (IOException ex) {

@@ -46,8 +46,6 @@ public class TrivialCentroids {
 	Vocabulary voc = Classifier.readVocabulary();
 	final int L = voc.L;
 
-	
-
 	final int maxlen = 10000;
 	Date since = SearchResults.daysAgo( nYears * 365);
 
@@ -271,6 +269,13 @@ public class TrivialCentroids {
 	    usage();
 	}
 	ParseConfig ht = new ParseConfig();
+
+	String basedir = ht.getOption("basedir", null);
+	if (basedir!=null) {
+	    Logging.info("Setting EE5 basedir=" + basedir);
+	    Files.setBasedir(basedir); 
+	}
+
 
 	final int nYears =ht.getOption("years", 3);
 	Logging.info("Time horizon=" + nYears + " years");

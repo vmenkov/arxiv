@@ -7,9 +7,26 @@ import java.util.*;
 class Files {
 
     /** All input files are somewhere under this directory */
-    private static final String basedir = "/data/arxiv/ee5/20141201";
-    private static final String docclusterdir = basedir +  "/docclusters";
-    private static final String cstarbindir = basedir +  "/cstarbin";
+    private static String basedir = "/data/arxiv/ee5/20141201";
+
+    /** Set the basedir for this application */
+    static void setBasedir(String x) { 
+	basedir = x;
+	System.out.println("Using basedir="+ basedir+" for all EE5 files");
+    }
+
+    /*
+    private static final String docclusterdir() {
+	return basedir +  "/docclusters";
+    }
+    */
+    static File getDocClusterDir() {
+	return new File(basedir +  "/docclusters");
+    }
+
+    private static final File cstarbindir() {
+	return new File(basedir +  "/cstarbin");
+    }
 
     /** The file that lists all multiwords, and assigns each
 	one to one of the L word cluster */
@@ -18,9 +35,6 @@ class Files {
 	return new File(d, "kmeans1024.csv");
     }
 
-    static File getDocClusterDir() {
-	return new File(docclusterdir);
-    }
 
     /** Category-specific file that lists all clusters in the
 	category, and describes each one by an L-dimensional
@@ -45,7 +59,7 @@ class Files {
 
     /** Lists all binary files produced with RandomAccessConverter */
     static File[] listCstarBinaryFiles() {
-	File d=new File(cstarbindir);
+	File d = cstarbindir();
 	Vector<File> v = new Vector<File>();
 	for(File f: d.listFiles()) {
 	    if (f.isFile() && f.getName().endsWith(SUFFIX_BIN)) v.add( f);

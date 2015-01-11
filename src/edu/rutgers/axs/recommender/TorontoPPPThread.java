@@ -22,18 +22,8 @@ import edu.rutgers.axs.upload.BackgroundThread;
 
 public class TorontoPPPThread extends BackgroundThread {
 
-    public String getProgressText() {
-	String s = (startTime == null ?
-		    "Data processing is about to start...\n" :
-		    "Data processing started at " + startTime + "\n");
-	s += progressText.toString();
-	if (progressTextMore != null) {
-	    s += progressTextMore + "\n";
-	}
-	if (endTime != null) {
-	    s += "\n\nData processing completed at " + endTime;
-	}
-	return s;
+    protected String taskName() {
+	return "Data processing";
     }
 
     private final String user;

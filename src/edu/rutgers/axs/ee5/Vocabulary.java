@@ -27,8 +27,20 @@ class Vocabulary {
 	    subsequence starting at text[start]?
 	 */
 	boolean matches(String [] text, int start) {
+	    return matches(text, start, 0);
+	}
+	/** Does this multiword matches the same-length 
+	    subsequence starting at text[start]?
+	    @param text a section of which we want to match against 
+	    this multiword
+	    @param start starting position of the text section to be matched
+	    @param pos skip so many words from the beginning of the matched
+	    section and this multiword (because we know that so many words
+	    already match)
+	 */
+	boolean matches(String [] text, int start, int pos) {
 	    if (start + seq.length > text.length) return false;
-	    for(int j=0; j<seq.length; j++) {
+	    for(int j=pos; j<seq.length; j++) {
 		if (!seq[j].equals(text[start+j]))  return false;
 	    }
 	    return true;
@@ -115,7 +127,7 @@ class Vocabulary {
 	int bestlen = 0;
 	Multiword best = null;
 	for(Multiword m: q) {
-	    if (m.length() > bestlen && m.matches(text,start)) {
+	    if (m.length() > bestlen && m.matches(text,start,1)) {
 		best = m;
 		bestlen = m.length();
 	    }

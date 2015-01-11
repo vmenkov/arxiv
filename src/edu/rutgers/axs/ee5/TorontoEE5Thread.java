@@ -40,18 +40,8 @@ public class TorontoEE5Thread extends BackgroundThread {
     /** An HTML snippet with checkboxes, based on newCatReport */
     public String catBoxes = null;
 
-    public String getProgressText() {
-	String s = (startTime == null ?
-		    "Data processing is about to start...\n" :
-		    "Data processing started at " + startTime + "\n");
-	s += progressText.toString();
-	if (progressTextMore != null) {
-	    s += progressTextMore + "\n";
-	}
-	if (endTime != null) {
-	    s += "\n\nData processing completed at " + endTime;
-	}
-	return s;
+    protected String taskName() {
+	return "Data processing";
     }
 
     private final String user;

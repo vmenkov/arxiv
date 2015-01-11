@@ -231,7 +231,7 @@ public class UploadPapers  extends ResultsBase {
 
 	} else if (sd.upThread.getState() == Thread.State.TERMINATED) {
 	    checkTitle = "Uploading completed";
-	    checkText = sd.upThread.getProgressText();
+	    checkText = sd.upThread.getProgressTextBrief();
 	    wantMainScreen = true;
 	} else {
 	    uploadingInProgress();
@@ -320,7 +320,7 @@ public class UploadPapers  extends ResultsBase {
 	    b.append("</table>\n");
 	} else {
 	    b.append("<p>"+files.length+ " files have been " +
-		     (convertedToTxt? "converted" : "uploaded")+ " so far\n");
+		     (convertedToTxt? "converted to text" : "uploaded")+ " so far\n");
 	}
 
 	if (!convertedToTxt)	return b.toString();
