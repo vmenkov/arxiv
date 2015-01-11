@@ -156,6 +156,7 @@ public class TrivialCentroids {
 	EntityManager em  = Main.getEM();
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
+	// read the general doc cluster list from the database
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
 	Vocabulary voc = Classifier.readVocabulary();
@@ -255,8 +256,8 @@ public class TrivialCentroids {
 	System.out.println("Usage:\n");
 	System.out.println("  java TrivialCentroids init main_outdir");
 	System.out.println("  java TrivialCentroids initsplit main_outdir");
-	System.out.println("  java TrivialCentroids test");
-	System.out.println("  java TrivialCentroids testsplit");
+	System.out.println("  java TrivialCentroids test main_indir");
+	System.out.println("  java TrivialCentroids testsplit main_indir");
 	System.exit(1);
    }
 
@@ -269,12 +270,6 @@ public class TrivialCentroids {
 	    usage();
 	}
 	ParseConfig ht = new ParseConfig();
-
-	String basedir = ht.getOption("basedir", null);
-	if (basedir!=null) {
-	    Logging.info("Setting EE5 basedir=" + basedir);
-	    Files.setBasedir(basedir); 
-	}
 
 
 	final int nYears =ht.getOption("years", 3);
@@ -294,6 +289,16 @@ public class TrivialCentroids {
 	    Logging.info("Will write output files into category-specific sudirectories of " + maindir);
 	    generateAllCentroids(maindir, nYears, split);
 	} else	if (cmd.equals("test") || cmd.equals("testsplit")) {
+
+	    if (ja<argv.length) {
+		File maindir = new File(argv[ja++]);
+		if (!maindir.isDirectory()) {
+		    throw new IOException("Directory " +maindir+ " does not exist");
+		}	    
+		Logging.info("Setting EE5 basedir=" + maindir);
+		Files.setBasedir(maindir); 
+	    }
+
 	    testAllCentroids(nYears, split);
 	} else {
 	    usage();
