@@ -22,7 +22,9 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
 /** An auxiliary application, this tool creates P-vectors describing 
     trivial clusters (one per category). The P-vectors in question
     are simply the centroids of (some sample of) documents from the
-    respective categories.
+    respective categories.  This application also has the test
+    mode, in which it measures how well cluster assignment works
+    at assigning ArXiv documents to their "correct" categories.
 
     <p>There is, of course, no need for these P-vectors when
     processing ArXiv articles, since those already have category
@@ -144,9 +146,12 @@ public class TrivialCentroids {
     /** Reads some document examples for each category, classifies
 	them (by means of category-blind cluster assignment, using
 	stored P-vectors for all clusters in all categories), and then
-	computes and reports the confusion matrix (which gauges
-	how good the classifier was at assigning examples to their
-	designated categories).
+	computes and reports the confusion matrix (which gauges how
+	good the classifier was at assigning examples to their
+	designated categories). We also report the percentage of
+	"reasonable" assignments, when the cluster assignment sent a
+	document to a category that was either its primary or one of
+	secondary categories in Lucene.
 
 	@param split If true, only classify designated test
 	examples. Otherwise, use all examples available (within the

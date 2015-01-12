@@ -79,7 +79,7 @@ Please go to the <strong><a href="../index.jsp">My.ArXiv Main page</a></strong> 
 
 <%   }  else {    %>
 <h1>Not sure what goes on!</h1>
-<p>Status = <%= main.status %> </p>
+<p>Something needs to be fixed in our application... Status = <%= main.status %> </p>
 <%   }    %>
 
 
