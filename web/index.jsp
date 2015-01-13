@@ -186,6 +186,12 @@ window.onload = StartScripts;
 
     <br>
     <span class="researcher">
+    <a href="personal/uploadPapers.jsp"><span>&nbsp;&diams;&nbsp;</span>
+    Upload personal papers</a>
+    </span>
+
+    <br>
+    <span class="researcher">
     <a href="tools/"><span>&nbsp;&diams;&nbsp;</span>
     <a onclick="javascript:window.onload=openSBMovingPanelNow('<%=main.cp%>');">
     Show Session-Based suggestions (in a pop-up window)</a>

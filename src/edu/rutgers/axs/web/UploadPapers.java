@@ -63,7 +63,6 @@ public class UploadPapers  extends ResultsBase {
 		    boolean isInMemory = item.isInMemory();
 		    long sizeInBytes = item.getSize();
 		    
-
 		    String fileNameLC =  fileName.toLowerCase();
 		
 		    if (!fieldName.equals( "pdf"))  {
@@ -196,6 +195,7 @@ public class UploadPapers  extends ResultsBase {
 	    if (ServletFileUpload.isMultipartContent(request)) {
 		// File upload from the desktop
 		readUploadedFile();
+		if (error) return;
 		wantStatus = true;
 		statusCheck();
 	    } else if ((lURL=getDocumentURL())!=null) {
@@ -248,7 +248,7 @@ public class UploadPapers  extends ResultsBase {
 	wantMainScreen = false;
 	checkTitle = "Uploading in progress...";
 	checkText =
-	    "Uploading thread state = " + sd.upThread.getState()+ "\n"+
+	    //"Uploading thread state = " + sd.upThread.getState()+ "\n"+
 	    sd.upThread.getProgressText();		
 	reloadURL = getReloadURL(true);		
 	checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);

@@ -201,6 +201,8 @@ public class UploadPapersInitProfile  extends ResultsBase {
 		} else {
 		    status = Status.DONE_ALL;
 		    checkTitle = "Processing completed";
+		    wantReload = true;
+		    reloadURL = "../index.jsp";
 		}
 	    }
 	} else {

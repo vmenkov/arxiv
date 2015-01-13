@@ -141,7 +141,7 @@ public class UploadProcessingThread extends BackgroundThread {
     private void processOutliner(EntityManager em) {
 	if (outliner==null) return;
 	if (outliner.getErrors().size()>0) {
-	    progress("During processing of the HTML document " + outliner.getErrors().size() + " errors were encountered");
+	    progress("During processing of the HTML document " + outliner.getErrors().size() + " errors were encountered", false, true, true);
 	}
 	int i=0;
 	for(String error: outliner.getErrors()) {
@@ -172,8 +172,8 @@ public class UploadProcessingThread extends BackgroundThread {
 	    }
 	}
 	pin.setK(cnt);
-	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.", false, false, true);
-	progress("The total of " + convCnt + " PDF files have been successfully converted to text", false, false, true);
+	progress("The total of " + doneLinks.size() + " links have been followed; " + pdfCnt + " PDF files have been retrieved from them.", false, true, true);
+	progress("The total of " + convCnt + " PDF files have been successfully converted to text", false, true, true);
     }
 
 
@@ -227,7 +227,7 @@ public class UploadProcessingThread extends BackgroundThread {
     private DataFile pullPage(String user, URL lURL, boolean pdfOnly) 
 	throws IOException, java.net.MalformedURLException {
 
-	progress("UploadPapers requesting URL " + lURL);
+	progress("UploadPapers requesting URL " + lURL, false, true, false);
 	HttpURLConnection lURLConnection;
 	try {
 	    lURLConnection=(HttpURLConnection)lURL.openConnection();	
@@ -464,13 +464,11 @@ public class UploadProcessingThread extends BackgroundThread {
 	    progress("Converted " + pdfFile + " to " + txtDf.getPath(), false, true, false);
 	    Document doc=UploadImporter.importFile(user,txtDf.getFile(),writer);
 	    Article art =  Article.getUUDocAlways(em, doc);
-	    //progress("Retrieved (or created) article entry " + art);
 	    User u = User.findByName(em, user);
 	    ActionSource asrc = new ActionSource(Action.Source.UNKNOWN, 0);
 
 	    em.getTransaction().begin(); 
 	    Action a=sd.addNewAction(em, u, Action.Op.UPLOAD, art, null, asrc);
-	    //progress("Added Action " + a);
 	    em.getTransaction().commit(); 
 	    progress("Successfully imported " + pdfFile.getName(), false, true, true);
 	    return txtDf;
