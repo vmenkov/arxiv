@@ -176,7 +176,7 @@ public class UploadPapers  extends ResultsBase {
 	    wantStatus = true;
 	    statusCheck();    	 
 	    return;
-	} else if (sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED) {  // The user did NOT request the check page, but the thread is already running!
+	} else if (isRunning()) {  // The user did NOT request the check page, but the thread is already running!
 	    wantStatus = true;
 	    wantReload = false;
 	    wantMainScreen = false;
@@ -214,8 +214,13 @@ public class UploadPapers  extends ResultsBase {
 	}
     }
 
+    /** Is the background thread running right now? */
+    private boolean isRunning() {
+	return sd.upThread != null && sd.upThread.getState() != Thread.State.TERMINATED;
+    }
+
     /** Checks the status of the background thread which we think is
-	running, or was running recent, and prepares all the necessary
+	running, or was running recently, and prepares all the necessary
 	reporting.
      */
     private void statusCheck() {
@@ -228,31 +233,23 @@ public class UploadPapers  extends ResultsBase {
 	    checkTitle = "Error happened";
 	    checkText = sd.upThread.getProgressText();
 	    wantMainScreen = false;
-
 	} else if (sd.upThread.getState() == Thread.State.TERMINATED) {
 	    checkTitle = "Uploading completed";
 	    checkText = sd.upThread.getProgressTextBrief();
 	    wantMainScreen = true;
 	} else {
-	    uploadingInProgress();
+	    check=true;
+	    wantReload = true;
+	    wantMainScreen = false;
+	    checkTitle = "Uploading in progress...";
+	    checkText =
+		//"Uploading thread state = " + sd.upThread.getState()+ "\n"+
+		sd.upThread.getProgressText();		
+	    reloadURL = getReloadURL(true);		
+	    checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
 	}
 	return;
     } 
-
-
-    /** Sets the necessary flags and messages if upload processing thread is
-	running right now */
-    private void uploadingInProgress() {
-	check=true;
-	wantReload = true;
-	wantMainScreen = false;
-	checkTitle = "Uploading in progress...";
-	checkText =
-	    //"Uploading thread state = " + sd.upThread.getState()+ "\n"+
-	    sd.upThread.getProgressText();		
-	reloadURL = getReloadURL(true);		
-	checkProgressIndicator=sd.upThread.getProgressIndicatorHTML(cp);
-    }    
 
     /** See if there is a url=... param in the query screen, requesting
 	that a document be loaded from the web. */

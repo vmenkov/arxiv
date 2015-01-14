@@ -29,6 +29,9 @@ import edu.rutgers.axs.html.ProgressIndicator;
     reference to the thread is stored in the current user session's
     SessionData object, whereby the thread's progress can be monitored
     from later HTTP requests.
+
+    <p>The PDF-to-text conversion is carried out by <a href="http://www.unixuser.org/~euske/python/pdfminer/">pdfminer</a> (pdf2txt.py)
+
  */
 public class UploadProcessingThread extends BackgroundThread {
     
@@ -227,7 +230,7 @@ public class UploadProcessingThread extends BackgroundThread {
     private DataFile pullPage(String user, URL lURL, boolean pdfOnly) 
 	throws IOException, java.net.MalformedURLException {
 
-	progress("UploadPapers requesting URL " + lURL, false, true, false);
+	progress("Requesting URL " + lURL, false, true, false);
 	HttpURLConnection lURLConnection;
 	try {
 	    lURLConnection=(HttpURLConnection)lURL.openConnection();	
@@ -416,8 +419,15 @@ public class UploadProcessingThread extends BackgroundThread {
 	creates an Article object and an Action object in the SQL
 	database.
 
+	<p>pdf2txt.py occasionally breaks, incapable of dealing with
+	certain (old-fashioned?) PDF files, such as
+	http://www.joachims.org/publications/joachims_96a.pdf .
+	As per TJ's comment ("Document upload UI changes", 2015-01-13),
+	we don't expose the script's long and messy message (essentially,
+	a stack trace) to users.
+
  	@param pdf A DataFile object with the information (mostly, file name) about a recently uploaded PDF file.
-	@return A DataFile object with  the information (mostly, file name) about the text file produced during the conversion, or null on an error
+	@return A DataFile object with the information (mostly, file name) about the text file produced during the conversion, or null on an error
     */
     private DataFile importPdf(EntityManager em, DataFile pdf) {
 	File pdfFile = pdf.getFile();
@@ -432,7 +442,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	    DataFile txtDf = new DataFile(user, DataFile.Type.UPLOAD_TXT, txtFileName);
 
-    File dir = txtDf.getFile().getParentFile();
+	    File dir = txtDf.getFile().getParentFile();
 	    if (!dir.exists() && !dir.mkdirs()) {
 		error("Server error: Failed to create directory " + dir);
 		return null;
@@ -450,15 +460,18 @@ public class UploadProcessingThread extends BackgroundThread {
 	    Runtime ru = Runtime.getRuntime();
 	    Process proc = ru.exec(cmdarray, null);
 	    String sb = collectProcessStderr(proc);
-	    if (sb.length()>0) error(sb);
 
 	    try {
 		proc.waitFor();
 	    } catch(java.lang.InterruptedException ex) {}
 	    int ev = proc.exitValue();
-	    if (ev!=0) {
-		error("Error reported when converting "+pdfFile+" to "+txtDf.getPath());
-		return null;
+	    if (sb.length()>0 || ev!=0) {
+		//-- This would be too long and messy text to impose on users;
+		//-- example, http://www.joachims.org/publications/joachims_96a.pdf
+		//error(sb);
+		error("Error in PDF-to-text converter while processing " + pdfFileName + " (exit code=" + ev + ")");
+		Logging.error("Error from "+script+" (exit code="+ev+"): "+sb);
+	 	return null;
 	    }
 
 	    progress("Converted " + pdfFile + " to " + txtDf.getPath(), false, true, false);

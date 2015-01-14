@@ -29,23 +29,31 @@ public abstract class BackgroundThread extends Thread {
      for statistics. These values are set in run(). */
     protected Date startTime, endTime;
 
+    /** An instance of this class represents one line in a thread's
+	progress report. Lines may be labeled as "strong" (displayed
+	in a bold face in printable report), or "permanent"
+     */
     static class ProgressLine {
 	String text;
-	//boolean iserror;
+	boolean iserror;
 	boolean permanent;
 	boolean strong;
-	ProgressLine(String s, boolean _permanent, boolean _strong) {
+	ProgressLine(String s, boolean _iserror, boolean _permanent, boolean _strong) {
 	    text = s;
+	    iserror = _iserror;
 	    permanent = _permanent;
 	    strong = _strong;
 	};
 	public String toString() { 
-	    return strong?  "<strong>"  + text+  "</strong>" : text;
+	    String q = text;
+	    if (strong) q =  "<strong>"  +q+  "</strong>";
+	    if (iserror) q = "<span style=\"color:red\">" + q + "</span>";
+	    return q;
 	}
     }
     
-    /** Human-readable text used to display this thread's progress. */
-    //    protected StringBuffer progressText = new StringBuffer();
+    /** The thread's progress report: a sequence of lines of
+	human-readable text used to display this thread's progress. */
     Vector<ProgressLine>  progressTextLines = new Vector<ProgressLine>();
      
     /** The last line, which may be replaced by a later call, in order
@@ -67,11 +75,23 @@ public abstract class BackgroundThread extends Thread {
     }
 
     /** Adds a line of text to the progress text visible to the user.
-       @param replace If true, this line replaces the last line.
+       @param replace If true, this line replaces the last stored line
+       (unless that line is not "replaceable").
      */
     public void progress(String text, boolean isError, boolean replace, boolean strong) {
-	boolean perm = strong;
-	ProgressLine line = new ProgressLine(text, perm, strong);
+	boolean perm = strong || isError;
+	progress(text, isError, replace, perm, strong);
+    }
+
+    /** Adds a line of text to the progress text visible to the user.
+	@param this is an error line; appropriate logging will be carried out.
+	@param replace If true, this line replaces the last stored line (unless that line is labeled as "permanent")
+	@param perm Label the new line as "permanent" (so it will not be replaced by consequent lines, even if they come with a "replace" flag)
+	@param strong Display this line in bold face
+     */
+    public void progress(String text, boolean isError, boolean replace, 
+			 boolean perm, boolean strong) {
+	ProgressLine line = new ProgressLine(text, isError, perm, strong);
 	ProgressLine lastLine = (progressTextLines.size()>0) ? 
 	    progressTextLines.lastElement() : null;
 	if (replace && lastLine!=null && !lastLine.permanent) {
