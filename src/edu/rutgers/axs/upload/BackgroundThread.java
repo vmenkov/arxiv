@@ -62,16 +62,29 @@ public abstract class BackgroundThread extends Thread {
     //    protected String progressTextMore = null;
 
     /** This is set if a fatal error occurrs during the thread's
-	operation */
+	operation. There is no separate error message variable, 
+	but whenever the error flag is set, and appropriate message is 
+	supposed to be added to the progress report.
+    */
     public boolean error = false;
 
     public void progress(String text) {
 	progress(text, false, false, false);
     }
 
+    /** Records an error message in the progress indicator and in the logs,
+	and sets the error flag for this thread.
+    */
     public void error(String text) {
 	error = true;
-	progress(text, true, false, false);
+	warning(text);
+    }
+
+    /** Records an error message in the progress indicator and in the logs,
+	but does NOT set the error flag for this thread.
+    */
+    public void warning(String text) {
+	progress(text, true, true, false);
     }
 
     /** Adds a line of text to the progress text visible to the user.

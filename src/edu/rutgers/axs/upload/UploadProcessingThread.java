@@ -32,6 +32,15 @@ import edu.rutgers.axs.html.ProgressIndicator;
 
     <p>The PDF-to-text conversion is carried out by <a href="http://www.unixuser.org/~euske/python/pdfminer/">pdfminer</a> (pdf2txt.py)
 
+    <p>FIXME: We import data into Lucene, which onlyu supports one
+    writer at a time. Thus if multiple users were to upload documents
+    at the same time (or if a user were to uploads documents during
+    the nightly ArXiv article importing process, around 9pm), locking
+    conflicts would ensue. Currently, this is dealt with by grabbing
+    a writer (and thus locking the Lucene data store for writing) in the
+    beginning of the thread's run(). This would not be scalable if
+    we had lots of users doing uploads.
+
  */
 public class UploadProcessingThread extends BackgroundThread {
     
@@ -81,60 +90,80 @@ public class UploadProcessingThread extends BackgroundThread {
 	startDf = df;
     }
     
-
-    /** Used to import data into Lucene */
-    private IndexWriter writer = null;
+    /** Make sure you can actually get an IndexWriter */
+    private boolean canGetWriter() {
+	IndexWriter writer = null;
+	try {
+	    writer = UploadImporter.makeWriter();	    
+	} catch(Exception ex) {
+	    String errmsg = ex.getMessage();	    
+	    //	    warning("Exception ("+ex+") in UploadProcessingThread " + getId() + ": " + errmsg + "\n" +
+	    //		  "Probably, the server is busy at the moment. You may try to wait for a few minutes and then repeat the upload"  );
+	    ex.printStackTrace(System.out);
+ 
+	    return false;
+	} finally {
+	    if (writer != null) {
+		try {
+		    writer.close();
+		} catch(IOException ex) {}
+	    }
+	}
+	return true;
+    }
 
     /** The main class for the actual document processing process.     */
     public void run()  {
 	startTime = new Date();
 	EntityManager em = sd.getEM();
+	// Used to import data into Lucene 
+	IndexWriter writer = null;
+
+	if (!canGetWriter()) {
+	    error("Your file(s) cannot be processed because our server is apparently too busy at the moment. (The UploadProcessingThread " + getId() + " cannot get write access to our data store). You may try to wait for a few minutes and then repeat the upload" );
+	}
+
 	try {
 
 	    writer = UploadImporter.makeWriter();
 
 	    if (startDf != null) {
 		pdfCnt = 1;
-		DataFile txt = importPdf(em, startDf);
+		DataFile txt = importPdf(em, writer, startDf);
 		if (txt != null) {
 		    convCnt ++;
 		}
 		return;
 	    } else if (startURL != null) {
 		PullPageResult pulled = pullPage(user, startURL, false);
-		if (pulled==null) {
-		    return; // error
-		} else if (pulled.pdfFile != null) {
+		if (pulled!=null && pulled.pdfFile != null) {
 		    pdfCnt ++;
-		    DataFile txt = importPdf(em, pulled.pdfFile);
+		    DataFile txt = importPdf(em, writer, pulled.pdfFile);
 		    if (txt != null) convCnt ++;
-		} else if (pulled.outliner!=null) {
+		} else if (pulled!=null && pulled.outliner!=null) {
 		    outliner = pulled.outliner;
-		    processOutliner(em);
+		    processOutliner(em, writer);
 		} else {
-		    // nothing useful has been read
+		    // No document could be obtained from the
+		    // specified URL.  pullPage() must have added an
+		    // err msg to the progress report.
+		    error = true;
 		    return;
 		}
 		    
 		//progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
 	    } else if (outliner != null) {		
 		// outliner has been supplied in the constructor 
-		processOutliner(em);
+		processOutliner(em, writer);
 	    }
-	    
+
+	} catch(java.nio.channels.OverlappingFileLockException ex) {
+	    reportLockProblem(ex);	    
 	} catch(org.apache.lucene.store.LockObtainFailedException ex) {
-	    // this happens in makeWriter() if some other process
-	    // is writing to Lucene at the moment
-	    // Lock obtain timed out: NativeFSLock@/data/arxiv/arXiv-index/write.lock
-	    String errmsg = ex.getMessage();
-	    error("LockObtainFailedException in UploadProcessingThread " + getId() + ": " + errmsg + "\n" +
-		  "Probably, the server is busy at the moment. You may try to wait for a few minutes and then repeat the upload"  );
-	    ex.printStackTrace(System.out);
-
-
+	    reportLockProblem(ex);
 	} catch(Exception ex) {
 	    String errmsg = ex.getMessage();
-	    error("Other exception in UploadProcessingThread " + getId() + ": " + errmsg);
+	    error("Exception ("+ex+") in UploadProcessingThread " + getId() + ": " + errmsg);
 	    ex.printStackTrace(System.out);
 	} finally {
 	    if (writer != null) {
@@ -145,12 +174,22 @@ public class UploadProcessingThread extends BackgroundThread {
 	    ResultsBase.ensureClosed( em, true);
 	    endTime = new Date();
 	}
-
     }
 
-    /** Gets the PDF focuments from all URLs listed in this thread's
+    /** this happens in makeWriter() if some other process
+	is writing to Lucene at the moment
+	Lock obtain timed out: NativeFSLock@/data/arxiv/arXiv-index/write.lock
+    */
+    private void reportLockProblem(Exception ex) {
+	    String errmsg = ex.getMessage();
+	    error("Exception ("+ex+") in UploadProcessingThread " + getId() + ": " + errmsg + "\n" +
+		  "Probably, the server is busy at the moment. You may try to wait for a few minutes and then repeat the upload"  );
+	    ex.printStackTrace(System.out);
+    }
+
+    /** Gets the PDF documents from all URLs listed in this thread's
 	Outliner object */
-    private void processOutliner(EntityManager em) {
+    private void processOutliner(EntityManager em, IndexWriter writer) {
 	if (outliner==null) return;
 	if (outliner.getErrors().size()>0) {
 	    progress("During processing of the HTML document " + outliner.getErrors().size() + " errors were encountered", false, true, true);
@@ -174,10 +213,11 @@ public class UploadProcessingThread extends BackgroundThread {
 		PullPageResult pulled = pullPage(user, url, true);
 		if (pulled !=null && pulled.pdfFile != null) {
 		    pdfCnt ++;
-		    DataFile txt = importPdf(em, pulled.pdfFile);
+		    DataFile txt = importPdf(em, writer, pulled.pdfFile);
 		    if (txt != null) convCnt ++;
 		} else {
-		    // error has been reported inside pullPage()
+		    // An error message must have been added to the 
+		    // progress report from inside pullPage(). 
 		}
 	    } catch(IOException ex) {
 		error(ex.getMessage());
@@ -242,13 +282,34 @@ public class UploadProcessingThread extends BackgroundThread {
 	HTMLParser.Outliner outliner=null;
 	PullPageResult( DataFile _pdfFile) { pdfFile= _pdfFile; }
 	PullPageResult( HTMLParser.Outliner _outliner) { outliner=_outliner; }
-		       
+	/*
+	boolean error = false;
+	static  PullPageResult error() {
+	    PullPageResult result = new  PullPageResult();
+	    result.error = true;
+	    return result;
+	}
+	*/
     }
 
     /** Downloads an HTML or PDF document from a specified URL. If a
 	PDF file is found, returns info about it in a DataFile
-	object; if an HTML file is found, sets this.outliner  
+	object; if an HTML file is found, and we're allowed to 
+	look for HTML, sets this.outliner.
+
+	<p>This method is used in two contexts: (a) the user has
+	specifically requested this URL; (b) this URL has occurred as
+	a link in an HTML file we're processing. This method never
+	sets BackgroundThread.error, because access errors are
+	considered fatal only for (a) but not for (b).
+
 	@param pdfOnly If true, only look for a PDF file; otehrwise, read HTML as well
+
+	@return a PullPageResult that contains either a DataFile
+	object describing the retrieved PDF document, or an Outliner
+	object describing the retrieved HTML document. A null is returned
+	if an error has happened, or if nothing suitable has been retrieved
+	
     */
     private PullPageResult pullPage(String user, URL lURL, boolean pdfOnly) 
 	throws IOException, java.net.MalformedURLException {
@@ -259,7 +320,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	    lURLConnection=(HttpURLConnection)lURL.openConnection();	
 	}  catch(Exception ex) {
 	    String msg= "Failed to open connection to " + lURL;
-	    error(msg);
+	    warning(msg);
 	    ex.printStackTrace(System.out);
 	    //throw new IOException(msg);
 	    return null;
@@ -271,7 +332,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	    lURLConnection.connect();
 	} catch(Exception ex) {
 	    String msg= "UploadPapers: Failed to connect to " + lURL;
-	    error(msg);
+	    warning(msg);
 	    return null;
 	}
 
@@ -282,7 +343,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	if (code != HttpURLConnection.HTTP_OK) {
 	    String msg= "UploadPapers: Error code " + code + " received when trying to retrieve page from " + lURL;
-	    error(msg);
+	    warning(msg);
 	    return null;
 	}
 
@@ -450,7 +511,7 @@ public class UploadProcessingThread extends BackgroundThread {
  	@param pdf A DataFile object with the information (mostly, file name) about a recently uploaded PDF file.
 	@return A DataFile object with the information (mostly, file name) about the text file produced during the conversion, or null on an error
     */
-    private DataFile importPdf(EntityManager em, DataFile pdf) {
+    private DataFile importPdf(EntityManager em, IndexWriter writer, DataFile pdf) {
 	File pdfFile = pdf.getFile();
 	String pdfFileName = pdfFile.getName();
 	try {
@@ -496,21 +557,32 @@ public class UploadProcessingThread extends BackgroundThread {
 	    }
 
 	    progress("Converted " + pdfFile + " to " + txtDf.getPath(), false, true, false);
-	    Document doc=UploadImporter.importFile(user,txtDf.getFile(),writer);
-	    Article art =  Article.getUUDocAlways(em, doc);
-	    User u = User.findByName(em, user);
-	    ActionSource asrc = new ActionSource(Action.Source.UNKNOWN, 0);
 
-	    em.getTransaction().begin(); 
-	    Action a=sd.addNewAction(em, u, Action.Op.UPLOAD, art, null, asrc);
-	    em.getTransaction().commit(); 
-	    progress("Successfully imported " + pdfFile.getName(), false, true, true);
+	    import2( em, writer, txtDf.getFile(), pdfFile); 
 	    return txtDf;
 
 	} catch (IOException ex) {
 	    error("I/O error when trying to convert " + pdfFile + ": " + ex.getMessage());
 	    return null;
 	}      
+    }
+
+    /** The actual importing of the content of a PDF file into Lucene, and
+	the creation of the appropriate entries in the SQL server. */
+    private void import2(EntityManager em, IndexWriter writer, File txtFile, File pdfFile)  {
+	try {
+	    Document doc=UploadImporter.importFile(user,txtFile,writer);
+	    Article art =  Article.getUUDocAlways(em, doc);
+	    User u = User.findByName(em, user);
+	    ActionSource asrc = new ActionSource(Action.Source.UNKNOWN, 0);
+	    
+	    em.getTransaction().begin(); 
+	    Action a=sd.addNewAction(em, u, Action.Op.UPLOAD, art, null, asrc);
+	    em.getTransaction().commit(); 
+	    progress("Successfully imported " + pdfFile.getName(), false, true, true);
+	} catch (IOException ex) {
+	    error("I/O error when importing data from " + pdfFile + ": " + ex.getMessage());
+	}         
     }
 
     /** Reads whatever a specified process writes to its stderr */
