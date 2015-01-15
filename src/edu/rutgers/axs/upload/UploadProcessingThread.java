@@ -47,7 +47,9 @@ public class UploadProcessingThread extends BackgroundThread {
 	return "Uploading and processing";
     }
 
-    /** Creates a thread which will follow the links listed in the Outliner structure
+    /** Creates a thread which will follow the links listed in the
+	Outliner structure. This is used if the user has just uploaded
+	an HTML document via the web UI.
      */
     public UploadProcessingThread(SessionData _sd, String _user, HTMLParser.Outliner _outliner) {
 	sd = _sd;
@@ -59,6 +61,7 @@ public class UploadProcessingThread extends BackgroundThread {
 
     /** Creates a thread which will get a document from a specified
 	URL, and, if it is HTML, will follow the links in it as well.
+	This is used if the user has specified a URL via the web UI.
      */
     public UploadProcessingThread(SessionData _sd, String _user, URL url) {
 	sd = _sd;
@@ -69,7 +72,7 @@ public class UploadProcessingThread extends BackgroundThread {
    }
 
     /** Creates a thread that will run pdf2txt conversion for a single pre-read
-	file */
+	file. This is done if the user has just uploaded a PDF file.  */
     public UploadProcessingThread(SessionData _sd, String _user, DataFile df) {
 	sd = _sd;
 	user = _user;
@@ -96,22 +99,28 @@ public class UploadProcessingThread extends BackgroundThread {
 		if (txt != null) {
 		    convCnt ++;
 		}
-
 		return;
-	    }
-
-	    if (startURL != null) {
-		DataFile pdf = pullPage(user, startURL, false);
-		if (pdf != null) {
+	    } else if (startURL != null) {
+		PullPageResult pulled = pullPage(user, startURL, false);
+		if (pulled==null) {
+		    return; // error
+		} else if (pulled.pdfFile != null) {
 		    pdfCnt ++;
-		    DataFile txt = importPdf(em, pdf);
+		    DataFile txt = importPdf(em, pulled.pdfFile);
 		    if (txt != null) convCnt ++;
-		} 
+		} else if (pulled.outliner!=null) {
+		    outliner = pulled.outliner;
+		    processOutliner(em);
+		} else {
+		    // nothing useful has been read
+		    return;
+		}
+		    
 		//progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
+	    } else if (outliner != null) {		
+		// outliner has been supplied in the constructor 
+		processOutliner(em);
 	    }
-
-	    // outliner may have been supplied in the constructor or set in pullPage()
-	    processOutliner(em);
 	    
 	} catch(org.apache.lucene.store.LockObtainFailedException ex) {
 	    // this happens in makeWriter() if some other process
@@ -162,13 +171,13 @@ public class UploadProcessingThread extends BackgroundThread {
 	    if (doneLinks.contains(url)) continue;		    
 	    doneLinks.add(url);
 	    try {
-		DataFile pdf = pullPage(user, url, true);
-		if (pdf != null) {
+		PullPageResult pulled = pullPage(user, url, true);
+		if (pulled !=null && pulled.pdfFile != null) {
 		    pdfCnt ++;
-		    DataFile txt = importPdf(em, pdf);
+		    DataFile txt = importPdf(em, pulled.pdfFile);
 		    if (txt != null) convCnt ++;
 		} else {
-		    // error is reported inside pullPage()
+		    // error has been reported inside pullPage()
 		}
 	    } catch(IOException ex) {
 		error(ex.getMessage());
@@ -222,12 +231,26 @@ public class UploadProcessingThread extends BackgroundThread {
 	return df;
     }
 
+    /** Convenience class for returning whatever we have found when
+	connecting to a specified URL */
+    static class PullPageResult {
+	/** This is set if a PDF document has been read */
+	DataFile pdfFile=null;
+	/** This structure is set if an HTML document has been
+	    read. It contains all links found inside the HTML
+	    document */
+	HTMLParser.Outliner outliner=null;
+	PullPageResult( DataFile _pdfFile) { pdfFile= _pdfFile; }
+	PullPageResult( HTMLParser.Outliner _outliner) { outliner=_outliner; }
+		       
+    }
+
     /** Downloads an HTML or PDF document from a specified URL. If a
 	PDF file is found, returns info about it in a DataFile
 	object; if an HTML file is found, sets this.outliner  
 	@param pdfOnly If true, only look for a PDF file; otehrwise, read HTML as well
     */
-    private DataFile pullPage(String user, URL lURL, boolean pdfOnly) 
+    private PullPageResult pullPage(String user, URL lURL, boolean pdfOnly) 
 	throws IOException, java.net.MalformedURLException {
 
 	progress("Requesting URL " + lURL, false, true, false);
@@ -249,7 +272,6 @@ public class UploadProcessingThread extends BackgroundThread {
 	} catch(Exception ex) {
 	    String msg= "UploadPapers: Failed to connect to " + lURL;
 	    error(msg);
-	    //throw new IOException(msg);
 	    return null;
 	}
 
@@ -261,7 +283,6 @@ public class UploadProcessingThread extends BackgroundThread {
 	if (code != HttpURLConnection.HTTP_OK) {
 	    String msg= "UploadPapers: Error code " + code + " received when trying to retrieve page from " + lURL;
 	    error(msg);
-	    //throw new IOException(msg);	    
 	    return null;
 	}
 
@@ -272,9 +293,9 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	// effective URL (after any redirect)
 	URL eURL = lURLConnection.getURL();
-	boolean expectPdf = checkContentType( eURL, lContentType);
+	boolean pdfComing = checkContentType( eURL, lContentType);
 
-	if (!expectPdf && pdfOnly) {
+	if (pdfOnly && !pdfComing) {
 	    //progress("No PDF file could be retrieved from " + url, false, true);
 	    progress("Ignoring document from "+lURL+" (not a PDF file)",false,true, false);
 	    return null;
@@ -295,18 +316,18 @@ public class UploadProcessingThread extends BackgroundThread {
 	    return null;
 	}
 
-	if (expectPdf) {
+	if (pdfComing) {
 	    // simple bytewise copy
 	    DataFile results = savePdf(user,is,fileName);
 	    progress("Retrieved PDF file from " + lURL, false, true, false);
-	    return results;
+	    return new PullPageResult(results);
 	} else {
 	    Charset cs = getCharset(lContentType);
 	    // set the outliner for the main function to process
-	    outliner = HTMLParser.parse(lURL, is, cs);
+	    HTMLParser.Outliner outliner = HTMLParser.parse(lURL, is, cs);
 	    is.close();
 	    progress("Retrieved HTML file from " + lURL, false, true, false);
-	    return null;
+	    return new PullPageResult(outliner);
 	}
     }
 
