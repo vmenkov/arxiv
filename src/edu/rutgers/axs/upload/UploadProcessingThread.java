@@ -132,6 +132,8 @@ public class UploadProcessingThread extends BackgroundThread {
 		DataFile txt = importPdf(em, writer, startDf);
 		if (txt != null) {
 		    convCnt ++;
+		} else {
+		    error = true;
 		}
 		return;
 	    } else if (startURL != null) {
@@ -508,6 +510,11 @@ public class UploadProcessingThread extends BackgroundThread {
 	we don't expose the script's long and messy message (essentially,
 	a stack trace) to users.
 
+	<p>The error flag is set on some errors (those that seem to 
+	have the potential to derail *any* conversion), but not
+	on others (which seem to be file-specific, and should not be 
+	a show-stopper for a multi-file upload). 
+
  	@param pdf A DataFile object with the information (mostly, file name) about a recently uploaded PDF file.
 	@return A DataFile object with the information (mostly, file name) about the text file produced during the conversion, or null on an error
     */
@@ -517,7 +524,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	try {
 	    final String suffix = ".pdf";
 	    if (!pdfFileName.toLowerCase().endsWith(suffix)) {
-		error("File name " +pdfFileName+ " does not have expected suffix '.pdf'; won't convert");
+		warning("File name " +pdfFileName+ " does not have expected suffix '.pdf'; won't convert");
 		return null;
 	    }
 	    String txtFileName = pdfFileName.substring(0, pdfFileName.length() - suffix.length()) + ".txt";
@@ -551,7 +558,7 @@ public class UploadProcessingThread extends BackgroundThread {
 		//-- This would be too long and messy text to impose on users;
 		//-- example, http://www.joachims.org/publications/joachims_96a.pdf
 		//error(sb);
-		error("Error in PDF-to-text converter while processing " + pdfFileName + " (exit code=" + ev + ")");
+		warning("Error in PDF-to-text converter while processing " + pdfFileName + " (exit code=" + ev + ")");
 		Logging.error("Error from "+script+" (exit code="+ev+"): "+sb);
 	 	return null;
 	    }
@@ -562,7 +569,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	    return txtDf;
 
 	} catch (IOException ex) {
-	    error("I/O error when trying to convert " + pdfFile + ": " + ex.getMessage());
+	    warning("I/O error when trying to convert " + pdfFile + ": " + ex.getMessage());
 	    return null;
 	}      
     }

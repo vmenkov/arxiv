@@ -36,7 +36,7 @@ public abstract class BackgroundThread extends Thread {
     static class ProgressLine {
 	String text;
 	boolean iserror;
-	boolean permanent;
+	final boolean permanent;
 	boolean strong;
 	ProgressLine(String s, boolean _iserror, boolean _permanent, boolean _strong) {
 	    text = s;
@@ -46,6 +46,7 @@ public abstract class BackgroundThread extends Thread {
 	};
 	public String toString() { 
 	    String q = text;
+	    //if (permanent) q = "* " + q;
 	    if (strong) q =  "<strong>"  +q+  "</strong>";
 	    if (iserror) q = "<span style=\"color:red\">" + q + "</span>";
 	    return q;
@@ -131,7 +132,7 @@ public abstract class BackgroundThread extends Thread {
     String getProgressTextBasic(boolean strongOnly) {
 	StringBuffer s= new StringBuffer();
 	for(ProgressLine q: progressTextLines) {
-	    if (strongOnly && !q.strong) continue;
+	    if (strongOnly && !q.strong  && !q.iserror) continue;
 	    s.append(q.toString() + "\n");
 	}
 	return s.toString();
