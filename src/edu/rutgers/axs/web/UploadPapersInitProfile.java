@@ -180,7 +180,7 @@ public class UploadPapersInitProfile  extends ResultsBase {
 	    checkTitle = "No processing is taking place";
 	    checkText = "No processing is taking place right now or was taking place recently";
 	} else if (sd.upInitThread.getState() == Thread.State.TERMINATED) {
-	    if (sd.upInitThread.error) {
+	    if (sd.upInitThread.getError()) {
 		error = true;
 		status = Status.DONE_ERROR;
 		checkTitle = "Error occurred";

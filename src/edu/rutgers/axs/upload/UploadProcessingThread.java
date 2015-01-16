@@ -121,22 +121,23 @@ public class UploadProcessingThread extends BackgroundThread {
 
 	if (!canGetWriter()) {
 	    error("Your file(s) cannot be processed because our server is apparently too busy at the moment. (The UploadProcessingThread " + getId() + " cannot get write access to our data store). You may try to wait for a few minutes and then repeat the upload" );
+	    //	    ex.printStackTrace(System.out);
 	}
 
 	try {
 
 	    writer = UploadImporter.makeWriter();
 
-	    if (startDf != null) {
+	    if (startDf != null) { // process an uploaded PDF file
 		pdfCnt = 1;
 		DataFile txt = importPdf(em, writer, startDf);
 		if (txt != null) {
 		    convCnt ++;
 		} else {
-		    error = true;
+		    setError();
 		}
 		return;
-	    } else if (startURL != null) {
+	    } else if (startURL != null) {  // work with a specified URL
 		PullPageResult pulled = pullPage(user, startURL, false);
 		if (pulled!=null && pulled.pdfFile != null) {
 		    pdfCnt ++;
@@ -149,13 +150,12 @@ public class UploadProcessingThread extends BackgroundThread {
 		    // No document could be obtained from the
 		    // specified URL.  pullPage() must have added an
 		    // err msg to the progress report.
-		    error = true;
+		    setError();
 		    return;
 		}
 		    
 		//progress("The total of " + pdfCnt +  " PDF files have been retrieved from " + startURL);
-	    } else if (outliner != null) {		
-		// outliner has been supplied in the constructor 
+	    } else if (outliner != null) {  // process an uploaded HTML file
 		processOutliner(em, writer);
 	    }
 
@@ -217,12 +217,14 @@ public class UploadProcessingThread extends BackgroundThread {
 		    pdfCnt ++;
 		    DataFile txt = importPdf(em, writer, pulled.pdfFile);
 		    if (txt != null) convCnt ++;
+		    if (getError()) return; // a fatal error in importPdf
 		} else {
 		    // An error message must have been added to the 
 		    // progress report from inside pullPage(). 
 		}
 	    } catch(IOException ex) {
 		error(ex.getMessage());
+		ex.printStackTrace(System.out);
 	    }
 	}
 	pin.setK(cnt);
@@ -532,11 +534,15 @@ public class UploadProcessingThread extends BackgroundThread {
 	    DataFile txtDf = new DataFile(user, DataFile.Type.UPLOAD_TXT, txtFileName);
 
 	    File dir = txtDf.getFile().getParentFile();
-	    if (!dir.exists() && !dir.mkdirs()) {
-		error("Server error: Failed to create directory " + dir);
-		return null;
+	    if (!dir.exists()) {
+		if (!dir.mkdirs()) {
+		    error("Server error: Failed to create directory " + dir);
+		    return null;
+		} else {
+		    Logging.info("Created directory " + dir);
+		}
 	    }
-	    Logging.info("Created directory " + dir);
+
 
 	    File script = findScript();
 	    if (script==null) {
@@ -589,6 +595,7 @@ public class UploadProcessingThread extends BackgroundThread {
 	    progress("Successfully imported " + pdfFile.getName(), false, true, true);
 	} catch (IOException ex) {
 	    error("I/O error when importing data from " + pdfFile + ": " + ex.getMessage());
+	    ex.printStackTrace(System.out);
 	}         
     }
 

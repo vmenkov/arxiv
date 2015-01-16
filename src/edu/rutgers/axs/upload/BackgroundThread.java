@@ -67,7 +67,14 @@ public abstract class BackgroundThread extends Thread {
 	but whenever the error flag is set, and appropriate message is 
 	supposed to be added to the progress report.
     */
-    public boolean error = false;
+    private boolean error = false;
+    public boolean getError() {
+	return error;
+    }
+    public void setError() {
+	Logging.info("Set error flag in thread " + getId());
+	error = true;
+    }
 
     public void progress(String text) {
 	progress(text, false, false, false);
@@ -77,8 +84,8 @@ public abstract class BackgroundThread extends Thread {
 	and sets the error flag for this thread.
     */
     public void error(String text) {
-	error = true;
 	warning(text);
+	setError();
     }
 
     /** Records an error message in the progress indicator and in the logs,
