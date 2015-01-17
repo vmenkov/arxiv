@@ -81,7 +81,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer23 {
      */
     public double idf(String key) throws IOException {
 	String[] q = key.split(":");
-	if (q.length != 2) throw new IllegalArgumentException("Calling AA2.idf() expects a qualified term (f:t); received "+key);
+	if (q.length < 2) throw new IllegalArgumentException("Calling AA2.idf() expects a qualified term (f:t); received "+key);
 	return idf(q[0], q[1]);
     }
 
@@ -374,7 +374,7 @@ public class ArticleAnalyzer2 extends  ArticleAnalyzer23 {
     Term keyToTerm(String key) //throws IOException 
     {
 	String[] q = key.split(":");
-	if (q.length != 2) throw new IllegalArgumentException("Calling AA2.idf() expects a qualified term (f:t); received "+key);
+	if (q.length < 2) throw new IllegalArgumentException("Calling AA2.idf() expects a qualified term (f:t); received "+key);
 	return new Term(q[0], q[1]);
     }
 

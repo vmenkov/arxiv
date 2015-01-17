@@ -64,6 +64,7 @@ public class KMeans {
 	    if (!catdir.exists()) {
 		//throw new IOException("Category directory " + catdir + " does not exist. Has a new category been added?");
 		Logging.warning("Category directory " + catdir + " does not exist. Has a new category been added? Documents from this category won't be classified.");
+		continue;
 	    }
 	    File[] cfiles = catdir.listFiles();
 	    int cids [] = new int[cfiles.length];

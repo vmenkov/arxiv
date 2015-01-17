@@ -92,9 +92,17 @@ public class ArticleAnalyzer1 extends  ArticleAnalyzer {
 	like it is done in Lucene's own searcher as well.
 
 	<p>This method is overridden in ArticleAnalyzer2.
+
+	@param idf A raw term (e.g. "rabbit"), rather than a qualified
+	one ("article:rabbit"). Alas, some (very few) documents have
+	semicolons inside terms (1412.8118 has "zhang:efficient";
+	somehow I thought Lucene's parsing removes colons, but I guess
+	not always...); so the presence of a colon should not be a
+	show-stopper. Therefore, we can't throw an exception on a colon!
+	(2015-11-17).
      */
     public double idf(String term) throws IOException  {
-	if (term.indexOf(':')>=0) throw new IllegalArgumentException("Calling AA.idf() for a qualified term ("+term+")");
+	//if (term.indexOf(':')>=0) throw new IllegalArgumentException("Calling AA.idf() for a qualified term ("+term+")");
 	try {
 	    return  1+ Math.log(numdocs*fields.length / (1.0 + totalDF(term)));
 	} catch(IOException ex) { 

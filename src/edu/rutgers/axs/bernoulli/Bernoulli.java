@@ -84,8 +84,11 @@ public class Bernoulli {
 	}
     }
 
-    /** FIXME: We'll be in trouble if index optimization happens after this 
-	map is created and  document ids change.
+    /** FIXME: We'll be in trouble if index optimization happens after
+	this map is created and document ids change. In practice, of
+	course, this is not likely, since in the normal course of
+	operations all the daily updates are carried out sequentially,
+	as per arxivUpdateCycle.sh.
 	@param cats Restrict to these categories
 	@return A map that maps Lucene's doc id to norm.	
      */

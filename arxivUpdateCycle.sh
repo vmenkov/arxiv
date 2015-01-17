@@ -16,6 +16,9 @@
 # the "-home /home/vm293" command-line argument), which is used as a
 # base for finding jar files etc. This is for the convenience of
 # running the script as a different user (e.g. with crontab)
+#
+#-- The usual crontab line for this script (for user "tomcat") is as follows:
+# 30 20 * * * cd /data/arxiv/log ; /home/vm293/arxiv/arxiv/arxivUpdateCycle.sh -home /home/vm293 >> update.log
 # ----------------------------------------------------------------------
 
 /bin/date
@@ -73,18 +76,18 @@ mv missing.txt missing-${d}.txt
 set opt="-Xmx2048m ${baseopt}"
 echo "Options for ArticleAnalyzer: $opt"
 
-time java $opt  edu.rutgers.axs.recommender.ArticleAnalyzer >& allnorms-${d}.log 
+time java $opt  edu.rutgers.axs.recommender.ArticleAnalyzer1 >& allnorms-${d}.log 
 
 set stoplist=${home}/arxiv/arxiv/WEB-INF/stop200.txt 
 
 #-- Taking care of new articles for Exploration Engine ver. 3
-time java $opt -Dstoplist=${stoplist}  edu.rutgers.axs.bernoulli.Bernoulli recent >& bernoulli-${d}.log 
+time java $opt -Dstoplist=${stoplist} edu.rutgers.axs.bernoulli.Bernoulli recent >& bernoulli-${d}.log 
 
 #-- Updating class stats and recommendations for Exploration Engine ver. 4
-time java $opt  -Dstoplist=${stoplist}   edu.rutgers.axs.ee4.Daily update >& ee4-${d}.log time 
+time java $opt  -Dstoplist=${stoplist} edu.rutgers.axs.ee4.Daily update >& ee4-${d}.log time 
 
 #-- Updating class stats and recommendations for Exploration Engine ver. 5
-/usr/bin/time  java $opt edu.rutgers.axs.ee5.Daily update >& ee5-${d}.log time 
+/usr/bin/time  java $opt  -Dstoplist=${stoplist} edu.rutgers.axs.ee5.Daily update >& ee5-${d}.log time 
 
 #-- Updating user profiles and recommendations for the 3PR (PPP) engine
 time java $opt  -Dstoplist=${stoplist} edu.rutgers.axs.recommender.DailyPPP update >& ppp-${d}.log 
