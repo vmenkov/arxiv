@@ -24,7 +24,7 @@
 </p>
 
 <p>Please refer to the <a href="manual.html">User Guide</a> for the
-high-level overview of the tables existing in the database, and more queries that can be used to access data.</p>
+high-level overview of the tables existing in the database, and for sample queries that can be used to access data.</p>
 
 <h2>JPQL vs. SQL</h2>
 
@@ -38,7 +38,7 @@ of objects being references.<p>
 
 </p>
 To help you get started, below are
-equivalent sample queries in the two langauges. Note that table names are case-sensitive. See <a href="manual.html">the manual</a> for more examples and interpretation.</p>
+equivalent sample queries in the two langauges. Note that table names are case-sensitive. See the <a href="manual.html">User Guide</a> for more examples and interpretation.</p>
 
 <p>Hint: you can use the first 3 JPQL queries from the table below to see what the names of all fields in each table are.</p>
 

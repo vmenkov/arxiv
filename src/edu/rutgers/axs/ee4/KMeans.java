@@ -61,7 +61,10 @@ public class KMeans {
 	    // read stored cluster center point files, filling the dictionary
 	    // in the process.
 	    File catdir =  getCatDirPath(cat);
-	    if (!catdir.exists()) throw new IOException("Category directory " + catdir + " does not exist. Has a new category been added?");
+	    if (!catdir.exists()) {
+		//throw new IOException("Category directory " + catdir + " does not exist. Has a new category been added?");
+		Logging.warning("Category directory " + catdir + " does not exist. Has a new category been added? Documents from this category won't be classified.");
+	    }
 	    File[] cfiles = catdir.listFiles();
 	    int cids [] = new int[cfiles.length];
 	    int nc=0;

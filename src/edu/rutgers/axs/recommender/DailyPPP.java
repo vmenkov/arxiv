@@ -272,7 +272,7 @@ public class DailyPPP {
 	TjAlgorithm1 algo = new TjAlgorithm1();
 	// rank by TJ Algo 1
 
-	SectionProgressIndicator spin = 
+	SectionProgressIndicator spin = (pin==null)? null:
 	    pin.mkSectionProgressIndicator(0.20, 0.80, 1000);
 	sd = algo.rank( upro, sd,  em, maxDocs, false, spin);
 

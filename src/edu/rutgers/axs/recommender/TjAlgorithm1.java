@@ -32,6 +32,7 @@ class TjAlgorithm1 {
 	algorithm as 	secondary keys for tie-breaking; they should be pre-set
 	as appropriate before calling this method.
 	@param nonlinear The utility function psi has a non-linear (sqrt) part.
+	@param pin Optional progress indicator. If non-null, used to provide progress info to the caller (which then may be displayed in real time via a web UI)
      */
     ArxivScoreDoc[] 
 	rank( UserProfile upro,    ArxivScoreDoc[] sd,

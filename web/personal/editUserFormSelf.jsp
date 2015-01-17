@@ -77,7 +77,7 @@ of <tt>1 in 8</tt>.  </p>
 
 <h3>Changing password and status</h3>
 
-<p>If you want to change your password, enter the new passowrd below (same word in both boxes). Otherwise just leave the boxes empty.</p>
+<p>If you want to change your password, enter the new password below (same word in both boxes). Otherwise just leave the boxes empty.</p>
 
 <p>
 <%= EditUser.pwTable() %>
