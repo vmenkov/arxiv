@@ -13,10 +13,10 @@
 #--   suggestion list generation requests for users in the SET_BASED program
 #
 # There is a provision to explicitly specify the value of $home (via
-# the 1st command-line argument), which is used as a base for finding
-# jar files etc. This is for the convenience of running the script as
-# a different user (e.g. with crontab)
-#----------------------------------------------------------------------
+# the "-home /home/vm293" command-line argument), which is used as a
+# base for finding jar files etc. This is for the convenience of
+# running the script as a different user (e.g. with crontab)
+# ----------------------------------------------------------------------
 
 /bin/date
 
@@ -25,13 +25,15 @@ set d=`/bin/date +'%Y-%m-%d'`
 echo "Today's log names will end in $d.log"
 
 echo home=$home
-
 echo arg0=$0
 
 
-if ("$1" == "") then
-else
+#-- Set the home directory as per the "-home" option. This is useful
+#-- if run as a different user.
+if ("$1" == "-home") then
+    shift
     set home=$1
+    shift
     echo "Setting home to $home"
 endif
 
@@ -79,7 +81,10 @@ set stoplist=${home}/arxiv/arxiv/WEB-INF/stop200.txt
 time java $opt -Dstoplist=${stoplist}  edu.rutgers.axs.bernoulli.Bernoulli recent >& bernoulli-${d}.log 
 
 #-- Updating class stats and recommendations for Exploration Engine ver. 4
-time java $opt  -Dstoplist=${stoplist}   edu.rutgers.axs.ee4.Daily update >& ee4-${d}.log 
+time java $opt  -Dstoplist=${stoplist}   edu.rutgers.axs.ee4.Daily update >& ee4-${d}.log time 
+
+#-- Updating class stats and recommendations for Exploration Engine ver. 5
+/usr/bin/time  java $opt edu.rutgers.axs.ee5.Daily update >& ee5-${d}.log time 
 
 #-- Updating user profiles and recommendations for the 3PR (PPP) engine
 time java $opt  -Dstoplist=${stoplist} edu.rutgers.axs.recommender.DailyPPP update >& ppp-${d}.log 
