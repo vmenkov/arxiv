@@ -310,7 +310,7 @@ public class Bernoulli {
 	    }
 	    em.getTransaction().commit();
 	}
-	
+	Logging.info("Bernoulli.addNewDocuments(): finished");
     }
 
 

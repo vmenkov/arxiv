@@ -13,6 +13,16 @@ if ("$1" == "-home") then
     echo "Setting home to $home"
 endif
 
+if ("$1" == "-days") then
+    shift
+    set days=$1
+    shift
+else 
+    days=7
+endif
+
+echo "Set days=$days"
+
 
 set opt="-DOSMOT_CONFIG=."
 
@@ -27,7 +37,7 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 
 #set opt="-cp ${cp} ${opt} -Drewrite=false"
-set opt="-cp ${cp} ${opt} -Drewrite=false -Doptimize=false -Ddays=7"
+set opt="-cp ${cp} ${opt} -Drewrite=false -Doptimize=false -Ddays=${days}"
 # -Dfrom=2012-01-16
 
 echo "opt=$opt"

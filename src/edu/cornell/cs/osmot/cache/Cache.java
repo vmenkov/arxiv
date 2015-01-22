@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.regex.*;
 
 import edu.cornell.cs.osmot.options.Options;
 import edu.cornell.cs.osmot.logger.Logger;
+import edu.rutgers.axs.util.Util;
+
 
 /**
  * This class implements a cache the search engine uses to generate snippets.
@@ -16,7 +19,7 @@ import edu.cornell.cs.osmot.logger.Logger;
  * This gets translated into a path for the form: cacheDir/blah/1234/1234567.txt
  * 
  * @author Filip Radlinski
- * @author Vladimir Menkov (minor mods, 2011)
+ * @author Vladimir Menkov (minor mods, 2011-2015)
  * @version 1.0, April 2005
  */
 public class Cache {
@@ -27,12 +30,24 @@ public class Cache {
     private int maxLength;
 
     private String cacheDirectory;
-    private String extension = ".txt";
+    private static final String TXT = ".txt";
+    private String extension = TXT;
 
     /** sets the extension added to all file names in this cache */
     public void setExtension(String e) {
 	extension = e;
     }
+
+    //    public static enum Structure {
+	/** Traditional directory structure, x.y maps to x/y  */
+    //	TRADITIONAL,
+	    /** Directory structure used in Paul Ginsparg's rsynced data
+		in 2015, where yymm.xxxx maps to arxiv/yymm/xxxx
+	     */
+    //	    RSYNC
+    //	    };
+
+    //private Structure structure = Structure.TRADITIONAL;
 
 	/**
 	 * Create a cache with the specified cache directory. The default length
@@ -206,36 +221,54 @@ public class Cache {
 		return false;
     }
 
-	/**
-	 * Return the filename this document is/would be stored in.
-	 * 
-	 * @param uniqId
-	 *            The unique identifier of the document.
-	 * @return The filename this document is/would be stored in.
-	 */
+    /**
+     * Return the filename this document is/would be stored in.
+     * 
+     * @param uniqId
+     *            The unique identifier of the document.
+     * @return The filename this document is/would be stored in.
+     */
     public String getFilename(String uniqId) {
-
-	return getFilename(uniqId, cacheDirectory, extension);
+	return getFilename(uniqId, cacheDirectory,
+			   //Structure.TRADITIONAL, 
+			   extension);
     }
 
-	/**
-	 * Return the filename the document with unique identifier uniqId is stored
-	 * if <dir>is the root of the cache. This is static so it allows the
-	 * filename to be found without actually creating a cache object.
-	 * 
-	 * @param uniqId
-	 *            The unique identifier of the document.
-	 * @param rootDir
-	 *            The root directory of the cache.
-	 * @return The filename this document would be stored in.
-
-	 @deprecated
-	 */
+    /**
+     * Return the filename the document with unique identifier uniqId is stored
+     * if <dir>is the root of the cache. This is static so it allows the
+     * filename to be found without actually creating a cache object.
+     * 
+     * @param uniqId
+     *            The unique identifier of the document.
+     * @param rootDir
+     *            The root directory of the cache.
+     * @return The filename this document would be stored in.
+     
+     @deprecated
+    */
     public static String getFilename(String uniqId, String rootDir) {
-	return getFilename( uniqId,  rootDir, ".txt");
+	return getFilename( uniqId,  rootDir, TXT);
     }
-    
-    public static String getFilename(String uniqId, String rootDir, String ext) {
+
+    static Pattern yymmPat  = Pattern.compile("\\d\\d\\d\\d");
+ 
+    public static String getFilename(String uniqId, String rootDir,
+				     String ext) {
+       return  getFilename( uniqId, rootDir, false, ext);
+   }
+
+    /** Creates a path for a traditional cache structure (which still
+	lives on osmot, even as we switched to the "rsync" style structure
+	in my.arxiv in 2015).
+     */
+    public static String getFilenameTraditional(String uniqId, String rootDir) {
+       return  getFilename( uniqId, rootDir, true, TXT);
+   }
+
+    public static String getFilename(String uniqId, String rootDir,
+				     boolean traditional,
+				     String ext) {
 
 	int l = uniqId.length();
 	String filename;
@@ -253,9 +286,16 @@ public class Cache {
 	    filename = filename + ext;
 
 	} else if (l > 3) {
-			
+
+	    String q[] = uniqId.split("\\.");
+	
+	    //final boolean traditional=false; //structure == Structure.TRADITIONAL
 	    // New arXiv ids have no slashes, just YYMM.nnnn			
-	    filename = rootDir + "/" + uniqId.replace('.','/')+ext;
+	    filename = rootDir + "/";
+	    if (!traditional && yymmPat.matcher(q[0]).matches()) {
+		filename += "arxiv/";
+	    }
+	    filename += uniqId.replace('.','/')+ext;
 			
 	} else {
 

@@ -14,6 +14,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.util.Util;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.search.*;
 
@@ -563,7 +564,7 @@ public class  SearchResults {
 	    readStdin() : argv;
 	
 	System.out.println( (cat? "Subject search":"Text search") +
-			    " for: " + join(" ",z) + "; since " + since);
+			    " for: " + Util.join(" ",z) + "; since " + since);
       
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
@@ -574,7 +575,7 @@ public class  SearchResults {
 	    sr = new SubjectSearchResults(searcher, z, since, maxlen);
 	    sr.reorderCatSearchResults(reader,  z);
 	} else {
-	    String s = join(" ", z);
+	    String s = Util.join(" ", z);
 	    sr =  new TextSearchResults(searcher, s,  maxlen);
 	}
 
@@ -635,16 +636,6 @@ public class  SearchResults {
 	return v.toArray(new String[0]);
     }
     
-    /** Like "join()" in perl. */
-    static String join(String sep, String[] v) {
-	StringBuffer s = new StringBuffer();
-	for(String z: v) {
-	    if (s.length()>0) s.append(" ");
-	    s.append(z);
-	}
-	return s.toString();
-    }
-
     /** Returns the value equal to the maximum value of ArticleEntry.age + 1
      */
     int getMaxAge( /* Vector<ArticleEntry> entries */) {

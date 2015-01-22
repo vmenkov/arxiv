@@ -78,6 +78,9 @@ public class BaseArxivServlet extends HttpServlet {
 	OutputStream ostream = response.getOutputStream();
 	PrintWriter out = new PrintWriter(ostream);
 
+	out.println("My.ArXiv server status report");
+	out.println("-----------------------------");
+
 	out.println("getContextPath()=" + request.getContextPath()  );
 	out.println("getMethod()=" + request.getMethod()  );
 	out.println("getPathInfo()=" + request.getPathInfo()  );
@@ -89,7 +92,9 @@ public class BaseArxivServlet extends HttpServlet {
 
 	out.println("");
 	out.println("My.ArXiv server ver. " + Version.getInfo() + " up and running since " + startTime);
-	out.println("Operation statistics since the restart time:");
+	out.println("Memory use stats: " +  Main.memoryInfo(null, false));
+	out.println("");
+	out.println("Operation statistics since the last restart:");
 	out.println("Accepted requests         : " + acceptedRequestCnt + 
 		    " (including: FilterServlet: " +filterServletRequestCnt +
 		    ", JudgmentServlet: " +judgmentServletRequestCnt +")");

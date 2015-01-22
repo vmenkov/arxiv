@@ -151,7 +151,6 @@ public class ArxivImporter {
 
     }
 
-
     private String  
      /** Location of pre-loaded article bodies (bulk copy) */
 	 bodySrcRoot = Options.get("ARXIV_TEXT_DIRECTORY"),
@@ -196,7 +195,7 @@ public class ArxivImporter {
      */
     static boolean getBodyFromWeb(String id, File storeTo) throws IOException    {
 	// The file path on the remote server
-	String doc_file = Cache.getFilename(id , "arXiv-cache");
+	String doc_file = Cache.getFilenameTraditional(id, "arXiv-cache");
 	if (doc_file==null) {
 	    System.out.println("Cannot figure remote file name for article id=" + id);
 	    return false;
@@ -274,8 +273,11 @@ public class ArxivImporter {
 	bodySrcRoot=_bodySrcRoot;
     }
 
-    public static String readBodyFromCache(String id, String bodySrcRoot) {
-	return readBody( id, bodySrcRoot, false);
+    /** Reads the document body from the specified directory tree. No
+	attempt to download from the web.
+     */
+    public static String readBodyFromCache(String id, String cacheRoot) {
+	return readBody( id, cacheRoot, false);
     }
 
     /** Finds the document body file in the specified dir tree
@@ -286,11 +288,11 @@ public class ArxivImporter {
 	@param canUpdateCache If this parameter is true, and the file
 	is not in the specified cache directory tree, this method also
 	tries to download it to that directory tree from Thorsten's
-	team's server. (Therefore, updating of the cache from the web
-	is a side effect of this method; it should not be called
-	unless you are also following up with importing the document
-	into Lucene.  Otherwise, the "isCached" test will be mislead
-	in the future ArxivImporter runs!)
+	team's server (osmot.cornell.edu). (Therefore, updating of the
+	cache from the web is a side effect of this method; it should
+	not be called unless you are also following up with importing
+	the document into Lucene.  Otherwise, the "isCached" test will
+	be mislead in the future ArxivImporter runs!)
 	
 	@param  bodySrcRoot The root of a file directory tree in which 
 	we'll look for the document body.
@@ -300,8 +302,12 @@ public class ArxivImporter {
     */
     private static String readBody( String id,  String bodySrcRoot,
 				   boolean canUpdateCache) {
-	
-	File q =  Indexer.locateBodyFile(id,  bodySrcRoot);
+
+	if (useRsyncData &&  canUpdateCache) throw new IllegalArgumentException("We are not supposed to update the rsync directory; rsync does it!");
+
+	//Cache.Structure structure=useRsyncData? Cache.Structure.RSYNC: Cache.Structure.TRADITIONAL;
+	File q =  Indexer.locateBodyFile(id,  bodySrcRoot//, structure
+					 );
 
 	if (q==null && canUpdateCache) {
 	    // can we get it from the web?
@@ -444,7 +450,7 @@ public class ArxivImporter {
 	    }
 	}
 	    
-	String whole_doc = readBody(paper, bodySrcRoot, true);
+	String whole_doc = readBody(paper, bodySrcRoot, !useRsyncData);
    
 	if (whole_doc!=null) {
 	    // this used Field.Store.NO before 2014-12-02; Field.Store.YES
@@ -789,7 +795,10 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 
     static boolean  optimize=true;
     static boolean fixCatsOnly = false;
-  
+
+    static final boolean useRsyncData = true;
+    
+
     /** Options:
 	<pre>
 	-Dtoken=xxxx   Resume from the specified resumption page

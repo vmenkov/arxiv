@@ -174,7 +174,10 @@ import edu.rutgers.axs.ParseConfig;
 	    else if (this == LOG_SUGGESTIONS_1) return "Log similarity: dot product of documents' log(TF) with the user profile. Reported scores are dot products";
 	    else if (this == TJ_ALGO_1_SUGGESTIONS_1) return  "Joachims' Algorithm 1: ranking documents to maximize the utility function. Reported 'scores' are documents' increments to the utility function.";
 	    else if (this == TJ_ALGO_2_USER_PROFILE) return "Joachims' Alghorithm 2: user profile updated based by updating the previously current user profile using the user's recent activity";
-	    else if (this == PPP_USER_PROFILE) return "3PR";
+	    else if (this == PPP_USER_PROFILE) return "3PR user profile";
+	    else if (this == PPP_SUGGESTIONS) return "3PR suggestions";
+	    else if (this == EE4_SUGGESTIONS) return "EE4 suggestions";
+	    else if (this == EE5_SUGGESTIONS) return "EE5 suggestions";
 	    else return "Unknown";
 
 	}

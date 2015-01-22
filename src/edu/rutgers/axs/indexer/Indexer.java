@@ -521,11 +521,14 @@ public class Indexer {
 	}
     }
 
-    /** @return path/id.txt. path/id.txt.gz, or null, based on what
-	can be found
+    /** @return path/id.txt. path/id.txt.gz, or null, based on which
+	file actually exists 
      */
-    static File locateBodyFile( String id,  String bodySrcRoot) {
- 	String doc_file = Cache.getFilename(id , bodySrcRoot);
+    static File locateBodyFile( String id,  String bodySrcRoot
+				//, Cache.Structure structure
+				) {
+ 	String doc_file = Cache.getFilename(id , bodySrcRoot //, structure
+					    );
 	//System.out.println("id="+id+", body at " + doc_file);
  	if (doc_file==null) {
 	    System.out.println("Document id " + id + " cannot be mapped to a cache path");

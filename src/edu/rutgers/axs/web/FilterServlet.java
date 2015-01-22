@@ -957,7 +957,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     static String report() {
 	if (filterServletRequestCnt == 0) {
-	    return "FilterServlet has not made any page requests to the ArXiv server yet";
+	    return "FilterServlet has not made any page requests to the ArXiv server since the last restart";
 	}
 	String q ="\nFilterServlet requests involve page retrieval from the ArXiv server at " + FilterServlet.ARXIV_BASE + "\n";
 

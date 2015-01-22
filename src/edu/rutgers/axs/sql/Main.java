@@ -68,15 +68,18 @@ public class Main {
 
     /** Reports memory use */
     public static void memory(String title) {
+	System.out.println(memoryInfo(title, true));	   	
+    }
+    public static String memoryInfo(String title, boolean doGc) {
 	Runtime run =  Runtime.getRuntime();
-	String s = (title.length()>0) ? " ("+title+")" :"";
-	run.gc();
+	if (doGc) run.gc();
+	String s = (title !=null && title.length()>0) ? " ("+title+")" :"";
 	long mmem = run.maxMemory();
 	long tmem = run.totalMemory();
 	long fmem = run.freeMemory();
 	long used = tmem - fmem;
-	System.out.println("[MEMORY]"+s+" max=" + mmem + ", total=" + tmem +
-			   ", free=" + fmem + ", used=" + used);	
+	return "[MEMORY]"+s+" max=" + mmem + ", total=" + tmem +
+	    ", free=" + fmem + ", used=" + used;	
     }
 
 }
