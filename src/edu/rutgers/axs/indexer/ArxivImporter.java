@@ -339,12 +339,18 @@ public class ArxivImporter {
 	    return null;
 	}
 
+	return readBodyFile(q);
+
+    }
+
+    /** Reads the specified document body file into a string */
+    private static String readBodyFile(File q) {
 	try {
 	    return Indexer.parseDocFile(q.getCanonicalPath());
 	} catch (IOException E) {
 	    System.out.println("Failed to read or parse document file " + q);
 	    return null;
-	}	
+	}	       
     }
 
     /** Returns the string value that should be stored in the
@@ -409,7 +415,8 @@ public class ArxivImporter {
 
 	if ( paper==null) {
 	    // an occasional problematic doc, like this one:
-	    // http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:0901.4014
+	    // http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:0901.4014  ,
+	    // which comes with <header status="deleted">
 	    System.out.println("Failed to extract id from the record. doc="+doc);
 	    return;
 	}
