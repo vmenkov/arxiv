@@ -309,24 +309,29 @@ public class ArxivImporter {
 	File q =  Indexer.locateBodyFile(id,  bodySrcRoot//, structure
 					 );
 
-	if (q==null && canUpdateCache) {
-	    // can we get it from the web?
-	    String doc_file = Cache.getFilename(id, bodySrcRoot);
-	    q = new File( doc_file);
-	    File g = q.getParentFile();
-	    if (g!=null && !g.exists()) {
-		boolean code = g.mkdirs();
-		System.out.println("Creating dir " + g + "; success=" + code);
-	    }
-	    try {
-		boolean code=getBodyFromWeb( id, q);
-		System.out.println("Tried to get data from the web for  document file " + doc_file +", success=" + code);
-	    } catch (IOException E) {
-		System.out.println("Failed to copy data from the web for  document file " + doc_file);
-		E.printStackTrace(System.out);
-		System.exit(0);
+	if (q==null) {
+	    if (canUpdateCache) {
+		// can we get it from the web?
+		String doc_file = Cache.getFilename(id, bodySrcRoot);
+		q = new File( doc_file);
+		File g = q.getParentFile();
+		if (g!=null && !g.exists()) {
+		    boolean code = g.mkdirs();
+		    System.out.println("Creating dir " + g + "; success=" + code);
+		}
+		try {
+		    boolean code=getBodyFromWeb( id, q);
+		    System.out.println("Tried to get data from the web for  document file " + doc_file +", success=" + code);
+		} catch (IOException E) {
+		    System.out.println("Failed to copy data from the web for  document file " + doc_file);
+		    E.printStackTrace(System.out);
+		    System.exit(0);
+		    return null;
+		}	
+	    } else {
+		System.out.println("There is no pre-loaded document file for " + id);
 		return null;
-	    }	
+	    }
 	}
 
 	if (!q.canRead()) {

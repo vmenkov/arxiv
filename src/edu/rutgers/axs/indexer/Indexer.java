@@ -544,6 +544,9 @@ public class Indexer {
 	if (q==fz) {
 	    System.out.println("Will use compressed file: " + q);
 	}
+	if (q==null) {
+	    System.out.println("Nether file exists: " + f0 +" , " + fz);
+	}
 	return q;
     }
 

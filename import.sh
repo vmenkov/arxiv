@@ -24,7 +24,7 @@ endif
 echo "Set days=$days"
 
 
-set opt="-DOSMOT_CONFIG=."
+set opt="-DOSMOT_CONFIG=${home}/arxiv/arxiv"
 
 set lib=$home/arxiv/lib
 

@@ -274,28 +274,43 @@ public class Cache {
 	String filename;
 	
 	if (l > 3 && uniqId.indexOf("/") != -1) {
+	    // E.g,  id=physics/9912017 , maps to physics/9912/9912017.txt
+
+	    String z[] = uniqId.split("/");
+	    if (z.length!=2 || z[1].length() < 5) throw new IllegalArgumentException("Cannot parse article ID " + uniqId +"; expected 'subject/XXXXXXX'");
+	    String cat = z[0];
+	    // A dot followed by stuff in the type should be discarded
+	    // (e.g. cs.th/1234567 => cs/1234567)
+	    cat = cat.replaceFirst("\\.[A-Z]+/", "/");
+
+	    String prefix = z[1].substring(0,4);
 
 	    // The usual filename code we use
-	    filename = rootDir + "/" + uniqId.substring(0, l - 3) + "/"
-			    + uniqId.substring(uniqId.indexOf("/") + 1, l);
+	    filename = rootDir + "/" + cat + "/" + prefix + "/" + z[1];
+	    // uniqId.substring(0, l - 3) + "/"   + uniqId.substring(uniqId.indexOf("/") + 1, l);
 
 	    // A dot followed by stuff in the type should be discarded
 	    // (e.g. cs.th/1234567 => cs/1234567)
-	    filename = filename.replaceFirst("\\.[A-Z]+/", "/");
+	    //	    filename = filename.replaceFirst("\\.[A-Z]+/", "/");
 
 	    filename = filename + ext;
 
 	} else if (l > 3) {
+	    // New arXiv ids have no slashes, just YYMM.nnnn			
+	    // E.g. 1412.0001  or 1501.00001, map to arxiv/1412/1412.0001.txt or arxiv/1501.00001.txt
 
 	    String q[] = uniqId.split("\\.");
 	
-	    //final boolean traditional=false; //structure == Structure.TRADITIONAL
-	    // New arXiv ids have no slashes, just YYMM.nnnn			
-	    filename = rootDir + "/";
-	    if (!traditional && yymmPat.matcher(q[0]).matches()) {
-		filename += "arxiv/";
+	    if (!yymmPat.matcher(q[0]).matches()) throw new IllegalArgumentException("Cannot parse article ID " + uniqId +"; expected 'YYMM.XXXX[X]'");
+
+	    filename = rootDir + "/";		
+	    if (traditional) {
+		//  map to YYMM/XXXX.txt
+		filename += uniqId.replace('.','/')+ext;
+	    } else {
+		//  map to arxiv/YYMM/YYMM.XXXX.txt
+		filename += "arxiv/" + q[0] + "/" + uniqId + ext;
 	    }
-	    filename += uniqId.replace('.','/')+ext;
 			
 	} else {
 
