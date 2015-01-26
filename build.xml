@@ -13,6 +13,7 @@
      deploy : "jar" + deploy the code to the Tomcat webapps directory
      reload : "deploy" + cause Tomcat to reload the application
      javadoc : "compile" + create Javadoc API documentation
+     deploy-javadoc: "javadoc" + deploy docs to the Tomcat webapps directory
 
      Apache Ant is available for most modern operating systems.
      You can read more about Apache Ant at http://ant.apache.org/manual/index.html

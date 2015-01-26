@@ -19,7 +19,9 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.html.QS;
 
-
+/** The parent class for most classes in this package. Its constructor
+    initializes certain member variables that are needed for processing
+    all JSP pages. */
 public class ResultsBase {
 
     HttpServletRequest request;

@@ -17,13 +17,14 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 
 
- /** Pulls in and serves out a page from arxiv.org
+ /** Pulls in and serves out a page from arxiv.org.
 
-     URLs are: http://my.arxiv.org/arxiv/FilterServlet/XXX[?query_string]
+     <p>
+     URLs served by this servlet are as follows: http://my.arxiv.org/arxiv/FilterServlet/XXX[?query_string] .
 
-     with XXX is the original URI of a request to arxiv.org. E.g., XXX=
+     Here XXX is the original URI of a request to arxiv.org. E.g., XXX=
           /find/all/1/all:+reptile/0/1/0/all/0/1  
-     (in a properly encoded form),  representing the URL such as 
+     (in a properly encoded form),  represents the URL  
           http://arxiv.org/find/all/1/all:+reptile/0/1/0/all/0/1
 
  */

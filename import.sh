@@ -18,7 +18,7 @@ if ("$1" == "-days") then
     set days=$1
     shift
 else 
-    days=7
+    set days=7
 endif
 
 echo "Set days=$days"

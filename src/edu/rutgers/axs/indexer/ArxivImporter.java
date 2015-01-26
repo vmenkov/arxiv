@@ -71,7 +71,16 @@ public class ArxivImporter {
     static private XMLtoLucene  xml2luceneMap = XMLtoLucene.makeMap();
 
     static class Tags {
-	final static String RECORD = "record", HEADER="header", METADATA="metadata";
+	final static String RECORD = "record", HEADER="header", METADATA="metadata", IDENTIFIER = "identifier";
+    }
+
+    /** @param hie Something like this:  <identifier>oai:arXiv.org:0901.4014</identifier> 
+	@return Something like oai:arXiv.org:0901.4014
+     */
+    private static String parseIdentifierTag( Element hie) {
+	if (hie==null) return null;
+	Node nx = hie.getFirstChild();
+	return (nx instanceof Text) ? nx.getNodeValue() : null;
     }
 
     /** Returns null if doc is deleted */
@@ -79,7 +88,13 @@ public class ArxivImporter {
 	Element header = XMLUtil.findChild(e, Tags.HEADER, false);
 	if (header!=null) {
 	    String status=header.getAttribute("status");
-	    if (status!=null && status.equals("deleted")) return null;
+	    // <identifier>oai:arXiv.org:0901.4014</identifier>
+	    Element hie = XMLUtil.findChild(e, Tags.IDENTIFIER, false);
+	    String oaiId = parseIdentifierTag(hie);
+	    if (status!=null && status.equals("deleted")) {
+		System.out.println("Found record for deleted document " + oaiId);
+		return null;
+	    }
 	}
 
 	org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
@@ -90,6 +105,7 @@ public class ArxivImporter {
     }
 
     private IndexWriter makeWriter() throws IOException {
+	Logging.info("makeWriter, dir=" + indexDirectory);
 	IndexWriterConfig iwConf = new IndexWriterConfig(Common.LuceneVersion, analyzer);
 	iwConf.setOpenMode(IndexWriterConfig.OpenMode.APPEND);	
 	return new IndexWriter(indexDirectory, iwConf);
@@ -277,7 +293,8 @@ public class ArxivImporter {
 	attempt to download from the web.
      */
     public static String readBodyFromCache(String id, String cacheRoot) {
-	return readBody( id, cacheRoot, false);
+	File q = readBody( id, cacheRoot, false);
+	return q==null? null : readBodyFile(q);
     }
 
     /** Finds the document body file in the specified dir tree
@@ -300,7 +317,7 @@ public class ArxivImporter {
 	@return The full text of the document's body, or null if none
 	could be obtained.
     */
-    private static String readBody( String id,  String bodySrcRoot,
+    private static File readBody( String id,  String bodySrcRoot,
 				   boolean canUpdateCache) {
 
 	if (useRsyncData &&  canUpdateCache) throw new IllegalArgumentException("We are not supposed to update the rsync directory; rsync does it!");
@@ -338,9 +355,7 @@ public class ArxivImporter {
 	    System.out.println("Document file is not readable: " + q);
 	    return null;
 	}
-
-	return readBodyFile(q);
-
+	return q;
     }
 
     /** Reads the specified document body file into a string */
@@ -387,7 +402,7 @@ public class ArxivImporter {
 	appropriate. This involves creating a Document object (with
 	everything parsed and indexed in it) and storing it in the
 	Lucene index, as well as caching both the abstract and the
-	document body in their respective caches, (We have one cache
+	document body in their respective caches. (We have one cache
 	for doc bodies, and one for metdata/abstracts).
 
 	@param The metadata in the form of an XML format, as received
@@ -414,9 +429,10 @@ public class ArxivImporter {
 	String paper = doc.get(ArxivFields.PAPER);
 
 	if ( paper==null) {
-	    // an occasional problematic doc, like this one:
-	    // http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:0901.4014  ,
-	    // which comes with <header status="deleted">
+	    // When a document is deleted, its new entry ( which comes
+	    // with <header status="deleted">) appears in the recent
+	    // doc feed. These entries look like this:
+	    // http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:0901.4014
 	    System.out.println("Failed to extract id from the record. doc="+doc);
 	    return;
 	}
@@ -462,7 +478,8 @@ public class ArxivImporter {
 	    }
 	}
 	    
-	String whole_doc = readBody(paper, bodySrcRoot, !useRsyncData);
+	File q = readBody(paper, bodySrcRoot, !useRsyncData);
+	String whole_doc = (q==null)? null: readBodyFile(q);
    
 	if (whole_doc!=null) {
 	    // this used Field.Store.NO before 2014-12-02; Field.Store.YES
@@ -485,8 +502,7 @@ public class ArxivImporter {
 	Article.getArticleAlways( em,  paper);
 
 	// write data to Lucene, and cache the doc body
-	String doc_file = whole_doc==null? null:
-	    Indexer.locateBodyFile(paper,  bodySrcRoot).getCanonicalPath();
+	String doc_file = whole_doc==null? null:   q.getCanonicalPath();
 	Indexer.processDocument(doc, doc_file,	true, writer, bodyCacheRoot);
 
 	pcnt++;
@@ -809,8 +825,7 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
     static boolean fixCatsOnly = false;
 
     static final boolean useRsyncData = true;
-    
-
+  
     /** Options:
 	<pre>
 	-Dtoken=xxxx   Resume from the specified resumption page
@@ -871,8 +886,6 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    writer.close();
 	} else if (cmd.equals("files")) {
 	    // processing XML files with metadata
-	    IndexWriter writer =  imp.makeWriter(); 
-	    IndexReader reader = IndexReader.open(writer, false);
 	    for(int i=1; i<argv.length; i++) {
 		String s= argv[i];
 		if (s.equals("")) continue;
@@ -883,7 +896,12 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 		Element e = isUrl?  getPage(s) :  XMLUtil.readFileToElement(s);
 		if (e.getNodeName().equals(Tags.RECORD)) {
 		    System.out.println("Found a record; processing");
+
+		    IndexWriter writer =  imp.makeWriter(); 
+		    IndexReader reader = IndexReader.open(writer, false);
 		    imp.importRecord(e, writer, reader, rewrite);
+		    reader.close();
+		    writer.close();
 		} else {
 		    System.out.println("parseResponse");
 		    tok = imp.parseResponse(e, //writer, reader, 
@@ -893,11 +911,11 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    }
 	    if (optimize) {
 		System.out.println("Optimizing index... ");
+		IndexWriter writer = imp.makeWriter(); 
 		writer.optimize();
 		writer.close();
 	    }
-	    reader.close();
-	    writer.close();
+
 	} else if (cmd.equals("test")) {
 	    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -936,7 +954,11 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    System.out.println("Unrecognized command: " + cmd);
 	}
 	System.out.println("imported "+imp.pcnt+" docs, among which missing body files for "+ imp.missingBodyIdList.size() +" docs");
-	PrintWriter fw = new PrintWriter(new FileWriter("missing.txt"));
+	File ms = new File("missing.txt");
+	if (!ms.canWrite()) {
+	    throw new IOException("Cannot write file " + ms +"; please check file and directory permissions!");
+	}
+	PrintWriter fw = new PrintWriter(new FileWriter(ms));
 	for(String s: imp.missingBodyIdList){
 	    fw.println(s);
 	}

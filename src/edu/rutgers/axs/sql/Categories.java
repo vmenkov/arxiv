@@ -17,6 +17,7 @@ As per Simeon Warner, 2012-12-07:
 
 <pre>
 Long ago ao-sci was moved to physics.ao-ph, see http://arxiv.org/list/physics.ao-ph/recent for recent subs.
+</pre>
 */
 
 public class Categories {
@@ -335,7 +336,7 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
     }
 
    /** Looks up the major category within which the category with the
-       specified full name.
+       specified full name id located.
 
 	@param fullname = "major.minor", or just "major" (if "major" has no 
      subcats) */
@@ -387,8 +388,8 @@ addMinor("q-fin","TR","Trading and Market Microstructure");
     }
 
 
-    /** Prepares a special-purpose box set for the "add discovered categories" feature
-	in EE5 */
+    /** Similar to mkCatBoxes, prepares a special-purpose box set for
+	the "add discovered categories" feature in EE5 */
     static public String mkCatBoxes2(User u, Classifier.CategoryAssignmentReport report) {
 	if (u==null) throw new IllegalArgumentException("mkCatBoxes2: no user specified!");
 

@@ -2,10 +2,14 @@ package  edu.rutgers.axs;
 
 import java.util.*;
 
+/** Auxiliary class used to report time spent by the computer
+ * executing various parts of a Java application. */
 public class Profiler {
 
     private boolean on = true;
 
+    /** Identifying codes for various sections of the application
+	being profiled. Modify this as required. */
     public enum Code {
 	OTHER,
 	    CLUSTERING,
@@ -31,7 +35,8 @@ public class Profiler {
 	return b.toString();
     }
 
-
+    /** Beginning of a particular profiling section.
+	@param x identifying code for the secion. */
     public void push(Code x) {
 	if (!on) return;
 	Date now = new Date();
@@ -44,6 +49,8 @@ public class Profiler {
 	started = now;
     }
 
+    /** End of a particular profiling section.
+	@param x identifying code for the secion; it should be the same as the code in the matching push() call. */
     public void pop(Code x) {
 	if (!on) return;
 	Date now = new Date();
@@ -53,6 +60,7 @@ public class Profiler {
 	started = now;
     }
 
+    /** End of section x and beginning of section y */
     public void replace(Code x, Code y) {
 	if (!on) return;
 	Date now = new Date();
@@ -62,6 +70,7 @@ public class Profiler {
 	started = now;
     }
 
+    /** Produces a report that can be printed at the end of the program's execution. */
     public String report() {
 	if (!on) return "Profiling OFF";
 	String s = "";
