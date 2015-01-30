@@ -18,7 +18,7 @@
 <h1>My.arXiv data research main page</h1>
 
 
-<h2>User Management Center</h2>
+<h2><a name="admin">User Management Center</a></h2>
 
 <ul>
 <li><A href="../personal/editUserFormSelf.jsp">Edit your own user record</a>
@@ -80,7 +80,7 @@ The <a href="../LogoutServlet">logout link</a> -- use that to explicitly termina
 </ul>
 
 
-<h2>Data Research Center</h2>
+<h2><a name="research">Data Research Center</a></h2>
 <ul>
 
 <li><A href="../BaseArxivServlet">Current server activity and performance statistics</a> 
@@ -101,6 +101,8 @@ The <a href="../LogoutServlet">logout link</a> -- use that to explicitly termina
 <h2>Documentation Center</h2>
 
 <ul>
+
+<li><A href="overview.html">My.ArXiv overview</a> - for developers / maintenance programmers, as well as for curious PIs
 
 <li><A href="../doc/html/api/">API documentation</a> - for developers / maintenance programmers, or those who want to reuse some of my.arxiv.code
 

@@ -1,0 +1,135 @@
+<html>
+<head>
+<title>My.ArXiv overview</title>
+</head>
+<body>
+<h1>My.ArXiv overview</h1>
+
+<p>This document is intended to give a high-level view of My.ArXiv,
+along with some essential details, to people who may be involved in its
+maintenance, or may be adding new features to it.
+
+<h2>My.Arxiv's Functionality</h2>
+
+<p>My.ArXiv is a web application that serves as an extension
+of <a href="arxiv.org">arxiv.org</a>, a Cornell-University-run digital
+library that, as of early 2015, contains over one million of
+user-submitted scientific articles. My.ArXiv's main role is to provide
+several types of personalized recommendations to users; there are
+certain other personalization features as well.
+
+<p>In order to do it, My.ArXiv relies on ArXiv.org's article database,
+which is largely replicated on the My.ArXiv server. My.ArXiv has its
+own user base (which, alas, is not integrated with ArXiv's own user
+registration system); information about each user's history of
+interaction with the system is stored, and is used to generate
+personalization recommendation both for the user himself, and,
+possibly, for other My.ArXiv users.
+
+<p>Below is the list of principal functions of My.ArXiv. Some of these
+functions are carried out by My.ArXiv's web application, and others,
+by a set of auxiliary command-line run applications (which are
+actually run by cron, typically on daily basis).
+
+<ul>
+<li>Maintaining an article database, which largely duplicates the
+article data stored in ArXiv.org itself. Most of the article data are
+stored in our Lucene data store; there is also the <tt>Article</tt>
+table in the MySQL database, for easier linkage with user activity and
+user recommendation data.
+
+<li>Managing users. User data are stored in the MySQL database. The
+My.ArXiv web application includes tools for self-service user
+registration and user profile editing, as well as user administration
+tool.  Each registered user selects his "subject categories of
+interest", which are used for recommendation generation. 
+
+<li>Invitation management. Presently (early 2015), users can register
+at My.ArXiv by invitation only; an invitation code can be sent by
+mail, or becomes available to a user after he uses the Session-Based
+recommender for a while.  Each invitation code is associated with a
+particular experiment plan. The invitation management tool is used to
+create, open or close invitations.
+
+<li>Generating and displaying web pages of several types:
+<ul>
+<li>Displaying ArXiv.org pages. An important part of My.ArXiv
+operations is displaying web pages taken from the ArXiv.org main site,
+and slightly personalized for our needs. Virtually all pages from
+ArXiv.org can be displayed to the user by My.ArXiv, via its
+FilterServlet tool. FilterServer modifies the pages, rewriting the
+links to other ArXiv.org pages so that they will now point to the
+respective My.ArXiv FilterServlet pages; thus the user will continue
+browsing arxiv.org pages thru My.ArXiv. This allows us to record the
+user's activity; in addition, FilterServlet inserts rating buttons
+into some pages (article lists, article detail pages), which allow the
+user to send us explicit feedback on articles, or to save articles to
+his folder.
+
+<li>Generating and displaying recommendation lists. This is the most
+important functionality of My.ArXiv. There are several types of
+recommendation lists, and they are generated in different ways. This
+is discussed under <a href="#sug">Recommendations</a>.
+
+<li>Generating various My.ArXiv-specific pages, intended to provide
+user with a variety of personalized experiences. This includes, for
+example:
+<ul>
+<li>search page (driven by My.ArXiv's own search tool, rather than the one in arxiv.org)
+<li>self-service user registration and account service system
+<li>user personal folder page, which is like an ArXiv bookmark list
+<li>user document upload system. User-uploaded documents are used for recommendation generation in several experimental plans 
+
+<li>Pages for various <a href="index.jsp#research">research</a> and <a href="index.jsp#admin">administration</a> tools
+</ul>
+
+</ul>
+
+<li>Recording user activity. Much of the interaction of registered
+users, and, to some extent, even of unregistered (anonymous) users is
+recorded in My.ArXiv. The activity data (known as "Actions") are
+stored in the <tt>Action</tt> table in the MySQL database. A large variety of user actions are recorded, including the following:
+<ul>
+<li>Viewing an article (abstract or PDF, etc), or merely expanding the
+article information paragraph for a particular article when viewing a
+list of articles.
+<li>Explicitly "judging" (rating) an article as useful or not, via rating tools
+that appear in some My.ArXiv pages.
+<li>Paging through multi-page article lists (e.g., the recommendation list shown to each user in the site's main page)
+<li>Adding an article to one's "personal folder" (similar to bookmarking)
+<li>A document upload (discussed below) is also reflected in Action record
+</ul>
+
+</ul>
+
+<h2><a name="sug">Personalized recommendations</a></h2>
+
+<p>My.ArXiv's main function is generating personalized recommendation
+lists for users. Each recommendation list consists of a number of
+ArXiv articles selected based on a certain algorithm's ideas as to
+what may be of interest to the user. There are two main types of
+recommendations, presented in very different ways: session-based and
+daily. For either type of recommendations, several algorithms are
+available.
+
+<h3>Session-based recommendations</h3>
+
+<p>Session-based recommendations are available to anonymous (not
+logged-in) and registered (logged-in) user alike. The only user
+actions used to generate these recommendation are those recorded
+during the current session.  (A session starts once you start
+interacting with the My.ArXiv web site; it ends after 30 minutes of
+inactivity). Typically, once you've viewed at least 3 pages (excluding
+pages listed on your daily recommendation list, if you are a
+registered user), a small Session-Based Recommender (a.k.a "Session
+Buddy") pop-up window appears on your screen; it displays a short list
+of articles that are deemed to be particularly relevant to your
+interests, based on your activity in this session so far.
+
+<p>There are several algorithms for finding relevant articles for the
+purposes of generating the session-based recommendation list (SBRL).
+
+<h3>Daily recommendations</h3>
+
+</body>
+</html>
