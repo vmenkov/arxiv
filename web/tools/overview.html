@@ -5,11 +5,13 @@
 <body>
 <h1>My.ArXiv overview</h1>
 
+<div align=center><em>Last edit: 2015-02-17</em></div>
+
 <p>This document is intended to give a high-level view of My.ArXiv,
 along with some essential details, to people who may be involved in its
 maintenance, or may be adding new features to it.
 
-<h2>My.Arxiv's Functionality</h2>
+<h2>My.Arxiv's Functionality overview</h2>
 
 <p>My.ArXiv is a web application that serves as an extension
 of <a href="arxiv.org">arxiv.org</a>, a Cornell-University-run digital
@@ -129,7 +131,41 @@ interests, based on your activity in this session so far.
 <p>There are several algorithms for finding relevant articles for the
 purposes of generating the session-based recommendation list (SBRL).
 
+<p>See a table of SBR methods <a href="index.jsp#sb">here</a>.
+
 <h3>Daily recommendations</h3>
+
+<p>More expansive recommendations are produced nightly by several
+recommendation engines that run every night, after new articles have
+been imported into My.ArXiv. A recommendation list is produced for
+each registered users, making use of all available information about
+the user's activity.
+
+<p>Each My.ArXiv user is enrolled into one of My.ArXiv's several
+"experiment plans" (aka "programs"); each experiment plan has its
+particular method for generating recommendation lists. Supported
+experiment plans, as defined in the enum type User.Program, include the following:
+<ul>
+<li>SET_BASED, Thorsten Joachim's original recommender based on the user's previous activity and document content
+<li>PPP, Thorsten's Perturbed Perceptron (3PR)
+<li>EE3, Peter Frazier's Exploration - Exploitation ver. 3
+<li>EE4, Peter Frazier's Exploration - Exploitation ver. 4
+<li>EE5, Peter Frazier's Exploration - Exploitation ver. 5.
+</ul>
+
+<p>
+The SET_BASED and PPP methods maintain a user profile vector for each
+user, based on the content of the documents the user has interacted
+with in a "positive" and "negative" ways. Article recommendations are
+made based on a match between the user profile and the content of
+the recommended articles.
+
+<p>
+The EE methods divide each article category into several subsets
+(clusters); different clustering techniques are used in EE4 and
+EE5. (The one for EE5 is implemented by Xiaoting Zhao's code, and is
+not part of My.ArXiv's own codebase). 
+
 
 </body>
 </html>
