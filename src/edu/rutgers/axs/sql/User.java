@@ -14,7 +14,14 @@ import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.sb.SBRGenerator;
 import edu.rutgers.axs.bernoulli.Bernoulli;
 
-
+/** A User entry contains basic information about one My.ArXiv
+    user. Unlike most other persistent (OpenJPA) classes, the underlying
+    table for this class is not named the same as the class; instead, it
+    is named "arxiv_users". This inconsistency comes from an early attempt
+    to share this table with  Tomcat's authentication system. That attempt 
+    was later abandoned (as I could not get it to work quite right on all
+    systems).
+ */
 @Entity 
     @Table(name="arxiv_users", 
 	   uniqueConstraints=@UniqueConstraint(name="arxiv_user_name_cnstrt", columnNames="user_name") )
