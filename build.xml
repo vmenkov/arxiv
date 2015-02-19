@@ -81,8 +81,8 @@
   <available file="${tomcat.home.rutgers}"/>
 </condition>
 
-<!-- <property name="app.name"       value="arxiv"/> -->
-<property name="app.name"       value="arxiv.laurent"/>
+<property name="app.name"       value="arxiv"/>
+<!-- <property name="app.name"       value="arxiv.laurent"/> --> 
 <!-- property name="app.name"       value="arxiv.tmp"/ -->
 <property name="deploy.home"    value="${tomcat.home}/webapps/${app.name}"/>
 <property name="dist.home"      value="${deploy.home}"/>
