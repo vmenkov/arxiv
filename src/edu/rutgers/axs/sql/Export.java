@@ -6,7 +6,7 @@ import java.lang.reflect.*;
 import javax.persistence.*;
 
 
-/** Exports the content of main ICD data tables
+/** An aixiliary utility, exports the content of some My.ArXiv data tables.
  */
 public class Export {
 
@@ -29,17 +29,20 @@ public class Export {
     public static void main(String[] args) throws IOException {
 	EntityManager em = getEM();
 	try {
-	    //dumpTable(em,"Respondent");
-	    //dumpTable(em,"PhoneCall");
-	    //dumpTable(em,"Response");
-	    dumpTable(em,"Action");
-	    
+	    dumpTable(em,"User");	    
+	    dumpTable(em,"Action");	    
 	} finally {
 	    em.close();
 	}
 
     }
 
+    /** Reads the entire content of a SQL table corresponding to a particular class, 
+	and saves it in a SQL file (as a huge "insert" statement). This may or
+	may not be usable, depending on the data types in use. This code has 
+	not been maintained for a long time.
+	@param name The name of the Java class corresponding to a SQL table.
+     */
     @SuppressWarnings("unchecked")
      private static void dumpTable(EntityManager em, String name) 
 	throws IOException  {

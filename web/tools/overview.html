@@ -166,6 +166,107 @@ The EE methods divide each article category into several subsets
 EE5. (The one for EE5 is implemented by Xiaoting Zhao's code, and is
 not part of My.ArXiv's own codebase). 
 
+<h2>My.ArXiv Components</h2>
+
+<p>In this section, we briefly review the data stored, modified, and used by My.ArXiv.
+
+<h3>Lucene Datastore</h3>
+
+<p>The Lucene data store, residing under
+/data/arxiv/arXiv-index/ , is used to store the full text and metadata of all ArXiv articles. It is accessed via the Lucene Java API.
+
+<p>The data store is updated nightly by a cron-driven command-line
+application, <a href="#ArxivImporter">ArxivImporter</a>, which gets
+the list of recently uploaded or updated articles from Arxiv's OAI2
+web interface, and the article bodies, from the files (in /data/txt/ )
+that are loaded daily to our server daily by Paul Ginsparg rsync
+application.
+
+<p>The document information in the data store is accessed both by the
+My.ArXiv web application and by various cron-driven command line applications.
+
+<p>The design of My.ArXiv's Lucene data store was influenced by the
+design of the data store that was previously used by Throsten
+Joachim's team in their project on osmot and kodiak. However, over the
+years out design has been significantly changed, to accommodate the needs of various My.ArXiv components.
+
+<p>The Java source code working with the Lucene data store is found primarily 
+in the package <a href="../doc/html/api/edu/rutgers/axs/indexer/package-summary.html">edu.rutgers.axs.indexer</a>.
+
+<h3>MySQL database</h3>
+
+<p>
+The MySQL database stores the greatest variety of information among
+all My.ArXiv's data sources. In particular, it contains information
+about My.ArXiv users and their interaction with the system (both what
+the user did [e.g. the Action table or the Query table] and what the
+system presented to the user [e.g. the PresentedList table]).
+
+<p>In production, the data in the MySQL database are primarily
+accessed via
+the <a href="http://docs.oracle.com/javaee/6/api/javax/persistence/package-summary.html">javax.persistence</a>
+interface, as supported by OpenJPA. Occasionally, <emad hoc</em> SQL
+queries and updates can be fed to the server directly with the command
+line interface (script mysql.sh)
+
+<p>Following the javax.persistence / OpenJPA paradigm, we have one Java class 
+(in the package <a href="../doc/html/api/edu/rutgers/axs/sql/package-summary.html">edu.rutgers.axs.sql</a>) mapped to one table in the MySQL database.
+
+<p>
+For a brief overview of the tables contained in the MySQL database, and the JPQL or SQL that can be used to access them (in particular, via our <a href="queryForm.jsp">interactive tool</a>), see the <a href="manual.html">My.arXiv database query guide</a>
+
+<h3>My.ArXiv disk files</h3>
+
+<p>Besides storing document information in the Lucene data store, and
+various transactional data in the MySQL database, we also store
+certain information in disk files. These files, located under
+/data/arxiv/arXiv-data/ , serve several purposes:
+<ul>
+<li>User-specific files, in directory /data/arxiv/arXiv-data/user. This directory has
+one subdirectory for each user. The main class controlling writing these files and access
+to them is 
+<ul>
+<li>User-uploaded documents (the "Toronto system"), in subdirectories upload_pdf and upload_txt.
+<li>User profile files and "suggestion lists" (lists of recommended articles) for whatever experimental plan the user is enrolled in. The subdirectory names are based on the specific functionality.
+</ul>
+<li>Non-user specific files containing data for a particular recommendation engine. Presenntly, we only have these kind of data for EE4 (document clustering computed by My.ArXiv's own application, <a href="/doc/html/api/edu/rutgers/axs/ee4/KMeans.html">KMeans</a>), and EE5 (the data obtained from Xiaoting).
+</ul>
+
+<h3>Coaccess matrices</h3>
+
+<p>Outside of the realm of My.ArXiv proper, but indirectly used by it, are the data files of the <a href="#coaccess">Coaccess Server</a>.
+
+<h3>Data from arxiv.org</h3>
+
+<p>A variety of data is regularly uploaded to the My.ArXiv server from the main arxiv.org servcer, using tools such as rsync. The My.ArXiv web application does not directly access those files, but some of them are directly or indirectly used by My.ArXiv's associated command-line applications. This includes:
+
+<ul>
+<ul>Article bodies,  in /data/txt, used by the <a href="#ArxivImporter">ArxivImporter</a>.
+
+<ul>Usage data (user-article interactions). These are used e.g. to build the coaccess matrix for the <a href="#coaccess">Coaccess Server</a>. These are also used by the (not-so-successful) history clustering tool (<a href="/doc/html/api/edu/rutgers/axs/ee4/HistoryClustering.html">HistoryClustering</a>) in EE4.
+
+<ul>A variety of data is used by certain other research applications; we have a number of shell scripts in My.ArXiv's main directory that extracts and formats the data in various ways.
+</ul>
+
+<h2>My.Arxiv command-line applications</h2>
+
+<p>Many of the applications listed in this section run every night, initiated by cron.
+
+<h3><a name="ArxivImporter">ArxivImporter</a></h3>
+
+<p>An essential tool, ArxivImporter starts the nightly series of cron
+jobs.  It updates the Lucene data store, making use of the list of
+recently uploaded or updated articles from Arxiv's OAI2 web interface,
+and the article bodies, from the files (in /data/txt/ ) that are
+loaded daily to our server daily by Paul Ginsparg rsync application.
+
+<p>This tool's main class is 
+<a href="../doc/html/api/edu/rutgers/axs/indexer/ArxivImporter.html">ArxivImporter</a>. 
+
+<h2><a name="coaccess">Coaccess Server</a></h2>
+
+<p>The Coaccess Server is not, strictly speaking, part of My.ArXiv. It is a separate web application (<a href="http://my.arxiv.org/coaccess/">http://my.arxiv.org/coaccess/</a>); however, it has been created primarily for My.ArXiv's needs.
+
 
 </body>
 </html>

@@ -130,7 +130,8 @@ public class KMeans {
   }
    
 
-    /** @param maxn 
+    /** Carries out document clustering within each category.
+	@param maxn 
      */
     static int clusterAll(ArticleAnalyzer z, EntityManager em, int maxn) throws IOException {
 	ArticleAnalyzer.setMinDf(10); // as PG suggests, 2013-02-06
