@@ -29,6 +29,7 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 set opt="-cp ${cp} ${opt}"
 #set opt="-cp ${cp} ${opt} -Ddays=7"
 # -Dfrom=2012-01-16
+set opt="${opt} -Ddays=1"
 
 # echo "opt=$opt"
 

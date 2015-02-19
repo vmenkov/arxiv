@@ -56,6 +56,8 @@ class SBRGThread extends Thread {
 	IndexSearcher searcher = null;
 
 	EntityManager em=null;
+
+        Logging.info("RUN worker from SBRGThread"); 
 	try {
 	    em = parent.sd.getEM();       
 	    reader=Common.newReader();
@@ -63,6 +65,7 @@ class SBRGThread extends Thread {
 
 	    his = new ActionHistory(em, parent.sd.getSqlSessionId());
 
+            Logging.info("launching worker from SBRGThread"); 
 	    worker.work(em, searcher, runID, his);
 	    if (worker.error) {
 		error=true;

@@ -30,7 +30,6 @@ import edu.rutgers.axs.web.*;
  */
 public class SBRGenerator {
 
-
     private final boolean sbOnByDefault = true;
     /** Whether this session needs a "moving panel" with session-based 
 	recommendations (aka "session buddy") */
@@ -87,7 +86,9 @@ public class SBRGenerator {
 		"real" methods. After that, the sbMethod parameter in
 		the SBR generator is set to that real method. 
 	    */
-	    RANDOM; 
+	    RANDOM,
+        /** Collaborative topic Poisson factorization (Gopalan, Charlin, Blei, 2014) */
+        CTPF; 
     };
 
     /**  Recommendation list generation method currently used in this session.
@@ -187,8 +188,9 @@ public class SBRGenerator {
 	    w = new SBRGWorkerMerge(sbrg, soMode,
 				    new SBRGWorker(Method.ABSTRACTS, sbrg, 0),
 				    new SBRGWorker(Method.COACCESS, sbrg, 0));
-
-	} else {
+	} else if (sbrg.sbMethod == Method.CTPF) { 
+	    w = new SBRGWorkerCTPF(sbrg, soMode);
+    } else {
 	    w = new SBRGWorker(sbrg.sbMethod, sbrg, soMode);
 	}
 
@@ -235,7 +237,7 @@ public class SBRGenerator {
     synchronized public void sbCheck() {
 	if (allowedSB) {
 	    int articleCnt = maintainedActionHistory.articleCount;
-	    needSBNow = 	     (articleCnt>=2);
+	    needSBNow = 	     (articleCnt>=1);
 	    if (needSBNow) {
 		requestRun(articleCnt);
 	    }

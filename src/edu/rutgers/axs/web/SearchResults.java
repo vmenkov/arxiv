@@ -101,7 +101,7 @@ public class  SearchResults {
      */
     SearchResults(DataFile df, IndexSearcher searcher) throws IOException {
 
-	// read the artcile IDs and scores from the file, or from the doc array
+	// read the article IDs and scores from the file, or from the doc array
 	if (df.getThisFile()==null) {
 	    entries = ArticleEntry.readStoredList(df.getDocs());
 	} else {

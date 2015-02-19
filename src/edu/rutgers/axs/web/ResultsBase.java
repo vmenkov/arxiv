@@ -19,10 +19,18 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.html.QS;
 
+import edu.rutgers.axs.sb.SBRGWorkerCTPF;
+
 /** The parent class for most classes in this package. Its constructor
     initializes certain member variables that are needed for processing
     all JSP pages. */
+
 public class ResultsBase {
+
+    // load the fit 
+    static {
+        SBRGWorkerCTPF.loadFit();
+    }
 
     HttpServletRequest request;
 

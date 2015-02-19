@@ -339,7 +339,6 @@ class SBRGWorker  {
 	return results;
     }
 
-
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
 	articles viewed by the user in this session.
@@ -651,7 +650,7 @@ class SBRGWorker  {
     }
 
     /** Adds article title etc to each entry in sr.entries */
-    private void addArticleDetails(IndexSearcher searcher) throws IOException { 
+    protected void addArticleDetails(IndexSearcher searcher) throws IOException { 
 	for(ArticleEntry ae: sr.entries) {
 	    ae.populateOtherFields(searcher);
 	}	    
