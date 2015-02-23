@@ -26,7 +26,8 @@ import edu.rutgers.axs.web.*;
     thread). At most one SBRGThread may have its thread running at any
     time on behalf of one SBRGenerator object. In this way some level
     of load control is achieved, and unnecessary computations are
-    avoided.
+    avoided. It is the  SBRGenerator instance which is responsible for
+    managing threads in this way.
  */
 public class SBRGenerator {
 
@@ -112,7 +113,12 @@ public class SBRGenerator {
     /** Pointer to a thread running right now; it will compute the
      * next available list, but it is not ready for display yet. */
     private SBRGThread sbrRunning = null;
+
+    /** Link to the most recent failed-run thread object, if any.
+     */
+    private SBRGThread sbrFailed = null;
     
+
     /** Used to keep track of the number of SBRG runs we've done so
 	far on behalf of this particular session. */
     private int runCnt=0;
@@ -233,11 +239,17 @@ public class SBRGenerator {
     /** Turns the flag on to activate the moving panel for the
 	Session-Based recommendations. Requests the suggestion
 	list generation.
+
+	<p>
+	We need at least 2 page views to start requesting SB generation.
+	This is because anyone can request one page without starting 
+	a real session (robots do it often), while having 2 pages requested 
+	in the same session is a good indicator of real user activity.
      */
     synchronized public void sbCheck() {
 	if (allowedSB) {
 	    int articleCnt = maintainedActionHistory.articleCount;
-	    needSBNow = 	     (articleCnt>=1);
+	    needSBNow = 	     (articleCnt>=2);
 	    if (needSBNow) {
 		requestRun(articleCnt);
 	    }
@@ -337,7 +349,9 @@ public class SBRGenerator {
 
     /** Returns true is this generator has a running thread (which is
 	going to generate a new list) in progress, AND it believes
-	that the thread will complete pretty soon.
+	that the thread will complete pretty soon. This method is used
+	to help us make a better prediction as to when the client
+	should check the server's status the next time.
     */
     synchronized boolean runningNearCompletion() {
 	return sbrRunning != null && sbrRunning.nearCompletion;
@@ -372,13 +386,16 @@ public class SBRGenerator {
 
     synchronized public String description() {
 	if (sbrReady==null) {
-	    String s= "No rec list has been generated yet. Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline +"\n";
+	    String s= "No rec list has been generated yet. Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline +"<br>\n";
+	    if (sbrFailed != null) {
+		s += "Error message from the most recent failed thread: " + sbrFailed.errmsg + "<br>\n";
+	    }
 	    return s;
 	} else {
-	    String s = sbrReady.description() + "\n";
-	    s += "<br>Excludable articles count: " + linkedAids.size()+"\n";
+	    String s = sbrReady.description() + "<br>\n";
+	    s += "<br>Excludable articles count: " + linkedAids.size()+"<br>\n";
 	    if (sbrReady!=null) {
-		s += "<br>Actually excluded: " + sbrReady.excludedList+"\n";
+		s += "<br>Actually excluded: " + sbrReady.excludedList+"<br>\n";
 	    }
 	    return s;
 	}
@@ -433,17 +450,19 @@ public class SBRGenerator {
 	}
     }
 
-    /** The running SBRG thread calls this method when it has completed all
-	computations (right before exiting from its run() method), and
-	the results it has produced can be made available for display.
-	If there has been a non-duplicate request to re-compute the
-	list, we will now start running a thread for it.
+    /** The running SBRG thread (this.sbRunning) calls this method
+	once it has completed all computations (right before exiting
+	from its run() method), and the results it has produced can be
+	made available for display.  If there has been a non-duplicate
+	request to re-compute the list, we will now start running a
+	thread for it.
      */
     synchronized void completeRun() {
 	if (sbrRunning.sr!=null) {
 	    sbrReady = sbrRunning;
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished successfully; plid="+ sbrRunning.plid+", |sr|=" + sbrReady.sr.entries.size() + "; " + sbrReady.msecLine());
 	} else { // there must have been an error
+	    sbrFailed = sbrRunning;
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+"): Thread " + sbrRunning.getId() + " finished with no result; error=" + sbrRunning.error + " errmsg=" + sbrRunning.errmsg);
 	}
 	sbrRunning = null;

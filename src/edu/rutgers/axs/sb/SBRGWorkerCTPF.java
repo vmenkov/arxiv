@@ -31,6 +31,14 @@ class CTPFFit extends Object {
     public HashMap<Integer, String> internalID_to_aID;
     public HashMap<String, Integer> aID_to_internalID;
     public boolean loaded;
+
+    boolean error = false;
+    String errmsg = null;
+    void setError(String msg) {
+	error = true;
+	errmsg = msg;
+    }
+
 } 
 
 /** This is a derivative class of SBRGWorker for the CTPF SB-recommendation method 
@@ -39,7 +47,11 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
     static long seed = 3; 
     //static String path = "/home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit-fdp/";
-    static String path = "/home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit/";
+
+    /**  We have a soft link,
+ ldainit to /home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit/
+    */
+    static String path = "/data/arxiv/ctpf/ldainit/";
     static int num_docs = 10000; // 825708; // 1000; // At the very least this should be read from some config file
     static int num_components = 250; // same as above
 
@@ -81,9 +93,17 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
             initializeX();
             updateExpectationsX(); 
-        }
+	    Logging.info("Constructed SBRGWorkerCTPF object"); 
+	} else if (ctpffit.error) {
+	    Logging.info("Constructed empty SBRGWorkerCTPF object (error in data loading: "+ctpffit.errmsg+")"); 
+	    error = true;
+	    errmsg = "CTPF worker won't start due to a data loading error: " + ctpffit.errmsg;	
+	} else {
+	    error = true;
+	    errmsg = "CTPF worker won't start, because the fit data have not been loaded yet";
+	    Logging.info("Constructed empty SBRGWorkerCTPF object (no data loaded yet)"); 
+	}
 
-        Logging.info("Constructed obj."); 
     }
 
     //public static void loadFit();
@@ -119,7 +139,8 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
 
     synchronized void work(EntityManager em, IndexSearcher searcher, int runID, ActionHistory _his)  {
-        Logging.info("Working"); 
+	if (error) return; // error from the constructor
+        Logging.info("CTPF worker working"); 
         updateUserProfileWithNewClick(_his);
         computeCTPFRecList(em, searcher, runID); 
         super.plid = super.saveAsPresentedList(em).getId();

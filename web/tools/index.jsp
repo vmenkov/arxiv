@@ -65,6 +65,12 @@ Session-Based recommendation lists (SBRL), different versions:</strong></a>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,true)%>">(ABSTRACTS + COACCESS) + SUBJECTS</a>
 <td>Team-draft merge of ABSTRACTS and COACCESS
 
+
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.CTPF,false)%>">CTPF</a>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.CTPF,true)%>">CTPF + SUBJECTS</a>
+<td>Team-draft merge of ABSTRACTS and COACCESS
+
 <tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.RANDOM,false)%>">RANDOM</a>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.RANDOM,true)%>">RANDOM + SUBJECTS</a>

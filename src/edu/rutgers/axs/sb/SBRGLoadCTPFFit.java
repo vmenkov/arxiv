@@ -15,11 +15,16 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 
-
+/** An auxiliary class used to load precomputed CTPF fit data into the web application.
+    The loading is carried out in a separate thread.
+ */
 class SBRGLoadCTPFFit extends Thread {
 
     String path;
     CTPFFit ctpffit; 
+
+    private boolean error = false;
+    private String errmsg = null;
 
     SBRGLoadCTPFFit(String _path, CTPFFit _ctpffit)
     {
@@ -29,7 +34,11 @@ class SBRGLoadCTPFFit extends Thread {
 
     public void run()  {
         loadFit(path);
-        ctpffit.loaded= true; 
+	if (error) {
+	    ctpffit.setError(errmsg);
+	} else {
+	    ctpffit.loaded= true; 
+	}
     }
 
     // load data 
@@ -70,8 +79,10 @@ class SBRGLoadCTPFFit extends Thread {
 
         } catch(Exception ex) { 
             // TODO: put this back
-	    // error = true;
-	    Logging.info("Exception when loading fit:" + ex.getMessage());
+	    error = true;
+	    String msg = "Exception when loading fit:" + ex.getMessage();
+	    errmsg = msg;
+	    Logging.info(msg);
 	    ex.printStackTrace(System.out);
         }
     } 

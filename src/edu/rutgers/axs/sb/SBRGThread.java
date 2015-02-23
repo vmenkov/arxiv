@@ -48,7 +48,12 @@ class SBRGThread extends Thread {
     private ActionHistory his = null;
   
     /** The main class for the actual recommendation list
-	generation. */
+	generation. At the end of the run, this method always calls
+	parent.completeRun() on the calling SBRGenerator object (to
+	indicate the completion of this thread, with success or
+	failure as the case may be, and to prompt the parent
+	SBRGenerator to start the next update thread, if needed). To
+	indicate failure, this method also sets this.error. */
     public void run()  {
 	startTime = new Date();
 	
@@ -57,7 +62,7 @@ class SBRGThread extends Thread {
 
 	EntityManager em=null;
 
-        Logging.info("RUN worker from SBRGThread"); 
+        Logging.info("SBRGThread.run() in"); 
 	try {
 	    em = parent.sd.getEM();       
 	    reader=Common.newReader();
@@ -65,7 +70,7 @@ class SBRGThread extends Thread {
 
 	    his = new ActionHistory(em, parent.sd.getSqlSessionId());
 
-            Logging.info("launching worker from SBRGThread"); 
+            Logging.info("launching worker from SBRGThread.run()"); 
 	    worker.work(em, searcher, runID, his);
 	    if (worker.error) {
 		error=true;
