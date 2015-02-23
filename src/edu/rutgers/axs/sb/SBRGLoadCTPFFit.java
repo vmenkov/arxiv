@@ -51,7 +51,7 @@ class SBRGLoadCTPFFit extends Thread {
             //Logging.info("loading epsilon rate"); 
             //float [][] epsilon_rate = load(path + "epsilon_scale.tsv.gz"); // actually a rate
 
-            Logging.info("Loading fit ");
+            Logging.info("SBRGLoadCTPFFit: Loading started");
             ctpffit.epsilonlog = load(path + "epsilon_log_10K.tsv.gz");
             ctpffit.thetalog = load(path + "theta_log_10K.tsv.gz");
             ctpffit.epsilon_plus_theta = load(path + "epsilon_plus_theta_10K.tsv.gz"); 
@@ -76,13 +76,13 @@ class SBRGLoadCTPFFit extends Thread {
 
             // load map 
             loadMap(path + "items_10K.tsv.gz");
-
+            Logging.info("SBRGLoadCTPFFit: Loading finished");
         } catch(Exception ex) { 
             // TODO: put this back
 	    error = true;
 	    String msg = "Exception when loading fit:" + ex.getMessage();
 	    errmsg = msg;
-	    Logging.info(msg);
+	    Logging.error(msg);
 	    ex.printStackTrace(System.out);
         }
     } 
