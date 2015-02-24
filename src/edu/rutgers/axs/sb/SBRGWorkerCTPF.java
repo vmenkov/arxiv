@@ -76,6 +76,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	if (ready) {
 	    Logging.info("Constructed and initialized SBRGWorkerCTPF object"); 
 	} else {
+	    Logging.info("Constructed an empty SBRGWorkerCTPF object"); 
 	}
 
 	/*
@@ -93,7 +94,16 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
     }
 
+    /** Has this object been properly initialized yet? (Normally this is done in the
+	constructor, but may happen later, if the data were not availabe at the time)
+    */
     private boolean ready = false;
+
+    /** Initialize this object's data if this has not been done yet. 
+	This is normally done in the constructor, but may happen
+	later, if the data were not availabe at the time. Therefore
+	this method is called both from the constructor and from the work() method.
+     */
     synchronized private void init() {
 	if (ready) return;
 	boolean wasError = error; // to prevent repetitive duplicate msgs
@@ -168,6 +178,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
 
     synchronized void work(EntityManager em, IndexSearcher searcher, int runID, ActionHistory _his)  {
+	init(); 
 	if (error) return; // error from the constructor
         Logging.info("CTPF worker working"); 
         updateUserProfileWithNewClick(_his);
