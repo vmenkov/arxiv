@@ -72,29 +72,15 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                     int _sbStableOrderMode) {
         super(SBRGenerator.Method.CTPF, _parent, _sbStableOrderMode);
 
+	init();
+	if (ready) {
+	    Logging.info("Constructed and initialized SBRGWorkerCTPF object"); 
+	} else {
+	}
+
+	/*
         if (ctpffit.loaded) { 
-            rnd = new Random(SBRGWorkerCTPF.seed);
-            viewedArticles = new TreeSet<String>(); 
-
-            // Xs
-            x = new float[ctpffit.epsilon_plus_theta[0].length]; 
-            xlog = new float[ctpffit.epsilon_plus_theta[0].length]; 
-            x_shape = new float[ctpffit.epsilon_plus_theta[0].length]; 
-            x_rate = new float[ctpffit.epsilon_plus_theta[0].length]; 
-
-            // 
-            epsilon_plus_theta_sum = new float[ctpffit.epsilon_plus_theta[0].length];
-            for (int j=0; j < epsilon_plus_theta_sum.length; ++j) {
-                epsilon_plus_theta_sum[j] = (float)0.;
-                for (int i=0; i < ctpffit.epsilon_plus_theta.length; ++i) { 
-                    epsilon_plus_theta_sum[j] += ctpffit.epsilon_plus_theta[i][j]; 
-                }
-            }
-
-            initializeX();
-            updateExpectationsX(); 
-	    Logging.info("Constructed SBRGWorkerCTPF object"); 
-	} else if (ctpffit.error) {
+     	} else if (ctpffit.error) {
 	    Logging.info("Constructed empty SBRGWorkerCTPF object (error in data loading: "+ctpffit.errmsg+")"); 
 	    error = true;
 	    errmsg = "CTPF worker won't start due to a data loading error: " + ctpffit.errmsg;	
@@ -102,6 +88,49 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    error = true;
 	    errmsg = "CTPF worker won't start, because the fit data have not been loaded yet";
 	    Logging.info("Constructed empty SBRGWorkerCTPF object (no data loaded yet)"); 
+	}
+	*/
+
+    }
+
+    private boolean ready = false;
+    synchronized private void init() {
+	if (ready) return;
+	boolean wasError = error; // to prevent repetitive duplicate msgs
+	if (ctpffit.loaded) {
+
+	    rnd = new Random(SBRGWorkerCTPF.seed);
+	    viewedArticles = new TreeSet<String>(); 
+	    
+	    // Xs
+	    x = new float[ctpffit.epsilon_plus_theta[0].length]; 
+	    xlog = new float[ctpffit.epsilon_plus_theta[0].length]; 
+	    x_shape = new float[ctpffit.epsilon_plus_theta[0].length]; 
+	    x_rate = new float[ctpffit.epsilon_plus_theta[0].length]; 
+	    
+            // 
+	    epsilon_plus_theta_sum = new float[ctpffit.epsilon_plus_theta[0].length];
+	    for (int j=0; j < epsilon_plus_theta_sum.length; ++j) {
+		epsilon_plus_theta_sum[j] = (float)0.;
+		for (int i=0; i < ctpffit.epsilon_plus_theta.length; ++i) { 
+		    epsilon_plus_theta_sum[j] += ctpffit.epsilon_plus_theta[i][j]; 
+		}
+	    }
+	    
+	    initializeX();
+	    updateExpectationsX(); 
+	    Logging.info("Initialized SBRGWorkerCTPF object"); 
+	    error = false;
+	    errmsg = "";
+	    ready = true;
+	} else if (ctpffit.error) {
+	    error = true;
+	    errmsg = "CTPF worker won't be initialized due to a data loading error: " + ctpffit.errmsg;	
+	    if (!wasError) Logging.info("errmsg");
+	}  else {
+	    error = true;
+	    errmsg = "CTPF worker won't be initialized now, because the fit data have not been loaded yet";
+	    if (!wasError) Logging.info("errmsg");
 	}
 
     }

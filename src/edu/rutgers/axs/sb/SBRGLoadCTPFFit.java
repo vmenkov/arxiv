@@ -41,6 +41,10 @@ class SBRGLoadCTPFFit extends Thread {
 	}
     }
 
+    /** Used to modify data file names, to refer to the full data set or a subset */
+    static final private String suffix  = "_10K";
+    //static final private String suffix  = "";
+
     // load data 
     private void loadFit(String path) {
 
@@ -52,9 +56,9 @@ class SBRGLoadCTPFFit extends Thread {
             //float [][] epsilon_rate = load(path + "epsilon_scale.tsv.gz"); // actually a rate
 
             Logging.info("SBRGLoadCTPFFit: Loading started");
-            ctpffit.epsilonlog = load(path + "epsilon_log_10K.tsv.gz");
-            ctpffit.thetalog = load(path + "theta_log_10K.tsv.gz");
-            ctpffit.epsilon_plus_theta = load(path + "epsilon_plus_theta_10K.tsv.gz"); 
+            ctpffit.epsilonlog = load(path + "epsilon_log" + suffix + ".tsv.gz");
+            ctpffit.thetalog = load(path + "theta_log" + suffix + ".tsv.gz");
+            ctpffit.epsilon_plus_theta = load(path + "epsilon_plus_theta"+suffix+".tsv.gz"); 
 
             // updateExpectationsEpsilonTheta(epsilon_shape, epsilon_rate, epsilonlog);
 
@@ -75,7 +79,7 @@ class SBRGLoadCTPFFit extends Thread {
             //         epsilon_plus_theta[i][j] = epsilon_shape[i][j]/epsilon_rate[i][j] + theta_shape[i][j]/theta_rate[i][j]; 
 
             // load map 
-            loadMap(path + "items_10K.tsv.gz");
+            loadMap(path + "items"+suffix+".tsv.gz");
             Logging.info("SBRGLoadCTPFFit: Loading finished");
         } catch(Exception ex) { 
             // TODO: put this back
@@ -100,10 +104,10 @@ class SBRGLoadCTPFFit extends Thread {
             ctpffit.internalID_to_aID.put(Integer.parseInt(parts[0]), parts[1]);
             ctpffit.aID_to_internalID.put(parts[1], Integer.parseInt(parts[0]));
         }
-        Logging.info("size of internalID_to_aID: " + Integer.toString(ctpffit.internalID_to_aID.size()));
-        Logging.info("size of aID_to_internalID: " + Integer.toString(ctpffit.aID_to_internalID.size()));
+        Logging.info("SBRGLoadCTPFFit: size of internalID_to_aID: " + Integer.toString(ctpffit.internalID_to_aID.size()));
+        Logging.info("SBRGLoadCTPFFit: size of aID_to_internalID: " + Integer.toString(ctpffit.aID_to_internalID.size()));
 
-        Logging.info("fit loaded"); 
+	//        Logging.info("fit loaded"); 
 
     }
 
