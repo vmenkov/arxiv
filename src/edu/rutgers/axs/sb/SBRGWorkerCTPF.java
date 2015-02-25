@@ -52,8 +52,6 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
  ldainit to /home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit/
     */
     static String path = "/data/arxiv/ctpf/ldainit/";
-    static int num_docs = 10000; // 825708; // 1000; // At the very least this should be read from some config file
-    static int num_components = 250; // same as above
 
     // The fit itself (not including the user)
     static CTPFFit ctpffit = new CTPFFit(); 

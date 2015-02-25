@@ -14,6 +14,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.util.Hosts;
 import edu.rutgers.axs.ParseConfig;
 
 /** Sends the user's current suggestion list to the user by email.
@@ -156,7 +157,7 @@ public class EmailSug extends ResultsBase {
     public static String businessEmail = "myarxiv-admin-l@list.cornell.edu";
 
     /** The gmail mode is used for local testing only */
-    static boolean gmail = isLocal(determineHostname());
+    static boolean gmail = Hosts.atHome();
 
     /** Sends a message to the specified email address. */
     static private boolean sendMail(String uname, String email, String realName)
@@ -296,38 +297,6 @@ public class EmailSug extends ResultsBase {
 	email message we're producing */
     static final String cp = determineContextPath();
 
-    /** Returns true if this is a test run on a home PC. The list of
-     such machines' host names is hard-coded inside this method. When
-     such a machine is used, we can use the "localhost" URL in emails,
-     since the emails will most likely be read in a web browser on the
-     same machine, possibly even in off-line mode. This contrasts with
-     production runs on a "real" web server, when the true hostname
-     should always be used.
-    */
-    static private boolean isLocal(String hostname) {
-	System.out.println("running on host = " + hostname);
-	return hostname.equals("localhost") ||
-	    hostname.equals("CC2239-Ubuntu") ||
-	    hostname.equals("qilin");
-	/*
-	} catch(java.net.UnknownHostException ex) {
-	    return false;
-	}
-	*/
-    }
-
-    /** Returns the host name this application is running on. */
-    static String determineHostname() {
-	try {
-	    String hostname = InetAddress.getLocalHost().getHostName();
-	    System.out.println("running on host = " + hostname);
-	    return hostname;
-	} catch(java.net.UnknownHostException ex) {
-	    // This should not happen in any normal operation
-	    return "localhost";
-	}
-    }
-
     /** A cludgy way to figure (from inside a standalone command-line
 	application) what the proper context path (including the host
 	name) for our server URL is. Since this code runs inside a
@@ -345,8 +314,8 @@ public class EmailSug extends ResultsBase {
     static String determineContextPath() {
 	String host;
 	int port;
-	String hostname =  determineHostname();
-	if (isLocal(hostname)) {
+	String hostname =  Hosts.determineHostname();
+	if (Hosts.isLocal(hostname)) {
 	    host = "localhost";
 	    port = 8080;
 	} else {

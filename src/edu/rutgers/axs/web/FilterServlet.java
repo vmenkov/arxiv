@@ -14,6 +14,7 @@ import javax.persistence.*;
 import org.apache.commons.lang.mutable.*;
 
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.util.Hosts;
 import edu.rutgers.axs.html.RatingButton;
 
 
@@ -73,7 +74,7 @@ public class FilterServlet extends  BaseArxivServlet  {
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
 
-	String hostname =  EmailSug.determineHostname();
+	String hostname =  Hosts.determineHostname();
 	
 	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu")
 	    && !hostname.endsWith("cactuar.scilsnet.rutgers.edu");
@@ -671,7 +672,7 @@ public class FilterServlet extends  BaseArxivServlet  {
     */
     /*
     static private String determineFSName() {
-	String hostname =  Tools.determineHostname();
+	String hostname =  Hosts.determineHostname();
 	return hostname.endsWith("orie.cornell.edu")? 
 	    "/FilterServlet" : "/FilterServletDEV";
     }
