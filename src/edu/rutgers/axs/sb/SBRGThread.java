@@ -128,7 +128,7 @@ class SBRGThread extends Thread {
      public String msecLine() {
 	if (startTime!=null && endTime!=null) {
 	    long msec = endTime.getTime() - startTime.getTime();
-	    return " (" + (0.001 * (double)msec) + " sec)";
+	    return " (" + (float)(0.001 * (double)msec) + " sec)";
 	} else return "";
      }
 

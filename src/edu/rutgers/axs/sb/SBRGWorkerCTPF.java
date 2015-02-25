@@ -76,20 +76,6 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	} else {
 	    Logging.info("Constructed an empty SBRGWorkerCTPF object"); 
 	}
-
-	/*
-        if (ctpffit.loaded) { 
-     	} else if (ctpffit.error) {
-	    Logging.info("Constructed empty SBRGWorkerCTPF object (error in data loading: "+ctpffit.errmsg+")"); 
-	    error = true;
-	    errmsg = "CTPF worker won't start due to a data loading error: " + ctpffit.errmsg;	
-	} else {
-	    error = true;
-	    errmsg = "CTPF worker won't start, because the fit data have not been loaded yet";
-	    Logging.info("Constructed empty SBRGWorkerCTPF object (no data loaded yet)"); 
-	}
-	*/
-
     }
 
     /** Has this object been properly initialized yet? (Normally this is done in the
@@ -97,10 +83,11 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
     */
     private boolean ready = false;
 
-    /** Initialize this object's data if this has not been done yet. 
-	This is normally done in the constructor, but may happen
-	later, if the data were not availabe at the time. Therefore
-	this method is called both from the constructor and from the work() method.
+    /** Initializes this object's data if this has not been done yet.
+	This is first tried in the constructor, but may be repeated
+	later, if the data were not availabe on the first call. 
+	Therefore this method is called both from the constructor and 
+	from the work() method.
      */
     synchronized private void init() {
 	if (ready) return;
@@ -111,15 +98,16 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    viewedArticles = new TreeSet<String>(); 
 	    
 	    // Xs
-	    x = new float[ctpffit.epsilon_plus_theta[0].length]; 
-	    xlog = new float[ctpffit.epsilon_plus_theta[0].length]; 
-	    x_shape = new float[ctpffit.epsilon_plus_theta[0].length]; 
-	    x_rate = new float[ctpffit.epsilon_plus_theta[0].length]; 
+	    int num_components=ctpffit.epsilon_plus_theta[0].length;
+	    x = new float[num_components]; 
+	    xlog = new float[num_components]; 
+	    x_shape = new float[num_components]; 
+	    x_rate = new float[num_components]; 
 	    
             // 
-	    epsilon_plus_theta_sum = new float[ctpffit.epsilon_plus_theta[0].length];
+	    epsilon_plus_theta_sum = new float[num_components];
 	    for (int j=0; j < epsilon_plus_theta_sum.length; ++j) {
-		epsilon_plus_theta_sum[j] = (float)0.;
+		epsilon_plus_theta_sum[j] = 0;
 		for (int i=0; i < ctpffit.epsilon_plus_theta.length; ++i) { 
 		    epsilon_plus_theta_sum[j] += ctpffit.epsilon_plus_theta[i][j]; 
 		}
@@ -146,6 +134,13 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
     //public static void loadFit();
     //public static boolean myVar = loadFit();
 
+    /** This method spawns the thread which will load the
+	SBRGLoadCTPFFit data, which are to be used by all
+	SBRGWorkerCTPF instances in the future.  It is essential that
+	this method be called only once in the web application's
+	life. This is done when the ResultsBase class load,
+	i.e. pretty soon after the web app has been reloaded.
+    */
     public static boolean loadFit() {
         // load data files 
         Logging.info("Loading fit"); 
@@ -159,12 +154,12 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
     }
 
     private void initializeX() { 
-            for(int i=0; i<x.length; ++i) { 
-                x_shape[i] = x_shape_prior; //  + (float)0.001 * rnd.nextFloat(); // TODO: removed for debugging. May be useful.
-                x_rate[i]  = x_rate_prior  + epsilon_plus_theta_sum[i]; // (float)0.001 * rnd.nextInt(1);
-            }
-            print1DArray(x_shape,"x_shape");
-            print1DArray(x_rate,"x_rate");
+	for(int i=0; i<x.length; ++i) { 
+	    x_shape[i] = x_shape_prior; //  + (float)0.001 * rnd.nextFloat(); // TODO: removed for debugging. May be useful.
+	    x_rate[i]  = x_rate_prior  + epsilon_plus_theta_sum[i]; // (float)0.001 * rnd.nextInt(1);
+	}
+	print1DArray(x_shape,"x_shape");
+	print1DArray(x_rate,"x_rate");
     } 
 
     private void updateExpectationsX() {
@@ -177,7 +172,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
     synchronized void work(EntityManager em, IndexSearcher searcher, int runID, ActionHistory _his)  {
 	init(); 
-	if (error) return; // error from the constructor
+	if (error) return; // error from the constructor or initializer
         Logging.info("CTPF worker working"); 
         updateUserProfileWithNewClick(_his);
         computeCTPFRecList(em, searcher, runID); 

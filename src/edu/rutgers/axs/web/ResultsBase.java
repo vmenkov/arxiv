@@ -27,7 +27,7 @@ import edu.rutgers.axs.sb.SBRGWorkerCTPF;
 
 public class ResultsBase {
 
-    // Start loading thread for fit data used in Laurent Charlin's CTPF recommender
+    // Starts the loading thread for fit data used in Laurent Charlin's CTPF recommender
     static {
         SBRGWorkerCTPF.loadFit();
     }

@@ -66,7 +66,7 @@ class SBRGLoadCTPFFit extends Thread {
 	    boolean atHome = Hosts.atHome();
 
             Logging.info("SBRGLoadCTPFFit: Loading started. Will use " +
-			 (atHome? " 10K sample" : " full data set"));
+			 (atHome? "the 10K sample" : "the full data set"));
 
 	    // Modifies data file names, to refer to the full data set or the 10K subset 
 	    final String suffix  = atHome ? "_10K" : "";
@@ -112,7 +112,8 @@ class SBRGLoadCTPFFit extends Thread {
     } 
 
     private void loadMap(String file) throws Exception { 
-        ctpffit.internalID_to_aID = new HashMap<Integer, String>();
+	Logging.info("SBRGLoadCTPFFit: loading document map from " + file);
+	ctpffit.internalID_to_aID = new HashMap<Integer, String>();
         ctpffit.aID_to_internalID = new HashMap<String, Integer>();
         GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
         BufferedReader br = new BufferedReader(new InputStreamReader(gzip));
@@ -124,8 +125,8 @@ class SBRGLoadCTPFFit extends Thread {
             ctpffit.internalID_to_aID.put(Integer.parseInt(parts[0]), parts[1]);
             ctpffit.aID_to_internalID.put(parts[1], Integer.parseInt(parts[0]));
         }
-        Logging.info("SBRGLoadCTPFFit: size of internalID_to_aID: " + Integer.toString(ctpffit.internalID_to_aID.size()));
-        Logging.info("SBRGLoadCTPFFit: size of aID_to_internalID: " + Integer.toString(ctpffit.aID_to_internalID.size()));
+        Logging.info("SBRGLoadCTPFFit: size of internalID_to_aID: " + ctpffit.internalID_to_aID.size());
+        Logging.info("SBRGLoadCTPFFit: size of aID_to_internalID: " + ctpffit.aID_to_internalID.size());
 
 	//        Logging.info("fit loaded"); 
 
