@@ -42,8 +42,8 @@ class SBRGLoadCTPFFit extends Thread {
     }
 
     /** Used to modify data file names, to refer to the full data set or a subset */
-    static final private String suffix  = "_10K";
-    //static final private String suffix  = "";
+    //static final private String suffix  = "_10K";
+    static final private String suffix  = "";
 
     // load data 
     private void loadFit(String path) {
@@ -114,7 +114,7 @@ class SBRGLoadCTPFFit extends Thread {
     private float[][] load(String file) throws Exception {
         float[][] d;
         
-        Logging.info("Loading " + file); 
+        Logging.info("SBRGLoadCTPFFit: Loading data from file " + file); 
 
         // List<String> lines = Files.readAllLines(Paths.get(file), StandardCharsets.UTF_8);
         GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
