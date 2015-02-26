@@ -713,7 +713,8 @@ class SBRGWorker  {
     }
 
 
-    /** Produces a human-readable description of this worker's particulars. */
+    /** Produces a human-readable description of this worker's particulars. The
+	method may be overriden by derivative classes, to report more details. */
     public String description() {
 	String s = "SBR method=" + sbMethod + "; stableOrder=" + sbStableOrderMode;
 	return s;

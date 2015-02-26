@@ -58,7 +58,18 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
     // User representation 
     float[] x, xlog, x_shape, x_rate;
-    float x_shape_prior = (float)0.1; 
+
+    /** There's also the issue of how to infer a user's eta (x in the
+	code). The way it's currently done isn't very sensitive and
+	will require too many clicks before producing personalized
+	recommendations. I suggest trying out one of two things: 1)
+	Set the prior shape on x (x_shape_prior) to be much smaller.
+	Something on the order of 10^(-6) 2) Set the factor variable
+	(in updateUserProfileWithNewClick()) to be much higher (at
+	least 10^4)
+    */
+    //float x_shape_prior = (float)0.1; 
+    float x_shape_prior = (float)1e-6; 
     float x_rate_prior = (float)0.1; 
     TreeSet<String> viewedArticles;
     Random rnd; 
@@ -179,6 +190,9 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
         super.plid = super.saveAsPresentedList(em).getId();
     }
 
+    //int factor = 1; // !! hack
+    static final private int factor = 10000;
+
     synchronized void updateUserProfileWithNewClick(ActionHistory _his) { 
 
         int internalID; 
@@ -203,7 +217,6 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
                 // update X's shape 
                 // need to create an array twice the length of X. 
-                int factor = 1; // !! hack
                 int inference_iterations = 1; 
                 for (int ii=0; ii<inference_iterations; ++ii) { 
                     if (ii % 1000 == 0) 
@@ -350,7 +363,17 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	}
 
         // apply exclusion list? 
-
-
     }
+
+    /** Produces a human-readable description of this worker's particulars. The
+	method may be overriden by derivative classes, to report more details. */
+    public String description() {
+	String s = super.description();
+	s += "; x_shape_prior="+ x_shape_prior +", x_rate_prior=" + x_rate_prior +", factor=" + factor;
+ 
+	return s;
+    }
+   
+
+
 }
