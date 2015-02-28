@@ -5,24 +5,30 @@
 <body>
 <h1>My.ArXiv server installation notes</h1>
 
-<p>These notes were mostly written in June-July 2013, when I waqs
-migrating the main my.arxiv.org server from cactuar to a server at
+<p>These notes were mostly written in June-July 2013, when I was
+migrating the main my.arxiv.org server from cactuar.rutgers.edu to a server at
 Cornell. The target server was running RedHat Enterprise Linux, and
 therefore the commands are geared to that system. If installing on a
 server running another flavor of Linux (e.g. Ubuntu), you'd be using
 (e.g.) apt-get instead of yum, and some paths my be different.
+
+<p>Last update: February 2015.
 
 <h2>Tools</h2>
 
 <p>Tools you need to have on the server.</p>
 
 <ul>
-<li>JDK - evrything runs on Java
-<li>Apache Tomcat - the web server that supports servlets and JSP
+<li><a href="#java">JDK</a> - everything runs on Java
+<li><a href="#tomcat">Apache Tomcat</a> - the web server that supports servlets and JSP
 <li>Apache Ant - used for building the system
 <li>MySQL server
-
+<li>Subversion
 </ul>
+
+<p>In production environment, we do not expose Apache Tomcat to the outside HTTP requests; instead, requests are first handled by the <a href="#apache.http">Apache HTTP Server</a>, which in its turn redirect them to Tomcat. You don't need this kind of complications if you are just setting up a development environment on your home machine.
+
+<p>Perl and Python are also used for some ancillary applications; it is nice to have them available on your machine, but this isn't critical.
 
 <h2>Java libraries</h2>
 
@@ -44,6 +50,8 @@ code... still there may be an occasional "import" in some Java files
 referring the Colt library).
 
 <li>Xerces, used for parsing XML files.
+
+<li><a href="http://commons.apache.org/proper/commons-math/">Apache Commons Mathematics Library</a> (used by Laurent's CTPF code)
 
 <li>Various jars that come with Apache Tomcat; they include e.g. Tomcat's implementation of the Servlet and JSP protocols.
 
@@ -71,7 +79,7 @@ Below, <tt>$ARXIV</tt> stands for the main arxiv directory (such as <tt>~vmenkov
 to be needed on any host where serious Java-based development work
 takes place. Most of this stuff is already found on a typical Linux
 machine; but what's missing, can be installed with <tt>apt-get</tt>
-(on a Ubintu host, such as most of our laptops), or with <tt>yum</tt>
+(on a Ubuntu host, such as most of our laptops), or with <tt>yum</tt>
 on a RedHat Linux host (such as orie1/orie2).
 
 <p>
@@ -83,7 +91,7 @@ sudo yum install svn
 sudo yum install ant
 </pre>
 
-<h5>Tomcat</h5>
+<h5><a name="tomcat">Tomcat</a></h5>
 
 <p>Note: the following instructions are for Tomcat 6; we have upgraded to Tomcat 7 since; see <a href="tomcat7.html">Tomcat 7</a>.
 
@@ -113,7 +121,11 @@ sudo service httpd start
 <p>Tomcat's default heap size (128 Mb) has long been sufficient for
 our web app's normal operations. However, with the addition of memory
 intensive EE5 classifier for user-uploaded documents (December 2014), 
-we started receiving OutOfMemoryError errors. The solution, as per advice at 
+we started receiving OutOfMemoryError errors. This may become an even more
+serious issue as Laurent's CTPF recommender is brought it in 2015.
+
+<p>
+<strong>On the Ubuntu machine with Tomcat 6,</strong> the solution, as per advice at 
 https://community.jaspersoft.com/questions/819581/solvedjasperreports-server-handler-processing-failed-nested-exception , was to raise the -Xmx value in JAVA_OPTS, as set
 in  /etc/default/tomcat6:
 <pre>
@@ -124,7 +136,13 @@ CC2239-Ubuntu:/etc/default> diff tomcat6 tomcat6.orig
 &gt; JAVA_OPTS="-Djava.awt.headless=true -Xmx128m -XX:+UseConcMarkSweepGC"
 </pre>
 
-<h6>Using Tomcat with Apache</h6>
+<strong>On the RedHat machine with Tomcat 7,</strong> I edited /use/share/tomcat7/catalina.sh, adding the line
+<pre>
+  CATALINA_OPTS="-Xmx2g"
+</pre>
+early in the file.
+
+<h6><a name="apache.http">Using Tomcat with Apache HTTP server</a></h6>
 
 <p>In order for Apache to redirect all requests to Tomcat, we add the
 following lines to /etc/httpd/conf/httpd.conf:
@@ -139,7 +157,7 @@ ProxyPass / ajp://localhost:8009/
 ProxyPassReverse / ajp://localhost:8009/
 </pre>
 
-<h5>Java</h5>
+<h5><a name="java">Java</a></h5>
 
 
 <pre>

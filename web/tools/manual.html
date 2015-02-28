@@ -108,6 +108,12 @@ select x,sl.inputFile.id from Action x, PresentedList pl, DataFile sl where x.us
 
 <tr>
 <td>
+select pl from PresentedList pl where pl.time > '2015-02-24' and pl.type= edu.rutgers.axs.sql.Action$Source.SB and pl.user.user_name = 'vmenkov' and pl.sbMethod =  edu.rutgers.axs.sb.SBRGenerator$Method.CTPF
+<td>select x.* from PresentedList x 
+<td>List all such lists produced over a given period (sine the specified date) for a given user by a particular tool (the session-based recommender, SBR), with a particular SB mode (CTPF)
+
+<tr>
+<td>
 select li.id, d from PresentedList li join li.docs d where li.id=5 
 <br>
 <br><em>Also, there is alternative syntax:</em><br>
@@ -117,6 +123,12 @@ select li.id, le  from PresentedList li, in(li.docs) le where li.id=5
 
 <td>select li.id, e.* from PresentedList li, PresentedList_PresentedListEntry r, PresentedListEntry e where r.PRESENTEDLIST_ID = li.id and r.DOCS_ID =e.id and li.id=5
 <td>Show the content of presented list no. 5
+
+<tr>
+<td>
+select le.aid from PresentedList li, in(li.docs) le where li.id=5
+<td>
+<td>Concise form of the above: show the content of presented list no. 5, but only displays article IDs, and not any other columns
 
 <tr>
 <td>
