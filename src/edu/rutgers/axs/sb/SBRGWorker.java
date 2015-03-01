@@ -174,6 +174,15 @@ class SBRGWorker  {
     boolean error = false;
     String errmsg = "";
 
+    /** A human-readable text message containing the list of ArXiv
+	article IDs of the articles that we decided NOT to show in the
+	rec list (e.g., because they had already been shown to the
+	user in this session in other contexts). This variable is only
+	used in reporting.
+    */
+    String excludedList = "";
+
+   
     /** An auxiliary object used to "integrate" information about an
 	article's position in multiple ranked lists. In particular, it
 	is used for ascending-order sort (i.e. rank 1 before rank 2,
@@ -218,14 +227,6 @@ class SBRGWorker  {
 	}
     }
 
-    /** A human-readable text message containing the list of ArXiv
-	article IDs of the articles that we decided NOT to show in the
-	rec list (e.g., because they had already been shown to the
-	user in this session in other contexts).
-    */
-    String excludedList = "";
-
-    
   /**  Paul's suggestion on list length (2014-02-26): I have been
 	thinking about how quickly the SB list grows. I would favor
 	somewhat slower growth. Perhaps start with three; then add

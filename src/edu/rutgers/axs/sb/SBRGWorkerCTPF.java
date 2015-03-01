@@ -41,15 +41,17 @@ class CTPFFit extends Object {
 
 } 
 
-/** This is a derivative class of SBRGWorker for the CTPF SB-recommendation method 
+/** This is a derivative class of SBRGWorker for the CTPF
+    SB-recommendation method
  */
 public class SBRGWorkerCTPF extends  SBRGWorker  {
 
     static long seed = 3; 
     //static String path = "/home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit-fdp/";
 
-    /**  We have a soft link,
- ldainit to /home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit/
+    /**  The directory where the precomputed fit data files are. 
+	 We have a soft link, ldainit to 
+	 /home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit/
     */
     static String path = "/data/arxiv/ctpf/ldainit/";
 
@@ -69,7 +71,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	least 10^4)
     */
     //float x_shape_prior = (float)0.1; 
-    float x_shape_prior = (float)1e-6; 
+    float x_shape_prior = (float)0.1; 
     float x_rate_prior = (float)0.1; 
     TreeSet<String> viewedArticles;
     Random rnd; 
@@ -184,20 +186,20 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
     synchronized void work(EntityManager em, IndexSearcher searcher, int runID, ActionHistory _his)  {
 	init(); 
 	if (error) return; // error from the constructor or initializer
-        Logging.info("CTPF worker working"); 
+        Logging.info("SBRGWorkerCTPF: start"); 
         updateUserProfileWithNewClick(_his);
         computeCTPFRecList(em, searcher, runID); 
         super.plid = super.saveAsPresentedList(em).getId();
     }
 
     //int factor = 1; // !! hack
-    static final private int factor = 10000;
+    static final private double factor = 1e8;
 
     synchronized void updateUserProfileWithNewClick(ActionHistory _his) { 
 
         int internalID; 
         float[] x2 = new float[x.length*2]; 
-        Logging.info("Number of articles viewed by user: " + Integer.toString(viewedArticles.size()) ); 
+        Logging.info("SBRGWorkerCTPF: Number of articles viewed by user: " + Integer.toString(viewedArticles.size()) ); 
 
         for(String aid: _his.viewedArticlesActionable) { // process articles in user history 
             if(!viewedArticles.contains(aid)) {
@@ -206,31 +208,31 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 if(ctpffit.aID_to_internalID.containsKey(aid)) {
                     internalID = ctpffit.aID_to_internalID.get(aid);
                     if (internalID > ctpffit.thetalog.length) {
-                        Logging.info("internalID out of range: " + Integer.toString(internalID)); 
+                        Logging.warning("SBRGWorkerCTPF: internalID out of range: " + internalID); 
                         continue; 
                     }
                 } else { 
-                    Logging.info("Article unknown: " + aid); 
+                    Logging.info("SBRGWorkerCTPF: Article unknown: " + aid); 
                     continue;
                 }
-                Logging.info("Viewed article: " + Integer.toString(internalID) + " " + aid); 
+                Logging.info("SBRGWorkerCTPF: Viewed article: " + internalID + " " + aid); 
 
                 // update X's shape 
                 // need to create an array twice the length of X. 
                 int inference_iterations = 1; 
                 for (int ii=0; ii<inference_iterations; ++ii) { 
                     if (ii % 1000 == 0) 
-                        Logging.info("Iteration: " + Integer.toString(ii)); 
+                        Logging.info("SBRGWorkerCTPF: Iteration: " + ii); 
                 for (int k=0; k < x2.length; ++k) { 
                     if(k < x.length) { 
-                        //Logging.info("thetalog: " + k + " " + Float.toString(ctpffit.thetalog[internalID][k])); 
-                        x2[k] = xlog[k] + factor*ctpffit.thetalog[internalID][k]; 
+                        //Logging.info("SBRGWorkerCTPF: thetalog: " + k + " " + ctpffit.thetalog[internalID][k]); 
+                        x2[k] = xlog[k] + (float)(factor*ctpffit.thetalog[internalID][k]); 
                     } else {
                         int t = x.length - (x2.length - k);
-                        //Logging.info("epsilonlog: " + t + " " + Float.toString(ctpffit.epsilonlog[internalID][t])); 
-                        x2[k] = xlog[t] + factor*ctpffit.epsilonlog[internalID][t]; 
+                        //Logging.info("SBRGWorkerCTPF: epsilonlog: " + t + " " + ctpffit.epsilonlog[internalID][t]); 
+                        x2[k] = xlog[t] + (float)(factor*ctpffit.epsilonlog[internalID][t]); 
                     } 
-                    //Logging.info("x2: " + k + " " + Float.toString(x2[k])); 
+                    //Logging.info("SBRGWorkerCTPF: x2: " + k + " " +x2[k]); 
                 }
  
                 normalize(x2); 
@@ -295,7 +297,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 xs += ", ";
         }
         xs += ']';
-        Logging.info(str + ": " + xs); 
+        Logging.info("SBRGWorkerCTPF: " + str + ": " + xs); 
     }
 
     /** Generates the list of recommendations based on CTPF */
@@ -303,7 +305,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
 	try {
 
-            Logging.info("Calculating Scores"); 
+            Logging.info("SBRGWorkerCTPF: Calculating Scores"); 
             // Do x^T * (epsilon + theta)
             TreeMap<Float,String> scores = new TreeMap<Float,String>();
             //String old_value = "";
@@ -313,7 +315,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 for (int j=0; j<ctpffit.epsilon_plus_theta[0].length; ++j) { 
                     e += x[j]*(ctpffit.epsilon_plus_theta[i][j]);
                 }
-                //Logging.info("(i,e): (" + Integer.toString(i) + "," + float.toString(e) + ") scores size: " + Integer.toString(scores.size()) + " " + old_value); 
+                //Logging.info("SBRGWorkerCTPF: (i,e): (" + i + "," + e + ") scores size: " + scores.size() + " " + old_value); 
                 scores.put(e, ctpffit.internalID_to_aID.get(i));
             }
 
@@ -323,8 +325,8 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    int k=0;
 	    //int maxAge = his.viewedArticlesActionable.size();
 
-            Logging.info("Formatting results for SB output"); 
-            //Logging.info("scores size: " + Integer.toString(scores.size()));
+            Logging.info("SBRGWorkerCTPF: Formatting results for SB output"); 
+            //Logging.info("SBRGWorkerCTPF: scores size: " + scores.size());
             Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
             String aid; // article id
             int topK=20; 
@@ -332,25 +334,25 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
             for(float score: scores.descendingKeySet()) {
                 aid = scores.get(score);
                 if(aid != null) {
-                    reco_articles += scores.get(score) + " (" + Float.toString(score) + ") | ";
+                    reco_articles += scores.get(score) + " (" + score + ") | ";
                     ArticleEntry ae = new ArticleEntry(++k, scores.get(score));
                     ae.setScore(score);
                     ae.age = k-1; 
                     entries.add(ae);
-                    ++k;
+                    // ++k; // No need to increment k again!
                 } else { 
-                    Logging.info("article id is null " + score); 
+                    Logging.warning("SBRGWorkerCTPF: article id is null " + score); 
                 }
                 if(k>topK) // TODO: hack-ish, make better
                     break; 
 	    }
             Logging.info("adding articles id:" + reco_articles); 
             if(entries.size() > 0) {
-                Logging.info("Adding entries:" + Integer.toString(entries.size())); 
+                Logging.info("SBRGWorkerCTPF: Adding entries:" +entries.size());
                 sr = new SearchResults(entries); 
                 super.addArticleDetails(searcher);
             } else {
-                Logging.info("No new entries to add to the recommender list."); 
+                Logging.info("SBRGWorkerCTPF: No new entries to add to the recommender list."); 
             }
 	    //sr.saveAsPresentedList(em,Action.Source.SB,null,null, null);
 
@@ -358,7 +360,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    error = true;
 	    errmsg = ex.getMessage();
 	    Logging.error(""+ex);
-	    System.out.println("Exception for SBRG thread "); //  + super.getId());
+	    System.out.println("SBRGWorkerCTPF: Exception for SBRG thread "); //  + super.getId());
 	    ex.printStackTrace(System.out);
 	}
 
