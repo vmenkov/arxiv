@@ -349,7 +349,7 @@ Soft link from /home/SCILSNET/vmenkov to /home/vmenkov (for compatibility with t
 
 <h4><a name="mysql.data">MySQL</a></h4>
 <p>
-Before starting any Java applications, we copy the entire MySQL database from the old host. The export and import process is carried out along the lines of the <a href="http://dev.mysql.com/doc/refman/5.0/en/copying-databases.html">official instructions ("Copying MySQL Databases to Another Machine")</a>, but we only copy the database <tt>arxiv_xs</tt>; we are not trying to copy the <tt>mysql</tt> database, as doing that my hose database logins etc.
+Before starting any Java applications, we copy the entire MySQL database from the old host. The export and import process is carried out along the lines of the <a href="http://dev.mysql.com/doc/refman/5.0/en/copying-databases.html">official instructions ("Copying MySQL Databases to Another Machine")</a>, but we only copy the database <tt>arxiv_xs</tt>; we are not trying to copy the <tt>mysql</tt> database, as doing that may hose database logins etc.
 
 <p>Data export (dumping) on the old host is generally not problematic, but import to the new one may be a bit trickier, as file ownership and permissions matter for both input files and MySQL server files. Some useful tips can be found <a href="http://www.electrictoolbox.com/article/mysql/mysqlimport-errors/">here</a>, in particular the one about the <tt>--local</tt> option. 
 

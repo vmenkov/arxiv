@@ -494,7 +494,7 @@ select count(distinct astat.id) from Action a, ArticleStats astat where a.articl
     public static String[] getAllPossiblyRatedDocs( EntityManager em, boolean missingSimsOnly)  {
 	//Query q = em.createQuery("select distinct(a.article) from Action a");
 
-	String qtext = "select astat.id, astat.aid from Action a, ArticleStats astat where a.article.id = astat.aid " +
+	String qtext = "select astat.id, astat.aid from Action a, ArticleStats astat where a.article.aid = astat.aid " +
 	    (missingSimsOnly? "and astat.simsTime is null " : "") +
 	    "group by astat.id, astat.aid";
 	Query q = em.createQuery(qtext);

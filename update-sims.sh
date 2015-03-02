@@ -21,10 +21,10 @@ echo "opt=$opt"
 
 # cmd=rated
 
-set cmd=allsims
+#set cmd=allsims
 set out=allsims.tmp
 
-time java $opt $1 $2 $3 edu.rutgers.axs.recommender.ArticleAnalyzer1  $cmd >& $out
+time java $opt $1 $2 $3 edu.rutgers.axs.recommender.ArticleAnalyzer1  >& $out
 echo "Please read log file $out"
 
 
