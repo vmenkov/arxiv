@@ -22,7 +22,7 @@ server running another flavor of Linux (e.g. Ubuntu), you'd be using
 <li><a href="#java">JDK</a> - everything runs on Java
 <li><a href="#tomcat">Apache Tomcat</a> - the web server that supports servlets and JSP
 <li>Apache Ant - used for building the system
-<li>MySQL server
+<li><A HREF="#mysql.install">MySQL server</a>
 <li>Subversion
 </ul>
 
@@ -91,7 +91,46 @@ sudo yum install svn
 sudo yum install ant
 </pre>
 
+On a Ubuntu host, this may be e.g.
+<pre>
+sudo apt-get install emacs24
+sudo apt-get install subversion
+sudo apt-get install ant
+</pre>
+(Emacs comes in many varieties, with different package names).
+
+<small>
+<p>Note: If you don't have Java installed, doing "apt-get install ant" on a Ubuntu 14.04 machine triggers the installation of JRE-related packages (since ant needs java to run):
+
+<pre>
+% sudo apt-get install ant
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following extra packages will be installed:
+  ant-optional ca-certificates-java default-jre-headless java-common
+  libxerces2-java libxml-commons-external-java libxml-commons-resolver1.1-java
+  openjdk-7-jre-headless tzdata-java
+Suggested packages:
+  ant-doc ant-gcj default-jdk java-compiler java-sdk ant-optional-gcj antlr
+  javacc junit jython libbcel-java libbsf-java libcommons-logging-java
+  libcommons-net-java libgnumail-java libjaxp1.3-java libjdepend-java
+  libjsch-java liblog4j1.2-java liboro-java libregexp-java libxalan2-java
+  default-jre equivs libxerces2-java-doc libxerces2-java-gcj
+  libxml-commons-resolver1.1-java-doc icedtea-7-jre-jamvm sun-java6-fonts
+  fonts-dejavu-extra fonts-ipafont-gothic fonts-ipafont-mincho
+  ttf-wqy-microhei ttf-wqy-zenhei ttf-telugu-fonts ttf-oriya-fonts
+  ttf-kannada-fonts ttf-bengali-fonts
+The following NEW packages will be installed
+  ant ant-optional ca-certificates-java default-jre-headless java-common
+  libxerces2-java libxml-commons-external-java libxml-commons-resolver1.1-java
+  openjdk-7-jre-headless tzdata-java
+</pre>
+</small>
+
 <h5><a name="tomcat">Tomcat</a></h5>
+
+<p><strong>On RedHat</strong>
 
 <p>Note: the following instructions are for Tomcat 6; we have upgraded to Tomcat 7 since; see <a href="tomcat7.html">Tomcat 7</a>.
 
@@ -114,6 +153,12 @@ sudo yum install httpd
 <p>It appears that if the host is rebooted, httpd needs to be restarted with
 <pre>
 sudo service httpd start
+</pre>
+
+<p><strong>On Ubuntu 14.04</strong>
+<pre> 
+sudo apt-get install tomcat7
+sudo apt-get install tomcat7-docs tomcat7-examples tomcat7-admin
 </pre>
 
 <h6>Tomcat memory settings</h6>
@@ -178,9 +223,18 @@ http://openjdk.java.net/install/
 https://access.redhat.com/site/documentation/en-US/JBoss_Enterprise_SOA_Platform/4.3/html/Getting_Started_Guide/appe-install_jdk_rhel.html 
 </ol>
 
+<p><strong>On Ubuntu 14.04</strong>, apt-get can be used. "apt-get java-sdk" epxlains that this is a "virtual package", and one needs to choose one of the underlying "real" packages.
+<pre>
+sudo apt-get install openjdk-7-jdk
+</pre>
+
+
 <h4><a name="mysql.install">Install Mysql server (on RHEL)</a></h4>
 <p>
-Install mysql, as per the instructions at <a href="http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html">http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html</a> . On a RedHat Enterprise host, that would look like this: 
+Install mysql, as per the instructions at <a href="http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html">http://docs.oracle.com/cd/E17952_01/refman-5.5-en/linux-installation-native.html</a> . 
+
+<p>
+<strong>On a RedHat Enterprise host,</strong> that would look like this: 
 <pre>
 sudo yum install mysql mysql-server mysql-libs mysql-server
 sudo service mysqld start
@@ -197,7 +251,11 @@ During this process, you will set the  usual MySQL server root password for the 
 <p>
 (Note: After reboot, mysqld apparently automatically restarts).
 
+<p><strong>On Ubuntu</strong>:
 
+<pre>
+sudo apt-get install mysql-server
+</pre>
 
 <h5>For access to mysqld from other hosts (identified by their IP)</h5>
 
