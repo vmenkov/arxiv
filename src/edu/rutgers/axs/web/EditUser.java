@@ -27,7 +27,7 @@ public class EditUser extends Participation  {
 	is inferred from the session data.
      */
     public final String uname;
-    /** The user entry being modified or created created */
+    /** The user entry being modified or created */
     public User r=null;
 
     public static enum Mode {
