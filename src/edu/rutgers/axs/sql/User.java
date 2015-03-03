@@ -389,7 +389,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 
     public User() {
 	setCluster( Bernoulli.defaultCluster);
-	setProgram( Program.SET_BASED);
+	setProgram( Program.PPP);
     }
 
 
