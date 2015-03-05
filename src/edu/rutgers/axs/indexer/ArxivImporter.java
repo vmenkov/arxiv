@@ -551,10 +551,17 @@ public class ArxivImporter {
 
 	boolean refused = false;
 	int code = 0;
+	Exception savedEx = null;
 	try {
 	    code = conn.getResponseCode();
 	    if (code==HttpURLConnection.HTTP_OK) return false;
 	} catch( java.net.ConnectException ex) {
+	    //Logging.warning("Caught exception " + ex)
+	    savedEx = ex;
+	    refused = true;
+	} catch(  java.net.SocketException ex) {
+	    // Logging.warning("Caught exception " + ex)
+	    savedEx = ex;
 	    refused = true;
 	}
 
@@ -562,7 +569,8 @@ public class ArxivImporter {
 	long msec2= msec1 + 1000 * 120; // default long wait	
 	if (refused) {
 	    // a very occasional "java.net.ConnectException: Connection refused"
-	    System.out.println("Had a 'connection refused', let's retry just in case");
+	    // or "java.net.SocketException: Connection reset"
+	    System.out.println("Had a 'connection refused' or 'connection reset' (ex="+savedEx+"). Let's retry just in case");
 	} else if (code==HttpURLConnection.HTTP_UNAVAILABLE) {
 	    // this usually is a typical OAI2 retry message
 	    String ra = conn.getHeaderField("Retry-After");
@@ -954,8 +962,9 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
 	    System.out.println("Unrecognized command: " + cmd);
 	}
 	System.out.println("imported "+imp.pcnt+" docs, among which missing body files for "+ imp.missingBodyIdList.size() +" docs");
-	File ms = new File("missing.txt");
-	if (!ms.canWrite()) {
+	File ms = (new File("missing.txt")).getAbsoluteFile();
+	if (!ms.getParentFile().canWrite() ||
+	    ms.exists() && !ms.canWrite()) {
 	    throw new IOException("Cannot write file " + ms +"; please check file and directory permissions!");
 	}
 	PrintWriter fw = new PrintWriter(new FileWriter(ms));
