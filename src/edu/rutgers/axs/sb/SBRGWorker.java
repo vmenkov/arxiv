@@ -340,6 +340,16 @@ class SBRGWorker  {
 	return results;
     }
 
+    HashSet<String> findExclusions() {
+	HashSet<String> exclusions = parent.linkedAids;
+	synchronized (exclusions) {
+	    exclusions.addAll(his.viewedArticlesAll);
+	    exclusions.addAll(his.prohibitedArticles);
+	}
+	return exclusions;
+    }
+
+
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
 	articles viewed by the user in this session. The results go into
@@ -348,11 +358,7 @@ class SBRGWorker  {
     private void computeRecList(EntityManager em, IndexSearcher searcher, int runID) {
 	
 	try {
-	    HashSet<String> exclusions = parent.linkedAids;
-	    synchronized (exclusions) {
-		exclusions.addAll(his.viewedArticlesAll);
-		exclusions.addAll(his.prohibitedArticles);
-	    }
+	    HashSet<String> exclusions = findExclusions();
 
 	    // A list of related articles (by abstract match, or by
 	    // coaccess, as appropriate), is obtained separately for

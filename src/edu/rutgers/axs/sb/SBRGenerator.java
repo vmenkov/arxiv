@@ -261,7 +261,7 @@ public class SBRGenerator {
 	shown to the user during this session. This can be used an 
 	exclusion list for the session-based recommendations.
 
-	<P>This set also inbcludes all other articles that we should not show to the user.
+	<P>This set also includes all other articles that we should not show to the user.
      */
     HashSet<String> linkedAids = new HashSet<String>();
     /** This method can be called to record the fact that a link of a

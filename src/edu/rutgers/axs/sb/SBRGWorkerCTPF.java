@@ -305,7 +305,8 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 
 	try {
 
-            Logging.info("SBRGWorkerCTPF: Calculating Scores"); 
+	    HashSet<String> exclusions = findExclusions();
+	    Logging.info("SBRGWorkerCTPF: Calculating Scores"); 
             // Do x^T * (epsilon + theta)
             TreeMap<Float,String> scores = new TreeMap<Float,String>();
             //String old_value = "";
@@ -335,6 +336,13 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 aid = scores.get(score);
                 if(aid != null) {
                     reco_articles += scores.get(score) + " (" + score + ") | ";
+
+		    // check this article against the exclusion list
+		    if (exclusions.contains(aid)) {
+			excludedList += " " + aid;
+			continue;
+		    }
+
                     ArticleEntry ae = new ArticleEntry(++k, scores.get(score));
                     ae.setScore(score);
                     ae.age = k-1; 
