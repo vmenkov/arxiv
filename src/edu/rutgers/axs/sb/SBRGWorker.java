@@ -342,7 +342,8 @@ class SBRGWorker  {
 
     /** Generates the list of recommendations based on searching the Lucene
 	index for articles whose abstracts are similar to those of the
-	articles viewed by the user in this session.
+	articles viewed by the user in this session. The results go into
+	array sr.
      */
     private void computeRecList(EntityManager em, IndexSearcher searcher, int runID) {
 	

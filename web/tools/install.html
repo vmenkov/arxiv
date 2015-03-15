@@ -10,9 +10,9 @@ migrating the main my.arxiv.org server from cactuar.rutgers.edu to a server at
 Cornell. The target server was running RedHat Enterprise Linux, and
 therefore the commands are geared to that system. If installing on a
 server running another flavor of Linux (e.g. Ubuntu), you'd be using
-(e.g.) apt-get instead of yum, and some paths my be different.
+(e.g.) <tt>apt-get</tt> instead of <tt>yum</tt>, and some paths may be different.
 
-<p>Last update: February 2015.
+<p>Last update: March 2015.
 
 <h2>Tools</h2>
 
@@ -312,6 +312,35 @@ GRANT SELECT ON json.* TO  'readonly'@'%';
 GRANT SELECT ON  arxiv_xs.*  TO 'readonly'@'%';
 flush privileges;
 </pre>
+
+<h5>Packet size</h5>
+
+<small>
+<p><em>(This section is not related to My.ArXiv's own needs)</em>
+
+<p>2015-03-15: Xiaoting reported:
+
+<pre>
+When I queried from the mysql EE database, I got the following error
+
+_mysql_exceptions.OperationalError: (1153, "Got a packet bigger than 'max_allowed_packet' bytes")
+</pre>
+
+<p>The solution, as per 
+http://stackoverflow.com/questions/93128/mysql-error-1153-got-a-packet-bigger-than-max-allowed-packet-bytes
+was to edit the <tt>[mysqld]</tt> section of the file /etc/my.conf, assing the line
+<pre>
+max_allowed_packet=100M
+</pre>
+(For the syntax of my.conf, see e.g.
+http://dev.mysql.com/doc/refman/5.1/en/option-files.html )
+
+<p>
+After that, access to that database could be carried out with 
+<pre>
+mysql --max_allowed_packet=100M -u <em>user_name</em> -p <em>database_name</em>
+</pre>
+</small>
 
 
 <h4>Create directories</h4>
