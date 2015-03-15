@@ -165,7 +165,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 	String js="";
 	RatingButton [] buttons = RatingButton.chooseRatingButtonSet(u.getProgram());
       
-	Logging.info("JudgmentServlet.responseJS(op=" + op+")");
+	//	Logging.info("JudgmentServlet.responseJS(op=" + op+")");
 	try {
 
 	    if (op!=Action.Op.EXPAND_ABSTRACT) {
@@ -222,7 +222,7 @@ public class JudgmentServlet extends BaseArxivServlet {
 		//js += "alert('Running response code!'); ";
 	    }
 
-	    Logging.info("JudgmentServlet.responseJS(op=" + op+") : " + js);
+	    //Logging.info("JudgmentServlet.responseJS(op=" + op+") : " + js);
 
 	} catch(Exception ex) {
 	    ex.printStackTrace(System.out);

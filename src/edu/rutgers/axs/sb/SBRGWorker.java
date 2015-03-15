@@ -343,8 +343,10 @@ class SBRGWorker  {
     HashSet<String> findExclusions() {
 	HashSet<String> exclusions = parent.linkedAids;
 	synchronized (exclusions) {
-	    exclusions.addAll(his.viewedArticlesAll);
-	    exclusions.addAll(his.prohibitedArticles);
+	    if (his!=null) {
+		exclusions.addAll(his.viewedArticlesAll);
+		exclusions.addAll(his.prohibitedArticles);
+	    }
 	}
 	return exclusions;
     }
