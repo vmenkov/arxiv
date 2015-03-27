@@ -13,6 +13,7 @@ import javax.persistence.*;
 
 import org.apache.lucene.search.ScoreDoc;
 
+import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.web.*;
@@ -136,9 +137,10 @@ public class SBRGenerator {
 	invoked immediately when the session is created, and merely
 	created a dummy (and disabled) SBRG object. 
 
-	@param rb Provides access to the query-string parameters. Since
-	2014-09-10, we call turnSBOn() in the constructor, with rb=null,
-	for the SB-on-by-default functionality. On this call,
+	@param rb Provides access to the query-string parameters,
+	which controls various SBRG modes and options. Since
+	2014-09-10, we call turnSBOn() in the constructor, with
+	rb=null, for the SB-on-by-default functionality. On this call,
 	all defaults are used.
      */
     public synchronized void turnSBOn(ResultsBase rb) throws WebException {
@@ -179,6 +181,7 @@ public class SBRGenerator {
 	}
 
     }
+
 
     /** Creates a SBRGWorker object of an appropriate type for the job.
 	@param sbrg The SBR generator which contains all relevant parameters
@@ -245,14 +248,18 @@ public class SBRGenerator {
 	This is because anyone can request one page without starting 
 	a real session (robots do it often), while having 2 pages requested 
 	in the same session is a good indicator of real user activity.
+
+	@return Pointer to the now-started thread, or null if no new thread
+	has been started right now. The return value is not utilized in the 
+	context of the web application, but can be used in the test harness
+	application (which wants to ensure single-thread processing,
+	and to report separately on each thread)
      */
-    synchronized public void sbCheck() {
+    synchronized public SBRGThread sbCheck() {
 	if (allowedSB) {
 	    int articleCnt = maintainedActionHistory.articleCount;
 	    needSBNow = 	     (articleCnt>=2);
-	    if (needSBNow) {
-		requestRun(articleCnt);
-	    }
+	    return needSBNow ? requestRun(articleCnt) : null;
 	}
     }
 
@@ -431,22 +438,30 @@ public class SBRGenerator {
     /** This method is invoked by front-end pages when they believe that 
 	the user has carried out a new action, and the SBRL may need
 	to be recomputed accordingly.
+
+	@return Pointer to the now-started thread, or null if no new thread
+	has been started right now. The return value is not utilized in the 
+	context of the web application, but can be used in the test harness
+	application (which wants to ensure single-thread processing,
+	and to report separately on each thread)
      */
-    private synchronized void requestRun(int articleCount) {
+    private synchronized SBRGThread requestRun(int articleCount) {
 	String prefix = "SBRG(session="+sd.getSqlSessionId()+"): ";
 	Logging.info(prefix+"requested computations for articleCnt="+articleCount);
 	if (sbrReady != null && sbrReady.getArticleCount() >= articleCount) {
 	    Logging.info(prefix + "ignoring redundant request with articleCount=" + articleCount);
-	    
+	    return null;
 	} else if (sbrRunning != null) {
 
-	    requestedArticleCount = Math.max(requestedArticleCount,articleCount);
+	    requestedArticleCount= Math.max(requestedArticleCount,articleCount);
 	    Logging.info(prefix+"recording request with articleCount=" + articleCount +", until the completion of the currently running thread " + sbrRunning.getId() + "/" + sbrRunning.getState()  );
+	    return null;
 	} else {
 	    sbrRunning = new SBRGThread(this, runCnt++, worker);
 	    lastThreadRequestedArticleCount=requestedArticleCount=articleCount;
 	    Logging.info(prefix + "Immediately starting a new thread "+ sbrRunning.getId() +", for articleCnt=" + requestedArticleCount);
 	    sbrRunning.start();
+	    return sbrRunning;
 	}
     }
 
@@ -553,5 +568,14 @@ public class SBRGenerator {
 	return js;
     }
 
+
+    /** This is designed for command line testing. The parameters which are
+	normally passed to the SBRGenerator via the URL query string 
+	are expected to be supplied as command line options (system properties),
+	e.g. -DsbXXXX=YYYY
+    */
+    public static void(String argv) {
+	
+    }
 
 }

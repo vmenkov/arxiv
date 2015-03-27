@@ -10,8 +10,8 @@ import org.apache.lucene.index.*;
 
 /** Information about an HttpSession stored in the SQL server. 
 
-    <p> FIXME: We probabluy also record the IP from which the first
-request in teh session came.  */
+    <p> FIXME: We probably should also record the IP address from
+    which the first request in the session came.  */
 @Entity  
      public class Session extends OurTable 
 {
@@ -28,10 +28,19 @@ request in teh session came.  */
     public void setId(int x) {        id=x;    }
 
   
-    Session() {}
+    /** Not used? */
+    Session() {
+    }
 
+    /** Used to a create a Session object for a real session (in a web
+	application) or a simulated session (in a command-line
+	application)
+	@param sess An underlying HttpSession object (or null, if in a
+	command-line app)
+    */
     public Session(HttpSession sess) {
-	setStartTime(new Date(sess.getCreationTime()));
+	Date t = (sess==null)? new Date() :new Date(sess.getCreationTime());
+	setStartTime(t);
     }
 
     @ManyToOne

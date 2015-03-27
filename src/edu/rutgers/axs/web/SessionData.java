@@ -14,7 +14,6 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.sb.SBRGenerator;
 import edu.rutgers.axs.upload.BackgroundThread;
 import edu.rutgers.axs.upload.UploadProcessingThread;
-//import edu.rutgers.axs.recommender.TorontoPPPThread;
 import edu.rutgers.axs.recommender.UserProfile;
 import edu.rutgers.axs.recommender.Stoplist;
 
@@ -29,6 +28,9 @@ import edu.rutgers.axs.recommender.Stoplist;
     SessionData objects and HttpSession objects of the servlet
     container (Tomcat). The latter stores the former as a property,
     and the formar back-links to the latter as well.
+
+    <p>It is also possible to create a SessionData object in a command line
+    application; this is used e.g. as part of the test harness for SBRG.
  */
 public class SessionData {
 
@@ -70,7 +72,10 @@ public class SessionData {
 	sbrg.recordLinkedAids(entries);
     }
    
-    private SessionData( HttpSession _session,HttpServletRequest request )
+    /** @param _session The underlying web session object (in a web
+     * app), or null (in a command line app)
+     */
+    private SessionData( HttpSession _session) {
 	throws WebException, IOException {
 	session = _session;
 	initFactory( session );
@@ -92,14 +97,23 @@ public class SessionData {
 	}
     }
 
-    /** Create a new EntityManagerFactory using the System properties.
+    /** Creates a new EntityManagerFactory using the System
+	properties. The properties are accessed via the servlet
+	context (in a web application) or directly (in a command line
+	application, for a simulated session).
+	@param session The relevant HttpSession, or null (in a simulated
+	session)
      */
     private static synchronized void initFactory(HttpSession session) 
 	throws IOException, WebException {
 	if (factory!=null) return;
-	Properties p = getProperties(session.getServletContext());     
-	factory = Persistence.
-	    createEntityManagerFactory(Main.persistenceUnitName,p);
+	if (session==null) {
+	    factory = Main.getFactory();
+	} else {
+	    Properties p = getProperties(session.getServletContext());     
+	    factory = Persistence.
+		createEntityManagerFactory(Main.persistenceUnitName,p);
+	}
     }
 
     /** Creates a new EntityManager from the EntityManagerFactory. The
@@ -134,16 +148,26 @@ public class SessionData {
   
 	    sd  = ( SessionData) session.getAttribute(ATTRIBUTE_SD);
 	    if (sd == null) {
-		sd = new SessionData(session,request);
+		sd = new SessionData(session);
 		session.setAttribute(ATTRIBUTE_SD, sd);
 	    }
 	}
 	return sd;
     }
 
+    static synchronized SessionData getSimulatedSessionData() 
+					throws //WebException, 
+					IOException {
+
+	    SessionData sd  = new SessionData(null);
+	    return sd;
+    }
+
+
     /** Discards the SessionData object (if any) associated with the
 	current web session; then creates a new one and stores it.
-	This is primarily used for the "change focus" functionality in SB. 
+	This method is primarily used for the "change focus"
+	functionality in SB.
 	
 	<p>When no SessionData object exists yet, this method is
 	similar to getSessionData()
@@ -163,8 +187,7 @@ public class SessionData {
     /** Simply invalidates the HttpSession. This means that the associated 
 	SessionData object will be discarded as well. 
      */
-    static synchronized void //SessionData
-	discardSessionData(HttpServletRequest request) 
+    static synchronized void discardSessionData(HttpServletRequest request) 
 	throws WebException, IOException {
 	HttpSession session = request.getSession();
 	session.invalidate();
@@ -304,9 +327,11 @@ public class SessionData {
 	storedUserName = u;
     }
 
-    /** Records the session-user association in the SQL server. Note that
-	when a person works for a while without logging in, and then logs in,
-	the user name will be associated with the entire session.
+    /** Records the session-user association in the SQL server (as
+	part of the associated persistent Session object). Note that
+	when a person works for a while without logging in, and then
+	logs in, the user name supplied on login will become
+	associated with the entire session.
      */
     void storeUserInfoInSQL(EntityManager em, User user) {
 	em.getTransaction().begin(); 
@@ -324,6 +349,10 @@ public class SessionData {
 	Note that the URLs of the form "index.jsp?..." requires login;
 	this is for the benefit of EmailSug.jsp. An exception is 
 	index.jsp?sb=true, used to activate Session-Based Recommendations
+
+	<p>FIXME: Obviously, no password protection of any kind is provided
+	for *.html pages (since they are served by Tomcat without invoking
+	any of our code, unlike *.jsp or servlet pages)
 
 	@return null if no restriction is imposed, or a list of
 	allowed roles (may be empty) otherwise

@@ -266,7 +266,9 @@ public class FilterServlet extends  BaseArxivServlet  {
     }
 
     /** Information about whether the currently viewed URL is one of
-	those "view abstract", "view pdf" etc.  pages.
+	those "view abstract", "view pdf" etc.  pages. This is
+	used to decide whether viewing of this page amounts to a 
+	recordable Action.
      */
     static private class Actionable {
 	String aid=null;

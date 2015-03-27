@@ -41,18 +41,24 @@ public class Main {
 
     private static EntityManagerFactory factory = null;
 
-    /** Creates a new EntityManager from the EntityManagerFactory. 
-     */
-    public static synchronized EntityManager getEM() {
-        // Create a new EntityManagerFactory using the System properties.
-        // The "icd" name will be used to configure based on the
-        // corresponding name in the META-INF/persistence.xml file
+    /** Initializes the EntityManagerFactory using the System properties.
+        The "icd" name will be used to configure based on the
+        corresponding name in the META-INF/persistence.xml file
+    */
+    public static synchronized  EntityManagerFactory getFactory() {
 	if (factory == null) {
 	    factory = Persistence.
 		createEntityManagerFactory(persistenceUnitName,
 					   System.getProperties());
 	}
+	return factory;
+    }
 
+    /** Creates a new EntityManager from the EntityManagerFactory. 
+     */
+    public static synchronized EntityManager getEM() {
+        // Create a new EntityManagerFactory if not created yet
+	getFactory();
         // Create a new EntityManager from the EntityManagerFactory. The
         // EntityManager is the main object in the persistence API, and is
         // used to create, delete, and query objects, as well as access

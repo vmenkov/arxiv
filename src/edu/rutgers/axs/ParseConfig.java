@@ -270,6 +270,24 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	    return fmt.parse(x);
 	}
 
+	/** Returns the value of the specified parameter if it can be
+	    interpreted as a value of the specified enumerated type.
+	    If no parameter with the specified value has been supplied,
+	    or if its value cannot be interpreted as a value of the desired
+	    type, the supplied default value is returned
+	    @param defVal The default value to be returned. May be null.
+	 */
+	static public Enum getOptionEnum(String aName, Class retType, Enum defVal) {
+	    String x= getOption(aName, null);
+	    if (x==null) return defVal;
+	    try {
+		return Enum.valueOf(retType, x);
+	    } catch (Exception ex) {
+		return defVal;
+	    }
+	}
+
+
 	/**
 	 * Gets the requested value from the hash table. If the value is not found, IOException is thrown.
 	 */
