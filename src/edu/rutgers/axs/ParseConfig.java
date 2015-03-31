@@ -277,7 +277,11 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	    type, the supplied default value is returned
 	    @param defVal The default value to be returned. May be null.
 	 */
-	static public Enum getOptionEnum(String aName, Class retType, Enum defVal) {
+
+	//    static public <T extends Enum<T>> T  getEnum(HttpServletRequest request, Class<T> retType, String name,  T defVal) {
+
+
+	public  <T extends Enum<T>> T getOptionEnum(Class<T> retType, String aName, T defVal) {
 	    String x= getOption(aName, null);
 	    if (x==null) return defVal;
 	    try {

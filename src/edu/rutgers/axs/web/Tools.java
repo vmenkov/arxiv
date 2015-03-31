@@ -16,7 +16,6 @@ import edu.rutgers.axs.sql.*;
     components, and processing requests sent by the web browser when
     those forms are filled
  */
-@SuppressWarnings("unchecked")
 public class Tools {
 
     final static String NONE = "none";
@@ -130,7 +129,7 @@ public class Tools {
 	}
     }
 
-    static public Enum getEnum(HttpServletRequest request, Class retType, String name, Enum defVal) {
+    static public <T extends Enum<T>> T  getEnum(HttpServletRequest request, Class<T> retType, String name,  T defVal) {
 	String s = request.getParameter(name);
 	if (s==null) {
 	    return defVal;
@@ -222,6 +221,7 @@ public class Tools {
       
       @throws  IllegalInputException If a problem with the input data is detected
      */
+    @SuppressWarnings("unchecked")
     static void editEntity(String prefix, Object /*OurTable*/ r, HttpServletRequest request)
 	throws IllegalAccessException, InvocationTargetException, 
 	       IllegalInputException {
@@ -285,7 +285,9 @@ public class Tools {
 		} else if (retType.isEnum()) {
 		    Enum x = null;
 		    try {
-			x = Enum.valueOf(retType, val);
+			Class<Enum> ce = (Class<Enum>)retType;
+			x = Enum.valueOf(ce, val);
+			//			x = Enum.valueOf(retType, val);
 		    } catch(IllegalArgumentException ex) {
 			Logging.warning("Impossible enum value (for type "+retType+") submitted: " + e.name + "=" + x);
 			throw new IllegalInputException("HTML form or CSV file submitted inappropriate value (for type "+retType+"),  " + e.name + "=" + x + ". This could be a data entry error, or an error in the HTML form");

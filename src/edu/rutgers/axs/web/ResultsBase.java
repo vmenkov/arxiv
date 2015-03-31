@@ -210,7 +210,8 @@ public class ResultsBase {
 	return Tools.getBoolean(request, name, defVal);
     }
 
-    public Enum getEnum(Class retType, String name, Enum defVal) {
+
+    public  <T extends Enum<T>> T getEnum(Class<T> retType, String name, T defVal) {
 	return Tools.getEnum(request, retType, name,  defVal);
     }
 

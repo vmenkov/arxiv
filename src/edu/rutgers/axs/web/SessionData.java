@@ -49,7 +49,7 @@ public class SessionData {
 	with the session, but is not actually used until the flag sd.needSBNow
 	is set.
     */
-    final public SBRGenerator sbrg=new SBRGenerator(this);
+    final public SBRGenerator sbrg=new SBRGenerator(this, true);
 
     /** The most recent uploaded document processsing thread (for the Toronto
 	system) in this session. */
@@ -75,8 +75,7 @@ public class SessionData {
     /** @param _session The underlying web session object (in a web
      * app), or null (in a command line app)
      */
-    private SessionData( HttpSession _session) {
-	throws WebException, IOException {
+    private SessionData( HttpSession _session) throws WebException, IOException {
 	session = _session;
 	initFactory( session );
 	// record the session in the database
@@ -87,7 +86,11 @@ public class SessionData {
 	    Session s = new Session(_session);
 	    em.persist(s);
 	    em.getTransaction().commit(); 
-	    Logging.info("Recorded session " + s + "; web server session id=" + _session.getId());
+	    String msg ="Recorded session " +s + ";";
+	    msg += (session!=null)?
+		" web server session id=" + _session.getId() :
+		" simulated session";
+	    Logging.info(msg);
 	    sqlSessionId = s.getId();
 	    //	} catch (IOException ex) {
 	    //	    ex.printStackTrace(System.out); // just for debugging
@@ -138,9 +141,18 @@ public class SessionData {
     /** Looks up the SessionData object already associated with the
 	current session, or creates a new one. This is done atomically,
         synchronized on the session object.
+	
+	<p>This can also be used in command-like app with simulated
+	session, when this method will simply create a new dummy SessionData
+	object.
+
+	@param request The current HTTP request (or null in a command-like app
+	with simulated session).
      */
-    static synchronized SessionData getSessionData(HttpServletRequest request) 
+    static public synchronized SessionData getSessionData(HttpServletRequest request) 
 	throws WebException, IOException {
+
+	if (request==null) return new SessionData(null);
 
 	HttpSession session = request.getSession();
 	SessionData sd  = null;
@@ -156,7 +168,7 @@ public class SessionData {
     }
 
     static synchronized SessionData getSimulatedSessionData() 
-					throws //WebException, 
+					throws WebException, 
 					IOException {
 
 	    SessionData sd  = new SessionData(null);
@@ -178,7 +190,7 @@ public class SessionData {
 	HttpSession session = request.getSession();
 	SessionData sd  = null;
 	synchronized(session) {  
-	    sd = new SessionData(session,request);
+	    sd = new SessionData(session);
 	    session.setAttribute(ATTRIBUTE_SD, sd);
 	}
 	return sd;
@@ -323,7 +335,7 @@ public class SessionData {
     /** Saves the user name (received from the [validated] login form, 
 	or recovered via a persistent cookie) into the session's memory.
      */
-    void storeUserName(String u) {
+    public void storeUserName(String u) {
 	storedUserName = u;
     }
 
@@ -333,7 +345,7 @@ public class SessionData {
 	logs in, the user name supplied on login will become
 	associated with the entire session.
      */
-    void storeUserInfoInSQL(EntityManager em, User user) {
+    public void storeUserInfoInSQL(EntityManager em, User user) {
 	em.getTransaction().begin(); 
 	Session s = (Session)em.find(Session.class, sqlSessionId);
 	s.setUser(user);

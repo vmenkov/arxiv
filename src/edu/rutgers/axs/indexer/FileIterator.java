@@ -20,7 +20,7 @@ public class FileIterator implements Iterator<String> {
     /** Creates a new FileIterator, which will iterate over the content of a file or stdin.
 	@param fname File name, or "-" for stdin 
     */
-    public static createFileIterator(String fname) throws IOException {
+    public static FileIterator createFileIterator(String fname) throws IOException {
 	if (fname.equals("-")) return new FileIterator();
 	File f = new File(fname);
 	if (!f.exists() || !f.canRead()) throw new IOException("File " + f + " does not exist, or cannot be read");

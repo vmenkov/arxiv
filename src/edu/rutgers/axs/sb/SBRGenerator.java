@@ -32,10 +32,11 @@ import edu.rutgers.axs.web.*;
  */
 public class SBRGenerator {
 
-    private final boolean sbOnByDefault = true;
+    //    private final boolean sbOnByDefault = true;
     /** Whether this session needs a "moving panel" with session-based 
 	recommendations (aka "session buddy") */
     private boolean allowedSB = false; 
+    void setAllowedSB(boolean x) { allowedSB =x;}
     private boolean needSBNow = false;
     public boolean getNeedSBNow() { return needSBNow;}
 
@@ -105,15 +106,15 @@ public class SBRGenerator {
 	 this session. This can be RANDOM, while sbMethod will contain
 	 the actual (randomly chosen) method.
      */
-    private Method requestedSbMethod = null;
+    Method requestedSbMethod = null;
 
     /** Pointer to a thread object that contains the most recently compiled
 	recommendation list ready for display. */
-    private SBRGThread sbrReady = null;
+    SBRGThread sbrReady = null;
 
     /** Pointer to a thread running right now; it will compute the
      * next available list, but it is not ready for display yet. */
-    private SBRGThread sbrRunning = null;
+    SBRGThread sbrRunning = null;
 
     /** Link to the most recent failed-run thread object, if any.
      */
@@ -124,7 +125,7 @@ public class SBRGenerator {
 	far on behalf of this particular session. */
     private int runCnt=0;
 
-    private SBRGWorker worker=null;
+    SBRGWorker worker=null;
 
     /** Enables SB generation, and sets all necessary mode parameters
 	etc. This method may be invoked directly (from
@@ -187,7 +188,7 @@ public class SBRGenerator {
 	@param sbrg The SBR generator which contains all relevant parameters
 	@return A new worker object.
      */
-    private static SBRGWorker createWorker(SBRGenerator sbrg) {
+    static SBRGWorker createWorker(SBRGenerator sbrg) {
 	// If merging with baseline is to follow, then the stable-order
 	// procedure is only carried out after that merging.
 	int soMode = sbrg.sbMergeWithBaseline? 0:  sbrg.sbStableOrderMode;
@@ -215,7 +216,7 @@ public class SBRGenerator {
 
     /** Randomly selects a SBR generation method to use in this session.
      */
-    private static SBRGenerator.Method pickRandomMethod() {
+    static SBRGenerator.Method pickRandomMethod() {
 	Method[] methods = {  Method.ABSTRACTS, Method.COACCESS,
 			      Method.ABSTRACTS_COACCESS,
 			      //Method.SUBJECTS
@@ -256,11 +257,13 @@ public class SBRGenerator {
 	and to report separately on each thread)
      */
     synchronized public SBRGThread sbCheck() {
+	Logging.info("sbCheck: allowedSB=" + allowedSB);
 	if (allowedSB) {
 	    int articleCnt = maintainedActionHistory.articleCount;
 	    needSBNow = 	     (articleCnt>=2);
+	    Logging.info("sbCheck: articleCnt="+articleCnt+", needSBNow=" +needSBNow);
 	    return needSBNow ? requestRun(articleCnt) : null;
-	}
+	} else return null;
     }
 
 
@@ -430,9 +433,9 @@ public class SBRGenerator {
     /** Since 2014-09-10, the SB functionality is turned on by
 	default, right here in the constructor.
      */
-    public SBRGenerator(SessionData _sd) throws WebException {
+    public SBRGenerator(SessionData _sd, boolean turnOnNow) throws WebException {
 	sd = _sd;
-	if (sbOnByDefault) turnSBOn(null);
+	if (turnOnNow) turnSBOn(null);
     }
 
     /** This method is invoked by front-end pages when they believe that 
@@ -491,7 +494,7 @@ public class SBRGenerator {
     }
 
 
-    ActionHistory maintainedActionHistory = new  ActionHistory();
+    private ActionHistory maintainedActionHistory = new  ActionHistory();
     
     synchronized public void addAction(Action a) {
 	maintainedActionHistory.augment(a);
@@ -566,16 +569,6 @@ public class SBRGenerator {
 	}
 	Logging.info("CheckSBServlet(session="+sd.getSqlSessionId()+", client="+clientHasPlid+", server="+serverHasPlid+", running="+r+") will send back: " + js);
 	return js;
-    }
-
-
-    /** This is designed for command line testing. The parameters which are
-	normally passed to the SBRGenerator via the URL query string 
-	are expected to be supplied as command line options (system properties),
-	e.g. -DsbXXXX=YYYY
-    */
-    public static void(String argv) {
-	
     }
 
 }
