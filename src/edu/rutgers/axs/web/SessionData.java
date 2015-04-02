@@ -12,6 +12,7 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.sb.SBRGenerator;
+import edu.rutgers.axs.sb.SBRGeneratorCmdLine;
 import edu.rutgers.axs.upload.BackgroundThread;
 import edu.rutgers.axs.upload.UploadProcessingThread;
 import edu.rutgers.axs.recommender.UserProfile;
@@ -49,7 +50,7 @@ public class SessionData {
 	with the session, but is not actually used until the flag sd.needSBNow
 	is set.
     */
-    final public SBRGenerator sbrg=new SBRGenerator(this, true);
+    final public SBRGenerator sbrg; 
 
     /** The most recent uploaded document processsing thread (for the Toronto
 	system) in this session. */
@@ -77,6 +78,8 @@ public class SessionData {
      */
     private SessionData( HttpSession _session) throws WebException, IOException {
 	session = _session;
+	sbrg=  (session!=null) ? new SBRGenerator(this, true) :
+	    new SBRGeneratorCmdLine(this);
 	initFactory( session );
 	// record the session in the database
 	EntityManager em=null;

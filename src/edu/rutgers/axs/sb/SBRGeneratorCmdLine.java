@@ -33,7 +33,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	string parameters that would be used to control SBRG in the web 
 	application.     
      */
-    private synchronized void turnSBOn(ParseConfig ht) throws WebException {
+    private synchronized void init(ParseConfig ht) throws WebException {
 	setAllowedSB(true);
 	sbStableOrderMode = ht.getOption("sbStableOrder", sbStableOrderMode);
 	validateSbStableOrderMode();
@@ -56,7 +56,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 
 	    sbMergeWithBaseline = ht.getOption("sbMergeWithBaseline", false);
 
-	    Logging.info("SBRG(session="+sd.getSqlSessionId() +").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline);
+	    Logging.info("SBRG(session="+sd.getSqlSessionId() +").init(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline);
 
 	    worker =createWorker(this);
 
@@ -67,12 +67,20 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	    Logging.error(msg);
 	    throw new IllegalArgumentException(msg);
 	}
-
+	em = sd.getEM();
+	String uname = "simulated_sb";
+	user= createDummyUser( em, uname);
+	sd.storeUserName(uname);
+	sd.storeUserInfoInSQL(em, user);
     }
 
-    private final User user;
+    private User user;
     /** Stays on for the duration of this object's existence */
-    private final EntityManager em;
+    private EntityManager em;
+
+    public SBRGeneratorCmdLine(SessionData _sd) throws WebException, IOException {
+	super(_sd, false);
+    }
 
     /** Creates a SBR generator configured based on command line
 	parameters (supplied as system properties)
@@ -82,14 +90,11 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	string parameters that would be used to control SBRG in the web 
 	application.     
      */
-    public SBRGeneratorCmdLine(ParseConfig ht) throws WebException, IOException {
-	super(SessionData.getSessionData(null), false);
-	turnSBOn(ht);
-	em = sd.getEM();
-	String uname = "simulated_sb";
-	user= createDummyUser( em, uname);
-	sd.storeUserName(uname);
-	sd.storeUserInfoInSQL(em, user);
+    public static SBRGeneratorCmdLine create(ParseConfig ht) throws WebException, IOException {
+	SessionData sd = SessionData.getSessionData(null);
+	SBRGeneratorCmdLine g = (SBRGeneratorCmdLine)sd.sbrg;
+	g.init(ht);
+	return g;
     }
 
     /** Creates a persistent User entry for a dummy user, if it does
@@ -114,7 +119,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	
 	em.getTransaction().begin();
 	u = User.findByName(em, uname);
-	System.out.println("Reading back user record: " + u.reflectToString() );
+	// System.out.println("Reading back user record: " + u.reflectToString() );
 
 	Role.Name rn = Role.Name.subscriber;
 	Role r = (Role)em.find(Role.class, rn.toString());
@@ -166,7 +171,26 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	}
 	String infile = argv[ia++];
 
-	SBRGeneratorCmdLine g = new SBRGeneratorCmdLine(ht);
+	PrintStream out = System.out;
+	if (ia < argv.length) {
+	    String outfile = argv[ia++];
+	    if (!outfile.equals("-")) {
+		File f2 = new File(outfile);	    
+		System.out.println("Results will be written to file " + f2);
+		out = new PrintStream(new FileOutputStream(f2));
+	    }
+	}
+
+	SBRGeneratorCmdLine g = SBRGeneratorCmdLine.create(ht);
+
+	// figuring if we need the CTPF data
+	if (g.sbMethod == SBRGenerator.Method.CTPF) {
+	    Logging.info("Waiting on CTPF data load (needed for method=" + g.sbMethod + ")");
+	    SBRGWorkerCTPF.waitForLoading();
+	} else {
+	    Logging.info("Canceling CTPF data load (not needed for method=" + g.sbMethod + ")");
+	    SBRGWorkerCTPF.cancelLoading();
+	}
 
 	EntityManager em = g.em;
 	int inCnt=0;
@@ -179,36 +203,42 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	    // trigger update thread
 
 	    String s= "["+inCnt+"] Added user action: article view " + aid;
-	    System.out.println(s);
+	    out.println(s);
 
 	    SBRGThread th = g.sbCheck();
 	    if (th == null) {	
 		// no update after the 1st page
-		System.out.println("No rec list update happens at this point");
+		out.println("No rec list update happens at this point");
 		continue;
 	    }
 
 	    waitToEnd(th);
 
-	    s = "";
 	    if (th.sr!=null) {
 		if (th != g.sbrReady) throw new AssertionError("sbrReady!=th");
-		s += "Rec list updated, "+
-		    th.sr.entries.size() + " articles, " + th.msecLine() +"\n";
+		s = "Rec list updated, "+
+		    th.sr.entries.size() + " articles, " + th.msecLine() +":";
+		out.println(s);
+
+		for(ArticleEntry e: th.sr.entries) {
+		    out.println(e.getAid());
+		}
+
+
 	    } else { // there must have been an error
-		s += "No rec list produced. Error=" + th.error + ": " + th.errmsg +"\n";
+		s = "No rec list produced. Error=" + th.error + ": " +th.errmsg;
+		out.println(s);
 	    }
 
-	    String desc = th.description() + "\n";
-	    s += "<br>Excludable articles count: " + g.linkedAids.size()+"<br>\n";
+	    String desc = th.description();
+	    s = "Excludable articles count: " + g.linkedAids.size();
 	    if (th.excludedList!=null) {
-		s += "<br>Actually excluded: " + th.excludedList+"<br>\n";
+		s += "\nActually excluded: " + th.excludedList;
 	    }
-  
-	    //String desc = g.description();
-	    System.out.println(s);
+	    out.println(s);
 	}
 	it.close();
+	out.close();
    }
 
     /** Waits for the completion of the computation thread */

@@ -117,28 +117,28 @@ class ActionHistory {
 	Action.Op op=a.getOp();
 
 	if (op.isHideSB()) {
-	    Logging.info("op is HideSB\n"); 
+	    //	    Logging.info("op is HideSB\n"); 
 	    if (prohibitedArticles.contains(aid)) return;
-	    Logging.info("article is NOT prohibited\n"); 
+	    //	    Logging.info("article is NOT prohibited\n"); 
 	    prohibitedArticles.add(aid);
 	    viewedArticlesAll.removeElement( aid);
 	    viewedArticlesActionable.removeElement( aid);
 	} else {
-	    Logging.info("op is NOT HideSB\n"); 
+	    //	    Logging.info("op is NOT HideSB\n"); 
 	    Action.Source src = a.getSrc();
 	    boolean actionable = (src!=null && !src.isMainPage());
 	    if (actionable) { //reposition to the beginning
-		Logging.info("action source is actionable"); 
+		//		Logging.info("action source is actionable"); 
 		viewedArticlesActionable.removeElement( aid);
 		viewedArticlesActionable.insertElementAt( aid, 0);
 	    }
 	    viewedArticlesAll.removeElement( aid);
 	    viewedArticlesAll.insertElementAt( aid, 0);
-	    Logging.info("inserted element"); 
+	    //Logging.info("inserted element"); 
 	}
 
 	articleCount=viewedArticlesActionable.size();
-	Logging.info("articleCount" + Integer.toString(articleCount)); 
+	//Logging.info("AH.augment(): articleCnt=" + articleCount); 
     }
 
 

@@ -135,17 +135,19 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	} else if (ctpffit.error) {
 	    error = true;
 	    errmsg = "CTPF worker won't be initialized due to a data loading error: " + ctpffit.errmsg;	
-	    if (!wasError) Logging.info("errmsg");
+	    if (!wasError) Logging.info(errmsg);
 	}  else {
 	    error = true;
 	    errmsg = "CTPF worker won't be initialized now, because the fit data have not been loaded yet";
-	    if (!wasError) Logging.info("errmsg");
+	    if (!wasError) Logging.info(errmsg);
 	}
 
     }
 
-    //public static void loadFit();
-    //public static boolean myVar = loadFit();
+    /** The thread created during the fit loading. This is kept
+	so that we can check on it later.
+     */
+    private static SBRGLoadCTPFFit ctpfLoadThread = null;
 
     /** This method spawns the thread which will load the
 	SBRGLoadCTPFFit data, which are to be used by all
@@ -153,18 +155,42 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	this method be called only once in the web application's
 	life. This is done when the ResultsBase class load,
 	i.e. pretty soon after the web app has been reloaded.
+
+	<p>This method must be called only once during the life of the
+	web app or the command line app.
     */
-    public static boolean loadFit() {
+    public static synchronized boolean loadFit() {
+	if (ctpfLoadThread!=null) {
+	    String msg = "CTPFFit.loadFit() must have been called repeatedly - no good!";	    
+	    Logging.error(msg);
+	    throw new IllegalArgumentException(msg);
+	}
         // load data files 
         Logging.info("Loading fit"); 
         //SBRGLoadCTPFFit lf = new SBRGLoadCTPFFit(path, ctpffit);;
         Logging.info("Created SBRGLoadCTPFFit obj"); 
         ctpffit.loaded = false; 
-        Thread t = new Thread(new SBRGLoadCTPFFit(path, ctpffit));
-        t.start();
-        Logging.info("Thread loading fit launched."); 
+        ctpfLoadThread = new SBRGLoadCTPFFit(path, ctpffit);
+        ctpfLoadThread.start();
+        Logging.info("Thread loading fit launched: " + ctpfLoadThread); 
         return true;
     }
+
+    /** Waits for the CTPF fit load thread to complete.
+     */
+    public static void waitForLoading() {
+	if (ctpfLoadThread==null) throw new IllegalArgumentException("No CTPF load thread has been created!");
+	while (true) {
+	    try {		    
+		ctpfLoadThread.join();
+		return;
+	    } catch ( InterruptedException ex) {}
+	}
+    }
+
+   public static void cancelLoading() {
+       ctpfLoadThread.cancel();
+   }
 
     private void initializeX() { 
 	for(int i=0; i<x.length; ++i) { 

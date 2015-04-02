@@ -502,7 +502,7 @@ public class SBRGenerator {
 	Article art = a.getArticle();
 	String aid =  (art==null) ? "[none]" : art.getAid();
 
-	Logging.info("SBRG(session="+sd.getSqlSessionId()+"): added action ("+a.getOp()+":"+ aid+"); article cnt = " + maintainedActionHistory.articleCount);
+	Logging.info("SBRG(session="+sd.getSqlSessionId()+"): added action ("+a.getOp()+":"+ aid+"); articleCnt = " + maintainedActionHistory.articleCount);
 
     }
     

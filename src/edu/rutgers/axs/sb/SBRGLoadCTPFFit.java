@@ -58,6 +58,22 @@ class SBRGLoadCTPFFit extends Thread {
 	}
     }
 
+    private boolean wantToCancel = false;
+
+    public void cancel() {
+	wantToCancel = true;
+    }
+
+    private boolean checkCancel() {
+	if (wantToCancel) {
+	    error = true;
+	    String msg = "CTPF data loading cancelled by the main app";
+	    Logging.warning(msg);
+	    errmsg = msg;	    
+	}
+	return wantToCancel;
+    }
+
     // load data 
     private void loadFit(String path) {
 
@@ -65,6 +81,7 @@ class SBRGLoadCTPFFit extends Thread {
 
 	    boolean atHome = Hosts.atHome();
 
+	    if (checkCancel()) return;
             Logging.info("SBRGLoadCTPFFit: Loading started. Will use " +
 			 (atHome? "the 10K sample" : "the full data set"));
 
@@ -76,9 +93,13 @@ class SBRGLoadCTPFFit extends Thread {
             //Logging.info("loading epsilon rate"); 
             //float [][] epsilon_rate = load(path + "epsilon_scale.tsv.gz"); // actually a rate
 
-            ctpffit.epsilonlog = load(path + "epsilon_log" + suffix + ".tsv.gz");
+            ctpffit.epsilonlog = load(path + "epsilon_log" + suffix +".tsv.gz");
+	    if (error || checkCancel()) return;
+
             ctpffit.thetalog = load(path + "theta_log" + suffix + ".tsv.gz");
+	    if (error || checkCancel()) return;
             ctpffit.epsilon_plus_theta = load(path + "epsilon_plus_theta"+suffix+".tsv.gz"); 
+	    if (error || checkCancel()) return;
 
             // updateExpectationsEpsilonTheta(epsilon_shape, epsilon_rate, epsilonlog);
 
@@ -100,6 +121,7 @@ class SBRGLoadCTPFFit extends Thread {
 
             // load map 
             loadMap(path + "items"+suffix+".tsv.gz");
+	    if (error || checkCancel()) return;
             Logging.info("SBRGLoadCTPFFit: Loading finished");
         } catch(Exception ex) { 
             // TODO: put this back
@@ -121,6 +143,7 @@ class SBRGLoadCTPFFit extends Thread {
         String line; 
         int k=0; 
         while ((line = br.readLine()) != null) {
+	    if (error || checkCancel()) return;
             String[] parts = line.split("\t");
             ctpffit.internalID_to_aID.put(Integer.parseInt(parts[0]), parts[1]);
             ctpffit.aID_to_internalID.put(parts[1], Integer.parseInt(parts[0]));
@@ -145,6 +168,7 @@ class SBRGLoadCTPFFit extends Thread {
         String line; 
 
         while ((line = br.readLine()) != null) {
+	    if (error || checkCancel()) return null;
             String[] parts = line.split("\t");
 
 	    int len = parts.length-2;

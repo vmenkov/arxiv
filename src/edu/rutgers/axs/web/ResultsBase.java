@@ -27,7 +27,20 @@ import edu.rutgers.axs.sb.SBRGWorkerCTPF;
 
 public class ResultsBase {
 
-    // Starts the loading thread for fit data used in Laurent Charlin's CTPF recommender
+    /** The static initializer starts the loading thread for fit data
+	used in Laurent Charlin's CTPF recommender. The idea is, for
+	start loading the fit data as soon as the class ResultsBase is
+	loaded (which happens as soon as the first request to any of
+	My.ArXiv's JSP pages is processed), so that chances are the data
+	are already fully loaded by the time we actually need them 
+	to generate the first requested CTPF session-based recommendation list.
+
+	<p> FIXME: It is a bit silly to load the CTPF data if we are
+	using ResultsBase in some context that does not need CTPF (e.g.
+	the SB test harness command line application). There may be
+	a more elegant way of doing this - for example, trigering 
+	loadFit() from the first constructor of ResultsBase...
+     */
     static {
         SBRGWorkerCTPF.loadFit();
     }
