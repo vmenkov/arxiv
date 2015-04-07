@@ -213,6 +213,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	init(); 
 	if (error) return; // error from the constructor or initializer
         Logging.info("SBRGWorkerCTPF: start"); 
+	excludedList = "";
         updateUserProfileWithNewClick(_his);
         computeCTPFRecList(em, searcher, runID); 
         super.plid = super.saveAsPresentedList(em).getId();
@@ -330,9 +331,8 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
     private void computeCTPFRecList(EntityManager em, IndexSearcher searcher, int runID) {
 
 	try {
-
 	    HashSet<String> exclusions = findExclusions();
-	    Logging.info("SBRGWorkerCTPF: Calculating Scores"); 
+	    Logging.info("SBRGWorkerCTPF: Calculating Scores. |exclusions|=" + exclusions.size()); 
             // Do x^T * (epsilon + theta)
             TreeMap<Float,String> scores = new TreeMap<Float,String>();
             //String old_value = "";
@@ -360,14 +360,14 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
             String reco_articles = ""; 
             for(float score: scores.descendingKeySet()) {
                 aid = scores.get(score);
-                if(aid != null) {
-                    reco_articles += scores.get(score) + " (" + score + ") | ";
+                if (aid != null) {
 
 		    // check this article against the exclusion list
 		    if (exclusions.contains(aid)) {
 			excludedList += " " + aid;
 			continue;
 		    }
+                    reco_articles += scores.get(score) + " (" + score + ") | ";
 
                     ArticleEntry ae = new ArticleEntry(++k, scores.get(score));
                     ae.setScore(score);
@@ -380,7 +380,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 if(k>topK) // TODO: hack-ish, make better
                     break; 
 	    }
-            Logging.info("adding articles id:" + reco_articles); 
+            Logging.info("SBRGWorkerCTPF: adding articles id:" + reco_articles + "; Excluded articles: " + excludedList); 
             if(entries.size() > 0) {
                 Logging.info("SBRGWorkerCTPF: Adding entries:" +entries.size());
                 sr = new SearchResults(entries); 

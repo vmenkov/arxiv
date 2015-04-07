@@ -66,7 +66,7 @@ The following options are available
 <h3>Details</h3>
 
 <p>
-The application will create a simulated session in the database, with one user action ({@link edu.rutgers.axs.sql.Action.Op.VIEW_ABSTRACT}) per each article ID in the input file. The session will be associated with the artificial user names "simulated_sb".
+The application will create a simulated session in the database, with one user action ({@link edu.rutgers.axs.sql.Action.Op#VIEW_ABSTRACT}) per each article ID in the input file. The session will be associated with the artificial user names "simulated_sb".
 
 <p>Every time an article view is added to the simulated session, the application will request the SBRGenerator to generate a session-based recommendation list, just like it happens in a real-life session. As usual, SBRL generation is only triggered once at least 2 pages have been "viewed" by the simulated users.
 
@@ -82,7 +82,6 @@ using a "live" web application and the ones produced in a simulated session.
 enviornment, all articles viewed by the user, as well as all articles
 links to which appeared in various pages (search results, ArXiv "Recent Articles" pages, etc) seen by the user, will be excluded from the rec list. The command line application does not have this kind of context (search results pages etc), so the exclusion list is simply the same as the input list.
 
-<li>[TEMPORARY SITUATION] I understand that as of 2015-03, the CTPF SB recommender does not apply any exclusions at all. In the web app, the list seen by the user still has appropriate pages excluded, but that is done at a different level, which is not a part of the command line app. So the command line app may generate a rec list that includes some of the input pages.
 </ul>
 
 */
@@ -263,6 +262,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	    inCnt ++;
 	    // add new action to the SQL database and to the generator
 	    g.createAction(em, aid);
+	    g.recordLinkedAid(aid);
 	    // trigger update thread
 
 	    String s= "["+inCnt+"] Added user action: article view " + aid;

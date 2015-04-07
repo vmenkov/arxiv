@@ -114,8 +114,8 @@ public class DenseDataPoint extends DataPoint {
 	return new DenseDataPoint(q);
     }
 
-    /** Prints the values out in space-separated format, with a leading space.
-	@return " v1 v2 v3 ... vL"
+    /** Prints the values out in space-separated format, with a leading space:
+	" v1 v2 v3 ... vL"
     */
     public void print(PrintWriter w) {
 	for(double v: values) {

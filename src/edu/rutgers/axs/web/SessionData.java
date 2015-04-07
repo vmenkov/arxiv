@@ -419,7 +419,7 @@ public class SessionData {
 	This method has no transaction begin/end calls in it; it normally
 	should appear inside a transaction.
 	
-	@param p ArXiv article id. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
+	@param art ArXiv article involved in this action. Should be non-null, unless op is NEXT_PAGE or PREV_PAGE	
 	@param u User object. May be null (for anon user actions)
 	@param art An Article object referring to the document on
 	which the action was carried out.  Usually, this refers to an

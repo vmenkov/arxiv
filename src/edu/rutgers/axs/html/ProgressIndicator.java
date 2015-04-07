@@ -39,7 +39,7 @@ public class ProgressIndicator {
     }
     
     /** Sets the current progress indicator  position.
-	@param k Progress indicator position, between 0 and n */
+	@param _k Progress indicator position, between 0 and n */
     public void setK(int _k) {
 	k = _k;
     }

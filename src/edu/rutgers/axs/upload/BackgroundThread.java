@@ -105,7 +105,7 @@ public abstract class BackgroundThread extends Thread {
     }
 
     /** Adds a line of text to the progress text visible to the user.
-	@param this is an error line; appropriate logging will be carried out.
+	@param isError This is an error line; appropriate logging will be carried out.
 	@param replace If true, this line replaces the last stored line (unless that line is labeled as "permanent")
 	@param perm Label the new line as "permanent" (so it will not be replaced by consequent lines, even if they come with a "replace" flag)
 	@param strong Display this line in bold face

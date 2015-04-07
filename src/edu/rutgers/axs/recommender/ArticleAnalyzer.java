@@ -48,7 +48,7 @@ public abstract class ArticleAnalyzer {
 
     /** Computes <em>idf = 1 + log ( numDocs/docFreq+1)</em>, much
 	like it is done in Lucene's own searcher as well. 
-	@term May mean a particular word in AA1, or field:word in AA2/AA3
+	@param term May mean a particular word in AA1, or field:word in AA2/AA3
     */
     abstract public double idf(String term) throws IOException;
 

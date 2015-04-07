@@ -28,7 +28,12 @@ import edu.rutgers.axs.web.*;
     time on behalf of one SBRGenerator object. In this way some level
     of load control is achieved, and unnecessary computations are
     avoided. It is the  SBRGenerator instance which is responsible for
-    managing threads in this way.
+    managing threads in this fashion.
+
+    <P> The SBRGenerator normally has pointers to the object for the
+    currently running computational thread, if any (sbrRunning); the most
+    recently successfully thread, if any (sbrReady); and the most 
+    recent failed thread, if any (sbrFailed).
  */
 public class SBRGenerator {
 
@@ -229,7 +234,7 @@ public class SBRGenerator {
 	user has requested the SB to be activated.  Once requested, it
 	will stay on for the rest of the session.
 
-	@rb The ResultsBase object for the web page; used to access
+	@param rb The ResultsBase object for the web page; used to access
 	command line parameters
      */
     public void setSBFromRequest(ResultsBase rb) throws WebException {
