@@ -398,7 +398,6 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    ex.printStackTrace(System.out);
 	}
 
-        // apply exclusion list? 
     }
 
     /** Produces a human-readable description of this worker's particulars. The
@@ -410,6 +409,4 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	return s;
     }
    
-
-
 }

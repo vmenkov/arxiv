@@ -221,7 +221,7 @@ public class Tools {
       
       @throws  IllegalInputException If a problem with the input data is detected
      */
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
     static void editEntity(String prefix, Object /*OurTable*/ r, HttpServletRequest request)
 	throws IllegalAccessException, InvocationTargetException, 
 	       IllegalInputException {
