@@ -62,7 +62,7 @@ class SBRGThread extends Thread {
 
 	EntityManager em=null;
 
-        Logging.info("SBRGThread.run() in"); 
+	//        Logging.info("SBRGThread.run() in"); 
 	try {
 	    em = parent.sd.getEM();       
 	    reader=Common.newReader();

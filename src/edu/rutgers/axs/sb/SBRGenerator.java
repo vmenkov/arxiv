@@ -151,7 +151,7 @@ public class SBRGenerator {
 	all defaults are used.
      */
     public synchronized void turnSBOn(ResultsBase rb) throws WebException {
-	init(rb, rb.runByResearcher(), false);
+	init(rb, rb!=null && rb.runByResearcher(), false);
     }
 
     synchronized void init(OptionAccess rb, boolean runByResearcher, boolean cmdLine) throws WebException {
@@ -177,9 +177,13 @@ public class SBRGenerator {
 	    sbMethod = (requestedSbMethod == Method.RANDOM)?
 		pickRandomMethod() : requestedSbMethod;
 
+	    if (cmdLine)  sbMergeWithBaseline = false;
 	    if (rb!=null)  sbMergeWithBaseline = rb.getBoolean("sbMergeWithBaseline", sbMergeWithBaseline);
 
-	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").turnSBOn(): requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline);
+	    String desc = "Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline +"; sbStableOrderMode=" + sbStableOrderMode;
+	    
+
+	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").init(): " + desc);
 
 	    worker =createWorker(this);
 
@@ -267,11 +271,11 @@ public class SBRGenerator {
 	and to report separately on each thread)
      */
     synchronized public SBRGThread sbCheck() {
-	Logging.info("sbCheck: allowedSB=" + allowedSB);
+	//Logging.info("sbCheck: allowedSB=" + allowedSB);
 	if (allowedSB) {
 	    int articleCnt = maintainedActionHistory.articleCount;
 	    needSBNow = 	     (articleCnt>=2);
-	    Logging.info("sbCheck: articleCnt="+articleCnt+", needSBNow=" +needSBNow);
+	    //Logging.info("sbCheck: articleCnt="+articleCnt+", needSBNow=" +needSBNow);
 	    return needSBNow ? requestRun(articleCnt) : null;
 	} else return null;
     }

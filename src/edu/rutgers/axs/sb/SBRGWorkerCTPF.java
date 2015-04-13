@@ -166,9 +166,9 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    throw new IllegalArgumentException(msg);
 	}
         // load data files 
-        Logging.info("Loading fit"); 
+        Logging.info("Loading CTPF fit data"); 
         //SBRGLoadCTPFFit lf = new SBRGLoadCTPFFit(path, ctpffit);;
-        Logging.info("Created SBRGLoadCTPFFit obj"); 
+	//        Logging.info("Created SBRGLoadCTPFFit obj"); 
         ctpffit.loaded = false; 
         ctpfLoadThread = new SBRGLoadCTPFFit(path, ctpffit);
         ctpfLoadThread.start();

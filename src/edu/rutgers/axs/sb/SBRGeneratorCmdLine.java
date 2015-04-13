@@ -95,6 +95,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	string parameters that would be used to control SBRG in the web 
 	application.     
      */
+    /*
     private synchronized void init0(ParseConfig ht) throws WebException {
 	setAllowedSB(true);
 	sbStableOrderMode = ht.getOption("sbStableOrder", sbStableOrderMode);
@@ -129,12 +130,8 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	    Logging.error(msg);
 	    throw new IllegalArgumentException(msg);
 	}
-	em = sd.getEM();
-	String uname = "simulated_sb";
-	user= createDummyUser( em, uname);
-	sd.storeUserName(uname);
-	sd.storeUserInfoInSQL(em, user);
     }
+    */
 
     private User user;
     /** Stays on for the duration of this object's existence */
@@ -155,7 +152,14 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
     public static SBRGeneratorCmdLine create(ParseConfig ht) throws WebException, IOException {
 	SessionData sd = SessionData.getSessionData(null);
 	SBRGeneratorCmdLine g = (SBRGeneratorCmdLine)sd.sbrg;
-	g.init0(ht);
+	g.init(ht, true, true);
+
+	g.em = sd.getEM();
+	String uname = "simulated_sb";
+	g.user= createDummyUser( g.em, uname);
+	g.sd.storeUserName(uname);
+	g.sd.storeUserInfoInSQL(g.em, g.user);
+
 	return g;
     }
 
@@ -253,6 +257,8 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	    Logging.info("Canceling CTPF data load (not needed for method=" + g.sbMethod + ")");
 	    SBRGWorkerCTPF.cancelLoading();
 	}
+
+	//out.println(g.description());
 
 	EntityManager em = g.em;
 	int inCnt=0;

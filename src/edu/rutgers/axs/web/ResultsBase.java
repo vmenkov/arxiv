@@ -155,8 +155,9 @@ public class ResultsBase implements OptionAccess {
 		String name = (String)en.nextElement();
 		infomsg += name + "=" + request.getParameter(name) + "<br>";
 	    }	    
+	    Logging.info("RB(): creating sd");
 	    sd = SessionData.getSessionData(request);	  
-
+	    Logging.info("RB(): created sd");
 	    infomsg += "Session " + sd.getSqlSessionId();
 	    
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
@@ -201,6 +202,7 @@ public class ResultsBase implements OptionAccess {
 	    sd.sbrg.setSBFromRequest(this);
 	
 	}  catch (Exception _e) {
+	    Logging.info(stackTrace(_e));
 	    setEx(_e);
 	}	
     }
@@ -626,7 +628,9 @@ public class ResultsBase implements OptionAccess {
 	session-based recommendation panel
      */
     public boolean needSBNow() {
-	return  sd.sbrg.getNeedSBNow();
+	Logging.info("RB.needSBNow: sd=" + sd);
+	edu.rutgers.axs.sb.SBRGenerator sbrg =  sd.sbrg;
+	return  sbrg.getNeedSBNow();
     }
 
 }
