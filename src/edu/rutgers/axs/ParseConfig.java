@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
+import edu.rutgers.axs.util.OptionAccess;
 
 /**
  * 
@@ -16,7 +17,8 @@ import java.text.*;
  * //@date 1999-2004 
  */
 
-public final class ParseConfig extends Hashtable<String,Object> {
+public final class ParseConfig extends Hashtable<String,Object> 
+				       implements OptionAccess {
 	final static String prefix = ""; // "Ant."
 
 	/**
@@ -296,20 +298,39 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	 * Gets the requested value from the hash table. If the value is not found, IOException is thrown.
 	 */
 	public String getParameter(String aName) throws IOException {
-		String value = null;
-		Object obj = get(aName);
-		if (obj != null) {
-			if (obj instanceof String)
-				return (String) obj;
-			else if (obj instanceof Number)
-				return "" + ((Number) obj).intValue();
-			else {
-				throw new IOException("Invalid type for parameter " + aName);
-			}
-		} else {
-			throw new IOException("Missing parameter " + aName);
+	    String value = null;
+	    Object obj = get(aName);
+	    if (obj != null) {
+		if (obj instanceof String)
+		    return (String) obj;
+		else if (obj instanceof Number)
+		    return "" + ((Number) obj).intValue();
+		else {
+		    throw new IOException("Invalid type for parameter " + aName);
 		}
+	    } else {
+		throw new IOException("Missing parameter " + aName);
+	    }
 	}
+
+	public long getLong(String name, long defVal) {
+	    return getOptionLong(name, defVal);
+	}
+	public int getInt(String name, int defVal) {
+	    return getOption(name, defVal);
+	}
+	public String getString(String name, String defVal) {
+	    return getOption(name, defVal);
+	}
+
+	public boolean getBoolean(String name, boolean defVal) {
+	    return getOption(name, defVal);
+	}
+
+	public  <T extends Enum<T>> T getEnum(Class<T> retType, String name, T defVal) { 
+	    return getOptionEnum(retType, name, defVal);
+	}
+
 
 	/** 
 	 * Purely for testing.

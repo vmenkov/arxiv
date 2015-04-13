@@ -95,7 +95,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	string parameters that would be used to control SBRG in the web 
 	application.     
      */
-    private synchronized void init(ParseConfig ht) throws WebException {
+    private synchronized void init0(ParseConfig ht) throws WebException {
 	setAllowedSB(true);
 	sbStableOrderMode = ht.getOption("sbStableOrder", sbStableOrderMode);
 	validateSbStableOrderMode();
@@ -155,7 +155,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
     public static SBRGeneratorCmdLine create(ParseConfig ht) throws WebException, IOException {
 	SessionData sd = SessionData.getSessionData(null);
 	SBRGeneratorCmdLine g = (SBRGeneratorCmdLine)sd.sbrg;
-	g.init(ht);
+	g.init0(ht);
 	return g;
     }
 

@@ -18,6 +18,7 @@ import org.apache.lucene.search.IndexSearcher;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.html.QS;
+import edu.rutgers.axs.util.OptionAccess;
 
 import edu.rutgers.axs.sb.SBRGWorkerCTPF;
 
@@ -25,7 +26,7 @@ import edu.rutgers.axs.sb.SBRGWorkerCTPF;
     initializes certain member variables that are needed for processing
     all JSP pages. */
 
-public class ResultsBase {
+public class ResultsBase implements OptionAccess {
 
     /** The static initializer starts the loading thread for fit data
 	used in Laurent Charlin's CTPF recommender. The idea is, for

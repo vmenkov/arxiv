@@ -17,6 +17,7 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.html.RatingButton;
 import edu.rutgers.axs.web.*;
+import edu.rutgers.axs.util.OptionAccess;
 
 /** The "manager" part of the sesion-based recommendation
     generator. We have an SBRGenerator instance in every
@@ -150,14 +151,18 @@ public class SBRGenerator {
 	all defaults are used.
      */
     public synchronized void turnSBOn(ResultsBase rb) throws WebException {
-	allowedSB = true;
+	init(rb, rb.runByResearcher(), false);
+    }
+
+    synchronized void init(OptionAccess rb, boolean runByResearcher, boolean cmdLine) throws WebException {
+	setAllowedSB(true);
 	if (rb!=null) sbStableOrderMode = rb.getInt("sbStableOrder", sbStableOrderMode);
 	validateSbStableOrderMode();
 	Method m = null;
 	// the same param initializes both vars now
 	if (rb!=null) {
 	    sbDebug = rb.getBoolean("sbDebug", sbDebug);
-	    researcherSB = rb.getBoolean("sbDebug", researcherSB || rb.runByResearcher());
+	    researcherSB = rb.getBoolean("sbDebug", researcherSB || runByResearcher);
 	    m = (SBRGenerator.Method)rb.getEnum(SBRGenerator.Method.class, "sbMethod", null);
 	}
  
