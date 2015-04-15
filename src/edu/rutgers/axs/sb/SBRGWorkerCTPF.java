@@ -46,6 +46,9 @@ class CTPFFit extends Object {
  */
 public class SBRGWorkerCTPF extends  SBRGWorker  {
 
+    /** Extra parameters */
+    double temperature = Double.POSITIVE_INFINITY;
+
     static long seed = 3; 
     //static String path = "/home/lc629/arxiv/fits/nusers120298-ndocs825708-nvocab14000-k250-batch-bin-vb-fa-ldainit-fdp/";
 
@@ -327,7 +330,20 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
         Logging.info("SBRGWorkerCTPF: " + str + ": " + xs); 
     }
 
-    /** Generates the list of recommendations based on CTPF */
+    /** Generates the list of recommendations based on CTPF.
+
+	<p>(Laurent, 2015-04-09)
+   - We currently compute scores by the dot product of x and
+   theta_eps (see function computeDotProductScores):
+   \sum_k (x_k * theta_eps_k)
+    - I suggest replacing with:
+             \sum_k exp( x_k * theta_eps_k / T)
+     - T is a parameter (akin to a temperature in a physical system).
+ Small Ts will exaggerate the contribution of the larger components.
+ I've noticed that very popular articles tend to be medium-high in all
+ components. I would try T=1 to begin and decrease T toward 0 if it
+ doesn't work well.
+ */
     private void computeCTPFRecList(EntityManager em, IndexSearcher searcher, int runID) {
 
 	try {
@@ -335,15 +351,19 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    Logging.info("SBRGWorkerCTPF: Calculating Scores. |exclusions|=" + exclusions.size()); 
             // Do x^T * (epsilon + theta)
             TreeMap<Float,String> scores = new TreeMap<Float,String>();
-            //String old_value = "";
-            float e; 
+	    boolean needExp = !Double.isInfinite(temperature);
             for (int i=0; i<ctpffit.epsilon_plus_theta.length; ++i) {
-                e = (float)0.;
+                double e = 0;
                 for (int j=0; j<ctpffit.epsilon_plus_theta[0].length; ++j) { 
-                    e += x[j]*(ctpffit.epsilon_plus_theta[i][j]);
+                    double q = x[j]*(ctpffit.epsilon_plus_theta[i][j]);
+		    if (needExp) {
+			q =  (Math.exp( q / temperature) - 1);
+		    }
+		    e += q;		    
                 }
+		if (needExp) e *= temperature;
                 //Logging.info("SBRGWorkerCTPF: (i,e): (" + i + "," + e + ") scores size: " + scores.size() + " " + old_value); 
-                scores.put(e, ctpffit.internalID_to_aID.get(i));
+                scores.put((float)e, ctpffit.internalID_to_aID.get(i));
             }
 
             // Get the results 

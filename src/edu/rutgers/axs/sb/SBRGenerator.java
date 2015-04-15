@@ -182,10 +182,31 @@ public class SBRGenerator {
 
 	    String desc = "Requested method=" + requestedSbMethod +"; effective  method=" + sbMethod + ". Merge with baseline = " + sbMergeWithBaseline +"; sbStableOrderMode=" + sbStableOrderMode;
 	    
+	    worker =createWorker(this);
+
+	    boolean isCTPF = (worker instanceof SBRGWorkerCTPF);
+	
+	    if (rb!=null) {
+		String key = "sb.CTPF.T";
+		if (rb.containsKey(key)) {
+		    if (isCTPF) {
+			SBRGWorkerCTPF w = (SBRGWorkerCTPF)worker;
+			w.temperature = rb.getDouble(key, w.temperature);
+		    } else {
+			Logging.warning("SBRG.init((): Ignoring option " + key + " (not a CTPF model!)");
+		    } 
+		} else {
+		    desc += "; [no key "+key+"]";
+		}
+	    }
+
+	    if (isCTPF) {
+		SBRGWorkerCTPF w = (SBRGWorkerCTPF)worker;
+		desc += "; CTPF.T=" + w.temperature;
+	    }
 
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").init(): " + desc);
 
-	    worker =createWorker(this);
 
 	} else if  (m==null || requestedSbMethod == m ) {
 	    // OK: has already been set, and no attempt to change it now 

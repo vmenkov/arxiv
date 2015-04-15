@@ -147,6 +147,7 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
     public String getAid() { return id; }
 
     public void setScore(double x) { score=x;}
+    public double getScore() { return score;}
 
     public String toString() {
 	return (id==null) ?

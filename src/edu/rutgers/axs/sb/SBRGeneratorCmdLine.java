@@ -61,6 +61,7 @@ The following options are available
 -DsbMergeWithBaseline=false|true  <em>(if true the generated list will be 
                                  team-draft merged with the baseline, SUBJECTS)</em>
 -DsbDebug=false|true
+-DshowScores=false|true           <em>Show scores along with ArXiv article IDs?</em>
 </pre>
 
 <h3>Details</h3>
@@ -247,6 +248,8 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	    }
 	}
 
+	boolean showScores = ht.getOption("showScores", true);
+
 	SBRGeneratorCmdLine g = SBRGeneratorCmdLine.create(ht);
 
 	// figuring if we need the CTPF data
@@ -290,7 +293,9 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 		out.println(s);
 
 		for(ArticleEntry e: th.sr.entries) {
-		    out.println(e.getAid());
+		    s = e.getAid();
+		    if (showScores) s += "\t" + e.getScore();
+		    out.println(s);
 		}
 
 

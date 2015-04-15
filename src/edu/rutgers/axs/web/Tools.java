@@ -115,6 +115,19 @@ public class Tools {
 	}
     }
 
+    static public double getDouble(HttpServletRequest request, String name, double defVal) {
+	String s = request.getParameter(name);
+	if (s==null) {
+	    Double a = (Double)request.getAttribute(name);
+	    return (a!=null) ? a.doubleValue() : defVal;
+	}
+	try {
+	    return Double.parseDouble(s);
+	} catch (Exception ex) {
+	    return defVal;
+	}
+    }
+
 
     static public boolean getBoolean(HttpServletRequest request, String name, boolean defVal) {
 	String s = request.getParameter(name);

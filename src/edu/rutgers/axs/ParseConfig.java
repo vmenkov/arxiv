@@ -293,6 +293,10 @@ public final class ParseConfig extends Hashtable<String,Object>
 	    }
 	}
 
+	public boolean containsKey(String aName) {	    
+	    return super.containsKey( aName) ||
+		getPropertySafe(prefix + aName) !=null;
+	}
 
 	/**
 	 * Gets the requested value from the hash table. If the value is not found, IOException is thrown.
@@ -318,6 +322,9 @@ public final class ParseConfig extends Hashtable<String,Object>
 	}
 	public int getInt(String name, int defVal) {
 	    return getOption(name, defVal);
+	}
+	public double getDouble(String name, double defVal) {
+	    return getOptionDouble(name, defVal);
 	}
 	public String getString(String name, String defVal) {
 	    return getOption(name, defVal);

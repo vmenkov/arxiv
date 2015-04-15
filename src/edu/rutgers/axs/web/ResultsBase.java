@@ -207,6 +207,13 @@ public class ResultsBase implements OptionAccess {
 	}	
     }
 
+
+    public boolean containsKey(String name) {	    
+	String s = getString(name, null);
+	return (s!=null);
+    }
+
+
     /** Gets the integer param with the specified value from the
 	request. If no such param is found in the request, returns the
 	specified default value.
@@ -216,6 +223,9 @@ public class ResultsBase implements OptionAccess {
     }
     public int getInt(String name, int defVal) {
 	return (int)Tools.getLong(request, name, defVal);
+    }
+    public double getDouble(String name, double defVal) {
+	return Tools.getDouble(request, name, defVal);
     }
 
     public String getString(String name, String defVal) {
