@@ -60,8 +60,9 @@ The following options are available
 -DsbStableOrderMode=0|1|2 <em>(0=no stable order; 1,2=various modes)</em>
 -DsbMergeWithBaseline=false|true  <em>(if true the generated list will be 
                                  team-draft merged with the baseline, SUBJECTS)</em>
+-Dsb.CTPF.T=Infinity|1.0|10.0|... <em>"Temperature" for CTPF</em>
 -DsbDebug=false|true
--DshowScores=false|true           <em>Show scores along with ArXiv article IDs?</em>
+-DshowScores=false|true           <em>Show scores along with ArXiv article IDs in the output file?</em>
 </pre>
 
 <h3>Details</h3>
@@ -77,7 +78,7 @@ The application will create a simulated session in the database, with one user a
 using a "live" web application and the ones produced in a simulated session. 
 
 <ul>
-<li>In a real session, you may not have a new SBR list generated after every new viewed page, due to system load. E.g., if list L1 has been generated after the user has viewed the first 2 articles (p1, p2), and then the user has viewed three more articles (p3,p4,p5) while L1 was generated, then the next generated list, L2, will be based on all 5 articles (p1 thru p5). On the other hand, the command line application will always wait for the completion of the rec list generation before adding one more article; thus, for an input list of <em>N</em> articles, you always will have  <em>N</em>-1 rec lists produced.
+<li>In a real session, you may not have a new SBR list generated after every new viewed page, due to system load. E.g., if list L1 has been generated after the user has viewed the first 2 articles (p1, p2), and then the user has viewed three more articles (p3,p4,p5) while L1 was generated, then the next generated list, L2, will be based on all 5 articles (p1 thru p5). On the other hand, the command line application will always wait for the completion of the rec list generation before adding one more article; thus, for an input list of <em>N</em> articles, you always will have  <em>N</em>-1 rec lists produced.  (One could think that skipping some lists during a real web session would not affect the lists which <em>are</em> generated, but this is not quite so; remember the "stable order" role!)
 
 <li>The set of excluded pages may be different. In the real web
 enviornment, all articles viewed by the user, as well as all articles
