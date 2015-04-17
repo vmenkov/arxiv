@@ -70,6 +70,7 @@ endif
 set in=$1
 set xin=`basename $1`
 
+cat $in | ./cmd.sh showtitle - | grep -v docno= > $dir/${xin}.titles
 
 foreach sbMethod (SUBJECTS ABSTRACTS COACCESS)
     set out="${xin}.${sbMethod}.out"
@@ -109,8 +110,5 @@ foreach t (Infinity 1 1e-1 1e-2 1e-3 1e-4 1e-5 1e-6 1e-7)
     $dir/$out |  ./cmd.sh showtitle - |grep -v docno=  > $dir/$outTitles
     
 end
-
-
-
 
 
