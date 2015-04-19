@@ -29,6 +29,13 @@ class SBRGLoadCTPFFit extends Thread {
 	been calculated). This number will be set based on the length
 	of the first data file to be read. Our two sample sets have
 	the sizes D=825708 and D=10000.
+
+	<p> The range of the internal IDs actually occurring in matrix
+	files (theta etc) is 0 thru num_docs-1; however, as per conversation
+	with Laurent (2015-04-17), the ID=0 document is actually a dummy one,
+	and is in practice disregarded. The document map file would typically
+	have IDs ranging from 1 thru num_docs-1; IDs outside of this 
+	range can be safely disregarded.
     */
     private int num_docs = 0; 
     /** The number of columns in each data file, not counting the
@@ -88,17 +95,20 @@ class SBRGLoadCTPFFit extends Thread {
 	    // Modifies data file names, to refer to the full data set or the 10K subset 
 	    final String suffix  = atHome ? "_10K" : "";
 
+	    File dir = new File(path);
+
             //Logging.info("loading epsilon shape"); 
             //float [][] epsilon_shape = load(path + "epsilon_shape.tsv.gz"); 
             //Logging.info("loading epsilon rate"); 
             //float [][] epsilon_rate = load(path + "epsilon_scale.tsv.gz"); // actually a rate
 
-            ctpffit.epsilonlog = load(path + "epsilon_log" + suffix +".tsv.gz");
+	    // the first load call will also set num_docs
+            ctpffit.epsilonlog = load(new File(dir, "epsilon_log" + suffix +".tsv.gz"));
 	    if (error || checkCancel()) return;
 
-            ctpffit.thetalog = load(path + "theta_log" + suffix + ".tsv.gz");
+            ctpffit.thetalog = load(new File(dir, "theta_log" + suffix + ".tsv.gz"));
 	    if (error || checkCancel()) return;
-            ctpffit.epsilon_plus_theta = load(path + "epsilon_plus_theta"+suffix+".tsv.gz"); 
+            ctpffit.epsilon_plus_theta = load(new File(dir, "epsilon_plus_theta"+suffix+".tsv.gz")); 
 	    if (error || checkCancel()) return;
 
             // updateExpectationsEpsilonTheta(epsilon_shape, epsilon_rate, epsilonlog);
@@ -120,7 +130,8 @@ class SBRGLoadCTPFFit extends Thread {
             //         epsilon_plus_theta[i][j] = epsilon_shape[i][j]/epsilon_rate[i][j] + theta_shape[i][j]/theta_rate[i][j]; 
 
             // load map 
-            loadMap(path + "items"+suffix+".tsv.gz");
+            ctpffit.loadMap(new File(dir,  "items"+suffix+".tsv.gz"), num_docs);
+	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), num_docs);
 	    if (error || checkCancel()) return;
             Logging.info("SBRGLoadCTPFFit: Loading finished");
         } catch(Exception ex) { 
@@ -132,30 +143,10 @@ class SBRGLoadCTPFFit extends Thread {
 	    ex.printStackTrace(System.out);
         }
     } 
+ 
 
-    private void loadMap(String file) throws Exception { 
-	Logging.info("SBRGLoadCTPFFit: loading document map from " + file);
-	ctpffit.internalID_to_aID = new HashMap<Integer, String>();
-        ctpffit.aID_to_internalID = new HashMap<String, Integer>();
-        GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
-        BufferedReader br = new BufferedReader(new InputStreamReader(gzip));
-
-        String line; 
-        int k=0; 
-        while ((line = br.readLine()) != null) {
-	    if (error || checkCancel()) return;
-            String[] parts = line.split("\t");
-            ctpffit.internalID_to_aID.put(Integer.parseInt(parts[0]), parts[1]);
-            ctpffit.aID_to_internalID.put(parts[1], Integer.parseInt(parts[0]));
-        }
-        Logging.info("SBRGLoadCTPFFit: size of internalID_to_aID: " + ctpffit.internalID_to_aID.size());
-        Logging.info("SBRGLoadCTPFFit: size of aID_to_internalID: " + ctpffit.aID_to_internalID.size());
-
-	//        Logging.info("fit loaded"); 
-
-    }
-
-    private float[][] load(String file) throws Exception {
+    /** Loads a matrix with num_docs rowd and num_components columns */
+    private float[][] load(File file) throws Exception {
         
         Logging.info("SBRGLoadCTPFFit: Loading data from file " + file); 
 
@@ -196,14 +187,13 @@ class SBRGLoadCTPFFit extends Thread {
 
 	int nrows = dvec.size();
 	if (nrows == 0) {
-	    throw new IOException("Parsing error on file " + file + ": zero rows!");
-	} else if (num_docs==0) {
+	    throw new IOException("Parsing error on file " + file + ": zero rows found!");
+	} else if (num_docs==0) {  // first file
 		num_docs = nrows;
 	} else if (num_docs != nrows) {
-	    throw new IOException("Parsing error on file " + file + ", : found " + nrows + " rows, vs. " + num_docs + " in previously processed files!");	    
+	    throw new IOException("Parsing error on file " + file + ", : found " + nrows + " rows, vs. " + num_docs + " in previously processed files!");
 	}
 	
-        //d = new float[num_docs][num_components];	
         float[][] d = (float[][])dvec.toArray(new float[0][]);
         return d;
     }

@@ -187,22 +187,27 @@ public class SBRGenerator {
 	    boolean isCTPF = (worker instanceof SBRGWorkerCTPF);
 	
 	    if (rb!=null) {
-		String key = "sb.CTPF.T";
-		if (rb.containsKey(key)) {
-		    if (isCTPF) {
-			SBRGWorkerCTPF w = (SBRGWorkerCTPF)worker;
-			w.temperature = rb.getDouble(key, w.temperature);
-		    } else {
-			Logging.warning("SBRG.init((): Ignoring option " + key + " (not a CTPF model!)");
-		    } 
+		String key1 = "sb.CTPF.T";
+		String key2 = "sb.CTPF.D";
+		if (isCTPF) {
+		    SBRGWorkerCTPF w = (SBRGWorkerCTPF)worker;
+		    w.temperature = rb.getDouble(key1, w.temperature);
+		    w.D = rb.getDouble(key2, w.D);
+		    if (!Double.isInfinite(w.temperature) && w.D!=0) {
+			throw new IllegalArgumentException("Cannot combine non-infinite T=" + w.temperature + " and non-zero D=" + w.D);
+		    }
 		} else {
-		    desc += "; [no key "+key+"]";
+		    for(String key: new String[] {key1,key2}) {
+			if (rb.containsKey(key)) {
+			    Logging.warning("SBRG.init((): Ignoring option " + key + " (not a CTPF model!)");
+			}
+		    } 
 		}
 	    }
 
 	    if (isCTPF) {
 		SBRGWorkerCTPF w = (SBRGWorkerCTPF)worker;
-		desc += "; CTPF.T=" + w.temperature;
+		desc += "; CTPF.T=" + w.temperature + "; CTPF.D=" + w.D;
 	    }
 
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").init(): " + desc);
