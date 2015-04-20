@@ -5,7 +5,7 @@
 # the results being saved into separate files in a specified directory.
 #
 # Usage examples:
-# nohup ./sb-ctpf-t.sh -dir ../runs/sb3 sb.in-tj.dat > & sb3.log &
+# nohup ./sb-ctpf-d.sh -dir ../runs/sb3 sb.in-tj.dat > & sb3.log &
 #---------------------------------------------------------------------------
 
 #-- Set the home directory as per the "-home" option. This is useful
