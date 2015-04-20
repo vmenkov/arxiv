@@ -18,18 +18,12 @@ import edu.cornell.cs.osmot.cache.Cache;
 import edu.cornell.cs.osmot.options.Options;
 import edu.cornell.cs.osmot.logger.Logger;
 
-import java.util.Collection;
-import java.util.Iterator;
-
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.*;
 import java.io.*;
 
-
-
-class IndexList {
+/** A utility class for listing all Arxiv article IDs in the Lucene datastore */
+public class IndexList {
 
   // Where our index lives.
     private Directory indexDirectory;
@@ -56,6 +50,27 @@ class IndexList {
 	    System.out.println(d.get(ArxivFields.PAPER));
 	}
 	//	if (max>=0 &&  max<n) System.out.println("    ... etc ...");
+    }
+
+    /** Returns the list of all ArXiv article IDs, as a HashSet */
+    public HashSet<String> listAsSet() throws IOException{
+	return listAsSet(-1);
+    }
+
+    public HashSet<String> listAsSet(int max) throws IOException{
+
+	IndexReader r =  IndexReader.open( indexDirectory); 
+
+	IndexReader[] surs = r.getSequentialSubReaders();
+	int n=	r.numDocs() ;
+	//	System.out.println("index has "+n +" docs");
+	if (max<0 || max>n) max=n;
+	HashSet<String> s = new HashSet<String>(n);
+	for(int i=0; i<max; i++){
+	    Document d=r.document(i);	    
+	    s.add(d.get(ArxivFields.PAPER));
+	}
+	return s;
     }
 
 
