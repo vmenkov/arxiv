@@ -345,7 +345,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 		if (needExp) e *= temperature;
                 //Logging.info("SBRGWorkerCTPF: (i,e): (" + i + "," + e + ") scores size: " + scores.size() + " " + old_value); 
 
-		if (D!=0) e -= ctpffit.avgScores[i];
+		if (D!=0) e -= D*ctpffit.avgScores[i];
                 scores.put((float)e, ctpffit.getInternalID_to_aID(i));
             }
 

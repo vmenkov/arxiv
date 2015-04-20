@@ -45,7 +45,7 @@ public class UploadPapers  extends ResultsBase {
 	    ServletFileUpload upload = new ServletFileUpload(factory);
 	    
 	    // Parse the request
-	    List<FileItem> items = upload.parseRequest(request);
+	    List<FileItem> items = (List<FileItem>)upload.parseRequest(request);
 	    
 	    // Process the uploaded items
 	    for(Iterator iter = items.iterator(); iter.hasNext(); ) {
