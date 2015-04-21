@@ -42,6 +42,8 @@ class Files {
 	return new File(d, "kmeans1024.csv");
     }
 
+    /** In 2015, cat file names end in this suffix */
+    private static final String year2015_catFileSuffix ="_docClusProbs.dat";
 
     /** Category-specific file that lists all clusters in the
 	category, and describes each one by an L-dimensional
@@ -57,17 +59,28 @@ class Files {
 	    File d = new File(d0,  fullCatName);
 	    return new File(d, "comm_clus_probs.dat");
 	} else { // dir structure used in 2015-04-15
-	    return new File(d0, fullCatName + "_docClusProbs.dat");
+	    return new File(d0, fullCatName + year2015_catFileSuffix);
 	}
     }
 
-    /** Lists all categories for which doc cluster subdirs exist */
+    /** Lists all categories for which doc cluster subdirs (in 2014) or
+	doc cluster files (in 2015) exist */
     static String[] listCats() {
 	File d=getDocClusterDir();
 	Vector<String> v = new Vector<String>();
-	for(File f: d.listFiles()) {
-	    if (f.isDirectory()) v.add( f.getName());
-	}
+	if (mode2014) { // dir structure used in 2014: one dir per cat
+	    for(File f: d.listFiles()) {
+		if (f.isDirectory()) v.add( f.getName());
+	    }
+	} else  { // dir structure used in 2015: one file per cat
+	    for(File f: d.listFiles()) {
+		if (!f.isFile()) continue;
+		String s =f.getName();
+		if (!s.endsWith(year2015_catFileSuffix)) continue;
+		s = s.substring(0,s.length() - year2015_catFileSuffix.length());
+		v.add(s);
+	    }
+	} 
 	return (String[])v.toArray(new String[0]);
     }
 
