@@ -351,7 +351,7 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
        comm_affinities.dat  comm_clus_probs.dat  doc_clus.dat  user_comm.dat
 
        the file comm_clus_probs.dat  has one line for each cluster within
-       cat astro_ph_GA, 
+       cat astro_ph_GA,
     */
     
     /** Reads the "P vectors"; each of them describes an article
@@ -365,6 +365,8 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	0 8.88931e-05 9.65938e-06 5.11056e-05 8.26743e-06 ...
 	</pre>
 
+	@param f The data file which contains the P vectors for one category
+	
 	@param L the expected dimension of P vectors. If L=0 is
 	supplied, the value is inferred from the file
      */

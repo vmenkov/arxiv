@@ -15,6 +15,13 @@ class Files {
 	System.out.println("Using basedir="+ basedir+" for all EE5 files");
     }
 
+    static String getBasedir() { return basedir; }
+
+
+    /** Which dir structure is in use? (Year 2014 directory structure
+	vs year 2015 structure) */
+    static boolean mode2014=true;
+
     /*
     private static final String docclusterdir() {
 	return basedir +  "/docclusters";
@@ -38,11 +45,20 @@ class Files {
 
     /** Category-specific file that lists all clusters in the
 	category, and describes each one by an L-dimensional
-	vector in the word2vec word cluster space. */       
+	vector in the word2vec word cluster space. 
+	
+	<p>The directory structure changed between 2014-11 and 2015-04.
+	2015:
+	casb_communities_20150415/astro-ph.CO_docClusProbs.dat
+    */       
     static File getDocClusterFile(String fullCatName) {
 	File d0=getDocClusterDir();
-	File d = new File(d0,  fullCatName);
-	return new File(d, "comm_clus_probs.dat");
+	if (mode2014) { // dir structure used in 2014
+	    File d = new File(d0,  fullCatName);
+	    return new File(d, "comm_clus_probs.dat");
+	} else { // dir structure used in 2015-04-15
+	    return new File(d0, fullCatName + "_docClusProbs.dat");
+	}
     }
 
     /** Lists all categories for which doc cluster subdirs exist */

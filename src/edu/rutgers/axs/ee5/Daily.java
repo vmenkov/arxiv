@@ -580,6 +580,12 @@ public class Daily {
 	stoplist = ht.getOption("stoplist",stoplist);
 	UserProfile.setStoplist(new Stoplist(new File(stoplist)));
 
+	String basedir = ht.getOption("basedir", Files.getBasedir());
+	Files.setBasedir(basedir);
+	Files.mode2014 = ht.getOption("mode2014", Files.mode2014);
+
+	Logging.info("basedir=" + Files.getBasedir() +"; mode2014=" + Files.mode2014);
+
 	if (argv.length == 0) {
 	    System.out.println("Usage: Daily [init|update]");
 	    return;
