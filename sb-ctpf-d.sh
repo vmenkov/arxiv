@@ -111,7 +111,7 @@ foreach t () # (Infinity 1 1e-1 1e-2 1e-3 1e-4 1e-5 1e-6 1e-7)
     
 end
 
-foreach D (0 0.5 1.5 3) # ( 1 1.5)
+foreach D (0 0.5 1 1.5 3) # ( 1 1.5)
     set out="${xin}.${sbMethod}.D=${D}.out"
     set outTitles="${xin}.${sbMethod}.D=${D}.titles"
 

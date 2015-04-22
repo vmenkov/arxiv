@@ -7,7 +7,8 @@ import java.util.*;
 class Files {
 
     /** All input files are somewhere under this directory */
-    private static String basedir = "/data/arxiv/ee5/20141201";
+    //    private static String basedir = "/data/arxiv/ee5/20141201";
+    private static String basedir = "/data/arxiv/ee5/20150415";
 
     /** Set the basedir for this application */
     static void setBasedir(String x) { 
@@ -20,7 +21,8 @@ class Files {
 
     /** Which dir structure is in use? (Year 2014 directory structure
 	vs year 2015 structure) */
-    static boolean mode2014=true;
+    //    static boolean mode2014=true;
+    static boolean mode2014=false;
 
     /*
     private static final String docclusterdir() {
