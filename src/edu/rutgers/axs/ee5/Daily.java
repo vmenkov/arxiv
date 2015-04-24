@@ -26,15 +26,28 @@ public class Daily {
 
     static private final int maxlen = 1000000;
 
-    /** The main "daily updates" method. Calls all other methods. Operations involved 
+    private static void reportEx(Exception ex) {
+	Logging.error(ex.toString());
+	System.out.println(ex);
+	ex.printStackTrace(System.out);
+    }
+
+   /** The main "daily updates" method. Calls all other methods. Operations involved 
 	are:
 	<ul>
 	<li>Classify (assign to clusters) recent articles
 	<li>Compute and record average daily submission rates for all doc clusters
 	<li>Create suggestion lists for all EE5 users
 	</ul>
+
+	@param onlyUser If not null, only generate sug list for this user
+	(rather than for every user in program EE5)
+
+	@param quick Only do user-related tasks, not any kind of overall
+	article stats. This option should only be used in experiments/testing,
+	not in production!
      */
-    static void updates() throws IOException {
+    static void updates(String onlyUser, boolean quick) throws IOException {
 
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
@@ -45,27 +58,40 @@ public class Daily {
 
 	// list document clusters
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
-	// assign recent ArXiv articles to clusters
 
-	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
-	// classify all recent docs
-	int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
-	recordSubmissionRates(em, cidMap, mT);
+	if (!quick) {
+	    // assign recent ArXiv articles to clusters
+	    ScoreDoc[] sd = getRecentArticles( em, searcher, since);
+	    // classify all recent docs	
+	    int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
+	    recordSubmissionRates(em, cidMap, mT);
+	}
 
-	List<Integer> lu = User.selectByProgram( em, User.Program.EE5);
+	final User.Program program = User.Program.EE5;
 
-	for(int uid: lu) {
+	if (onlyUser!=null) {
+	    User user = User.findByName( em, onlyUser);
+	    if (user==null) throw new IllegalArgumentException("User " + onlyUser + " does not exist");
+	    if (!user.getProgram().equals(program)) throw new IllegalArgumentException("User " + onlyUser + " is not enrolled in program " + program);
 	    try {
-		User user = (User)em.find(User.class, uid);
 		makeEE5Sug(em, searcher, since, cidMap.id2dc, user);
 	    } catch(Exception ex) {
-		Logging.error(ex.toString());
-		System.out.println(ex);
-		ex.printStackTrace(System.out);
+		reportEx(ex);
+	    }
+	} else {
+	    List<Integer> lu = User.selectByProgram( em, User.Program.EE5);
+	    for(int uid: lu) {
+		try {
+		    User user = (User)em.find(User.class, uid);
+		    makeEE5Sug(em, searcher, since, cidMap.id2dc, user);
+		} catch(Exception ex) {
+		    reportEx(ex);
+		}
 	    }
 	}
 	em.close();
     }
+
 
     /** Retrieve a specified set of documents stored in the Lucene
 	data store, and assign each document to the appropriate cluster.
@@ -104,7 +130,7 @@ public class Daily {
 	the last TIME_HORIZON_DAY days. (The correct range is
 	important, so that we can compute the average daily rate correctly)
     */
-    static void recordSubmissionRates(EntityManager em, EE5DocClass.CidMapper cidMap, int mT[])
+    static void recordSubmissionRates(EntityManager em, final EE5DocClass.CidMapper cidMap, int mT[])
 	throws IOException
     {
 	em.getTransaction().begin();
@@ -121,7 +147,7 @@ public class Daily {
     /** Prepares a suggestion list for one user and saves it. This
      method does not conduct any document classification itself; it
      relies only on already-classified documents. Therefore, one
-     either should use it either in the daily update script *after*
+     should use it either in the daily update script *after*
      all judged docs have been classified, or in a new-user scenario,
      when there is no judgment history anyway. */
     static DataFile makeEE5Sug(EntityManager em,  IndexSearcher searcher, Date since, 
@@ -170,7 +196,7 @@ public class Daily {
 	else return 0;
     }
 
-    /** Does action a override action b? Return the most "relevant" one 
+    /** Does action a override action b? Returns the most "relevant" one 
 	(higher-priority, or more recent) */
     private static Action mostRelevant(Action a, Action b) {	
 	int aval = actionPriority(a.getOp()), bval=actionPriority(b.getOp());
@@ -179,7 +205,9 @@ public class Daily {
 	else return a.getTime().after(b.getTime()) ? a : b;
     }
 
-    /** Should this action be taken into consideration? */
+    /** Should this user action be taken into consideration? Generally,
+	only article views from the EE5 suggestion list pages are taken
+	into consideration, as well as user uploads. */
     private static boolean acceptAction(EntityManager em, Action a) {
 	if (actionPriority(a.getOp())==0) return false;
 
@@ -227,7 +255,7 @@ public class Daily {
 	System.out.println("updateUserVote(user=" + u);
 	Set<Action> sa = u.getActions();
 	long lai=0;
-	// maps our Article.id to the latest Action
+	// maps our Article.id to the latest acceptable Action on that article
 	HashMap<Integer, Action> lastActions = new HashMap<Integer,Action>();
 	for( Action a: sa) {
 	    if (!acceptAction( em, a)) continue; 
@@ -260,7 +288,7 @@ public class Daily {
 		beta[ cid] ++;
 	    }
 	    System.out.println((plus? "PLUS " : "MINUS ") +" page=" + 
-			       a.getAid() + ", " + a.getOp() +  ", class=" +
+			       a.describeArticle()+ ", " +a.getOp()+", class=" +
 			       cid);
 	}
 	
@@ -579,6 +607,7 @@ public class Daily {
 	String stoplist = "WEB-INF/stop200.txt";
 	stoplist = ht.getOption("stoplist",stoplist);
 	UserProfile.setStoplist(new Stoplist(new File(stoplist)));
+	String onlyUser = ht.getOption("user", null);
 
 	String basedir = ht.getOption("basedir", Files.getBasedir());
 	Files.setBasedir(basedir);
@@ -598,8 +627,9 @@ public class Daily {
 	} else if (cmd.equals("init")) {
 	    Date since = ht.getOptionDate("since", "2013-01-01");
 	    init(since);
-	} else if (cmd.equals("update")) {
-	    updates();
+	} else if (cmd.equals("update")) {	    
+	    final boolean quick = false;
+	    updates(onlyUser, false);
 	} else {
 	    System.out.println("Unknown command: " + cmd);
 	}

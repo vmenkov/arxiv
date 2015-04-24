@@ -4,9 +4,10 @@ package edu.rutgers.axs.indexer;
 import java.util.*;
 import java.io.*;
 
-/** An utility class for reading in the content of a file. The file is expected to contain one word per line. This more or less corresponds to the perl construct,
-    for(`cat filename`)
-*/
+/** An utility class for reading in the content of a file. The file is
+    expected to contain one word per line, but we don't actually
+    check. This more or less corresponds to the perl construct,
+    for(`cat filename`) */
 public class FileIterator implements Iterator<String> {
     private String savedNext=null;
     private LineNumberReader r;
@@ -27,10 +28,10 @@ public class FileIterator implements Iterator<String> {
 	return new FileIterator(f);
     }
     
-    public boolean 	hasNext()  {
-	if (savedNext!=null) return true;
-	String s=null;
-	do  {
+    /** Is there one more non-blank line to read? */
+    public boolean hasNext()  {
+	while (savedNext==null)  {
+	    String s=null;
 	    try {
 		s=r.readLine();
 	    } catch(IOException ex) { 
@@ -38,20 +39,23 @@ public class FileIterator implements Iterator<String> {
 	    }
 	    if (s==null) return false;
 	    s = s.trim();
-	} while (s.equals("") || s.startsWith("#"));
-	savedNext = s;
+	    if (s.equals("") || s.startsWith("#")) continue;
+	    savedNext = s;
+	}
 	return true;
     }
 
+    /** Returns the content of the next non-blank line (with the
+	leading and trailing whitespace removed */
     public String next() throws NoSuchElementException {
-	if (savedNext==null) throw new NoSuchElementException();
+	if (!hasNext()) throw new NoSuchElementException();
 	String s = savedNext;
 	savedNext=null;
 	return s;
     }
     
     public void remove() throws UnsupportedOperationException {
-	throw new  UnsupportedOperationException();
+	throw new UnsupportedOperationException();
     }
 
     public void close() throws IOException {

@@ -62,6 +62,12 @@ import  edu.rutgers.axs.web.SessionData;
 	return a==null? null: a.getAid();
     }
 
+    /** ArXiv:id or UU:uname:file */
+    public String describeArticle() {
+	Article a =  getArticle();
+	return a==null? "no_article": a.toString();
+    }
+
     /*
     public void setArticle(String article) {
 	this.article = article;
@@ -410,15 +416,17 @@ import  edu.rutgers.axs.web.SessionData;
 	setTime(now);
     }
 
-   public String reflectToString() {
+    public String reflectToString() {
 	return Reflect.reflectToString(this);
     }
 
-   public String toString() {
-       return "(id="+getId()+", u="+getUser().getId()+", op="+getOp()+", aid="+getAid()+", src="+getSrc()+
-	   ", pl=" +  getPresentedListId()+")";
-   }
-
+    public String toString() {
+	String s = "(id="+getId()+", u="+getUser().getId()+", op="+getOp();
+	s += ", "+ describeArticle();
+	s += ", src="+getSrc()+ ", pl=" +  getPresentedListId()+")";
+	return s;
+    }
+    
  
     /** @return "(hh:mm:ss)", or an empty string */
     private String formatRelTime(long sec) {
