@@ -542,7 +542,7 @@ public class ViewSuggestions  extends ViewSuggestionsBase {
     /** Prepares to present a list that was already presented in the
 	past, and saved in a PresentedList structure. This is
 	typically done when a user clicks on an article link in an
-	emial message, in order to show exactly the list as it existed
+	email message, in order to show exactly the list as it existed
 	back then, without any exclusions (due to User Folder  
 	
     */

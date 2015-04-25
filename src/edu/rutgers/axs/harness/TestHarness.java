@@ -189,12 +189,18 @@ public class TestHarness {
 		    sr.entries.size() + " articles";
 		out.println(s);
 
-		final int M=20;
+		final int M=30;
 		int cnt=0;
 		for(ArticleEntry e: sr.entries) {
 		    s = e.getAid();
 		    if (showScores) s += "\t" + e.getScore();
-		    if (showTitles) s += "\t" + e.subj + "\t" + e.titline;
+		    if (showTitles) {
+			// int docno = Common.find(searcher, e.getAid());
+			// Document doc = searcher.doc(docno);
+			e.populateOtherFields(searcher);
+			s += "\t" + e.subj + "\t" + e.titline;
+			s += "\t" + "; " + e.researcherCommline;
+		    }
 		    out.println(s);
 		    if (cnt++ >= M) break;
 		}

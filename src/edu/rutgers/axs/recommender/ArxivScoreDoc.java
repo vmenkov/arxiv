@@ -9,7 +9,7 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.web.ArticleEntry;
 
-/** Our replacement of sort's for Lucene's ScoreDoc class.
+/** Our replacement of sorts for Lucene's ScoreDoc class.
 
     <p>(Hmm... Why did I create this class? My recollection is that
     I had to do it because Lucene's ScoreDoc did not have a public 
