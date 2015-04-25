@@ -128,7 +128,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	FilterServlet does when a page is viewed. This also 
 	causes an indirect call to SBRGenerator.addAction()
      */
-    void createAction(EntityManager em, String aid) {
+    void createActionSB(EntityManager em, String aid) {
 
 	em.getTransaction().begin();		
 	// no commit needed, since we're inside a transaction already
@@ -197,7 +197,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	    inCnt ++;
 	    for(String aid: aids) {
 		// add new action to the SQL database and to the generator
-		g.createAction(em, aid);
+		g.createActionSB(em, aid);
 		g.recordLinkedAid(aid);
 	    }
 	    // trigger update thread

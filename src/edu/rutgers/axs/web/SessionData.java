@@ -437,8 +437,11 @@ public class SessionData {
     }
 
     /** Similar to its non-static sibling, this method is only needed
-	to be used when we need to retroactively create an Action entry
-	from a command-line application.
+	to be used when we need to create an Action entry from a
+	command-line application. (This may be done retroactively to 
+	"fix" things after some reorganizations, or it can be done
+	in test harness experiments, when we are emulating online user activity
+	in a command-line tool)
      */
     public static Action addNewAction(EntityManager em,  User u, Action.Op op, 
 				      Article art, String reorderedAids[],

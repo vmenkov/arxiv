@@ -92,6 +92,28 @@ public class Daily {
 	em.close();
     }
 
+    /** A simplified version of the updates() method which is used with the command-line
+	harness, with a simulated user.
+    */
+    static void simulatedUserUpdates(EntityManager em, IndexSearcher searcher, User user) throws IOException {
+	    
+	final int days = EE5DocClass.TIME_HORIZON_DAY;
+	Date since = SearchResults.daysAgo( days );
+
+	// list document clusters
+	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
+
+
+	final User.Program program = User.Program.EE5;
+	if (!user.getProgram().equals(program)) throw new IllegalArgumentException("User " + onlyUser + " is not enrolled in program " + program);
+	try {
+	    makeEE5Sug(em, searcher, since, cidMap.id2dc, user);
+	} catch(Exception ex) {
+	    reportEx(ex);
+	}
+    }
+
+
 
     /** Retrieve a specified set of documents stored in the Lucene
 	data store, and assign each document to the appropriate cluster.
@@ -557,6 +579,7 @@ public class Daily {
 	}
 	em.close();
     }
+
 
 
     /** A one-off procedure, which needs to be invoked after a new

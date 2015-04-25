@@ -54,6 +54,41 @@ public class TestHarness {
 	em.getTransaction().commit();
 	return u;
     }
+
+    /** Deletes all actions for a user. This only should be used for dummy users, 
+	whose accounts we may reset and refill with dummy actions, in order
+	to use them for testing a recommendation engine.	
+     */
+    public static void deleteActionsForUser(User user)  throws IOException {
+	EntityManager em  = Main.getEM();
+	String query = 	    "delete from Action a where a.user.id=:u";
+
+	javax.persistence.Query q = em.createQuery(query);
+	Logging.info("Query: " + query);
+	q.setParameter("u", user.getId());
+	em.getTransaction().begin();
+	int n= q.executeUpdate();
+	em.getTransaction().commit();
+	Logging.info("" + n + " rows updated");
+	em.close();
+    }
+
+    static void createActionEE5(EntityManager em, User user, String aid) {
+
+	em.getTransaction().begin();		
+	// no commit needed, since we're inside a transaction already
+	//Article art=Article.getArticleAlways(em, aid,false);
+	Article art = Article.findByAid( em, aid);
+	if (art == null) throw new IllegalArgumentException("Article " + aid + " is not in My.ArXiv's local database; won't proceed");
+
+	ActionSource asrc = new ActionSource(Action.Source.MAIN_EE5,0);
+	Action a = SessionData.addNewAction(em,  user,  Action.Op.VIEW_ABSTRACT,
+					    art, null, asrc, null);
+
+	em.getTransaction().commit(); 
+    }
+
+
     
     static void usage() {
 	System.out.println("Usage: java [options] TestHarness aid_list_file [out_file]");
@@ -87,10 +122,14 @@ public class TestHarness {
 	User.Program program = (User.Program)ht.getEnum(User.Program.class, "program", User.Program.EE5);
 	
 	System.out.println("Program=" + program);
+	IndexReader reader = Common.newReader();
+	IndexSearcher searcher = new IndexSearcher(reader);
+
 
 	EntityManager em  = Main.getEM();
 	String uname = "simulated_u";
 	User user= createDummyUser( em, uname);
+	deleteActionsForUser(em, user);
 
 	int inCnt=0;
 	FileIterator it = FileIterator.createFileIterator(infile); 
@@ -98,13 +137,9 @@ public class TestHarness {
 	    String aids[] = it.next().split("\\s+");
 	    inCnt ++;
 	    for(String aid: aids) {
-		// add new action to the SQL database and to the generator
-		/*
-		g.createAction(em, aid);
-		g.recordLinkedAid(aid);
-		*/
+		createActionEE5( em, user, aid);
 	    }
-	    // trigger update thread
+
 	    
 	    String s= "["+inCnt+"] Added "+aids.length+" user action(s): article view " + Util.join(",", aids);
 	    out.println(s);

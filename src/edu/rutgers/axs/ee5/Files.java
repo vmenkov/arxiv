@@ -2,6 +2,8 @@ package edu.rutgers.axs.ee5;
 
 import java.io.*;
 import java.util.*;
+import edu.rutgers.axs.sql.Logging;
+
 
 /** Location of input files related to EE5 clustering */
 class Files {
@@ -91,6 +93,8 @@ class Files {
     /** Lists all binary files produced with RandomAccessConverter */
     static File[] listCstarBinaryFiles() {
 	File d = cstarbindir();
+	Logging.info("cstarbindir=" + d);
+	Logging.info("cstarbindir.isDir=" + d.isDirectory());
 	Vector<File> v = new Vector<File>();
 	for(File f: d.listFiles()) {
 	    if (f.isFile() && f.getName().endsWith(SUFFIX_BIN)) v.add( f);
