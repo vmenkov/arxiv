@@ -12,9 +12,12 @@ import javax.servlet.http.*;
 import javax.persistence.*;
 
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.FileIterator;
+import edu.rutgers.axs.indexer.Common;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.util.Util;
@@ -24,7 +27,7 @@ public class TestHarness {
     /** Creates a persistent User entry for a dummy user, if it does
 	not exist already, or returns the already existing one.
      */
-    public static User createDummyUser(EntityManager em, String uname) throws WebException {
+    public static User createDummyUser(EntityManager em, String uname, User.Program program) throws WebException {
 	em.getTransaction().begin();
 	
 	String pw = "xxx";
@@ -50,6 +53,7 @@ public class TestHarness {
 	if (r == null) throw new IllegalArgumentException("No Role object found: " + rn);
 	System.out.println("Adding role to user: "+uname+ ", role=" + r);
 	u.addRole(r);
+	u.setProgram(program);
 	em.persist(u);
 	em.getTransaction().commit();
 	return u;
@@ -59,10 +63,8 @@ public class TestHarness {
 	whose accounts we may reset and refill with dummy actions, in order
 	to use them for testing a recommendation engine.	
      */
-    public static void deleteActionsForUser(User user)  throws IOException {
-	EntityManager em  = Main.getEM();
+    public static void deleteActionsForUser(EntityManager em, User user)  throws IOException {
 	String query = 	    "delete from Action a where a.user.id=:u";
-
 	javax.persistence.Query q = em.createQuery(query);
 	Logging.info("Query: " + query);
 	q.setParameter("u", user.getId());
@@ -70,7 +72,6 @@ public class TestHarness {
 	int n= q.executeUpdate();
 	em.getTransaction().commit();
 	Logging.info("" + n + " rows updated");
-	em.close();
     }
 
     static void createActionEE5(EntityManager em, User user, String aid) {
@@ -84,11 +85,8 @@ public class TestHarness {
 	ActionSource asrc = new ActionSource(Action.Source.MAIN_EE5,0);
 	Action a = SessionData.addNewAction(em,  user,  Action.Op.VIEW_ABSTRACT,
 					    art, null, asrc, null);
-
 	em.getTransaction().commit(); 
     }
-
-
     
     static void usage() {
 	System.out.println("Usage: java [options] TestHarness aid_list_file [out_file]");
@@ -96,8 +94,7 @@ public class TestHarness {
     }
 
 
-
- static public void main(String[] argv) throws Exception {
+    static public void main(String[] argv) throws Exception {
        ParseConfig ht = new ParseConfig();
 	
 	int ia = 0;
@@ -118,17 +115,22 @@ public class TestHarness {
 	}
 
 	boolean showScores = ht.getOption("showScores", true);
+	boolean showTitles = ht.getOption("showTitles", true);
+
+	// special params for EE5
+	String basedir = ht.getOption("basedir", edu.rutgers.axs.ee5.Files.getBasedir());
+	edu.rutgers.axs.ee5.Files.setBasedir(basedir);
+	edu.rutgers.axs.ee5.Files.mode2014 = ht.getOption("mode2014", edu.rutgers.axs.ee5.Files.mode2014);
+
 
 	User.Program program = (User.Program)ht.getEnum(User.Program.class, "program", User.Program.EE5);
 	
 	System.out.println("Program=" + program);
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
-
-
 	EntityManager em  = Main.getEM();
 	String uname = "simulated_u";
-	User user= createDummyUser( em, uname);
+	User user= createDummyUser( em, uname, program);
 	deleteActionsForUser(em, user);
 
 	int inCnt=0;
@@ -137,48 +139,50 @@ public class TestHarness {
 	    String aids[] = it.next().split("\\s+");
 	    inCnt ++;
 	    for(String aid: aids) {
-		createActionEE5( em, user, aid);
+		if (program==User.Program.EE5) {
+		    createActionEE5( em, user, aid);
+		} else {
+		    throw new IllegalArgumentException("program " + program + " not supported");
+		}
 	    }
 
 	    
 	    String s= "["+inCnt+"] Added "+aids.length+" user action(s): article view " + Util.join(",", aids);
 	    out.println(s);
-	    /*
-
-	    SBRGThread th = g.sbCheck();
-	    if (th == null) {	
-		// no update after the 1st page
-		out.println("No rec list update happens at this point");
-		continue;
+	    DataFile df=null;
+	    if (program==User.Program.EE5) {
+		df = edu.rutgers.axs.ee5.Daily.simulatedUserUpdates(em, searcher, user);
+	    } else {
 	    }
 
-	    waitToEnd(th);
+	    if (df!=null) {
 
-	    if (th.sr!=null) {
-		if (th != g.sbrReady) throw new AssertionError("sbrReady!=th");
+
+		DataFile.Type type = df.getType();
+		//		if (type.isProfile()) {}
+		SearchResults sr = new SearchResults(df, searcher);
+
 		s = "Rec list updated, "+
-		    th.sr.entries.size() + " articles, " + th.msecLine() +":";
+		    sr.entries.size() + " articles";
 		out.println(s);
 
-		for(ArticleEntry e: th.sr.entries) {
+		final int M=20;
+		int cnt=0;
+		for(ArticleEntry e: sr.entries) {
 		    s = e.getAid();
 		    if (showScores) s += "\t" + e.getScore();
+		    if (showTitles) s += "\t" + e.subj + "\t" + e.titline;
 		    out.println(s);
+		    if (cnt++ >= M) break;
 		}
 
 
 	    } else { // there must have been an error
-		s = "No rec list produced. Error=" + th.error + ": " +th.errmsg;
+		s = "No rec list produced. Error?";
 		out.println(s);
 	    }
 
-	    String desc = th.description();
-	    s = "Excludable articles count: " + g.linkedAids.size();
-	    if (th.excludedList!=null) {
-		s += "\nActually excluded: " + th.excludedList;
-	    }
-	    out.println(s);
-	    */
+
 	}
 	it.close();
 	out.close();

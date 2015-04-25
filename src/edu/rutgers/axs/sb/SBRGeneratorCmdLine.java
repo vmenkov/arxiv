@@ -117,7 +117,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 
 	g.em = sd.getEM();
 	String uname = "simulated_sb";
-	g.user= TestHarness.createDummyUser( g.em, uname);
+	g.user= TestHarness.createDummyUser( g.em, uname, User.Program.SB_ANON);
 	g.sd.storeUserName(uname);
 	g.sd.storeUserInfoInSQL(g.em, g.user);
 

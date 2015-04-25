@@ -6,25 +6,25 @@ import edu.rutgers.axs.sql.Logging;
 
 
 /** Location of input files related to EE5 clustering */
-class Files {
+public class Files {
 
     /** All input files are somewhere under this directory */
     //    private static String basedir = "/data/arxiv/ee5/20141201";
     private static String basedir = "/data/arxiv/ee5/20150415";
 
     /** Set the basedir for this application */
-    static void setBasedir(String x) { 
+    public static void setBasedir(String x) { 
 	basedir = x;
 	System.out.println("Using basedir="+ basedir+" for all EE5 files");
     }
 
-    static String getBasedir() { return basedir; }
+    public static String getBasedir() { return basedir; }
 
 
     /** Which dir structure is in use? (Year 2014 directory structure
 	vs year 2015 structure) */
     //    static boolean mode2014=true;
-    static boolean mode2014=false;
+    public static boolean mode2014=false;
 
     /*
     private static final String docclusterdir() {

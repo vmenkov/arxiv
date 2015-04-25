@@ -43,11 +43,8 @@ public class Daily {
 	@param onlyUser If not null, only generate sug list for this user
 	(rather than for every user in program EE5)
 
-	@param quick Only do user-related tasks, not any kind of overall
-	article stats. This option should only be used in experiments/testing,
-	not in production!
      */
-    static void updates(String onlyUser, boolean quick) throws IOException {
+    static void updates(String onlyUser) throws IOException {
 
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
@@ -59,13 +56,11 @@ public class Daily {
 	// list document clusters
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
-	if (!quick) {
-	    // assign recent ArXiv articles to clusters
-	    ScoreDoc[] sd = getRecentArticles( em, searcher, since);
-	    // classify all recent docs	
-	    int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
-	    recordSubmissionRates(em, cidMap, mT);
-	}
+	// assign recent ArXiv articles to clusters
+	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
+	// classify all recent docs	
+	int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
+	recordSubmissionRates(em, cidMap, mT);
 
 	final User.Program program = User.Program.EE5;
 
@@ -92,10 +87,10 @@ public class Daily {
 	em.close();
     }
 
-    /** A simplified version of the updates() method which is used with the command-line
-	harness, with a simulated user.
+    /** A simplified version of the updates() method, to be used
+	with the command-line harness, with a simulated user.
     */
-    static void simulatedUserUpdates(EntityManager em, IndexSearcher searcher, User user) throws IOException {
+    public static DataFile simulatedUserUpdates(EntityManager em, IndexSearcher searcher, User user) throws IOException {
 	    
 	final int days = EE5DocClass.TIME_HORIZON_DAY;
 	Date since = SearchResults.daysAgo( days );
@@ -103,13 +98,13 @@ public class Daily {
 	// list document clusters
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
-
 	final User.Program program = User.Program.EE5;
-	if (!user.getProgram().equals(program)) throw new IllegalArgumentException("User " + onlyUser + " is not enrolled in program " + program);
+	if (!user.getProgram().equals(program)) throw new IllegalArgumentException("User " + user + " is not enrolled in program " + program);
 	try {
-	    makeEE5Sug(em, searcher, since, cidMap.id2dc, user);
+	    return makeEE5Sug(em, searcher, since, cidMap.id2dc, user);
 	} catch(Exception ex) {
 	    reportEx(ex);
+	    return null;
 	}
     }
 
@@ -651,8 +646,7 @@ public class Daily {
 	    Date since = ht.getOptionDate("since", "2013-01-01");
 	    init(since);
 	} else if (cmd.equals("update")) {	    
-	    final boolean quick = false;
-	    updates(onlyUser, false);
+	    updates(onlyUser);
 	} else {
 	    System.out.println("Unknown command: " + cmd);
 	}

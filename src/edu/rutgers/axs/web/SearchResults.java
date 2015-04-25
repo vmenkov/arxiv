@@ -95,11 +95,12 @@ public class  SearchResults {
 	normal search, this process involves looking up Lucene's
 	internal document IDs using a searcher.
 
+	<p>
 	Note: the "entries" array is intialized here using the entire
 	data file. You may want to call setWindow() later to restrict the
 	size.
      */
-    SearchResults(DataFile df, IndexSearcher searcher) throws IOException {
+    public SearchResults(DataFile df, IndexSearcher searcher) throws IOException {
 
 	// read the article IDs and scores from the file, or from the doc array
 	if (df.getThisFile()==null) {
