@@ -256,7 +256,7 @@ class CStarLookup {
 		values[i] = Double.parseDouble(q[k++]);		
 	    }
 	    if (values[0] !=  onlyGamma) {
-		Logging.info("Ignoring file " + f + " with gamma=" + values[0]);
+		//Logging.info("Ignoring file " + f + " with gamma=" + values[0]);
 		continue;
 	    } 
 	    Logging.info("Using file " + f);

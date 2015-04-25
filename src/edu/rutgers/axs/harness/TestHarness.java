@@ -4,20 +4,17 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.util.regex.*;
-import java.nio.charset.Charset;
-import java.net.URLEncoder;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.persistence.*;
 
-import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.ParseConfig;
-import edu.rutgers.axs.indexer.FileIterator;
-import edu.rutgers.axs.indexer.Common;
+import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.util.Util;
@@ -25,9 +22,12 @@ import edu.rutgers.axs.util.Util;
 public class TestHarness {
 
     /** Creates a persistent User entry for a dummy user, if it does
-	not exist already, or returns the already existing one.
+	not exist already, or modifies and returns the already existing one.
+
+	@param program The experiment plan to enroll the user into. For SB this does not matter; for nightly recommenders, this should match the recommender type.
+	@param cats The set of categories of interest to assign to the user. (This is needed for recommenders such as PPP or EE5)
      */
-    public static User createDummyUser(EntityManager em, String uname, User.Program program) throws WebException {
+    public static User createDummyUser(EntityManager em, String uname, User.Program program, Set<String> cats) throws WebException {
 	em.getTransaction().begin();
 	
 	String pw = "xxx";
@@ -54,6 +54,8 @@ public class TestHarness {
 	System.out.println("Adding role to user: "+uname+ ", role=" + r);
 	u.addRole(r);
 	u.setProgram(program);
+	if (cats==null) cats = new HashSet<String>();
+	u.setCats(cats);
 	em.persist(u);
 	em.getTransaction().commit();
 	return u;
@@ -87,12 +89,25 @@ public class TestHarness {
 					    art, null, asrc, null);
 	em.getTransaction().commit(); 
     }
+
+    private static HashSet<String> prepareCatSet(IndexSearcher searcher, Vector<String[]> aidsList) throws IOException {
+	HashSet<String> set = new  HashSet<String>();
+	for(String aids[] : aidsList ) {
+	    for(String aid: aids) {
+		int docno = Common.find(searcher, aid);		    
+		Document doc = searcher.doc(docno);
+		String subj = doc.get(ArxivFields.CATEGORY);
+		String[] cats =	CatInfo.split(subj);
+		for(String cat: cats) set.add(cat);
+	    }
+	}
+	return set;
+    }
     
     static void usage() {
 	System.out.println("Usage: java [options] TestHarness aid_list_file [out_file]");
 	System.exit(1);
     }
-
 
     static public void main(String[] argv) throws Exception {
        ParseConfig ht = new ParseConfig();
@@ -129,14 +144,23 @@ public class TestHarness {
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
 	EntityManager em  = Main.getEM();
+	
+	// read in the list of AIDs
+	Vector<String[]> aidsList = new 	Vector<String[]>();
+	FileIterator it = FileIterator.createFileIterator(infile); 
+	while(it.hasNext()) {
+	    aidsList.add( it.next().split("\\s+"));
+	}
+
+	HashSet<String> catSet = prepareCatSet(searcher, aidsList);
+	System.out.println("The input list contains " + catSet.size() + " categories: " + catSet +". Will assign them as cats of interest to the simulated user");
+
 	String uname = "simulated_u";
-	User user= createDummyUser( em, uname, program);
+	User user= createDummyUser( em, uname, program, catSet);
 	deleteActionsForUser(em, user);
 
 	int inCnt=0;
-	FileIterator it = FileIterator.createFileIterator(infile); 
-	while(it.hasNext()) {
-	    String aids[] = it.next().split("\\s+");
+	for(String aids[] : aidsList ) {
 	    inCnt ++;
 	    for(String aid: aids) {
 		if (program==User.Program.EE5) {
@@ -153,11 +177,10 @@ public class TestHarness {
 	    if (program==User.Program.EE5) {
 		df = edu.rutgers.axs.ee5.Daily.simulatedUserUpdates(em, searcher, user);
 	    } else {
+		throw new IllegalArgumentException("program " + program + " not supported");
 	    }
 
 	    if (df!=null) {
-
-
 		DataFile.Type type = df.getType();
 		//		if (type.isProfile()) {}
 		SearchResults sr = new SearchResults(df, searcher);

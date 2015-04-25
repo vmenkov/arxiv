@@ -269,7 +269,7 @@ public class Daily {
     */
     static int updateUserVote(EntityManager em, HashMap<Integer,EE5DocClass> id2dc, User u, EE5User ee5u) throws IOException {
 
-	System.out.println("updateUserVote(user=" + u);
+	System.out.println("updateUserVote(user=" + u + ")");
 	Set<Action> sa = u.getActions();
 	long lai=0;
 	// maps our Article.id to the latest acceptable Action on that article

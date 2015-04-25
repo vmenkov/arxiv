@@ -63,7 +63,7 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 
 set opt="-cp ${cp} ${opt}"
-# set opt="${opt} -Dbasedir=/data/arxiv/ee5/20141201 -Dmode2014=true"
+#set opt="${opt} -Dbasedir=/data/arxiv/ee5/20141201 -Dmode2014=true"
 
 echo "opt=$opt"
 
@@ -89,9 +89,9 @@ foreach program (EE5) # (SUBJECTS ABSTRACTS COACCESS)
     edu.rutgers.axs.harness.TestHarness $in $dir/$out
 
     #-- extract the last list of AIDs, and look up article titles
-    perl -e \
-    '$_=join("",<>); s/.*Rec/Rec/sm; s/\t.*//g;  s/^[A-Z].*\n?//mg; print;' \
-    $dir/$out |  ./cmd.sh showtitle - |grep -v docno=  > $dir/$outTitles
+#    perl -e \
+#    '$_=join("",<>); s/.*Rec/Rec/sm; s/\t.*//g;  s/^[A-Z].*\n?//mg; print;' \
+#    $dir/$out |  ./cmd.sh showtitle - |grep -v docno=  > $dir/$outTitles
 
 end
 

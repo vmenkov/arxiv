@@ -4,8 +4,8 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.util.regex.*;
-import java.nio.charset.Charset;
-import java.net.URLEncoder;
+//import java.nio.charset.Charset;
+//import java.net.URLEncoder;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -117,7 +117,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 
 	g.em = sd.getEM();
 	String uname = "simulated_sb";
-	g.user= TestHarness.createDummyUser( g.em, uname, User.Program.SB_ANON);
+	g.user= TestHarness.createDummyUser( g.em, uname, User.Program.SB_ANON, null);
 	g.sd.storeUserName(uname);
 	g.sd.storeUserInfoInSQL(g.em, g.user);
 
