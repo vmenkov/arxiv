@@ -59,7 +59,7 @@ public class Daily {
 	// assign recent ArXiv articles to clusters
 	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
 	// classify all recent docs	
-	int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
+	int mT[] = Classifier.classifyDocuments(em, reader, sd,cidMap);
 	recordSubmissionRates(em, cidMap, mT);
 
 	final User.Program program = User.Program.EE5;
@@ -106,6 +106,30 @@ public class Daily {
 	    reportEx(ex);
 	    return null;
 	}
+    }
+
+    /** Assigns specified ArXiv articles to clusters. This method
+	can be used, for example, if we decided to classify 
+	just a few docs that have not been classified before.
+    */
+    private static void classifySomeDocs(String[] aids) throws IOException {
+
+	IndexReader reader = Common.newReader();
+	IndexSearcher searcher = new IndexSearcher(reader);
+	EntityManager em  = Main.getEM();
+	    
+	// list document clusters
+	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
+
+	ScoreDoc[] sd = new ScoreDoc[aids.length];
+	for(int i=0; i<aids.length; i++) {
+	    int docno = Common.find(searcher, aids[i]);
+	    sd[i] = new ScoreDoc(docno, 0);
+	}
+	
+	// classify all recent docs	
+	int mT[] = Classifier.classifyDocuments(em, reader, sd,cidMap);
+	em.close();
     }
 
 
@@ -634,12 +658,13 @@ public class Daily {
 	Logging.info("basedir=" + Files.getBasedir() +"; mode2014=" + Files.mode2014);
 
 	if (argv.length == 0) {
-	    System.out.println("Usage: Daily [init|update]");
+	    System.out.println("Usage: Daily [delete|init|update]");
 	    return;
 	}
 
 
-	String cmd = argv[0];
+	int ia=0;
+	String cmd = argv[ia++];
 	if (cmd.equals("delete")) {
 	    deleteAll();
 	} else if (cmd.equals("init")) {
@@ -647,9 +672,17 @@ public class Daily {
 	    init(since);
 	} else if (cmd.equals("update")) {	    
 	    updates(onlyUser);
+	} else if (cmd.equals("classifySome")) {	    
+	    String infile = argv[ia++];
+	    String[] aids=FileIterator.readAidsFlat(infile);
+	    System.out.println("Will classify " + aids.length + " docs");
+	    classifySomeDocs(aids);
 	} else {
 	    System.out.println("Unknown command: " + cmd);
 	}
+
+
+
 
     }
 

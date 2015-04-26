@@ -61,5 +61,40 @@ public class FileIterator implements Iterator<String> {
     public void close() throws IOException {
 	r.close();
     }
+
+    /** Reads in the list of AIDs 
+	@param infile Name of a file with 1 or several AIDs per line
+	@param All AIDs in a 2D array (one row per line of input file)
+    */
+    public static Vector<String[]> readAids(String  infile)  throws IOException{
+	Vector<String[]> aidsList = new Vector<String[]>();
+	FileIterator it = FileIterator.createFileIterator(infile); 
+	while(it.hasNext()) {
+	    aidsList.add( it.next().split("\\s+"));
+	}
+	it.close();
+	return aidsList;
+    }
+
+    /** Reads in the list of AIDs
+	@param infile Name of a file with 1 or several AIDs per line
+	@param All AIDs in a single array
+    */
+    public static String[] readAidsFlat(String  infile) throws IOException {
+       Vector<String[]> lists = readAids(infile);
+       int n = 0;
+       for(String aids[] : lists) {
+	   n += aids.length;
+       }
+       String[] q = new String[n];
+       int k=0;
+       for(String aids[] : lists) {
+	    for(String aid: aids) {
+		q[k++] = aid;
+	    }
+       }
+       return q;
+   }
+
 }
 

@@ -146,14 +146,10 @@ public class TestHarness {
 	EntityManager em  = Main.getEM();
 	
 	// read in the list of AIDs
-	Vector<String[]> aidsList = new 	Vector<String[]>();
-	FileIterator it = FileIterator.createFileIterator(infile); 
-	while(it.hasNext()) {
-	    aidsList.add( it.next().split("\\s+"));
-	}
+	Vector<String[]> aidsList = FileIterator.readAids(infile); 
 
 	HashSet<String> catSet = prepareCatSet(searcher, aidsList);
-	System.out.println("The input list contains " + catSet.size() + " categories: " + catSet +". Will assign them as cats of interest to the simulated user");
+	System.out.println("The input list contains " + catSet.size() + " categories: " +catSet+". Will assign them as cats of interest to the simulated user");
 
 	String uname = "simulated_u";
 	User user= createDummyUser( em, uname, program, catSet);
@@ -213,7 +209,6 @@ public class TestHarness {
 
 
 	}
-	it.close();
 	out.close();
    }
 
