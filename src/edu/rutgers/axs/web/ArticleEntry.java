@@ -118,10 +118,13 @@ public class ArticleEntry implements Comparable<ArticleEntry>, Cloneable {
 	this(_i, doc, new ScoreDoc(_docno, (float)0));
     }
 
-    /** Sets title, author, and various other info field from the Document object
+    /** Sets title, author, and various other info field from the
+	Document object. For better printability, we replace 
+	line breaks, tabs, etc in the title with plain single spaces.
      */
     void populateOtherFields( Document doc) {
-	titline = doc.get(ArxivFields.TITLE);
+	titline = doc.get(ArxivFields.TITLE);	
+	if (titline!=null) titline = titline.replaceAll("\\s+", " ");
 	authline=doc.get(ArxivFields.AUTHORS);
 	String c= doc.get(ArxivFields.COMMENTS);
 	commline=(c==null? "": "Comments:" + c);

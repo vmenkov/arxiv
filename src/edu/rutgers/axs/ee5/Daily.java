@@ -405,7 +405,7 @@ public class Daily {
 	     final boolean admit = true;
 	     if (admit) {
 		 results.add(new ArxivScoreDoc(sd).setScore(cstar));
-		 String cmt="Cluster "+cid+", xi=" + (float)xi +", u=" +rank+", cstar=" + (float)cstar;
+		 String cmt="Cluster "+cid+", xi=" + (float)xi +", c*("+rank+","+alpha+","+beta+")=" + (float)cstar;
 		 commentsHash.put(sd.doc, cmt);
 		 //  Logging.info("Daily.USL: added, cstar=" + cstar);
 	     } else {
