@@ -4,8 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.util.regex.*;
-//import java.nio.charset.Charset;
-//import java.net.URLEncoder;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -50,6 +48,11 @@ list generation will be triggered after all these AIDs have been entered.)
 The name of the SB recommendation generation method (one of those listed at 
 {@link edu.rutgers.axs.sb.SBRGenerator.Method}; they also appear in the URLs linked to from the first column of the table at  
 <a href="/arxiv/tools/index.jsp#sb">http://my.arxiv.org/arxiv/tools/index.jsp#sb</a>) is specified with the option -sbMethod. One can also supply all other sb-related parameters to the test harness class, but at the moment this is not exposed at the shell script command line level (see below).
+
+<p>There is also a script with a loop, testing several recommenders on the same input file. All output files go to the same specified directory.
+<pre>
+./sb-ctpf-d.sh -dir ../runs/sb.out sb.in.dat
+</pre>
 
 <h3>Usage - directly using the Java app</h3>
 

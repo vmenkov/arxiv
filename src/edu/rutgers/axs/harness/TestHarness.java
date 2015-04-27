@@ -19,6 +19,72 @@ import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.util.Util;
 
+/** This class provides a platform for online experimentation with the
+  recommender engines that are used to provide daily recommendation
+  lists for registered users. As of April 2015, only EE5 is supported.
+
+  <p>The overall framework and the command line interface for this
+  class is fairly similar to those for {@link
+  edu.rutgers.axs.sb.SBRGeneratorCmdLine}; however, there are
+  substantial differences due to the fact that the daily recommenders are
+  designed to serve registered users, and make significant use of the context 
+  in which user actions have occurred.
+
+  <h3>How to use the program</h3>
+
+<p>A command line shell script is provided for convenience. Usage:
+
+<pre>
+ ~/arxiv/arxiv/simulate-daily.sh -dir output-directory input-file.dat 
+</pre>
+
+  <h3>Overview of the process</h3>
+
+  <p>This is how the test platform works, in case of EE5.
+
+  <ul> <li>A "dummy user" (<tt>simulated_u</tt>) is created. The
+  simulated user is assigned to he EE5 experimental plan ({@link
+  edu.rutgers.axs.sql.User.Program#EE5}). The user is given the set of
+  categories of interest consisisting of the primary categories of all
+  articles in the input file.
+
+  <li>The simulated user's old action history, is exists, is
+erased. For each article listed in the input file, we add a
+VIEW_ABSTRACT action ({@link edu.rutgers.axs.sql.Action}) to the
+user's (simulated) action history. In order for EE5 recommender to
+accept these actions as actionable user feedback, we set each action's
+source as if the user had visited the article's page by following the
+link from an earlier EE5 rec list (even though in reality, of course,
+that page would not have appeared on any EE5 rec list).
+
+<li>After each addition of an action (or of several actions, if
+several article IDs were listed on the same line in the input file),
+the EE5 recommendation engine is run to produce the recommendation
+list for the dummy user based on its recorded simulated action
+history.  The resulted recommendation list is reported in the output
+file.
+  </ul>
+
+<h3>Input file format</h3>
+
+<p>Normally, one ArXiv article ID (AID) per line. You can also have
+several AIDs on a single line, in which case the recommendation
+generator will be run only once after the simulated actions for all
+AIDs have been added to the simulated user's action history.
+
+<h3>Output file format</h3>
+
+<p>After a brief information about the input (an added actions, etc),
+the list of recommended articles is printed. Besides the AID and the
+score, each line also contains brief information about the article
+(categories, title), and some numbers explaining its origin on the
+list (doc cluster ID, &xi;, and the value of <em>c<sup>*</em></sup>(<em>u</em>,&alpha;,&beta;)).
+
+
+
+
+
+ */
 public class TestHarness {
 
     /** Creates a persistent User entry for a dummy user, if it does
