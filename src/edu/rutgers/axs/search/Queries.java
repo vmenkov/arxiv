@@ -32,9 +32,14 @@ public class Queries {
 	return mkDateRangeQuery(since, null);
     }
 
-    public static  org.apache.lucene.search.Query mkDateRangeQuery(Date since, Date toDate) {
-	String lower = 	DateTools.timeToString(since.getTime(), DateTools.Resolution.MINUTE);
-	String upper = 	(toDate==null)? null: DateTools.timeToString(toDate.getTime(), DateTools.Resolution.MINUTE);
+    /** Creates a query that will select articles by date:
+	{@literal  since <= date < toDate}
+	@param since Lower bound (inclusive). May be null, which means open range.
+	@param toDate Upper bound (exclusive). May be null, which means open range.
+     */
+    public static org.apache.lucene.search.Query mkDateRangeQuery(Date since, Date toDate) {
+	String lower = (since==null)? null: DateTools.timeToString(since.getTime(), DateTools.Resolution.MINUTE);
+	String upper = (toDate==null)? null: DateTools.timeToString(toDate.getTime(), DateTools.Resolution.MINUTE);
 	//System.out.println("date range: from " + lower);
 	//	return new TermRangeQuery(ArxivFields.DATE,lower,null,true,false);
 

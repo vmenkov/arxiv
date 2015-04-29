@@ -57,7 +57,7 @@ public class Daily {
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
 	// assign recent ArXiv articles to clusters
-	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
+	ScoreDoc[] sd = getRecentArticles( em, searcher, since, null);
 	// classify all recent docs	
 	int mT[] = Classifier.classifyDocuments(em, reader, sd,cidMap);
 	recordSubmissionRates(em, cidMap, mT);
@@ -111,8 +111,10 @@ public class Daily {
     /** Assigns specified ArXiv articles to clusters. This method
 	can be used, for example, if we decided to classify 
 	just a few docs that have not been classified before.
+
+	Either the list of AIDs (aids[]), or a date range (at least one of since or to) must be non-null.
     */
-    private static void classifySomeDocs(String[] aids) throws IOException {
+    private static void classifySomeDocs(String[] aids, Date since, Date to) throws IOException {
 
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher(reader);
@@ -121,13 +123,18 @@ public class Daily {
 	// list document clusters
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
-	ScoreDoc[] sd = new ScoreDoc[aids.length];
-	for(int i=0; i<aids.length; i++) {
-	    int docno = Common.find(searcher, aids[i]);
-	    sd[i] = new ScoreDoc(docno, 0);
-	}
-	
-	// classify all recent docs	
+	ScoreDoc[] sd;
+	boolean hasRange = (since!=null || to!=null);
+	if (aids!=null && !hasRange) {
+	    sd = new ScoreDoc[aids.length];
+	    for(int i=0; i<aids.length; i++) {
+		int docno = Common.find(searcher, aids[i]);
+		sd[i] = new ScoreDoc(docno, 0);
+	    }
+	} else if (hasRange) {
+	    sd = getRecentArticles( em, searcher, since, to);
+	} else throw new IllegalArgumentException("Either provide a list of documents, or a date range, but not both");
+
 	int mT[] = Classifier.classifyDocuments(em, reader, sd,cidMap);
 	em.close();
     }
@@ -141,7 +148,7 @@ public class Daily {
      */
     private static int[] updateClusters(EntityManager em, IndexSearcher searcher,
 					EE5DocClass.CidMapper cidMap, Date since) throws IOException {
-	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
+	ScoreDoc[] sd = getRecentArticles( em, searcher, since, null);
 	// classify all recent docs
 	int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
 	return mT;
@@ -151,10 +158,11 @@ public class Daily {
 	data store.
 
 	@param since Retrieve all ArXiv articles submitted since this date.
+	@param toDate Until this date (may be null)
      */
-    private static ScoreDoc[] getRecentArticles(EntityManager em, IndexSearcher searcher, Date since) throws IOException {
+    private static ScoreDoc[] getRecentArticles(EntityManager em, IndexSearcher searcher, Date since, Date toDate) throws IOException {
 	org.apache.lucene.search.Query q= 
-	    Queries.andQuery(Queries.mkSinceDateQuery(since),
+	    Queries.andQuery(Queries.mkDateRangeQuery(since, toDate),
 			     Queries.hasAidQuery());
 
 	TopDocs top = searcher.search(q, maxlen);
@@ -352,7 +360,10 @@ public class Daily {
     static final int MAX_SUG = 100; 
 
  
-    /** Generates a current suggestion list for a specified user. 
+    /** Generates a current suggestion list for a specified user. This
+	method also calls User.forceNewDay(), to start the new LEARN
+	or EVAL day.
+
 	@param nofile This is set to true when we're running inside a
 	web server, and aren't allowed to write disk files (due to
 	file ownership/permission issues). This flag is false in the
@@ -443,7 +454,6 @@ public class Daily {
 
 	 em.persist(outputFile);
 	 
-	 // FIXME: could use some kind of "day 1" rule
 	 boolean isTrivial = false; 
 	 if (isTrivial) {
 	     u.forceNewDay(User.Day.LEARN);
@@ -620,13 +630,13 @@ public class Daily {
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
 	Logging.info("(Re)Classifying documents dated since " + since);
-	ScoreDoc[] sd = getRecentArticles( em, searcher, since);
-	Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
+	ScoreDoc[] sd = getRecentArticles( em, searcher, since, null);
+	Classifier.classifyDocuments(em, reader, sd,cidMap);
 
 	org.apache.lucene.search.Query q = Queries.hasUserQuery();
 	sd = searcher.search(q, maxlen).scoreDocs;
-	Logging.info("Found " + sd.length + " user-uploaded docs to (re)classify");
-	Classifier.classifyNewDocsCategoryBlind(em, reader, sd, cidMap, true, null);
+	Logging.info("Found " +sd.length+" user-uploaded docs to (re)classify");
+	Classifier.classifyNewDocsCategoryBlind(em,reader,sd,cidMap,true,null);
 
 	reader.close();
 	em.close();
@@ -663,6 +673,7 @@ public class Daily {
 	}
 
 
+
 	int ia=0;
 	String cmd = argv[ia++];
 	if (cmd.equals("delete")) {
@@ -673,17 +684,22 @@ public class Daily {
 	} else if (cmd.equals("update")) {	    
 	    updates(onlyUser);
 	} else if (cmd.equals("classifySome")) {	    
-	    String infile = argv[ia++];
-	    String[] aids=FileIterator.readAidsFlat(infile);
-	    System.out.println("Will classify " + aids.length + " docs");
-	    classifySomeDocs(aids);
+	    // classifies some documents, either listed in a file, or 
+	    // specified by a date range
+	    Date since = ht.getOptionDate("since", null);
+	    Date to = ht.getOptionDate("to", null);
+	    String[] aids = null;
+
+	    if (since != null || to != null) {
+		System.out.println("Will classify all articles dated" + since + " to " + to);
+	    } else {
+		String infile = argv[ia++];
+		aids=FileIterator.readAidsFlat(infile);
+		System.out.println("Will classify " + aids.length + " docs");
+	    }
+	    classifySomeDocs(aids, since, to);
 	} else {
 	    System.out.println("Unknown command: " + cmd);
 	}
-
-
-
-
     }
-
 }
