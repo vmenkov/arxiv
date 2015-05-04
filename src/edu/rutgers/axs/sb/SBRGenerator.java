@@ -548,14 +548,24 @@ public class SBRGenerator {
     
     /** Generates the query string for the URL. Used in tools/index.jsp */
     static public String qsd(Method method, boolean withBaseline) {
-	return qs(method, true, withBaseline);
+	return qs(method, true, withBaseline, null);
     }
 
-    static public String qs(Method method, boolean debug, boolean withBaseline) {
+    static public String qsd(Method method, boolean withBaseline, String extra) {
+	return qs(method, true, withBaseline, extra);
+    }
+
+    /** @param extra E.g. "foo=bar", or "foo1=bar1&foo2=bar2", etc. Null is allowed. 
+     */
+    static public String qs(Method method, boolean debug, boolean withBaseline, String extra) {
 	String s= "sb=true";
 	if (debug) { s += "&sbDebug=true"; }
 	s += "&sbMethod="+ method;
-	s += "&sbMergeWithBaseline=" +withBaseline ;
+	if (extra != null && !extra.equals("")) {
+	    s += "&" + extra;
+	}
+
+	s += "&sbMergeWithBaseline=" +withBaseline;
 	return s;
     }
 
@@ -563,9 +573,10 @@ public class SBRGenerator {
     /** This is a URL used in the "Change Focus" buton in the SB window.
 	The user will be redirected to this URL once he's gone through
 	the logout servlet, where his current session will be terminated.
+	The new session will use a random method.
      */
     public String encodedChangeFocusURL() {
-	String url = "index.jsp?" + qs( Method.RANDOM, sbDebug, sbMergeWithBaseline);
+	String url = "index.jsp?" + qs( Method.RANDOM, sbDebug, sbMergeWithBaseline, null);
 	return URLEncoder.encode(url);
     }
 

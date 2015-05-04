@@ -167,8 +167,11 @@ public class Daily {
 
 	TopDocs top = searcher.search(q, maxlen);
 
-	System.out.println("Looking back to " + since + "; found " + 
-			   top.scoreDocs.length + " papers");
+	String msg = "Date range from " + 
+	    (since ==null? "the beginning of time" : since) + 
+	    " to " + (toDate ==null? "now" : toDate);
+	msg += "; found " +  top.scoreDocs.length + " papers";	
+	System.out.println(msg);
 	
 	return top.scoreDocs;
     }
@@ -642,6 +645,13 @@ public class Daily {
 	em.close();
     }
 
+   static void usage() {
+	System.out.println("Usage:\n");
+	System.out.println(" java Daily [delete|init|update]");
+	System.out.println(" java Daily classifySome input-file");
+	System.exit(1);
+   }
+
   
     /** When the system is first set up, run
 	<pre>
@@ -679,7 +689,8 @@ public class Daily {
 	if (cmd.equals("delete")) {
 	    deleteAll();
 	} else if (cmd.equals("init")) {
-	    Date since = ht.getOptionDate("since", "2013-01-01");
+	    //	    Date since = ht.getOptionDate("since", "2013-01-01");
+	    Date since = ht.getOptionDate("since", "2010-01-01");
 	    init(since);
 	} else if (cmd.equals("update")) {	    
 	    updates(onlyUser);
@@ -693,6 +704,7 @@ public class Daily {
 	    if (since != null || to != null) {
 		System.out.println("Will classify all articles dated" + since + " to " + to);
 	    } else {
+		if (ia >= argv.length) usage();
 		String infile = argv[ia++];
 		aids=FileIterator.readAidsFlat(infile);
 		System.out.println("Will classify " + aids.length + " docs");

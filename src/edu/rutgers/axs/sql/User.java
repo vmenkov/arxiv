@@ -204,6 +204,15 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public  long getInvitation() { return invitation; }
     public void setInvitation( long x) { invitation = x; }
 
+    /** When was the user entry created? (The null value only exists in 
+     legacy entries, created prior to 2015-05-01) */
+   @Display(editable=false, order=11.3) 
+	@Temporal(TemporalType.TIMESTAMP)     @Column(nullable=true)
+	Date signupTime;
+    public  Date getSignupTime() { return signupTime; }
+    private void setSignupTime(       Date x) { signupTime = x; }
+
+
 
     /** This is how it's described in context.xml:
     //	     userRoleTable="user_roles" roleNameCol="role_name"
@@ -390,6 +399,7 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
     public User() {
 	setCluster( Bernoulli.defaultCluster);
 	setProgram( Program.PPP);
+	setSignupTime( new Date());
     }
 
 

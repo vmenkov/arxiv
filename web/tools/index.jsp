@@ -72,6 +72,12 @@ Session-Based recommendation lists (SBRL), different versions:</strong></a>
 <td>CTPF (David Blei and Laurent Charlin)
 
 <tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.CTPF,false, "sb.CTPF.D=1")%>">CTPF</a> with D=1
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.CTPF,true, "sb.CTPF.D=1")%>">CTPF (with D=1) + SUBJECTS</a> 
+<td>CTPF (David Blei and Laurent Charlin) with D=1.0 (subtracting avg score)
+
+
+<tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.RANDOM,false)%>">RANDOM</a>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.RANDOM,true)%>">RANDOM + SUBJECTS</a>
 <td>Pick one of ABSTRACTS, COACCESS, or  ABSTRACTS + COACCESS randomly
