@@ -37,6 +37,12 @@ of objects being references.<p>
 <tr><td>select x from User x <td> select x.* from arxiv_users x
 <td>Show all User entries.
 
+<tr>
+<td>select x.user.user_name, x from Action x where x.user.invitation=6
+order by x.user.id, x.id
+<td>
+<td>Show all users who have registered pursuant to invitation no. 6. (You can look up your invitation's id in the <a href="../admin/invitations.jsp">Invitation Manager</a>)
+
 <tr><th colspan=3>The <a name="Action"><tt>Action</tt></a> table (<tt>Action</tt> entries)</th></tr>
 <tr><td colspan=3>Each <tt>Action</tt> entry contains information about one recordable user action. Each action is performed by a particular user, and has a particular ArXiv article as its object. Action types include adding an article to the user's folder (sort of a bookmark list), or removing it from the folder; viewing the article's abstract page or PDF page; explicitly rating an article as "new and useful", "useless", etc; marking the article as "not to be shown to me again"; etc. Each action contains the id of the PresentedList object (see below), which is understood as its contex.t
 
@@ -261,6 +267,18 @@ select u.user_name, x from EE4User x, User u where u.id = x.id
 select u.user_name, x.id, uci.classId, uci.alpha, uci.beta from EE4User x, User u, in(x.uci) uci where u.id = x.id 
 <td>
 <td>View each user's <em>alpha</em> and <em>beta</em> values for all classes
+
+<tr>
+<th colspan=3>The <a name="EE5DocClass"><tt>EE5DocClass</tt></a> table
+(list of document clusters for EE ver. 5)
+and <tt>EE5User</tt> table ( &alpha; and  &beta; values reflecting 
+users' interaction with document clusters)
+
+<tr>
+<td>
+select e5u.id, u.user_name, d.classId, d.alpha, d.beta, ee5 from User u, EE5User e5u, in(e5u.uci) d, EE5DocClass ee5 where u.id = e5u.id and ee5.id = d.classId and ( d.alpha <> ee5.alpha0 or d.beta <> ee5.beta0) order by e5u.id, d.classId
+<td>
+<td>For each user, list all document clusters with "non-default" &alpha; or  &beta. (Those are clusters with which, as of the time of the last EE5 rec list generation for this user, the user had had a non-trivial history of interaction. This is identified by the value of &alpha; or  &beta; for the {user, cluster} pair being different from the default).
 
 <tr>
 <th colspan=3>Other tables
