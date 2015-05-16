@@ -22,6 +22,7 @@ import edu.rutgers.axs.recommender.*;
     Multiclass SVM tool. */
 class DocumentExporter {
 
+    /* A term dictionary, used to represent terms as integer indexes */
     class Dictionary {
 
 	/** One-based, for the SVM tool */
@@ -147,6 +148,9 @@ class DocumentExporter {
 	}
     }
 	
+    /** Adds weighted TF values for a specified field of a specified document
+	to the list of pairs h.	
+     */
     private void processField(Vector<Pair> h,
 			      int docno, Document doc, String name) throws IOException {
 	

@@ -4,21 +4,14 @@ import java.io.*;
 import java.lang.Math;
 import java.nio.*;
 import java.util.*;
-//import java.text.*;
-//import java.net.*;
-//import java.util.Random.*;
-//import java.util.regex.*;
 import java.util.zip.GZIPInputStream;
-//import javax.persistence.*;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
-//import org.apache.commons.math3.special.Gamma;
 
 import edu.rutgers.axs.sql.*;
-//import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.*;
 
 /** The fit data for CTPF */

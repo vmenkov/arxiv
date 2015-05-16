@@ -499,7 +499,7 @@ public class EmailSug extends ResultsBase {
 	try {
 
 	    if (argv.length ==0) {
-		User.Program programs[] = { User.Program.PPP, User.Program.EE4};
+		User.Program programs[] = {User.Program.PPP, User.Program.EE5};
 		for( User.Program program: programs) {
 		    Logging.info("Checking all users in program " + program);
 		    doAllEmails( em,  program,  force);

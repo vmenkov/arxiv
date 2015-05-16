@@ -1,7 +1,13 @@
 #!/bin/csh
 
+#------------------------------------------------------------------------
+# This script pulls metadata from the ArXiv OAI2 server, and saves them into
+# a CSV file, for processing by Laurent's code. Articles are selected by
+# timestamp.
+#------------------------------------------------------------------------
 # Usage example:
 # import-csv.sh 2013 details-2013.csv
+#------------------------------------------------------------------------
 
 #-- the directory where this script lives
 set scriptdir=`dirname $0`

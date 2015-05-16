@@ -11,6 +11,13 @@ class AsgMap {
     Vector<String> list=new  Vector<String>();
     /** Used to map int value to unique Integer objects (space-saving) */
     private Vector<Integer> integers = new Vector<Integer>();
+
+    /** Adds more values to the list of all (needed) integers */
+    private void expandIntegers(int x) {
+	while (integers.size() <= x) {
+	    integers.add(integers.size(), new Integer(integers.size()));
+	}
+    }
     
     /** Reads the map from the assignment file for a specified major category */
     AsgMap(String cat) throws IOException {
@@ -25,13 +32,11 @@ class AsgMap {
 	//int linecnt = 0, cnt=0;
 	while((s=r.readLine())!=null) {
 	    s = s.trim();
-		String q[] = s.split(",");
-		int x =	Integer.parseInt(q[1]);
-		while (integers.size() <= x) {
-		    integers.add(integers.size(), new Integer(integers.size()));
-		}
-		list.add(q[0]);
-		map.put(q[0], integers.elementAt(x));
+	    String q[] = s.split(",");
+	    int x = Integer.parseInt(q[1]);
+	    expandIntegers(x);
+	    list.add(q[0]);
+	    map.put(q[0], integers.elementAt(x));
 	}
 	r.close();
     }
