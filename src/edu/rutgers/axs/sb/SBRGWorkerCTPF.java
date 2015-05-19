@@ -20,6 +20,7 @@ import org.apache.commons.math3.special.Gamma;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
 import edu.rutgers.axs.indexer.*;
+import edu.rutgers.axs.ctpf.*;
 
 /** This is a derivative class of SBRGWorker for the CTPF
     SB-recommendation method
@@ -130,10 +131,10 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
     /** The thread created during the fit loading. This is kept
 	so that we can check on it later.
      */
-    private static SBRGLoadCTPFFit ctpfLoadThread = null;
+    private static LoadCTPFFit ctpfLoadThread = null;
 
     /** This method spawns the thread which will load the
-	SBRGLoadCTPFFit data, which are to be used by all
+	LoadCTPFFit data, which are to be used by all
 	SBRGWorkerCTPF instances in the future.  It is essential that
 	this method be called only once in the web application's
 	life. This is done when the ResultsBase class load,
@@ -150,10 +151,10 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	}
         // load data files 
         Logging.info("Loading CTPF fit data"); 
-        //SBRGLoadCTPFFit lf = new SBRGLoadCTPFFit(path, ctpffit);;
-	//        Logging.info("Created SBRGLoadCTPFFit obj"); 
+        //LoadCTPFFit lf = new LoadCTPFFit(path, ctpffit);;
+	//        Logging.info("Created LoadCTPFFit obj"); 
         ctpffit.loaded = false; 
-        ctpfLoadThread = new SBRGLoadCTPFFit(path, ctpffit);
+        ctpfLoadThread = new LoadCTPFFit(path, ctpffit);
         ctpfLoadThread.start();
         Logging.info("Thread loading fit launched: " + ctpfLoadThread); 
         return true;
@@ -215,8 +216,8 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
             if(!viewedArticles.contains(aid)) {
                 // obtain article internal ID
                 //Logging.info("Looking up article" + aid);
-                if(ctpffit.aID_to_internalID.containsKey(aid)) {
-                    internalID = ctpffit.aID_to_internalID.get(aid);
+                if(ctpffit.map.aID_to_internalID.containsKey(aid)) {
+                    internalID = ctpffit.map.aID_to_internalID.get(aid);
                     if (internalID > ctpffit.thetalog.length) {
                         Logging.warning("SBRGWorkerCTPF: internalID out of range: " + internalID); 
                         continue; 
@@ -346,7 +347,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 //Logging.info("SBRGWorkerCTPF: (i,e): (" + i + "," + e + ") scores size: " + scores.size() + " " + old_value); 
 
 		if (D!=0) e -= D*ctpffit.avgScores[i];
-                scores.put((float)e, ctpffit.getInternalID_to_aID(i));
+                scores.put((float)e, ctpffit.map.getInternalID_to_aID(i));
             }
 
             // Get the results 

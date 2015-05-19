@@ -1,8 +1,6 @@
-package edu.rutgers.axs.sb;
+package edu.rutgers.axs.ctpf;
 
 import java.io.*;
-import java.lang.Math;
-import java.nio.*;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
@@ -11,65 +9,63 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 
-import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.sql.Logging;
 import edu.rutgers.axs.indexer.*;
 
-/** The fit data for CTPF */
-class CTPFFit  {
+/** Maps Arxiv artice IDs (AIDs) to CTPF internal IDs and vice versa */
+public class CTPFMap  {
 
-    //public float[][] theta, epsilon; 
-    public float[][] epsilon_plus_theta;
-    public float[][] epsilonlog, thetalog; 
-    //public float[][] epsilon_shape, epsilon_rate;
-    //public float[][] theta_shape, theta_rate; 
-    //    private HashMap<Integer, String> internalID_to_aID = new HashMap<Integer, String>();
+    /** All Arxiv artice IDs (AIDs) in the map. The position in the array is
+	the CTPF internal ID */
     private String[] aIDs;
-    //  void storeInternalID_to_aID(int i, String aid) {
-    //	internalID_to_aID.put(new Integer(i), aid);
-    //    }
-    String  getInternalID_to_aID(int i) {
+    /** Maps CTPF internal article ID to AID */
+    public String  getInternalID_to_aID(int i) {
 	//	return internalID_to_aID.get(i);
 	return aIDs[i];
     }
 
+    /** Maps AID to CTPF internal ID */
     public HashMap<String, Integer> aID_to_internalID  = new HashMap<String, Integer>();
-    public boolean loaded;
-
-    boolean error = false;
-    String errmsg = null;
-    void setError(String msg) {
-	error = true;
-	errmsg = msg;
+ 
+    public int size() { return aIDs.length; }
+   
+    public boolean containsAid(String aid) {
+	return aID_to_internalID.containsKey(aid);
     }
 
     /** Loads the map which associates CTPF internal doc ids with
 	Arxiv article IDs (AIDs). We ignore a few "fake" AIDs that may
 	appear in the map file but are not actually present in 
 	our Lucene data store.
-     */
-    void loadMap(File file, int num_docs) throws Exception { 
-	IndexList il = new IndexList();
-	HashSet<String> allAIDs = il.listAsSet();
 
+	@param num_docs Expected number of documents (size of map,
+	inlcuding the "fake" document with the internal ID=0). The
+	internal IDs are supposed to range from 1 thru num_docs. If a
+	negative value is supplied, the size will be determined
+	dynamically.
+     */
+    public CTPFMap(File file, int num_docs) throws IOException { 
+	IndexList il = new IndexList();
+	HashSet<String> allAIDs = il.listAsSet(); // all articles in Lucene
 
 	Logging.info("CTPFFit: loading document map from " + file);
 	GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
         BufferedReader br = new BufferedReader(new InputStreamReader(gzip));
 
-	aIDs = new String[num_docs];
+	int n = (num_docs < 0) ? 0 : num_docs;
+	Vector<String> vAIDs = new Vector<String>(n);
 
         String line; 
 	int invalidAidCnt = 0;
 	String invalidAidTxt = "";
 	final int M = 10;
         while ((line = br.readLine()) != null) {
-	    if (error) return;
             String[] parts = line.split("\t");
 	    int iid = Integer.parseInt(parts[0]);
 	    String aid = parts[1];
 	    if (iid == 0) {
 		Logging.warning("CPPFFit.loadMap("+file+"): entering useless map entry for iid=" + iid + ", aid=" + aid);
-	    } else if (iid >= num_docs) {
+	    } else if (num_docs >=0 && iid >= num_docs) {
 		Logging.warning("CPPFFit.loadMap("+file+"): ignoring useless map entry for iid=" + iid + ", aid=" + aid);
 		continue;
 	    } else if (!allAIDs.contains(aid)) {
@@ -80,9 +76,15 @@ class CTPFFit  {
 	    }
 
             //internalID_to_aID.put(iid, aid);
-	    aIDs[iid] = aid;
+	    //aIDs[iid] = aid;
+	    if (iid >= vAIDs.size()) vAIDs.setSize(iid+1);
+	    vAIDs.set(iid, aid);
             aID_to_internalID.put(aid, new Integer(iid));
         }
+
+	if (num_docs < 0) num_docs = vAIDs.size(); 
+	aIDs = (String[])vAIDs.toArray(new String[num_docs]);
+
 
 	// basic validation
 	int gapCnt=0;
@@ -99,46 +101,7 @@ class CTPFFit  {
 
 	String msg = (gapCnt==0)? " AID values have been loaded for all internal IDs" :
 	    " AID values are missing for " + gapCnt + " internal IDs!";
-	Logging.info("CTPFFit.loadMap: for 0<internalID<" + num_docs +", " +msg);
-    }
-
-    float avgScores[];
-    
-    /** Input file format (TAB-separated):
-	<pre>
-0	0.000139
-1	0.001495
-2	0.000314
-...
-</pre>
-    */
-    void loadAvgScores(File file, int num_docs) throws Exception { 
-	Logging.info("CTPFFit: loading avg scores from " + file);
-	InputStream fis = new FileInputStream(file);
-	if (file.getName().endsWith(".gz")) fis = new GZIPInputStream(fis);
-	BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-
-	avgScores = new float[num_docs];
-
-        String line; 
-	int lineCnt=0;
-        while ((line = br.readLine()) != null) {
-	    if (error) return;
-	    lineCnt++;
-            String[] parts = line.split("\t");
-	    int iid = Integer.parseInt(parts[0]);
-	    float score = (float)Double.parseDouble(parts[1]);
-	    if (iid == 0) {
-		Logging.warning("CPPFFit.loadAvgScores("+file+"): entering useless map entry for iid=" + iid + ", score=" + score);
-	    } else if (iid >= num_docs) {
-		Logging.warning("CPPFFit.loadAvgScores("+file+"): ignoring useless map entry for iid=" + iid + ", score=" + score);
-		continue;
-	    } 
-
- 	    avgScores[iid] = score;
-        }
-
-        Logging.info("CTPFFit: read " + lineCnt + " lines from " + file);
+	Logging.info("CTPFFit.loadMap: for 0<internalID<" +num_docs +", " +msg);
     }
 
 } 

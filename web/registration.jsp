@@ -401,6 +401,19 @@ of <tt>1 in 8</tt>.
 </P>
 <%
 }
+
+ if (main.program==User.Program.PPP || main.program==User.Program.EE5) { %>
+<h3>Email alerts</h3>
+	<table>
+	<tr>
+			<td style="width:50%; text-align:right; vertical-align:middle;"><label for="emailDays">Would you like the system to alert you by email about new ArXiv articles that may be interesting to you? Please indicate how often you would like such messages to be sent to you (1 = every day, 7 = every 7 days, etc), or enter 0 to opt out.
+</label></td>
+			<td style="width:50%; text-align:left; vertical-align:middle;"><input id="days" name="r.emailDays" value="7" style="width:150px" /></td>
+		</tr>
+	</table>
+<% }
+
+
 if (!main.bernoulli) { %>
 <h3>Your interest areas</h3>
 	

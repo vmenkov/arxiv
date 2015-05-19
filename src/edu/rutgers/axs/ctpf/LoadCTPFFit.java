@@ -1,4 +1,4 @@
-package edu.rutgers.axs.sb;
+package edu.rutgers.axs.ctpf;
 import edu.rutgers.axs.sql.Logging;
 
 import java.io.*;
@@ -20,10 +20,10 @@ import edu.rutgers.axs.util.Hosts;
 /** An auxiliary class used to load precomputed CTPF fit data into the web application.
     The loading is carried out in a separate thread.
  */
-class SBRGLoadCTPFFit extends Thread {
+public class LoadCTPFFit extends Thread {
 
     String path;
-    CTPFFit ctpffit; 
+    public CTPFFit ctpffit; 
     /** The number of lines in each data file (which corresponds to
 	the number D of documents based on which the matrices have
 	been calculated). This number will be set based on the length
@@ -46,11 +46,10 @@ class SBRGLoadCTPFFit extends Thread {
  
     private int num_components = 0; 
 
-
     private boolean error = false;
     private String errmsg = null;
 
-    SBRGLoadCTPFFit(String _path, CTPFFit _ctpffit)
+    public LoadCTPFFit(String _path, CTPFFit _ctpffit)
     {
         path = _path; 
         ctpffit = _ctpffit;
@@ -89,7 +88,7 @@ class SBRGLoadCTPFFit extends Thread {
 	    boolean atHome = Hosts.atHome();
 
 	    if (checkCancel()) return;
-            Logging.info("SBRGLoadCTPFFit: Loading started. Will use " +
+            Logging.info("LoadCTPFFit: Loading started. Will use " +
 			 (atHome? "the 10K sample" : "the full data set"));
 
 	    // Modifies data file names, to refer to the full data set or the 10K subset 
@@ -130,10 +129,10 @@ class SBRGLoadCTPFFit extends Thread {
             //         epsilon_plus_theta[i][j] = epsilon_shape[i][j]/epsilon_rate[i][j] + theta_shape[i][j]/theta_rate[i][j]; 
 
             // load map 
-            ctpffit.loadMap(new File(dir,  "items"+suffix+".tsv.gz"), num_docs);
+            ctpffit.map = new CTPFMap(new File(dir,  "items"+suffix+".tsv.gz"), num_docs);
 	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), num_docs);
 	    if (error || checkCancel()) return;
-            Logging.info("SBRGLoadCTPFFit: Loading finished");
+            Logging.info("LoadCTPFFit: Loading finished");
         } catch(Exception ex) { 
             // TODO: put this back
 	    error = true;
@@ -148,7 +147,7 @@ class SBRGLoadCTPFFit extends Thread {
     /** Loads a matrix with num_docs rowd and num_components columns */
     private float[][] load(File file) throws Exception {
         
-        Logging.info("SBRGLoadCTPFFit: Loading data from file " + file); 
+        Logging.info("LoadCTPFFit: Loading data from file " + file); 
 
         // List<String> lines = Files.readAllLines(Paths.get(file), StandardCharsets.UTF_8);
         GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
@@ -179,11 +178,11 @@ class SBRGLoadCTPFFit extends Thread {
 	    dvec.add(row);
 
 	    if (dvec.size() % 100000 == 0)  {
-                Logging.info("SBRGLoadCTPFFit("+file+"): " + dvec.size() + " rows...");
+                Logging.info("LoadCTPFFit("+file+"): " + dvec.size() + " rows...");
             }
 	}
 
-	Logging.info("SBRGLoadCTPFFit("+file+"): total of " + dvec.size() + " rows, " + num_components + " columns");
+	Logging.info("LoadCTPFFit("+file+"): total of " + dvec.size() + " rows, " + num_components + " columns");
 
 	int nrows = dvec.size();
 	if (nrows == 0) {

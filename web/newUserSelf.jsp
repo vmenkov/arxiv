@@ -51,7 +51,6 @@ To help My.ArXiv find articles of interest to you, you can upload a few document
 <p>
 <form action="<%=main.cp%>/login2.jsp">
 <input type="hidden" name="sp" value="/index.jsp">
-</form>
 Or 
 <input type="submit" value="Continue without uploading papers">
 </form>
