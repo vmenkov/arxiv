@@ -66,17 +66,17 @@ public class CTPFUpdateFit {
 	for(int i=0; i<nc; i++) w.set(i, v.elementAt(i));
 	Logging.info("For this run, out of " +n+ " new articles, will only hande " + nc);
 	return w;
-   }
+    }
 
-
-  static void usage() {
+    
+    static void usage() {
 	System.out.println("Usage:\n");
 	//	System.out.println(" java Daily [delete|init|update]");
 	//	System.out.println(" java Daily classifySome input-file");
 	System.exit(1);
-   }
+    }
 
-  static public void main(String[] argv) throws IOException, java.text.ParseException {
+    static public void main(String[] argv) throws IOException, java.text.ParseException {
 	ParseConfig ht = new ParseConfig();      
 
 	String path = "/data/arxiv/ctpf/ldainit/";
