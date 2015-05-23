@@ -43,6 +43,7 @@ public class CTPFUpdateFit {
 	    }
 	    it.close();
 	}
+	int size() { return h.size(); }
     }
 
     /** Lists all (or some) articles that are in Lucene but not in the old doc 

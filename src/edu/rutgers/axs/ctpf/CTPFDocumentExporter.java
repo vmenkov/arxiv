@@ -18,9 +18,30 @@ import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.recommender.*;
 
-/** Exports document information in a format suitable for reading by the
-    Multiclass SVM tool. Only exports the terms present in a specified
-    pre-read vocabulary.
+/** Exporting document information in a format suitable for reading by 
+    David Blei's LDA (LATENT DIRICHLET ALLOCATION) application. The
+    format looks somewhat similar to that used by Thorsten's
+    Multiclass SVM tool, but isn't really the same. 
+    
+    <p> We only export the terms present in a specified pre-read
+    vocabulary.
+
+    <P>The output file format is as outlined in http://www.cs.princeton.edu/~blei/lda-c/readme.txt :
+    <blockquote>
+    <p>
+Under LDA, the words of each document are assumed exchangeable.  Thus,
+each document is succinctly represented as a sparse vector of word
+counts. The data is a file where each line is of the form:
+<pre>
+     [M] [term_1]:[count] [term_2]:[count] ...  [term_N]:[count]
+</pre>
+where [M] is the number of unique terms in the document, and the
+[count] associated with each term is how many times that term appeared
+in the document.  Note that [term_1] is an integer which indexes the
+term; it is not a string.
+</p>
+    </blockquote>
+
 */
 class DocumentExporter {
 
@@ -42,9 +63,19 @@ class DocumentExporter {
 	}
     }
 
+   /** Fields we're exporting */
+    static private final String fields[] =  {
+	//	ArxivFields.CATEGORY,
+	ArxivFields.TITLE, 
+	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
+	//	ArxivFields.ARTICLE
+    };
+
+
     /**
-       @param w The training file for SVM will be written here
-       @param wasg The list of docs described in w will be written here
+       @param voc The vocabulary lists the "important" terms. Only the term frequency for these terms will be exported; all other terms will be simply ignored.
+       @param w The input file for LDA will be written here
+       @param aids List of Arxive document IDs (AIDs) to export
      */
     void exportAll(CTPFUpdateFit.Vocabulary voc, Vector<String> aids, PrintWriter w)  throws IOException {
 
@@ -68,22 +99,21 @@ class DocumentExporter {
 		processField( results, reader,  voc,  docno,  doc,  name);
 	    }
 
-	    int clu = map.map.get(aid).intValue();
-	    w.print("" + clu);
-	    for(Pair p: pairs) {
-		w.print(" " + p.key + ":");
-		if (normalize) {
-		    w.print(p.val/norm);
-		} else {
-		    w.print(p.val);
-		}
+
+	    int nnz = 0;
+	    for(int v: results) { if (v!=0) nnz++; }
+
+	    w.print("" + nnz);
+	    
+	    for(int i=0; i< results.length; i++) { 
+		double v = results[i];
+		if (v!=0) w.print("" + i + ":" + v); 
 	    }
 	    w.println( " # " + aid);
-	    if (wasg!=null) {
-		wasg.println(aid + "," + clu);
-	    }
 	}
-	System.out.println("Out of " + map.list.size() + " documents, " + missingCnt + " not found in Lucene; ignored due to poor category information, " + ignoreCnt);
+	
+	if (missingCnt>0) {
+	    throw new IOException("Out of " + aids.size() + " documents, " + missingCnt + " not found in Lucene. Should not proceed.");
+	}
     }
-
 }
