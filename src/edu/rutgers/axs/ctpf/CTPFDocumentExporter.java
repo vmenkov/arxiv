@@ -43,7 +43,7 @@ term; it is not a string.
     </blockquote>
 
 */
-class DocumentExporter {
+class CTPFDocumentExporter {
 
    /** Adds weighted TF values for a specified field of a specified document
 	to the list of pairs h.	
@@ -77,7 +77,7 @@ class DocumentExporter {
        @param w The input file for LDA will be written here
        @param aids List of Arxive document IDs (AIDs) to export
      */
-    void exportAll(CTPFUpdateFit.Vocabulary voc, Vector<String> aids, PrintWriter w)  throws IOException {
+    static void exportAll(CTPFUpdateFit.Vocabulary voc, Vector<String> aids, PrintWriter w)  throws IOException {
 
 	IndexReader reader = Common.newReader2();
   	IndexSearcher searcher = new IndexSearcher( reader );	
@@ -85,6 +85,7 @@ class DocumentExporter {
 
 	for( String aid: aids) {
 	    int docno = 0;
+	    Logging.info("aid="+ aid);
 	    try {
 		docno =	Common.find(searcher, aid);
 	    } catch(IOException ex) {
@@ -92,7 +93,7 @@ class DocumentExporter {
 		continue;
 	    }
 	    Document doc = reader.document(docno);
-	    int [] results = new int[voc.size()];
+	    int [] results = new int[voc.size()]; // 0-based indexes
 
 
 	    for(String name: fields) {
@@ -107,7 +108,7 @@ class DocumentExporter {
 	    
 	    for(int i=0; i< results.length; i++) { 
 		double v = results[i];
-		if (v!=0) w.print("" + i + ":" + v); 
+		if (v!=0) w.print(" " + i + ":" + v); 
 	    }
 	    w.println( " # " + aid);
 	}

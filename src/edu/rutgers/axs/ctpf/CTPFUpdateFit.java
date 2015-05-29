@@ -27,11 +27,11 @@ import edu.rutgers.axs.util.Hosts;
  */
 public class CTPFUpdateFit {
 
-    /** One-based */
+    /** Maps words to 0-based indexes */
     static class Vocabulary {
 	private Vector<String> v = new  Vector<String>();
 	HashMap<String, Integer> h = new HashMap<String, Integer>();
-	String pos2word(int i) { return v.elementAt(i+1); }
+	String pos2word(int i) { return v.elementAt(i); }
 	boolean containsWord(String w) { return h.containsKey(w); }
 	int word2pos(String w) { return h.get(w).intValue();}
 	Vocabulary(File f)  throws IOException {
@@ -39,7 +39,7 @@ public class CTPFUpdateFit {
 	    while(it.hasNext()) {
 		String w = it.next();
 		v.add(w);
-		h.put(w, new Integer(v.size()));
+		h.put(w, new Integer(v.size()-1));
 	    }
 	    it.close();
 	}
@@ -55,6 +55,7 @@ public class CTPFUpdateFit {
 	HashSet<String> allAIDs = il.listAsSet(); // all articles in Lucene
 	Vector<String> v = new Vector<String>();
 	for(String aid: allAIDs) {
+	    if (aid==null) throw new IllegalArgumentException("Found null in the list of AIDs");
 	    if (!map.containsAid(aid)) v.add(aid);
 	}
 	int n = v.size();
@@ -64,7 +65,11 @@ public class CTPFUpdateFit {
 	int nc = (int)( n * fraction);
 	int[] sample = Util.randomSample(n, nc);
 	Vector<String> w = new Vector<String>(nc);
-	for(int i=0; i<nc; i++) w.set(i, v.elementAt(i));
+	w.setSize(nc);
+	for(int i=0; i<nc; i++) {
+	    int pos = sample[i];
+	    w.set(i, v.elementAt(pos));
+	}
 	Logging.info("For this run, out of " +n+ " new articles, will only hande " + nc);
 	return w;
     }
@@ -99,6 +104,12 @@ public class CTPFUpdateFit {
 
 	double fraction = ht.getDouble("fraction", 1.0);
 	Vector<String> newAids = identifyNewDocs(map, fraction);
+
+	File g = new File("tmp.dat");
+	PrintWriter w = new PrintWriter(new FileWriter(g));
+	CTPFDocumentExporter.exportAll(voc, newAids,  w);
+
+
 
   }
 

@@ -93,7 +93,7 @@ public class CTPFMap  {
 	}
 
 	if (invalidAidCnt>0) {
-	    Logging.warning("CTPFFit.loadMap("+file+"): " + invalidAidCnt + " lines have been ignored, because they contained apparently invalid AIDs, such as:  " + invalidAidTxt);
+	    Logging.warning("CTPFFit.loadMap("+file+"): " + invalidAidCnt + " lines have been ignored, because they contained AIDs not existing in our data store, such as:  " + invalidAidTxt);
 	}
 
 	//        Logging.info("CTPFFit: size of internalID_to_aID: " + internalID_to_aID.size());

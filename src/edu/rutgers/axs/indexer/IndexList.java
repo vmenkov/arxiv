@@ -37,11 +37,11 @@ public class IndexList {
 
 	IndexReader r =  IndexReader.open( indexDirectory); 
 
-	IndexReader[] surs = r.getSequentialSubReaders();
-	for(IndexReader sur: surs) {	    
-	    long utc = sur.getUniqueTermCount();
+	//	IndexReader[] surs = r.getSequentialSubReaders();
+	//	for(IndexReader sur: surs) {	    
+	//  long utc = sur.getUniqueTermCount();
 	    //  System.out.println("subindex has "+utc +" unique terms");
-	}
+	//	}
 	int n=	r.numDocs() ;
 	//	System.out.println("index has "+n +" docs");
 	if (max<0) max=n;
@@ -52,7 +52,8 @@ public class IndexList {
 	//	if (max>=0 &&  max<n) System.out.println("    ... etc ...");
     }
 
-    /** Returns the list of all ArXiv article IDs, as a HashSet */
+    /** Returns the list of all ArXiv article IDs, as a HashSet. (User-uploaded
+     docs, which don't have AIDs, are ignored) */
     public HashSet<String> listAsSet() throws IOException{
 	return listAsSet(-1);
     }
@@ -60,15 +61,14 @@ public class IndexList {
     public HashSet<String> listAsSet(int max) throws IOException{
 
 	IndexReader r =  IndexReader.open( indexDirectory); 
-
-	IndexReader[] surs = r.getSequentialSubReaders();
 	int n=	r.numDocs() ;
 	//	System.out.println("index has "+n +" docs");
 	if (max<0 || max>n) max=n;
 	HashSet<String> s = new HashSet<String>(n);
 	for(int i=0; i<max; i++){
 	    Document d=r.document(i);	    
-	    s.add(d.get(ArxivFields.PAPER));
+	    String aid = d.get(ArxivFields.PAPER);
+	    if (aid!=null) s.add(aid);
 	}
 	return s;
     }
