@@ -73,5 +73,7 @@ echo "opt=$opt"
 /usr/bin/time java $opt -Dfraction=0.001 \
 edu.rutgers.axs.ctpf.CTPFUpdateFit
 
-   
+#-- need this on en-myarxiv: 
+# setenv LD_LIBRARY_PATH /usr/local/lib
 
+# nohup lda --test_data mult.dat --num_topics 250 --directory test_250/ --model_prefix ldafit > & lda.log &

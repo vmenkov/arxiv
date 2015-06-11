@@ -5,7 +5,7 @@
 # the results being saved into separate files in a specified directory.
 #
 # Usage examples:
-# nohup ./sb-ctpf-t.sh -dir ../runs/sb3 sb.in-tj.dat > & sb3.log &
+# nohup ./sb-ctpf-d.sh -dir ../runs/sb3 sb.in-tj.dat > & sb3.log &
 #---------------------------------------------------------------------------
 
 #-- Set the home directory as per the "-home" option. This is useful
@@ -62,70 +62,28 @@ set opt="-cp ${cp} ${opt} -DsbStableOrder=0"
 
 echo "opt=$opt"
 
-if ("$1" == "") then
-    echo 'Usage: $0 input-file-name [output-file-name]'
-    exit
-endif
+#if ("$1" == "") then
+#    echo 'Usage: $0 input-file-name [output-file-name]'
+#    exit
+#endif
 
-set in=$1
-set xin=`basename $1`
+#set in=$1
+#set xin=`basename $1`
 
-cat $in | ./cmd.sh showtitle - | grep -v docno= > $dir/${xin}.titles
+/usr/bin/time java $opt -Dfraction=0.0001 \
+edu.rutgers.axs.ctpf.CTPFUpdateFit
 
-foreach sbMethod () # (SUBJECTS ABSTRACTS COACCESS)
-    set out="${xin}.${sbMethod}.out"
-    set outTitles="${xin}.${sbMethod}.titles"
+#-- need this on en-myarxiv: 
+# setenv LD_LIBRARY_PATH /usr/local/lib
 
-    date
-    echo "sbMethod=$sbMethod"
-    echo "Input=$in, output=$out, output+titles=$outTitles"
+# nohup lda --test_data mult.dat --num_topics 250 --directory test_250/ --model_prefix ldafit > & lda.log &
 
-    /usr/bin/time java $opt -DsbMergeWithBaseline=false  -DsbMethod=$sbMethod   \
-    edu.rutgers.axs.sb.SBRGeneratorCmdLine $in $dir/$out
-
-    #-- extract the last list of AIDs, and look up article titles
-    perl -e \
-    '$_=join("",<>); s/.*Rec/Rec/sm; s/\t.*//g;  s/^[A-Z].*\n?//mg; print;' \
-    $dir/$out |  ./cmd.sh showtitle - |grep -v docno=  > $dir/$outTitles
-
-end
-
-
-set sbMethod="CTPF"
-
-foreach t () # (Infinity 1 1e-1 1e-2 1e-3 1e-4 1e-5 1e-6 1e-7)
-    set out="${xin}.${sbMethod}.t=${t}.out"
-    set outTitles="${xin}.${sbMethod}.t=${t}.titles"
-
-    date
-    echo "sbMethod=$sbMethod; T=$t"
-    echo "Input=$in, output=$out, output+titles=$outTitles"
-
-    /usr/bin/time java $opt -DsbMergeWithBaseline=false -DsbMethod=$sbMethod -Dsb.CTPF.T=$t  \
-    edu.rutgers.axs.sb.SBRGeneratorCmdLine $in $dir/$out
-
-    #-- extract the last list of AIDs, and look up article titles
-    perl -e \
-    '$_=join("",<>); s/.*Rec/Rec/sm; s/\t.*//g;  s/^[A-Z].*\n?//mg; print;' \
-    $dir/$out |  ./cmd.sh showtitle - |grep -v docno=  > $dir/$outTitles
-    
-end
-
-foreach D (0 0.5 1.5 3) # ( 1 1.5)
-    set out="${xin}.${sbMethod}.D=${D}.out"
-    set outTitles="${xin}.${sbMethod}.D=${D}.titles"
-
-    date
-    echo "sbMethod=$sbMethod; D=$D"
-    echo "Input=$in, output=$out, output+titles=$outTitles"
-
-    /usr/bin/time java $opt -DsbMergeWithBaseline=false -DsbMethod=$sbMethod -Dsb.CTPF.D=$D  \
-    edu.rutgers.axs.sb.SBRGeneratorCmdLine $in $dir/$out
-
-    #-- extract the last list of AIDs, and look up article titles
-    perl -e \
-    '$_=join("",<>); s/.*Rec/Rec/sm; s/\t.*//g;  s/^[A-Z].*\n?//mg; print;' \
-    $dir/$out |  ./cmd.sh showtitle - |grep -v docno=  > $dir/$outTitles
-    
-end
-
+# (Mem 20 G)
+# Virt / Res
+# 19/18 G
+# 23.2 / 18
+# 25.7 / 18
+# 29.2 / 18  (swap: total 33/ used 17)
+# 37.8 / 18  (swap: total 33 /  used 26.4)
+# 40.5 , s= 29.3 
+# 43.7

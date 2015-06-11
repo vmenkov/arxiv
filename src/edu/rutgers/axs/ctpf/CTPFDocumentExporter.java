@@ -63,11 +63,12 @@ class CTPFDocumentExporter {
 	}
     }
 
-   /** Fields we're exporting */
+   /** Fields we're exporting. (Abstract only, as per LC, 2015-05-27) */
     static private final String fields[] =  {
 	//	ArxivFields.CATEGORY,
-	ArxivFields.TITLE, 
-	ArxivFields.AUTHORS, ArxivFields.ABSTRACT,
+	//ArxivFields.TITLE, 
+	//ArxivFields.AUTHORS, 
+	ArxivFields.ABSTRACT,
 	//	ArxivFields.ARTICLE
     };
 
@@ -75,13 +76,14 @@ class CTPFDocumentExporter {
     /**
        @param voc The vocabulary lists the "important" terms. Only the term frequency for these terms will be exported; all other terms will be simply ignored.
        @param w The input file for LDA will be written here
+       @param itemsW The list of AIDs wil be written here. (There is no place for the in the LDA file).
        @param aids List of Arxive document IDs (AIDs) to export
      */
-    static void exportAll(CTPFUpdateFit.Vocabulary voc, Vector<String> aids, PrintWriter w)  throws IOException {
+    static void exportAll(CTPFUpdateFit.Vocabulary voc, Vector<String> aids, PrintWriter w, PrintWriter itemsW)  throws IOException {
 
 	IndexReader reader = Common.newReader2();
   	IndexSearcher searcher = new IndexSearcher( reader );	
-	int missingCnt=0;
+	int missingCnt=0, cnt=0;
 
 	for( String aid: aids) {
 	    int docno = 0;
@@ -107,10 +109,12 @@ class CTPFDocumentExporter {
 	    w.print("" + nnz);
 	    
 	    for(int i=0; i< results.length; i++) { 
-		double v = results[i];
+		int v = results[i];
 		if (v!=0) w.print(" " + i + ":" + v); 
 	    }
-	    w.println( " # " + aid);
+	    w.println();
+	    cnt++; // 1-based
+	    itemsW.println( cnt +  "\t" + aid);
 	}
 	
 	if (missingCnt>0) {

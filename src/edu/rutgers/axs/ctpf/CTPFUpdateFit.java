@@ -106,9 +106,12 @@ public class CTPFUpdateFit {
 	Vector<String> newAids = identifyNewDocs(map, fraction);
 
 	File g = new File("tmp.dat");
+	File itemsFile = new File("new-items.tsv");
 	PrintWriter w = new PrintWriter(new FileWriter(g));
-	CTPFDocumentExporter.exportAll(voc, newAids,  w);
-
+	PrintWriter itemsW = new PrintWriter(new FileWriter(itemsFile));
+	CTPFDocumentExporter.exportAll(voc, newAids,  w, itemsW);
+	w.close();
+	itemsW.close();
 
 
   }
