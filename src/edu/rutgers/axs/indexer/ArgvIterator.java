@@ -4,15 +4,14 @@ package edu.rutgers.axs.indexer;
 import java.util.*;
 import java.io.*;
 
-/** An auxiliary class used to scan and interpret a command line that may contain
-    both actual arguments to be processed and a dash ("-"), which is interpreted
-    as "read arguments from stdin".
-*/
-class ArgvIterator implements Iterator<String> {
+/** An auxiliary class used to scan and interpret a command line that
+    may contain both actual arguments to be processed and a dash
+    ("-"), which is interpreted as "read arguments from stdin".  */
+public class ArgvIterator implements Iterator<String> {
     private String savedNext=null;
     private String[] argv;
     private int pos;
-    ArgvIterator(String[] _argv, int _pos) {
+    public ArgvIterator(String[] _argv, int _pos) {
 	argv = _argv;
 	pos = _pos;
     }

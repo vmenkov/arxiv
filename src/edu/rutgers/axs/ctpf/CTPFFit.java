@@ -56,6 +56,7 @@ public class CTPFFit  {
 
         String line; 
 	int lineCnt=0;
+	int ignoreCnt = 0;
         while ((line = br.readLine()) != null) {
 	    if (error) return;
 	    lineCnt++;
@@ -65,7 +66,8 @@ public class CTPFFit  {
 	    if (iid == 0) {
 		Logging.warning("CPPFFit.loadAvgScores("+file+"): entering useless map entry for iid=" + iid + ", score=" + score);
 	    } else if (iid >= num_docs) {
-		Logging.warning("CPPFFit.loadAvgScores("+file+"): ignoring useless map entry for iid=" + iid + ", score=" + score);
+		//		Logging.warning("CPPFFit.loadAvgScores("+file+"): ignoring useless map entry for iid=" + iid + ", score=" + score);
+		ignoreCnt++;
 		continue;
 	    } 
 
@@ -73,6 +75,9 @@ public class CTPFFit  {
         }
 
         Logging.info("CTPFFit: read " + lineCnt + " lines from " + file);
+	if (ignoreCnt>0) {
+	    Logging.warning("CTPFFit: ignored " + ignoreCnt + " useless map entries");
+	}
     }
 
 } 

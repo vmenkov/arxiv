@@ -91,22 +91,35 @@ public class CTPFUpdateFit {
 	File f = new File(oldFitDir, "vocab.dat");
 	Vocabulary voc = new Vocabulary(f);
 
-	boolean atHome = Hosts.atHome();
-	Logging.info("CTPFUpdateFit: Will use " +
+	Vector<String> newAids;
+
+	int ia=0;
+	if (ia<argv.length && argv[ia].equals("aids")) {
+	    newAids = new Vector<String>(0);
+	    // Dump the data for some specific AIDs
+	    for(ArgvIterator it=new ArgvIterator(argv,ia+1); it.hasNext();){
+		String aid = it.next();
+		newAids.add(aid);
+	    }
+	    Logging.info("CTPFUpdateFit: Will dump data for " + newAids.size() + " specified docs");
+	} else {
+	    // just find some or all docs that are not in the old map
+	    // Modifies data file names, to refer to the full data set or the 10K subset 
+	    boolean atHome = Hosts.atHome();
+	    Logging.info("CTPFUpdateFit: Will use " +
 			 (atHome? "the 10K sample" : "the full data set"));
 
-	// Modifies data file names, to refer to the full data set or the 10K subset 
-	final String suffix  = atHome ? "_10K" : "";
+	    final String suffix  = atHome ? "_10K" : "";
+	    File mf = new File(oldFitDir,  "items"+suffix+".tsv.gz");
+	    CTPFMap map = new CTPFMap(mf, -1);
+	    double fraction = ht.getDouble("fraction", 1.0);
+	    Logging.info("CTPFUpdateFit: Loaded map, size=" + map.size());
+	    newAids = identifyNewDocs(map, fraction);
+	}
 
-	File mf = new File(oldFitDir,  "items"+suffix+".tsv.gz");
-	CTPFMap map = new CTPFMap(mf, -1);
-	Logging.info("CTPFUpdateFit: Loaded map, size=" + map.size());
-
-	double fraction = ht.getDouble("fraction", 1.0);
-	Vector<String> newAids = identifyNewDocs(map, fraction);
-
-	File g = new File("tmp.dat");
+	File g = new File("mult.dat");
 	File itemsFile = new File("new-items.tsv");
+	Logging.info("Writing to file " + g);
 	PrintWriter w = new PrintWriter(new FileWriter(g));
 	PrintWriter itemsW = new PrintWriter(new FileWriter(itemsFile));
 	CTPFDocumentExporter.exportAll(voc, newAids,  w, itemsW);

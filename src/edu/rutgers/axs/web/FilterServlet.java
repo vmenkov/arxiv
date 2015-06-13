@@ -76,8 +76,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 
 	String hostname =  Hosts.determineHostname();
 	
-	boolean weAreBlacklisted = !hostname.endsWith("orie.cornell.edu")
-	    && !hostname.endsWith("cactuar.scilsnet.rutgers.edu");
+	boolean weAreBlacklisted = false;
+	//	    !hostname.endsWith("orie.cornell.edu")
+	//	    && !hostname.endsWith("cactuar.scilsnet.rutgers.edu");
 
 	/** Martin H. Lessmeister, 2014-04-17: "Please continue to use
 	    arxiv.org instead of export.arxiv.org in the future, since
