@@ -2,6 +2,12 @@
 
 use strict;
 
+#----------------------------------------------------------------------
+# Shows the top terms for a topic. 
+# Sample usage:
+#  ~/arxiv/arxiv/util/show-topic.pl ldafit.topics 169
+#----------------------------------------------------------------------
+
 my $vocabFile = "/data/arxiv/ctpf/ldainit/vocab.dat";
 
 my ($topicFile, $t) = @ARGV;

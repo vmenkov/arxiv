@@ -8,17 +8,31 @@ use strict;
 # identify, for each document, the topic with the largest count. (So
 # this is presumably the topic with which the document has the highest
 # affinity).
+#
+# Sample usage:
+#  ~/arxiv/arxiv/util/find-top-topic.pl -n=2 -items=new-items.tsv test_250.n=240/ 
 #------------------------------------------------------------------------
 
 my $m = (defined $::n? $::n : 1);
+my $itemsFile = (defined $::items? $::items : undef);
 
 my $ia=0;
-($ia <= $#ARGV) or die "Usage: $0 [-n=1] dirname\n";
+($ia <= $#ARGV) or die "Usage: $0 [-n=1] [-items=items.tsv] dirname\n";
+
+my @aids = ();
+if (defined $itemsFile) {
+    open(F, "<$itemsFile") or die "Cannot read items file $itemsFile";
+    my @tsvLines = <F>;
+    close(F);
+    @aids = map { s/^(\S+)\s+//; s/\s+$//; $_; } @tsvLines;
+}
+
+#-- print "Aids (from $itemsFile)=" . join(",", @aids) . "\n";
 
 my $dir = $ARGV[$ia++];
 my $f="$dir/ldafit-test.doc.states";
 
-open(F, "<$f") or die "Cannot read file $f";
+open(F, "<$f") or die "Cannot read count file $f";
 my @lines = <F>;
 close(F);
 
@@ -41,6 +55,8 @@ foreach my $line (@lines) {
 	    print ", $t ($w)";
  	}
     }
+    if (scalar @aids > 0) { print " " . $aids[$pos-1]; }
+
     print "\n";
 
     print `../lda/show-topic.pl $dir/ldafit-test.topics $t`;
