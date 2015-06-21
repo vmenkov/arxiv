@@ -1,24 +1,26 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -s
 
 use strict;
 
 #----------------------------------------------------------------------
-# Shows the top terms for a topic. 
+# Shows the top terms for an LDA (CTPF) topic. 
 # Sample usage:
-#  ~/arxiv/arxiv/util/show-topic.pl ldafit.topics 169
+#  ~/arxiv/arxiv/util/show-topic.pl [-n=30] ldafit.topics 169
 #----------------------------------------------------------------------
 
-my $vocabFile = "/data/arxiv/ctpf/ldainit/vocab.dat";
 
+#-- determine the topic file to analyze
 my ($topicFile, $t) = @ARGV;
-
 (defined $t) or die "Usage: $0 topicFile topicNo\n";
 
+#-- Read the standard vocabulary file
+my $vocabFile = "/data/arxiv/ctpf/ldainit/vocab.dat";
 open( F , "$vocabFile") or die "Cannot read vocabulary file $vocabFile\n";
 my @voc = <F>;
 @voc = map { s/\s+$//; $_; } @voc;
 close(F);
 
+#-- read the topic file
 open( F , "$topicFile") or die "Cannot read topic file $topicFile\n";
 my @allTopics = <F>;
 close(F);
