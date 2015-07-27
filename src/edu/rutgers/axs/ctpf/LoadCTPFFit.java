@@ -129,7 +129,7 @@ public class LoadCTPFFit extends Thread {
             //         epsilon_plus_theta[i][j] = epsilon_shape[i][j]/epsilon_rate[i][j] + theta_shape[i][j]/theta_rate[i][j]; 
 
             // load map 
-            ctpffit.map = new CTPFMap(new File(dir,  "items"+suffix+".tsv.gz"), num_docs);
+            ctpffit.map = new CTPFMap(new File(dir,  "items"+suffix+".tsv.gz"), num_docs, false);
 	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), num_docs);
 	    if (error || checkCancel()) return;
             Logging.info("LoadCTPFFit: Loading finished");

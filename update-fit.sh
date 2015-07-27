@@ -1,11 +1,10 @@
 #!/bin/csh
 
 #---------------------------------------------------------------------------
-# This script runs the SB recommendation list generator with a variety of options,
-# the results being saved into separate files in a specified directory.
+# This script runs the CTPF fit data updater
 #
 # Usage examples:
-# nohup ./sb-ctpf-d.sh -dir ../runs/sb3 sb.in-tj.dat > & sb3.log &
+# nohup ./update-fit.sh -dir ~/arxiv/runs/test
 #---------------------------------------------------------------------------
 
 #-- Set the home directory as per the "-home" option. This is useful
@@ -27,10 +26,6 @@ else
 endif
 
 echo "Output directory for all runs is $dir"
-
-
-
-set opt="-DOSMOT_CONFIG=${home}/arxiv/arxiv"
 
 set lib=$home/arxiv/lib
 
@@ -57,10 +52,23 @@ endif
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
 set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
+set baseopt="-cp ${cp} -DOSMOT_CONFIG=${home}/arxiv/arxiv"
 
-set opt="-cp ${cp} ${opt} -DsbStableOrder=0"
 
-echo "opt=$opt"
+if (-e $dir) then
+    echo "Directory $dir already exists. Please specify a different (non-existent) directory with the '-dir dirname' option, or delete this directory and let the script recreate it"
+    exit
+endif
+
+echo "Creating run directory $dir"
+mkdir $dir
+
+if (! -e $dir) then
+    echo "Failed to create directory $dir. Make sure the parent directory is writeable, and try again!"
+    exit
+endif
+
+
 
 #if ("$1" == "") then
 #    echo 'Usage: $0 input-file-name [output-file-name]'
@@ -70,10 +78,36 @@ echo "opt=$opt"
 #set in=$1
 #set xin=`basename $1`
 
-/usr/bin/time java $opt -Dfraction=0.001 \
-edu.rutgers.axs.ctpf.CTPFUpdateFit
+set frac=0.001
 
-#-- need this on en-myarxiv: 
+echo "Exporting  fraction=$frac of new documents"
+
+set opt="${baseopt} -Dout=$dir/mult.dat -DitemsOut=$dir/new-items.tsv"
+echo "opt=$opt"
+
+/usr/bin/time java $opt -Dfraction=0.001 edu.rutgers.axs.ctpf.CTPFUpdateFit export new 
+
+echo "Done exporting"
+
+#-- need this on en-myarxiv to run LDA: 
 # setenv LD_LIBRARY_PATH /usr/local/lib
 
-# nohup lda --test_data mult.dat --num_topics 250 --directory test_250/ --model_prefix ldafit > & lda.log &
+set model=ldafit
+set topics=250
+set subdir=test_${topics}
+
+echo "Sym-linking $model files, and runing lda in $dir"
+(cd $dir; \
+ln -s  /data/arxiv/ctpf/ldainit/${model}.* . ; \
+lda --test_data mult.dat --num_topics $topics --directory $subdir/ --model_prefix $model > & lda.log )
+
+echo "Done LDA"
+
+set udir=/data/arxiv/ctpf/lda.update
+cp $dir/new-items.tsv $udir/
+
+set opt="${baseopt} -Dtopics=250 -DitemsNew=$udir/new-items.tsv -Dstates=$dir/$subdir/ldafit-test.doc.states -DoutDir=$udir"
+
+echo "Runing post.lda with opt=$opt"
+
+/usr/bin/time java $opt edu.rutgers.axs.ctpf.CTPFUpdateFit post.lda 

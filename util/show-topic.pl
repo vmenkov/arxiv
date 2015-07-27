@@ -5,9 +5,10 @@ use strict;
 #----------------------------------------------------------------------
 # Shows the top terms for an LDA (CTPF) topic. 
 # Sample usage:
-#  ~/arxiv/arxiv/util/show-topic.pl [-n=30] ldafit.topics 169
+#  ~/arxiv/arxiv/util/show-topic.pl [-n=40] ldafit.topics 169
 #----------------------------------------------------------------------
 
+my $n = (defined $::n) ? $::n : 40;
 
 #-- determine the topic file to analyze
 my ($topicFile, $t) = @ARGV;
@@ -43,7 +44,7 @@ my @pairs = map { [$voc[$_], $cnts[$_]] } (0..$#voc);
 
 @pairs = sort { $b->[1] <=> $a->[1] } @pairs;
 
-for(my $i=0; $i<=$#pairs && $i<40; $i++) {
+for(my $i=0; $i<=$#pairs && $i<$n; $i++) {
     my ($word, $cnt) = @{$pairs[$i]};
     print "$cnt $word\n";
 }

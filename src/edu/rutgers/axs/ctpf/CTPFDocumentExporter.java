@@ -76,7 +76,7 @@ class CTPFDocumentExporter {
     /**
        @param voc The vocabulary lists the "important" terms. Only the term frequency for these terms will be exported; all other terms will be simply ignored.
        @param w The input file for LDA will be written here
-       @param itemsW The list of AIDs wil be written here. (There is no place for the in the LDA file).
+       @param itemsW The list of AIDs wil be written here. (There is no place for the in the LDA file). Each document will have a base-1 internal id, which is the same as the line number in this file.
        @param aids List of Arxive document IDs (AIDs) to export
      */
     static void exportAll(CTPFUpdateFit.Vocabulary voc, Vector<String> aids, PrintWriter w, PrintWriter itemsW)  throws IOException {

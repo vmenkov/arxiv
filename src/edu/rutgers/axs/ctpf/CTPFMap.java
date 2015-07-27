@@ -43,14 +43,25 @@ public class CTPFMap  {
 	internal IDs are supposed to range from 1 thru num_docs. If a
 	negative value is supplied, the size will be determined
 	dynamically.
+
+	@param  expectLinear If true, this method will also validate the
+	input data: namely, check that IDs start with 1 and increase
+	monotnously and with no gaps. This is used when we read in
+	a data file produced by our own export routine, and want to
+	make sure that the LDA output can be easily mapped to this doc list.
      */
-    public CTPFMap(File file, int num_docs) throws IOException { 
+    public CTPFMap(File file, int num_docs, boolean expectLinear) throws IOException { 
 	IndexList il = new IndexList();
 	HashSet<String> allAIDs = il.listAsSet(); // all articles in Lucene
 
 	Logging.info("CTPFFit: loading document map from " + file);
-	GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
-        BufferedReader br = new BufferedReader(new InputStreamReader(gzip));
+
+
+	Reader fr = file.getPath().endsWith(".gz") ?
+	    new InputStreamReader(new GZIPInputStream(new FileInputStream(file))) :
+	    new FileReader(file);
+
+        LineNumberReader br = new LineNumberReader(fr);
 
 	int n = (num_docs < 0) ? 0 : num_docs;
 	Vector<String> vAIDs = new Vector<String>(n);
@@ -59,19 +70,29 @@ public class CTPFMap  {
 	int invalidAidCnt = 0;
 	String invalidAidTxt = "";
 	final int M = 10;
+	int prevIid = 0;
         while ((line = br.readLine()) != null) {
             String[] parts = line.split("\t");
 	    int iid = Integer.parseInt(parts[0]);
 	    String aid = parts[1];
 	    if (iid == 0) {
-		Logging.warning("CPPFFit.loadMap("+file+"): entering useless map entry for iid=" + iid + ", aid=" + aid);
+		if (expectLinear) {
+		    String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): found unexpected useless map entry for iid=" + iid + ", aid=" + aid;
+		    Logging.error(msg);
+		    throw new IllegalArgumentException(msg);
+		}
+		Logging.warning("CPPFFit.loadMap("+file+"): entering useless map entry for iid=" + iid + ", aid=" + aid);		
 	    } else if (num_docs >=0 && iid >= num_docs) {
 		Logging.warning("CPPFFit.loadMap("+file+"): ignoring useless map entry for iid=" + iid + ", aid=" + aid);
 		continue;
+	    } else if (expectLinear && iid != prevIid+1) {
+		String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): unexpected entry for iid=" + iid + ", aid=" + aid  + " following iid="+prevIid;
+		Logging.error(msg);
+		throw new IllegalArgumentException(msg);
 	    } else if (!allAIDs.contains(aid)) {
 		invalidAidCnt++;
 		if (invalidAidCnt<M) invalidAidTxt += " " + aid;
-		else if (invalidAidCnt==M) invalidAidTxt += " ...";		
+		else if (invalidAidCnt==M) invalidAidTxt += " ...";
 		continue;
 	    }
 
@@ -80,6 +101,7 @@ public class CTPFMap  {
 	    if (iid >= vAIDs.size()) vAIDs.setSize(iid+1);
 	    vAIDs.set(iid, aid);
             aID_to_internalID.put(aid, new Integer(iid));
+	    prevIid=iid;
         }
 
 	if (num_docs < 0) num_docs = vAIDs.size(); 

@@ -75,7 +75,7 @@ foreach aid ($argv)
     set xaid=`echo $aid| perl -pe 's/\//-/g'`
     echo "aid=$aid, escaped to $xaid"
 
-    /usr/bin/time java $opt edu.rutgers.axs.ctpf.CTPFUpdateFit aids $aid
+    /usr/bin/time java $opt edu.rutgers.axs.ctpf.CTPFUpdateFit export aids $aid
     ls -lt | head -3
 
 

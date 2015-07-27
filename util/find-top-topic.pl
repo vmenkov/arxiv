@@ -3,7 +3,7 @@
 use strict;
 
 #------------------------------------------------------------------------
-# An auxiliary scripts for LDA expriments. It is used to take a look
+# An auxiliary scripts for LDA experiments. It is used to take a look
 # at the file ldafit-test.doc.states produced in an LDA run, and to
 # identify, for each document, the topic with the largest count. (So
 # this is presumably the topic with which the document has the highest

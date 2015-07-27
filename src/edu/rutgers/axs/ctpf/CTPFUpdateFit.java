@@ -74,11 +74,119 @@ public class CTPFUpdateFit {
 	return w;
     }
 
-    
+
+    /** Returns the suffix used to modify data file names, to refer to
+	the full data set or the 10K subset, depending on which host
+	we are. */
+    static private String getSuffix() {
+	boolean atHome = Hosts.atHome();
+	Logging.info("CTPFUpdateFit: Will use " +
+		     (atHome? "the 10K sample" : "the full data set"));	
+	final String suffix  = atHome ? "_10K" : "";
+	return suffix;
+    }
+
+    /** @param f Sample count file produced by LDA (ldafit-test.doc.states)
+	Each line of the contains the T sample counts for one document.
+
+	@param outDir Directory into which 3 new output files will be written.
+
+	The necessary output files are:
+	"theta_log",
+	"epsilon_log" = 0, 
+	"epsilon_plus_theta" = ?]
+
+	There is no need to write out "theta", but we do, just for review.
+
+     */
+    static void convertSampleCounts(File f, File outDir, int topics, double alpha) throws IOException {
+	final String suff = "_update.tsv";
+	File 
+	    thetaFile=new File(outDir, "theta" + suff),
+	    thetaLogFile=new File(outDir, "theta_log" + suff),
+	    epsLogFile=new File(outDir, "epsilon_log" + suff),
+	    epsPlusThetaFile=new File(outDir, "epsilon_plus_theta" + suff);
+
+	FileReader fr = new FileReader(f);
+	LineNumberReader r = new LineNumberReader(fr);
+
+	PrintWriter 
+	    thetaW = new PrintWriter(new FileWriter(thetaFile)),
+	    thetaLogW = new PrintWriter(new FileWriter(thetaLogFile)),
+	    epsLogW = new PrintWriter(new FileWriter(epsLogFile)),
+	    epsPlusThetaW = new PrintWriter(new FileWriter(epsPlusThetaFile));
+
+	String s = null;
+	int lineCnt = 0;
+
+	// epsilon_log stays 0
+	final double epsilon_log[] = new double[topics];
+
+	while( (s=r.readLine())!=null) {
+	    lineCnt++;
+	    String counts[] = s.split("\\s+");
+	    if (counts.length != topics) {
+		usage("Mismatch in file " + f+", line " + r.getLineNumber() + ": Found " + counts.length + " tokens, expected " + topics);
+	    }
+	    double c[] = new double[topics];
+	    double sum = 0;
+	    for(int k=0; k<topics; k++) {
+		c[k] = Integer.parseInt(counts[k]);
+		sum += c[k];
+	    }
+
+	    double[] v1 = new double[topics], v2 = new double[topics];
+	    double[] epsilon_plus_theta = new double[topics];
+	    for(int k=0; k<topics; k++) {
+		// E[theta]
+		v1[k] = (alpha + c[k]) / sum;
+		// this is the theta_log=E[log(theta) for this doc
+		v2[k] = Gamma.digamma(alpha + c[k]) - Gamma.digamma(sum);
+		epsilon_plus_theta[k] = v1[k];
+	    }
+
+	    writeTsvLine(thetaW, lineCnt, v1);
+	    writeTsvLine(thetaLogW, lineCnt, v2);
+	    writeTsvLine(epsLogW, lineCnt, epsilon_log);
+	    writeTsvLine(epsPlusThetaW,  lineCnt, epsilon_plus_theta);
+
+	}
+
+
+
+	r.close();
+
+	thetaW.close();
+	thetaLogW.close();
+	epsLogW.close();
+	epsPlusThetaW.close();
+
+    }
+
+
+    private static NumberFormat tsvFmt = new DecimalFormat( "0.00000000");
+
+    /** Writes a line of a file such as epsilon_plus_theta.tsv
+     */
+    private static void writeTsvLine(PrintWriter w, int k, double[] values) {
+	w.print("" + k + "\t" + k);
+	for(double x: values) {
+	    w.print("\t" + tsvFmt.format(x));
+	}
+	w.println();
+    }
+
     static void usage() {
+	usage(null);
+    }
+    static void usage(String msg) {
 	System.out.println("Usage:\n");
-	//	System.out.println(" java Daily [delete|init|update]");
-	//	System.out.println(" java Daily classifySome input-file");
+	System.out.println(" java [options] CTPFUpdateFit export new");
+	System.out.println(" java [options] CTPFUpdateFit export aids aid1 [aid2 ...]");
+	System.out.println("\nOptions:\n");
+	System.out.println(" -Dout=mult.dat Output file for 'export'");
+	System.out.println(" -DitemsOut=new-items.tsv Items list output file for 'export'");
+	if (msg!=null) System.out.println(msg);
 	System.exit(1);
     }
 
@@ -94,40 +202,74 @@ public class CTPFUpdateFit {
 	Vector<String> newAids;
 
 	int ia=0;
-	if (ia<argv.length && argv[ia].equals("aids")) {
-	    newAids = new Vector<String>(0);
-	    // Dump the data for some specific AIDs
-	    for(ArgvIterator it=new ArgvIterator(argv,ia+1); it.hasNext();){
-		String aid = it.next();
-		newAids.add(aid);
+
+	if (ia>=argv.length) usage("No command specified");
+	String cmd = argv[ia++];
+
+
+	if (cmd.equals("export")) { // exporting some docs, to later run LDA on them in test mode
+	    if (ia>=argv.length) usage("Command 'export' requires subcommand 'new' or 'aids'");
+	    String subcmd = argv[ia++];
+
+	    if (subcmd.equals("aids")) {  // exporting specified docs
+		newAids = new Vector<String>(0);
+		// Dump the data for some specific AIDs
+		for(ArgvIterator it=new ArgvIterator(argv,ia); it.hasNext();){
+		    String aid = it.next();
+		    newAids.add(aid);
+		}
+		if (newAids.size()==0) usage("No valid AIDs has been specified on the command line!"); 
+		Logging.info("CTPFUpdateFit: Will dump data for " + newAids.size() + " specified docs");
+		
+	    } else if (subcmd.equals("new")) { 
+		// Exporting all docs that are not in the old map.
+
+		final String suffix  = getSuffix();
+		File mf = new File(oldFitDir,  "items"+suffix+".tsv.gz");
+		CTPFMap map = new CTPFMap(mf, -1, false);
+		double fraction = ht.getDouble("fraction", 1.0);
+		Logging.info("CTPFUpdateFit: Loaded map, size=" + map.size());
+		newAids = identifyNewDocs(map, fraction);
+	    } else {
+		usage("Error: command 'export' must be followed by 'aids' or 'new'!");
+		return;
 	    }
-	    Logging.info("CTPFUpdateFit: Will dump data for " + newAids.size() + " specified docs");
+
+
+	    String out = ht.getString("out", "mult.dat");
+	    File g = new File(out);
+
+	    String itemsOut = ht.getString("itemsOut", "new-items.tsv");
+	    File itemsFile = new File(itemsOut);
+	    Logging.info("Writing data to file " + g + ", items list to " + itemsFile);
+	    PrintWriter w = new PrintWriter(new FileWriter(g));
+	    PrintWriter itemsW = new PrintWriter(new FileWriter(itemsFile));
+	    CTPFDocumentExporter.exportAll(voc, newAids,  w, itemsW);
+	    w.close();
+	    itemsW.close();
+	} else if (cmd.equals("post.lda")) { 
+	    // use the data produced by an LDA run
+
+	    int topics = ht.getInt("topics", 250);
+
+	    String itemsNew = ht.getString("itemsNew", "new-items.tsv");
+	    File newItemsFile = new File(itemsNew);
+	    Logging.info("Will read new items list from "+newItemsFile);
+	    CTPFMap newItemsMap = new CTPFMap(newItemsFile, -1, true);
+
+	    String states = ht.getString("states","ldafit-test.doc.states");
+	    File statesFile = new File(states);
+	    Logging.info("Will read sample counts from  "+statesFile);
+
+	    String outDirPath = ht.getString("outDir", "/data/arxiv/ctpf/lda.update");
+	    File outDir = new File( outDirPath);
+	    if (!outDir.exists() || !outDir.isDirectory()) usage("Directory " + outDir + " does not exist");
+	    double alpha = 0.01; // same as in LDA app itself
+	    convertSampleCounts(statesFile,  outDir, topics, alpha);
+
 	} else {
-	    // just find some or all docs that are not in the old map
-	    // Modifies data file names, to refer to the full data set or the 10K subset 
-	    boolean atHome = Hosts.atHome();
-	    Logging.info("CTPFUpdateFit: Will use " +
-			 (atHome? "the 10K sample" : "the full data set"));
-
-	    final String suffix  = atHome ? "_10K" : "";
-	    File mf = new File(oldFitDir,  "items"+suffix+".tsv.gz");
-	    CTPFMap map = new CTPFMap(mf, -1);
-	    double fraction = ht.getDouble("fraction", 1.0);
-	    Logging.info("CTPFUpdateFit: Loaded map, size=" + map.size());
-	    newAids = identifyNewDocs(map, fraction);
+	    usage("Unknonw command: " + cmd);
 	}
-
-	File g = new File("mult.dat");
-	File itemsFile = new File("new-items.tsv");
-	Logging.info("Writing to file " + g);
-	PrintWriter w = new PrintWriter(new FileWriter(g));
-	PrintWriter itemsW = new PrintWriter(new FileWriter(itemsFile));
-	CTPFDocumentExporter.exportAll(voc, newAids,  w, itemsW);
-	w.close();
-	itemsW.close();
-
-
-  }
-
+    }
 
 }
