@@ -142,7 +142,7 @@ public class CTPFUpdateFit {
 		v1[k] = (alpha + c[k]) / sum;
 		// this is the theta_log=E[log(theta) for this doc
 		v2[k] = Gamma.digamma(alpha + c[k]) - Gamma.digamma(sum);
-		epsilon_plus_theta[k] = v1[k];
+		epsilon_plus_theta[k] = v1[k] + 1.0;
 	    }
 
 	    writeTsvLine(thetaW, lineCnt, v1);
@@ -179,13 +179,27 @@ public class CTPFUpdateFit {
     static void usage() {
 	usage(null);
     }
+
+    /** Prints a usage message and an optional error message, and exits
+	with error code 1.
+     */
     static void usage(String msg) {
 	System.out.println("Usage:\n");
+	System.out.println("To export all new documents for an LDA run:");
 	System.out.println(" java [options] CTPFUpdateFit export new");
+	System.out.println("To export a number of specified documents for an LDA run:");
 	System.out.println(" java [options] CTPFUpdateFit export aids aid1 [aid2 ...]");
-	System.out.println("\nOptions:\n");
-	System.out.println(" -Dout=mult.dat Output file for 'export'");
-	System.out.println(" -DitemsOut=new-items.tsv Items list output file for 'export'");
+	System.out.println("To process the results of an LDA run:");
+	System.out.println(" java [options] CTPFUpdateFit post.lda");
+	System.out.println("\nOptions for 'export':\n");
+	System.out.println(" -Dout=mult.dat -- Output file for 'export'");
+	System.out.println(" -DitemsOut=new-items.tsv -- Items list output file for 'export'");
+	System.out.println("\nOptions for 'post.lda':\n");
+	System.out.println(" -Dtopics=250 -- the number of topics with which LDA has been run");
+	System.out.println(" -DitemsNew=new-items.tsv -- the AIDS list file produced with -DitemsOut during export");
+	System.out.println(" -Dstates=ldafit-test.doc.states -- the sample count file produced by the LDA run");
+	System.out.println(" -DoutDir=/data/arxiv/ctpf/lda.update -- the directory into which theta etc files are to be written");
+	System.out.println();
 	if (msg!=null) System.out.println(msg);
 	System.exit(1);
     }
@@ -211,9 +225,10 @@ public class CTPFUpdateFit {
 	    if (ia>=argv.length) usage("Command 'export' requires subcommand 'new' or 'aids'");
 	    String subcmd = argv[ia++];
 
-	    if (subcmd.equals("aids")) {  // exporting specified docs
+	    if (subcmd.equals("aids")) {  
+		// Exporting specified documents (as per the list of 
+		// AIDs on the command line)
 		newAids = new Vector<String>(0);
-		// Dump the data for some specific AIDs
 		for(ArgvIterator it=new ArgvIterator(argv,ia); it.hasNext();){
 		    String aid = it.next();
 		    newAids.add(aid);
@@ -248,7 +263,7 @@ public class CTPFUpdateFit {
 	    w.close();
 	    itemsW.close();
 	} else if (cmd.equals("post.lda")) { 
-	    // use the data produced by an LDA run
+	    // Processing the data produced by an LDA run
 
 	    int topics = ht.getInt("topics", 250);
 

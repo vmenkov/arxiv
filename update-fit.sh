@@ -22,10 +22,14 @@ if ("$1" == "-dir") then
     set dir=$1
     shift
 else 
-    set dir="."
+    set dir="/data/arxiv/tmp/lda.inputs"
+    if (-e $dir) then
+        echo "Removing old directory $dir"
+	rm -rf $dir
+    endif
 endif
 
-echo "Output directory for all runs is $dir"
+echo "Output directory for article dump is $dir"
 
 set lib=$home/arxiv/lib
 
@@ -63,7 +67,10 @@ endif
 echo "Creating run directory $dir"
 mkdir $dir
 
-if (! -e $dir) then
+if ($? != 0) then
+    echo "Failed to create directory $dir (mkdir failed)"
+    exit 
+else if (! -e $dir ||  ! -d $dir) then
     echo "Failed to create directory $dir. Make sure the parent directory is writeable, and try again!"
     exit
 endif
@@ -87,6 +94,12 @@ echo "opt=$opt"
 
 /usr/bin/time java $opt -Dfraction=0.001 edu.rutgers.axs.ctpf.CTPFUpdateFit export new 
 
+
+if ($? != 0) then
+    echo "Exporter apparently failed (exit code $?)"
+    exit 
+endif
+
 echo "Done exporting"
 
 #-- need this on en-myarxiv to run LDA: 
@@ -96,14 +109,39 @@ set model=ldafit
 set topics=250
 set subdir=test_${topics}
 
+
 echo "Sym-linking $model files, and runing lda in $dir"
 (cd $dir; \
 ln -s  /data/arxiv/ctpf/ldainit/${model}.* . ; \
 lda --test_data mult.dat --num_topics $topics --directory $subdir/ --model_prefix $model > & lda.log )
 
+if ($? != 0) then
+    echo "LDA app apparently failed (exit code $?)"
+    exit 
+endif
+
 echo "Done LDA"
 
-set udir=/data/arxiv/ctpf/lda.update
+set udirbase=/data/arxiv/ctpf/
+set today=`date +%Y%m%d`
+set udir=$udirbase/lda.update.$today
+
+if (-e $udir) then
+   rm $udir/*
+   rmdir $udir
+endif
+
+mkdir $udir
+
+if ($? != 0) then
+    echo "Failed to create directory $udir (mkdir failed)"
+    exit 
+else if (! -e $udir || ! -d $udir) then
+    echo "Failed to create directory $udir. Make sure the parent directory is writeable, and try again!"
+    exit
+endif
+
+
 cp $dir/new-items.tsv $udir/
 
 set opt="${baseopt} -Dtopics=250 -DitemsNew=$udir/new-items.tsv -Dstates=$dir/$subdir/ldafit-test.doc.states -DoutDir=$udir"
@@ -111,3 +149,34 @@ set opt="${baseopt} -Dtopics=250 -DitemsNew=$udir/new-items.tsv -Dstates=$dir/$s
 echo "Runing post.lda with opt=$opt"
 
 /usr/bin/time java $opt edu.rutgers.axs.ctpf.CTPFUpdateFit post.lda 
+
+if ($? != 0) then
+    echo "Post-LDA data processing apparently failed (exit code $?)"
+    exit 
+endif
+
+echo "Done post-processing. New data files should be in $udir"
+
+set dirlink=$udirbase/lda.update
+if (-e $dirlink) then
+    if (-d $dirlink) then 
+	echo "$dirlink is an actual directory, not a symlink; please delete it! Not doing symlink"
+	exit
+    endif
+    rm $dirlink
+endif
+
+if (-e $dirlink) then
+    echo "There is already $dirlink, which can't be removed. Can't do symlinking"
+endif
+
+echo "Doing symbolic linking: ln -s $udir $dirlink"
+ln -s $udir $dirlink
+
+if ($? != 0) then
+    echo "Symbolic linking (ln -s $udir $dirlink) apparently failed; code $?"
+    exit 
+endif
+
+echo "Done linking to $dirlink"
+echo "All done"
