@@ -18,7 +18,8 @@ import org.apache.lucene.search.ScoreDoc;
 import edu.rutgers.axs.util.Hosts;
 
 /** An auxiliary class used to load precomputed CTPF fit data into the web application.
-    The loading is carried out in a separate thread.
+    This class extends Thread, so that loading can be carried out in a separate thread,
+    which is essential in a web app.
  */
 public class LoadCTPFFit extends Thread {
 
@@ -80,7 +81,10 @@ public class LoadCTPFFit extends Thread {
 	return wantToCancel;
     }
 
-    // load data 
+    /** Loads everything. 
+	@param path The directory in which the required data files (with expected names)
+	are to be found.
+     */
     private void loadFit(String path) {
 
         try { 
@@ -101,13 +105,14 @@ public class LoadCTPFFit extends Thread {
             //Logging.info("loading epsilon rate"); 
             //float [][] epsilon_rate = load(path + "epsilon_scale.tsv.gz"); // actually a rate
 
-	    // the first load call will also set num_docs
-            ctpffit.epsilonlog = load(new File(dir, "epsilon_log" + suffix +".tsv.gz"));
+	    // the first load call will also set this.num_docs
+            ctpffit.epsilonlog = load(new File(dir, "epsilon_log" + suffix +".tsv.gz"), 0);
+	    Logging.info("LoadCTPFFit: determined num_docs=" + num_docs);
 	    if (error || checkCancel()) return;
 
-            ctpffit.thetalog = load(new File(dir, "theta_log" + suffix + ".tsv.gz"));
+            ctpffit.thetalog = load(new File(dir, "theta_log" + suffix + ".tsv.gz"), 0);
 	    if (error || checkCancel()) return;
-            ctpffit.epsilon_plus_theta = load(new File(dir, "epsilon_plus_theta"+suffix+".tsv.gz")); 
+            ctpffit.epsilon_plus_theta = load(new File(dir, "epsilon_plus_theta"+suffix+".tsv.gz"), 0); 
 	    if (error || checkCancel()) return;
 
             // updateExpectationsEpsilonTheta(epsilon_shape, epsilon_rate, epsilonlog);
@@ -144,32 +149,43 @@ public class LoadCTPFFit extends Thread {
     } 
  
 
-    /** Loads a matrix with num_docs rowd and num_components columns */
-    private float[][] load(File file) throws Exception {
+    /** Loads a matrix with num_docs rowd and num_components columns.	
+	@param offset This is to be added to the internal ID value
+	found in the first 2 columns of the input file.
+     */
+    private float[][] load(File file, int offset) throws Exception {
+	Vector<float[]> dvec = new Vector<float[]>();
+	load0(file, offset, dvec);
+	return finalizeLoad(dvec);  	
+    }
+
+    private void load0(File file, int offset, Vector<float[]> dvec ) throws Exception {
         
         Logging.info("LoadCTPFFit: Loading data from file " + file); 
 
         // List<String> lines = Files.readAllLines(Paths.get(file), StandardCharsets.UTF_8);
         GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
-        BufferedReader br = new BufferedReader(new InputStreamReader(gzip));
+        LineNumberReader br = new LineNumberReader(new InputStreamReader(gzip));
 
-
-	Vector<float[]> dvec = new Vector<float[]>();
-        String line; 
+	String line; 
 
         while ((line = br.readLine()) != null) {
-	    if (error || checkCancel()) return null;
+	    if (error || checkCancel()) return;
             String[] parts = line.split("\t");
 
 	    int len = parts.length-2;
 	    int k = dvec.size();
 	    if (len <= 0) {
-		throw new IOException("Parsing error on file " + file + ", line "+(k+1)+": num_components=" + len); 
+		throw new IOException("Parsing error on file " + file + ", line "+br.getLineNumber()+": num_components=" + len); 
 	    } else if (num_components==0) {
 		num_components = len;
 	    } else if (num_components != len) {
-		throw new IOException("Parsing error on file " + file + ", line "+(k+1)+": num_components changing from " + num_components + " to " + len); 
+		throw new IOException("Parsing error on file " + file + ", line "+br.getLineNumber()+": num_components changing from " + num_components + " to " + len); 
 	    }
+
+	    int storedIid = Integer.parseInt(parts[0]);
+	    int iid = storedIid + offset;
+	    if (iid != dvec.size()) throw  new IOException("Data alignment error in file " + file + ", line "+br.getLineNumber()+": num_components changing from " + num_components + " to " + len); 
 
 	    float[] row = new float[num_components];
             for(int j=0; j<row.length; j++) {
@@ -193,11 +209,14 @@ public class LoadCTPFFit extends Thread {
 	    throw new IOException("Parsing error on file " + file + ", : found " + nrows + " rows, vs. " + num_docs + " in previously processed files!");
 	}
 	
-        float[][] d = (float[][])dvec.toArray(new float[0][]);
-        return d;
     }
 
-    // TODO: Consider doing it offline and then loading epsilon_plus_theta, epsilon_log and theta_log. 
+    private float[][]  finalizeLoad(Vector<float[]> dvec) {
+	return (float[][])dvec.toArray(new float[0][]);
+    }
+
+    /** TODO: Consider doing it offline and then loading epsilon_plus_theta, epsilon_log and theta_log. 
+     */
     //private static void updateExpectationsEpsilonTheta(float[][] a_shape, float[][] a_rate, float[][] a, float[][] alog) {
     private void updateExpectationsEpsilonTheta(float[][] a_shape, float[][] a_rate, float[][] alog) {
         for(int i=0; i<alog.length; ++i) { 

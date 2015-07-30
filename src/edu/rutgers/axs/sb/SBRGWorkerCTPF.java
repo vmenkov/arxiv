@@ -216,8 +216,8 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
             if(!viewedArticles.contains(aid)) {
                 // obtain article internal ID
                 //Logging.info("Looking up article" + aid);
-                if(ctpffit.map.aID_to_internalID.containsKey(aid)) {
-                    internalID = ctpffit.map.aID_to_internalID.get(aid);
+                if(ctpffit.map.containsAid(aid)) {
+                    internalID = ctpffit.map.aid2iid(aid);
                     if (internalID > ctpffit.thetalog.length) {
                         Logging.warning("SBRGWorkerCTPF: internalID out of range: " + internalID); 
                         continue; 
@@ -346,7 +346,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 		if (needExp) e *= temperature;
                 //Logging.info("SBRGWorkerCTPF: (i,e): (" + i + "," + e + ") scores size: " + scores.size() + " " + old_value); 
 
-		if (D!=0) e -= D*ctpffit.avgScores[i];
+		if (D!=0) e -= D*ctpffit.getAvgScore(i);
                 scores.put((float)e, ctpffit.map.getInternalID_to_aID(i));
             }
 

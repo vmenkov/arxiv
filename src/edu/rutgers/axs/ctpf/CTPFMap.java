@@ -17,17 +17,26 @@ public class CTPFMap  {
 
     /** All Arxiv artice IDs (AIDs) in the map. The position in the array is
 	the CTPF internal ID */
-    private String[] aIDs;
+    private Vector<String> aIDs;
     /** Maps CTPF internal article ID to AID */
     public String  getInternalID_to_aID(int i) {
 	//	return internalID_to_aID.get(i);
-	return aIDs[i];
+	return aIDs.elementAt(i);
+    }
+
+    public int aid2iid(String aid) {
+	Integer q  =  aID_to_internalID.get(aid);
+	if (q==null) throw new IllegalArgumentException("The CTPFMap has no mapping for AID=" + aid);
+	return q.intValue();
     }
 
     /** Maps AID to CTPF internal ID */
-    public HashMap<String, Integer> aID_to_internalID  = new HashMap<String, Integer>();
- 
-    public int size() { return aIDs.length; }
+    private HashMap<String, Integer> aID_to_internalID  = new HashMap<String, Integer>();
+
+    /** @return The value N such that  valid internal IDs range from 1 to N-1
+	(and there is also the dummy value 0)
+     */
+    public int size() { return aIDs.size(); }
    
     public boolean containsAid(String aid) {
 	return aID_to_internalID.containsKey(aid);
@@ -42,7 +51,7 @@ public class CTPFMap  {
 	inlcuding the "fake" document with the internal ID=0). The
 	internal IDs are supposed to range from 1 thru num_docs. If a
 	negative value is supplied, the size will be determined
-	dynamically.
+	dynamically, based on the content of the data file.1
 
 	@param  expectLinear If true, this method will also validate the
 	input data: namely, check that IDs start with 1 and increase
@@ -105,13 +114,13 @@ public class CTPFMap  {
         }
 
 	if (num_docs < 0) num_docs = vAIDs.size(); 
-	aIDs = (String[])vAIDs.toArray(new String[num_docs]);
+	aIDs = vAIDs;
 
 
 	// basic validation
 	int gapCnt=0;
 	for(int i=1; i<num_docs; i++) {
-	    if (aIDs[i]==null) gapCnt++;
+	    if (aIDs.elementAt(i)==null) gapCnt++;
 	}
 
 	if (invalidAidCnt>0) {

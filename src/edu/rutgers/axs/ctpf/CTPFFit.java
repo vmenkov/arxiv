@@ -36,8 +36,13 @@ public class CTPFFit  {
 	errmsg = msg;
     }
 
-    public float avgScores[];
+    private float avgScores[];
     
+    public float getAvgScore(int i) {
+	return i<avgScores.length? avgScores[i] : 0;
+    }
+
+
     /** Input file format (TAB-separated):
 	<pre>
 0	0.000139
