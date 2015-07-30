@@ -241,7 +241,7 @@ public class CTPFUpdateFit {
 
 		final String suffix  = getSuffix();
 		File mf = new File(oldFitDir,  "items"+suffix+".tsv.gz");
-		CTPFMap map = new CTPFMap(mf, -1, false);
+		CTPFMap map = new CTPFMap(mf, -1, false, false);
 		double fraction = ht.getDouble("fraction", 1.0);
 		Logging.info("CTPFUpdateFit: Loaded map, size=" + map.size());
 		newAids = identifyNewDocs(map, fraction);
@@ -270,7 +270,9 @@ public class CTPFUpdateFit {
 	    String itemsNew = ht.getString("itemsNew", "new-items.tsv");
 	    File newItemsFile = new File(itemsNew);
 	    Logging.info("Will read new items list from "+newItemsFile);
-	    CTPFMap newItemsMap = new CTPFMap(newItemsFile, -1, true);
+	    // Assuming that AIDs do not need to be validated
+	    // (purely for efficiency's sake)
+	    CTPFMap newItemsMap = new CTPFMap(newItemsFile, -1, true, false);
 
 	    String states = ht.getString("states","ldafit-test.doc.states");
 	    File statesFile = new File(states);
@@ -279,7 +281,8 @@ public class CTPFUpdateFit {
 	    String outDirPath = ht.getString("outDir", "/data/arxiv/ctpf/lda.update");
 	    File outDir = new File( outDirPath);
 	    if (!outDir.exists() || !outDir.isDirectory()) usage("Directory " + outDir + " does not exist");
-	    double alpha = 0.01; // same as in LDA app itself
+	    double alpha = ht.getDouble("alpha", 0.01); // same as in LDA app itself
+	    Logging.info("Using alpha=" + alpha);
 	    convertSampleCounts(statesFile,  outDir, topics, alpha);
 
 	} else {

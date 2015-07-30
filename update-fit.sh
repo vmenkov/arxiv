@@ -103,17 +103,17 @@ endif
 echo "Done exporting"
 
 #-- need this on en-myarxiv to run LDA: 
-# setenv LD_LIBRARY_PATH /usr/local/lib
+setenv LD_LIBRARY_PATH /usr/local/lib
 
 set model=ldafit
 set topics=250
 set subdir=test_${topics}
-
+set alpha=0.25
 
 echo "Sym-linking $model files, and runing lda in $dir"
 (cd $dir; \
 ln -s  /data/arxiv/ctpf/ldainit/${model}.* . ; \
-lda --test_data mult.dat --num_topics $topics --directory $subdir/ --model_prefix $model > & lda.log )
+lda --test_data mult.dat --num_topics $topics --directory $subdir/ --model_prefix $model  --alpha $alpha > & lda.log )
 
 if ($? != 0) then
     echo "LDA app apparently failed (exit code $?)"
@@ -144,7 +144,7 @@ endif
 
 cp $dir/new-items.tsv $udir/
 
-set opt="${baseopt} -Dtopics=250 -DitemsNew=$udir/new-items.tsv -Dstates=$dir/$subdir/ldafit-test.doc.states -DoutDir=$udir"
+set opt="${baseopt} -Dtopics=250 -DitemsNew=$udir/new-items.tsv -Dstates=$dir/$subdir/ldafit-test.doc.states -DoutDir=$udir -Dalpha=${alpha}"
 
 echo "Runing post.lda with opt=$opt"
 

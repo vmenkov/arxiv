@@ -58,13 +58,16 @@ public class CTPFMap  {
 	monotnously and with no gaps. This is used when we read in
 	a data file produced by our own export routine, and want to
 	make sure that the LDA output can be easily mapped to this doc list.
+
+	@param validateAids If true (recommended), AIDs will be checked
+	against Lucene.
      */
-    public CTPFMap(File file, int num_docs, boolean expectLinear) throws IOException { 
+    public CTPFMap(File file, int num_docs, boolean expectLinear, boolean validateAids) throws IOException { 
 	IndexList il = new IndexList();
-	HashSet<String> allAIDs = il.listAsSet(); // all articles in Lucene
+	Logging.info("CTPFMap: reading AIDs list from Lucene");
+	HashSet<String> allAIDs = validateAids ? il.listAsSet() : null; // all articles in Lucene
 
-	Logging.info("CTPFFit: loading document map from " + file);
-
+	Logging.info("CTPFMap: loading document map from " + file);
 
 	Reader fr = file.getPath().endsWith(".gz") ?
 	    new InputStreamReader(new GZIPInputStream(new FileInputStream(file))) :
@@ -95,10 +98,10 @@ public class CTPFMap  {
 		Logging.warning("CPPFFit.loadMap("+file+"): ignoring useless map entry for iid=" + iid + ", aid=" + aid);
 		continue;
 	    } else if (expectLinear && iid != prevIid+1) {
-		String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): unexpected entry for iid=" + iid + ", aid=" + aid  + " following iid="+prevIid;
+		String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): found entry with iid=" + iid + ", aid=" + aid  + " following iid="+prevIid;
 		Logging.error(msg);
 		throw new IllegalArgumentException(msg);
-	    } else if (!allAIDs.contains(aid)) {
+	    } else if (validateAids && !allAIDs.contains(aid)) {
 		invalidAidCnt++;
 		if (invalidAidCnt<M) invalidAidTxt += " " + aid;
 		else if (invalidAidCnt==M) invalidAidTxt += " ...";
