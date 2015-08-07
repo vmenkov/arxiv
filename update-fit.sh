@@ -109,10 +109,12 @@ set model=ldafit
 set topics=250
 set subdir=test_${topics}
 set alpha=0.25
+set ldainit=/data/arxiv/ctpf/ldainit/
+set ldainit=nusers50748-ndocs50000-nvocab14000-k100-batch-bin-vb-fa-ldainit/
 
 echo "Sym-linking $model files, and runing lda in $dir"
 (cd $dir; \
-ln -s  /data/arxiv/ctpf/ldainit/${model}.* . ; \
+ln -s  ${ldainit}/${model}.* . ; \
 lda --test_data mult.dat --num_topics $topics --directory $subdir/ --model_prefix $model  --alpha $alpha > & lda.log )
 
 if ($? != 0) then
@@ -144,7 +146,7 @@ endif
 
 cp $dir/new-items.tsv $udir/
 
-set opt="${baseopt} -Dtopics=250 -DitemsNew=$udir/new-items.tsv -Dstates=$dir/$subdir/ldafit-test.doc.states -DoutDir=$udir -Dalpha=${alpha}"
+set opt="${baseopt} -Dtopics=${topics} -DitemsNew=$udir/new-items.tsv -Dstates=$dir/$subdir/ldafit-test.doc.states -DoutDir=$udir -Dalpha=${alpha} -Dldainit=${ldainit}"
 
 echo "Runing post.lda with opt=$opt"
 

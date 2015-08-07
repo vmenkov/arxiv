@@ -86,6 +86,14 @@ public class CTPFUpdateFit {
 	return suffix;
     }
 
+    /** As per skype conversation with LC, 2015-02-04 */
+    private static double defaultEpsilonLog() {
+	double alpha=0.3, beta=0.3;
+	double epsilon_log = Gamma.digamma(alpha) - Math.log(beta);
+	return epsilon_log;
+    }
+
+
     /** @param f Sample count file produced by LDA (ldafit-test.doc.states)
 	Each line of the contains the T sample counts for one document.
 
@@ -119,8 +127,13 @@ public class CTPFUpdateFit {
 	String s = null;
 	int lineCnt = 0;
 
-	// epsilon_log stays 0
+	// epsilon_log stays a constant (not 0, though...)
 	final double epsilon_log[] = new double[topics];
+	final double defaultEpsilonLog = defaultEpsilonLog();
+	for(int i=0; i<topics; i++) { 
+	    epsilon_log[i] = defaultEpsilonLog;
+	}
+
 
 	while( (s=r.readLine())!=null) {
 	    lineCnt++;
@@ -129,17 +142,22 @@ public class CTPFUpdateFit {
 		usage("Mismatch in file " + f+", line " + r.getLineNumber() + ": Found " + counts.length + " tokens, expected " + topics);
 	    }
 	    double c[] = new double[topics];
-	    double sum = 0;
 	    for(int k=0; k<topics; k++) {
 		c[k] = Integer.parseInt(counts[k]);
-		sum += c[k];
 	    }
 
+
+	    double sum = 0;
 	    double[] v1 = new double[topics], v2 = new double[topics];
 	    double[] epsilon_plus_theta = new double[topics];
 	    for(int k=0; k<topics; k++) {
 		// E[theta]
-		v1[k] = (alpha + c[k]) / sum;
+		v1[k] = (alpha + c[k]);
+		sum += v1[k];
+	    }
+
+	    for(int k=0; k<topics; k++) {
+		v1[k]  /= sum;
 		// this is the theta_log=E[log(theta) for this doc
 		v2[k] = Gamma.digamma(alpha + c[k]) - Gamma.digamma(sum);
 		epsilon_plus_theta[k] = v1[k] + 1.0;
@@ -207,7 +225,8 @@ public class CTPFUpdateFit {
     static public void main(String[] argv) throws IOException, java.text.ParseException {
 	ParseConfig ht = new ParseConfig();      
 
-	String path = "/data/arxiv/ctpf/ldainit/";
+	// the directory with the data produced by the LDA init run
+	String path = ht.getString("ldainit", "/data/arxiv/ctpf/ldainit/");
 	File oldFitDir = new File(path);
 
 	File f = new File(oldFitDir, "vocab.dat");
@@ -241,7 +260,7 @@ public class CTPFUpdateFit {
 
 		final String suffix  = getSuffix();
 		File mf = new File(oldFitDir,  "items"+suffix+".tsv.gz");
-		CTPFMap map = new CTPFMap(mf, -1, false, false);
+		CTPFMap map = new CTPFMap(mf, false, false);
 		double fraction = ht.getDouble("fraction", 1.0);
 		Logging.info("CTPFUpdateFit: Loaded map, size=" + map.size());
 		newAids = identifyNewDocs(map, fraction);
@@ -272,7 +291,7 @@ public class CTPFUpdateFit {
 	    Logging.info("Will read new items list from "+newItemsFile);
 	    // Assuming that AIDs do not need to be validated
 	    // (purely for efficiency's sake)
-	    CTPFMap newItemsMap = new CTPFMap(newItemsFile, -1, true, false);
+	    CTPFMap newItemsMap = new CTPFMap(newItemsFile,  true, false);
 
 	    String states = ht.getString("states","ldafit-test.doc.states");
 	    File statesFile = new File(states);

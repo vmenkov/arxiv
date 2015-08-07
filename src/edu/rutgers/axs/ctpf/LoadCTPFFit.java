@@ -86,6 +86,15 @@ public class LoadCTPFFit extends Thread {
 	are to be found.
      */
     private void loadFit(String path) {
+	loadFit(path, new String[0]);
+    }
+
+    /** Loads everything. 
+	@param path The directory in which the required data files (with expected names)
+	are to be found.
+	@param otherPaths A list of additional load paths (zero or more), each one of which will contain fit data for an addtional set of documents. Those sets (usually, just 1) are produced during data updates after the main LDA init run.
+     */
+    private void loadFit(String path, String otherPaths[]) {
 
         try { 
 
@@ -134,7 +143,15 @@ public class LoadCTPFFit extends Thread {
             //         epsilon_plus_theta[i][j] = epsilon_shape[i][j]/epsilon_rate[i][j] + theta_shape[i][j]/theta_rate[i][j]; 
 
             // load map 
-            ctpffit.map = new CTPFMap(new File(dir,  "items"+suffix+".tsv.gz"), num_docs, false, true);
+            ctpffit.map = new CTPFMap(new File(dir,  "items"+suffix+".tsv.gz"),  false, true);
+
+	    if (num_docs !=  ctpffit.map.size()) {
+		error = true;
+		errmsg = "Data mismatch: num_doc=" + num_docs + " (based on array files); map.size=" +ctpffit.map.size();
+		Logging.error(errmsg);
+		return;
+	    }
+
 	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), num_docs);
 	    if (error || checkCancel()) return;
             Logging.info("LoadCTPFFit: Loading finished");

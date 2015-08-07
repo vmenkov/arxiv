@@ -17,11 +17,11 @@ public class CTPFMap  {
 
     /** All Arxiv artice IDs (AIDs) in the map. The position in the array is
 	the CTPF internal ID */
-    private Vector<String> aIDs;
+    private Vector<String> aids = new  Vector<String>();
     /** Maps CTPF internal article ID to AID */
     public String  getInternalID_to_aID(int i) {
 	//	return internalID_to_aID.get(i);
-	return aIDs.elementAt(i);
+	return aids.elementAt(i);
     }
 
     public int aid2iid(String aid) {
@@ -36,7 +36,14 @@ public class CTPFMap  {
     /** @return The value N such that  valid internal IDs range from 1 to N-1
 	(and there is also the dummy value 0)
      */
-    public int size() { return aIDs.size(); }
+    public int size() { return aids.size(); }
+
+    /** This is the value which should be added to the iid listed in file
+	to obtain our iid. The idea is,  iid=1 will be converted to aids.size();
+    */
+    int futureOffset() {
+	return size() - 1;
+    }
    
     public boolean containsAid(String aid) {
 	return aID_to_internalID.containsKey(aid);
@@ -62,10 +69,20 @@ public class CTPFMap  {
 	@param validateAids If true (recommended), AIDs will be checked
 	against Lucene.
      */
-    public CTPFMap(File file, int num_docs, boolean expectLinear, boolean validateAids) throws IOException { 
-	IndexList il = new IndexList();
+    public CTPFMap(File file, 
+		   //int num_docs, 
+		   boolean expectLinear, boolean validateAids) throws IOException { 
+	addFromFile(file, expectLinear,  validateAids, 0);
+	gapCheck();
+    }
+
+    void addFromFile(File file, boolean expectLinear, boolean validateAids, int offset ) throws IOException { 
 	Logging.info("CTPFMap: reading AIDs list from Lucene");
-	HashSet<String> allAIDs = validateAids ? il.listAsSet() : null; // all articles in Lucene
+	HashSet<String> allAids = null;
+	if (validateAids) {
+	    IndexList il = new IndexList();
+	    allAids = il.listAsSet(); // all articles in Lucene
+	}
 
 	Logging.info("CTPFMap: loading document map from " + file);
 
@@ -75,63 +92,73 @@ public class CTPFMap  {
 
         LineNumberReader br = new LineNumberReader(fr);
 
-	int n = (num_docs < 0) ? 0 : num_docs;
-	Vector<String> vAIDs = new Vector<String>(n);
+	int n = 0;
+	//	Vector<String> vAIDs = new Vector<String>(n);
 
         String line; 
 	int invalidAidCnt = 0;
 	String invalidAidTxt = "";
 	final int M = 10;
-	int prevIid = 0;
+	int prevReadIid = 0;
         while ((line = br.readLine()) != null) {
             String[] parts = line.split("\t");
-	    int iid = Integer.parseInt(parts[0]);
+	    int readIid = Integer.parseInt(parts[0]);
+	    int iid = readIid + offset;
 	    String aid = parts[1];
-	    if (iid == 0) {
-		if (expectLinear) {
-		    String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): found unexpected useless map entry for iid=" + iid + ", aid=" + aid;
+
+	    if (expectLinear) {
+		if (readIid  == 0) {
+		    String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): found unexpected useless map entry for iid=" + iid + " (read "+readIid+"), aid=" + aid;
+		    Logging.error(msg);
+		    throw new IllegalArgumentException(msg);
+		} else if (readIid != prevReadIid+1) {
+		    String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): read entry with riid=" + readIid + ", aid=" + aid  + " following riid="+prevReadIid;
 		    Logging.error(msg);
 		    throw new IllegalArgumentException(msg);
 		}
+	    }
+
+	    if (iid == 0) {
 		Logging.warning("CPPFFit.loadMap("+file+"): entering useless map entry for iid=" + iid + ", aid=" + aid);		
-	    } else if (num_docs >=0 && iid >= num_docs) {
-		Logging.warning("CPPFFit.loadMap("+file+"): ignoring useless map entry for iid=" + iid + ", aid=" + aid);
-		continue;
-	    } else if (expectLinear && iid != prevIid+1) {
-		String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): found entry with iid=" + iid + ", aid=" + aid  + " following iid="+prevIid;
-		Logging.error(msg);
-		throw new IllegalArgumentException(msg);
-	    } else if (validateAids && !allAIDs.contains(aid)) {
+		//} else if (num_docs >=0 && iid >= num_docs) {
+		//		Logging.warning("CPPFFit.loadMap("+file+"): ignoring useless map entry for iid=" + iid + ", aid=" + aid);
+		//		continue;
+	    } else if (validateAids && !allAids.contains(aid)) {
 		invalidAidCnt++;
 		if (invalidAidCnt<M) invalidAidTxt += " " + aid;
 		else if (invalidAidCnt==M) invalidAidTxt += " ...";
 		continue;
+	    } else if (iid < aids.size()) {
+		String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): found entry with duplicate conv iid="+iid+" (readIid=" + readIid + "), aid=" + aid;	
+		Logging.error(msg);
+		throw new IllegalArgumentException(msg);
 	    }
 
-            //internalID_to_aID.put(iid, aid);
-	    //aIDs[iid] = aid;
-	    if (iid >= vAIDs.size()) vAIDs.setSize(iid+1);
-	    vAIDs.set(iid, aid);
+	    if (iid >= aids.size()) aids.setSize(iid+1);
+	    aids.set(iid, aid);
             aID_to_internalID.put(aid, new Integer(iid));
-	    prevIid=iid;
+	    prevReadIid=readIid;
         }
-
-	if (num_docs < 0) num_docs = vAIDs.size(); 
-	aIDs = vAIDs;
-
-
-	// basic validation
-	int gapCnt=0;
-	for(int i=1; i<num_docs; i++) {
-	    if (aIDs.elementAt(i)==null) gapCnt++;
-	}
 
 	if (invalidAidCnt>0) {
 	    Logging.warning("CTPFFit.loadMap("+file+"): " + invalidAidCnt + " lines have been ignored, because they contained AIDs not existing in our data store, such as:  " + invalidAidTxt);
 	}
 
+
+    }
+
+    private void gapCheck() {
+
+	int num_docs = aids.size(); 
+
+	// basic validation
+	int gapCnt=0;
+	for(int i=1; i<num_docs; i++) {
+	    if (aids.elementAt(i)==null) gapCnt++;
+	}
+
 	//        Logging.info("CTPFFit: size of internalID_to_aID: " + internalID_to_aID.size());
-        Logging.info("CTPFFit.loadMap("+file+"): size of aID_to_internalID: " + aID_to_internalID.size());
+        Logging.info("CTPFFit.loadMap(): size of aID_to_internalID: " + aID_to_internalID.size());
 
 	String msg = (gapCnt==0)? " AID values have been loaded for all internal IDs" :
 	    " AID values are missing for " + gapCnt + " internal IDs!";
