@@ -167,10 +167,7 @@ public class CTPFUpdateFit {
 	    writeTsvLine(thetaLogW, lineCnt, v2);
 	    writeTsvLine(epsLogW, lineCnt, epsilon_log);
 	    writeTsvLine(epsPlusThetaW,  lineCnt, epsilon_plus_theta);
-
 	}
-
-
 
 	r.close();
 
@@ -225,13 +222,6 @@ public class CTPFUpdateFit {
     static public void main(String[] argv) throws IOException, java.text.ParseException {
 	ParseConfig ht = new ParseConfig();      
 
-	// the directory with the data produced by the LDA init run
-	String path = ht.getString("ldainit", "/data/arxiv/ctpf/ldainit/");
-	File oldFitDir = new File(path);
-
-	File f = new File(oldFitDir, "vocab.dat");
-	Vocabulary voc = new Vocabulary(f);
-
 	Vector<String> newAids;
 
 	int ia=0;
@@ -242,6 +232,15 @@ public class CTPFUpdateFit {
 
 	if (cmd.equals("export")) { // exporting some docs, to later run LDA on them in test mode
 	    if (ia>=argv.length) usage("Command 'export' requires subcommand 'new' or 'aids'");
+
+	    // The directory with the data produced by the LDA init
+	    // run. Depending on the task, We will read up to 2 files from
+	    // that directory: the vocabulary file vocab.dat and the
+	    // article list (items.tsv)
+	    
+	    String path=ht.getString("ldainit","/data/arxiv/ctpf/ldainit/");
+	    File oldFitDir = new File(path);
+
 	    String subcmd = argv[ia++];
 
 	    if (subcmd.equals("aids")) {  
@@ -260,7 +259,8 @@ public class CTPFUpdateFit {
 
 		final String suffix  = getSuffix();
 		File mf = new File(oldFitDir,  "items"+suffix+".tsv.gz");
-		CTPFMap map = new CTPFMap(mf, false, false);
+		CTPFMap map = new CTPFMap();
+		map.addFromFile(mf, false, false);
 		double fraction = ht.getDouble("fraction", 1.0);
 		Logging.info("CTPFUpdateFit: Loaded map, size=" + map.size());
 		newAids = identifyNewDocs(map, fraction);
@@ -268,7 +268,8 @@ public class CTPFUpdateFit {
 		usage("Error: command 'export' must be followed by 'aids' or 'new'!");
 		return;
 	    }
-
+	    File vocf = new File(oldFitDir, "vocab.dat");
+	    Vocabulary voc = new Vocabulary(vocf);
 
 	    String out = ht.getString("out", "mult.dat");
 	    File g = new File(out);
@@ -291,7 +292,8 @@ public class CTPFUpdateFit {
 	    Logging.info("Will read new items list from "+newItemsFile);
 	    // Assuming that AIDs do not need to be validated
 	    // (purely for efficiency's sake)
-	    CTPFMap newItemsMap = new CTPFMap(newItemsFile,  true, false);
+	    CTPFMap newItemsMap =  new CTPFMap();
+	    newItemsMap.addFromFile(newItemsFile,  true, false);
 
 	    String states = ht.getString("states","ldafit-test.doc.states");
 	    File statesFile = new File(states);
@@ -303,9 +305,25 @@ public class CTPFUpdateFit {
 	    double alpha = ht.getDouble("alpha", 0.01); // same as in LDA app itself
 	    Logging.info("Using alpha=" + alpha);
 	    convertSampleCounts(statesFile,  outDir, topics, alpha);
+	} else if (cmd.equals("scale.theta")) { 
+	    // Post-processing of "theta shape" and "theta scale" in the ldainit dir,
+	    
+	    //String outDirPath = ht.getString("outDir", "/data/arxiv/ctpf/ldainit");
+	    String outDirPath = ht.getString("outDir", null);
+	    if (outDirPath == null) usage("-DoutDir=... must be supplied for cmd=" + cmd);
+	    File outDir = new File( outDirPath);
+	    if (!outDir.exists() || !outDir.isDirectory()) usage("Directory " + outDir + " does not exist");
+
+	    File shapeFile = new File(outDir, "theta_shape.tsv");
+	    File scaleFile = new File(outDir, "theta_scale.tsv");
+	    File outThetaFile = new File(outDir, "scaled-theta.tsv");
+	    File outLogThetaFile = new File(outDir, "scaled-theta_log.tsv");
+	    
+	    LoadCTPFFit.computeShapeScaleRatio( shapeFile, scaleFile, 
+					        outThetaFile,  outLogThetaFile);
 
 	} else {
-	    usage("Unknonw command: " + cmd);
+	    usage("Unknown command: " + cmd);
 	}
     }
 

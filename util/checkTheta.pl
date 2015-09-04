@@ -24,6 +24,6 @@ foreach my $s (<>) {
 	$n ++;
     }
     my $s2 = ($minT==0 ?  "n/a" : $alpha*(1.0/$minT - $n));
-    print "j=$j;  sumTheta=$sumT;  minTheta= $minT = alpha/s (guess s=$s2)\n";
+    print "j=$j;  sumTheta=$sumT;  minTheta= $minT = alpha/(alpha*$n+s) (guess s=$s2)\n";
 }
 

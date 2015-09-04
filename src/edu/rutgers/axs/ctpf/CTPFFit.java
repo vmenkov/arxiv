@@ -18,8 +18,8 @@ import edu.rutgers.axs.indexer.*;
 public class CTPFFit  {
 
     //public float[][] theta, epsilon; 
-    public float[][] epsilon_plus_theta;
-    public float[][] epsilonlog, thetalog; 
+    public Vector<float[]> epsilon_plus_theta = new Vector<float[]>(), 
+	epsilonlog= new Vector<float[]>(), thetalog= new Vector<float[]>(); 
     //public float[][] epsilon_shape, epsilon_rate;
     //public float[][] theta_shape, theta_rate; 
     //    private HashMap<Integer, String> internalID_to_aID = new HashMap<Integer, String>();

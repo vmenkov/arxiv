@@ -95,7 +95,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    viewedArticles = new TreeSet<String>(); 
 	    
 	    // Xs
-	    int num_components=ctpffit.epsilon_plus_theta[0].length;
+	    int num_components=ctpffit.epsilon_plus_theta.elementAt(0).length;
 	    x = new float[num_components]; 
 	    xlog = new float[num_components]; 
 	    x_shape = new float[num_components]; 
@@ -105,8 +105,8 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    epsilon_plus_theta_sum = new float[num_components];
 	    for (int j=0; j < epsilon_plus_theta_sum.length; ++j) {
 		epsilon_plus_theta_sum[j] = 0;
-		for (int i=0; i < ctpffit.epsilon_plus_theta.length; ++i) { 
-		    epsilon_plus_theta_sum[j] += ctpffit.epsilon_plus_theta[i][j]; 
+		for (int i=0; i < ctpffit.epsilon_plus_theta.size(); ++i) { 
+		    epsilon_plus_theta_sum[j] += ctpffit.epsilon_plus_theta.elementAt(i)[j]; 
 		}
 	    }
 	    
@@ -132,6 +132,21 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	so that we can check on it later.
      */
     private static LoadCTPFFit ctpfLoadThread = null;
+
+
+    static private boolean ctpfLoadingStarted = false;
+    /** Starts the time-consuming data loading thread needed for the
+	CTPF SB recommender, if it has not been started yet This
+	method can be invoked from main(), or from the ResultsBase
+	constructor in a web app.
+     */
+    static public synchronized void loadFitIfNeeded() {
+	if (!ctpfLoadingStarted) {
+	    ctpfLoadingStarted = true;
+	    loadFit();
+	}
+    }
+
 
     /** This method spawns the thread which will load the
 	LoadCTPFFit data, which are to be used by all
@@ -173,7 +188,11 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
     }
 
    public static void cancelLoading() {
-       ctpfLoadThread.cancel();
+       if (ctpfLoadThread==null) {
+	   Logging.info("SBRGWorkerCTPF.cancelLoading() ignored - loading had not even started yet!");
+       } else {
+	   ctpfLoadThread.cancel();
+       }
    }
 
     private void initializeX() { 
@@ -218,7 +237,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 //Logging.info("Looking up article" + aid);
                 if(ctpffit.map.containsAid(aid)) {
                     internalID = ctpffit.map.aid2iid(aid);
-                    if (internalID > ctpffit.thetalog.length) {
+                    if (internalID > ctpffit.thetalog.size()) {
                         Logging.warning("SBRGWorkerCTPF: internalID out of range: " + internalID); 
                         continue; 
                     }
@@ -237,11 +256,11 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
                 for (int k=0; k < x2.length; ++k) { 
                     if(k < x.length) { 
                         //Logging.info("SBRGWorkerCTPF: thetalog: " + k + " " + ctpffit.thetalog[internalID][k]); 
-                        x2[k] = xlog[k] + (float)(factor*ctpffit.thetalog[internalID][k]); 
+                        x2[k] = xlog[k] + (float)(factor*ctpffit.thetalog.elementAt(internalID)[k]); 
                     } else {
                         int t = x.length - (x2.length - k);
                         //Logging.info("SBRGWorkerCTPF: epsilonlog: " + t + " " + ctpffit.epsilonlog[internalID][t]); 
-                        x2[k] = xlog[t] + (float)(factor*ctpffit.epsilonlog[internalID][t]); 
+                        x2[k] = xlog[t] + (float)(factor*ctpffit.epsilonlog.elementAt(internalID)[t]); 
                     } 
                     //Logging.info("SBRGWorkerCTPF: x2: " + k + " " +x2[k]); 
                 }
@@ -334,10 +353,10 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
 	    // The treemap contains AIDs, ordered by score 
             TreeMap<Float,String> scores = new TreeMap<Float,String>();
 	    boolean needExp = !Double.isInfinite(temperature);
-            for (int i=0; i<ctpffit.epsilon_plus_theta.length; ++i) {
+            for (int i=0; i<ctpffit.epsilon_plus_theta.size(); ++i) {
                 double e = 0;
-                for (int j=0; j<ctpffit.epsilon_plus_theta[0].length; ++j) { 
-                    double q = x[j]*(ctpffit.epsilon_plus_theta[i][j]);
+                for (int j=0; j<ctpffit.epsilon_plus_theta.elementAt(0).length; ++j) { 
+                    double q = x[j]*(ctpffit.epsilon_plus_theta.elementAt(i)[j]);
 		    if (needExp) {
 			q = (Math.exp(q / temperature) - 1);
 		    }

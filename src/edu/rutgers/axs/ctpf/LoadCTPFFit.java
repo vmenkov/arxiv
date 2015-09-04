@@ -50,6 +50,7 @@ public class LoadCTPFFit extends Thread {
     private boolean error = false;
     private String errmsg = null;
 
+    /** Creates an object, but does not read any data yet. */
     public LoadCTPFFit(String _path, CTPFFit _ctpffit)
     {
         path = _path; 
@@ -109,20 +110,30 @@ public class LoadCTPFFit extends Thread {
 
 	    File dir = new File(path);
 
+            // load map 
+            ctpffit.map = new CTPFMap();
+	    CTPFMap.Descriptor desc =
+		ctpffit.map.addFromFile(new File(dir,  "items"+suffix+".tsv.gz"),  false, true, true);
+	    Logging.info("Loaded map: " + desc);
+
+
             //Logging.info("loading epsilon shape"); 
             //float [][] epsilon_shape = load(path + "epsilon_shape.tsv.gz"); 
             //Logging.info("loading epsilon rate"); 
             //float [][] epsilon_rate = load(path + "epsilon_scale.tsv.gz"); // actually a rate
 
-	    // the first load call will also set this.num_docs
-            ctpffit.epsilonlog = load(new File(dir, "epsilon_log" + suffix +".tsv.gz"), 0);
+	    // after the first load call, set this.num_docs
+	    load0(new File(dir, "epsilon_log" + suffix +".tsv.gz"), desc, ctpffit.epsilonlog);
+	    num_docs = ctpffit.epsilonlog.size();
 	    Logging.info("LoadCTPFFit: determined num_docs=" + num_docs);
 	    if (error || checkCancel()) return;
 
-            ctpffit.thetalog = load(new File(dir, "theta_log" + suffix + ".tsv.gz"), 0);
+            load0(new File(dir, "theta_log" + suffix + ".tsv.gz"), desc, ctpffit.thetalog);
 	    if (error || checkCancel()) return;
-            ctpffit.epsilon_plus_theta = load(new File(dir, "epsilon_plus_theta"+suffix+".tsv.gz"), 0); 
+            load0(new File(dir, "epsilon_plus_theta"+suffix+".tsv.gz"), desc, ctpffit.epsilon_plus_theta); 
 	    if (error || checkCancel()) return;
+
+	    ctpffit.map.possibleShrink(desc);
 
             // updateExpectationsEpsilonTheta(epsilon_shape, epsilon_rate, epsilonlog);
 
@@ -141,9 +152,6 @@ public class LoadCTPFFit extends Thread {
             // for(int i=0; i<thetalog.length; ++i)
             //     for(int j=0; j<thetalog[0].length; ++j)
             //         epsilon_plus_theta[i][j] = epsilon_shape[i][j]/epsilon_rate[i][j] + theta_shape[i][j]/theta_rate[i][j]; 
-
-            // load map 
-            ctpffit.map = new CTPFMap(new File(dir,  "items"+suffix+".tsv.gz"),  false, true);
 
 	    if (num_docs !=  ctpffit.map.size()) {
 		error = true;
@@ -167,27 +175,43 @@ public class LoadCTPFFit extends Thread {
  
 
     /** Loads a matrix with num_docs rowd and num_components columns.	
-	@param offset This is to be added to the internal ID value
-	found in the first 2 columns of the input file.
+	@param desc Contains offset, which is to be added to the
+	internal ID value found in the first 2 columns of the input
+	file. A null object can be passed, in which case a desriptor can be created.
      */
-    private float[][] load(File file, int offset) throws Exception {
+    private float[][] load1(File file, CTPFMap.Descriptor desc) throws IOException {
 	Vector<float[]> dvec = new Vector<float[]>();
-	load0(file, offset, dvec);
-	return finalizeLoad(dvec);  	
+	load0(file, desc, dvec);
+	return (float[][])dvec.toArray(new float[0][]);
+	//return finalizeLoad(dvec);  	
     }
 
-    private void load0(File file, int offset, Vector<float[]> dvec ) throws Exception {
-        
-        Logging.info("LoadCTPFFit: Loading data from file " + file); 
+    /** Adds data from a file to a vector.
+	@param file An input file. It is expected that the first two 
+	columns of it contain the same number: the (raw) internal document
+	id.
+	@param desc Describes how the range of (raw) internal article
+	IDs found in the file are to be mapped to the internally
+	stored IDs. If the ID range in the file is shorter than in the 
+	descriptor, the descriptor will be modified (shrunk). If null is passed,
+	a descriptor will be created based on the file content.
+	@param dvec A vector of arrays (one array per document) to
+	which data are to be appended.
+     */
+    private CTPFMap.Descriptor load0(File file, CTPFMap.Descriptor desc, Vector<float[]> dvec) throws IOException {        
+	Logging.info("LoadCTPFFit: Loading data from file " + file); 
 
-        // List<String> lines = Files.readAllLines(Paths.get(file), StandardCharsets.UTF_8);
-        GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file));
-        LineNumberReader br = new LineNumberReader(new InputStreamReader(gzip));
+ 	boolean mustDescribe = (desc==null);
+
+	Reader fr = file.getPath().endsWith(".gz") ?
+	    new InputStreamReader(new GZIPInputStream(new FileInputStream(file))) :
+	    new FileReader(file);
+        LineNumberReader br = new LineNumberReader(fr);
 
 	String line; 
 
         while ((line = br.readLine()) != null) {
-	    if (error || checkCancel()) return;
+	    if (error || checkCancel()) return null;
             String[] parts = line.split("\t");
 
 	    int len = parts.length-2;
@@ -201,8 +225,34 @@ public class LoadCTPFFit extends Thread {
 	    }
 
 	    int storedIid = Integer.parseInt(parts[0]);
-	    int iid = storedIid + offset;
-	    if (iid != dvec.size()) throw  new IOException("Data alignment error in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + "(converted to "+iid+"), with dvec.size=" + dvec.size());
+
+	    if (mustDescribe) {
+		if (desc==null) {
+		    // creating the descriptor based on the first line
+		    // of the file. Are the IDs 0- or 1-based?		    
+		    desc=new CTPFMap.Descriptor(-storedIid,  storedIid, storedIid);
+		}
+		if (storedIid != desc.r1) {
+		    throw new IOException("Data error on file " + file + ", line "+br.getLineNumber()+": unexpected iid increment (found "+storedIid+" instead of expected "+desc.r1+")");
+		} else {
+		    desc.r1++;
+		}
+	    }
+	
+	    if (storedIid < desc.r0)  {
+		// We should ignore this and keep working. This is because
+		// Laurent's theta files sometimes start with 0, even though
+		// items files start with 1. As per Laurent's advice,
+		// these iid=0 entries should simply be discarded.
+		String msg = "Ignoring unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", below of the expected range ("+desc+")";
+		Logging.error(msg);
+		continue;
+	    } else if ( storedIid >= desc.r1) {
+		throw new IOException("Unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", above of the expected range ("+desc+")");
+	    }
+
+	    int iid = storedIid + desc.offset;
+	    if (iid != dvec.size()) throw  new IOException("Data alignment error in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + "(converted to "+iid+"), != dvec.size=" + dvec.size());
 
 	    float[] row = new float[num_components];
             for(int j=0; j<row.length; j++) {
@@ -217,20 +267,21 @@ public class LoadCTPFFit extends Thread {
 
 	Logging.info("LoadCTPFFit("+file+"): total of " + dvec.size() + " rows, " + num_components + " columns");
 
-	int nrows = dvec.size();
-	if (nrows == 0) {
-	    throw new IOException("Parsing error on file " + file + ": zero rows found!");
-	} else if (num_docs==0) {  // first file
-		num_docs = nrows;
-	} else if (num_docs != nrows) {
-	    throw new IOException("Parsing error on file " + file + ", : found " + nrows + " rows, vs. " + num_docs + " in previously processed files!");
+	if (dvec.size() < desc.offset + desc.r1) {
+	    int r1new = dvec.size() - desc.offset;
+	    String msg = "As a result of reading file " +file+ ", shrinking range descriptor from (" + desc + ") ";
+	    desc.r1 = r1new;
+	    msg += "to (" + desc + ")";
+	    Logging.info(msg);
 	}
-	
+	return desc;
     }
 
+    /*
     private float[][]  finalizeLoad(Vector<float[]> dvec) {
 	return (float[][])dvec.toArray(new float[0][]);
     }
+    */
 
     /** TODO: Consider doing it offline and then loading epsilon_plus_theta, epsilon_log and theta_log. 
      */
@@ -242,6 +293,49 @@ public class LoadCTPFFit extends Thread {
                 alog[i][j] = (float)(Gamma.digamma(a_shape[i][j]) - Math.log(a_rate[i][j]));
             }
         }
+    }
+
+    private static NumberFormat tsvFmt = new DecimalFormat( "0.000000");
+
+    /** As per LC, 2015-08-20:
+ E[theta]        = shape / scale
+ E[log(theta)] = diagamma(shape) - ln(scale)
+
+     */
+    static void computeShapeScaleRatio(File shapeFile, File scaleFile, 
+				File outThetaFile, File outLogThetaFile) throws IOException {   
+
+	CTPFFit dummy = new CTPFFit();
+	LoadCTPFFit loader = new LoadCTPFFit(null, dummy);
+
+	Vector<float[]> shape = new Vector<float[]>();
+	Vector<float[]> scale = new Vector<float[]>();
+
+	CTPFMap.Descriptor desc = loader.load0(shapeFile, null, shape);
+	loader.load0(scaleFile, desc, scale);
+
+	PrintWriter thetaW = new PrintWriter(new FileWriter(outThetaFile));
+	PrintWriter logThetaW = new PrintWriter(new FileWriter(outLogThetaFile));
+	
+	if (shape.size() != scale.size()) throw new IllegalArgumentException("Array sizes (row count) don't match");
+	for(int i=0; i<shape.size(); i++) {
+	    int r = i - desc.offset;
+	    thetaW.print( r + "\t" + r);
+	    logThetaW.print( r + "\t" + r);
+	    float[] shapeI = shape.elementAt(i), scaleI = scale.elementAt(i);
+	    if (shapeI.length != scaleI.length) throw new IllegalArgumentException("Array sizes don't match for i=" + i);
+	    for(int j=0; j<shapeI.length; ++j) { 
+                double a = shapeI[j]/scaleI[j]; 
+                double alog = (float)(Gamma.digamma(shapeI[j]) - Math.log(scaleI[j]));
+		thetaW.print("\t" + tsvFmt.format(a));			   
+		logThetaW.print("\t" + tsvFmt.format(alog));
+	    }
+     
+	    thetaW.println();			   
+	    logThetaW.println();
+	}
+	thetaW.close();
+	logThetaW.close();
     }
 
 }

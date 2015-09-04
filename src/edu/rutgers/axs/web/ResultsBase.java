@@ -42,10 +42,13 @@ public class ResultsBase implements OptionAccess {
 	a more elegant way of doing this - for example, trigering 
 	loadFit() from the first constructor of ResultsBase...
      */
+    /*
     static {
-        SBRGWorkerCTPF.loadFit();
+	SBRGWorkerCTPF.loadFit();
     }
+    */
 
+  
     HttpServletRequest request;
 
     /** Will be set to true if an error happened */
@@ -138,6 +141,11 @@ public class ResultsBase implements OptionAccess {
        @param response If null, don't bother with checking.
      */
     public ResultsBase(HttpServletRequest _request, HttpServletResponse response) {
+
+	// Starts the time-consuming loading thread needed for
+	// the CTPF SB recommender, if it has not been started yet
+	SBRGWorkerCTPF.loadFitIfNeeded();
+
 	request = _request;
 	cp = request.getContextPath(); 
 

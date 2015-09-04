@@ -183,6 +183,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 
 	// figuring if we need the CTPF data
 	if (g.sbMethod == SBRGenerator.Method.CTPF) {
+	    SBRGWorkerCTPF.loadFitIfNeeded();
 	    Logging.info("Waiting on CTPF data load (needed for method=" + g.sbMethod + ")");
 	    SBRGWorkerCTPF.waitForLoading();
 	} else {

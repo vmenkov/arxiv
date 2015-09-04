@@ -22,6 +22,7 @@ if ("$1" == "-dir") then
     set dir=$1
     shift
 else 
+    #-- standard temporary directory used by default 
     set dir="/data/arxiv/tmp/lda.inputs"
     if (-e $dir) then
         echo "Removing old directory $dir"
@@ -75,21 +76,11 @@ else if (! -e $dir ||  ! -d $dir) then
     exit
 endif
 
-
-
-#if ("$1" == "") then
-#    echo 'Usage: $0 input-file-name [output-file-name]'
-#    exit
-#endif
-
-#set in=$1
-#set xin=`basename $1`
-
 set frac=0.001
 
 echo "Exporting  fraction=$frac of new documents"
 
-set opt="${baseopt} -Dout=$dir/mult.dat -DitemsOut=$dir/new-items.tsv"
+set opt="${baseopt} -Dout=$dir/mult.dat -DitemsOut=$dir/new-items.tsv -Dldainit=${ldainit}"
 echo "opt=$opt"
 
 /usr/bin/time java $opt -Dfraction=0.001 edu.rutgers.axs.ctpf.CTPFUpdateFit export new 
@@ -109,8 +100,8 @@ set model=ldafit
 set topics=250
 set subdir=test_${topics}
 set alpha=0.25
-set ldainit=/data/arxiv/ctpf/ldainit/
-set ldainit=nusers50748-ndocs50000-nvocab14000-k100-batch-bin-vb-fa-ldainit/
+set ldainit=/data/arxiv/ctpf/ldainit
+
 
 echo "Sym-linking $model files, and runing lda in $dir"
 (cd $dir; \
