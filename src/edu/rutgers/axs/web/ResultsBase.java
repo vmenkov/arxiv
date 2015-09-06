@@ -142,9 +142,6 @@ public class ResultsBase implements OptionAccess {
      */
     public ResultsBase(HttpServletRequest _request, HttpServletResponse response) {
 
-	// Starts the time-consuming loading thread needed for
-	// the CTPF SB recommender, if it has not been started yet
-	SBRGWorkerCTPF.loadFitIfNeeded();
 
 	request = _request;
 	cp = request.getContextPath(); 
@@ -169,6 +166,14 @@ public class ResultsBase implements OptionAccess {
 	    infomsg += "Session " + sd.getSqlSessionId();
 	    
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
+
+
+	    // Starts the time-consuming loading thread needed for
+	    // the CTPF SB recommender, if it has not been started yet.
+	    // (Note that this can only be started after Options.init()!
+	    SBRGWorkerCTPF.loadFitIfNeeded();
+
+
 	    user = sd.getRemoteUser(request);
 
 	    if(!sd.isAuthorized(request,user)) {
