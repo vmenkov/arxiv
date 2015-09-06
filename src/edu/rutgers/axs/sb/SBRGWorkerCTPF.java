@@ -171,7 +171,7 @@ public class SBRGWorkerCTPF extends  SBRGWorker  {
         ctpffit.loaded = false; 
         ctpfLoadThread = new LoadCTPFFit(path, ctpffit);
         ctpfLoadThread.start();
-        Logging.info("Thread loading fit launched: " + ctpfLoadThread); 
+        Logging.info("CTPFFit.loadFit(): loading thread launched: " + ctpfLoadThread); 
         return true;
     }
 
