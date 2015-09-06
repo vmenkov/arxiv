@@ -135,6 +135,7 @@ public class LoadCTPFFit extends Thread {
 
 	    ctpffit.map.possibleShrink(desc);
 
+
             // updateExpectationsEpsilonTheta(epsilon_shape, epsilon_rate, epsilonlog);
 
             // Logging.info("loading theta shape"); 
@@ -248,6 +249,7 @@ public class LoadCTPFFit extends Thread {
 		Logging.error(msg);
 		continue;
 	    } else if ( storedIid >= desc.r1) {
+		// This has not be seen in any examples yet, so let's error out
 		throw new IOException("Unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", above of the expected range ("+desc+")");
 	    }
 

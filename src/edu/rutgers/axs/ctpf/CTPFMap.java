@@ -12,7 +12,19 @@ import org.apache.lucene.search.ScoreDoc;
 import edu.rutgers.axs.sql.Logging;
 import edu.rutgers.axs.indexer.*;
 
-/** Maps Arxiv artice IDs (AIDs) to CTPF internal IDs and vice versa */
+/** Maps Arxiv artice IDs (AIDs) to CTPF internal IDs and vice versa. 
+
+    <p>
+    This class tries to accommodate a variety of irregular situations that
+    may occur in real life, such as:
+    <ul>
+    <li>The range of internal IDs found in the map file (items.tsv) being
+    slightly different from the range found in the epsilon etc files.
+    <li>The map file (items.tsv) containing some Arxiv IDs that are not
+    valid according to our Lucene data store.
+    </ul>
+
+ */
 public class CTPFMap  {
 
     /** A Descriptor object describes how the range of "raw internal IDs"
@@ -169,13 +181,13 @@ public class CTPFMap  {
 		    Logging.error(msg);
 		    throw new IllegalArgumentException(msg);
 		} else if (readIid != prevReadIid+1) {
-		    String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): read entry with riid=" + readIid + ", aid=" + aid  + " following riid="+prevReadIid;
+		    String msg = "CTPFMap.addFromFile("+file+", line="+br.getLineNumber()+"): read entry with riid=" + readIid + ", aid=" + aid  + " following riid="+prevReadIid;
 		    Logging.error(msg);
 		    throw new IllegalArgumentException(msg);
 		}
 	    }
 	    if (readIid < v.size() && v.elementAt(readIid)!=null) {
-		String msg = "CPPFFit.loadMap("+file+", line="+br.getLineNumber()+"): found entry with duplicate readIid=" + readIid + "), aid=" + aid;	
+		String msg = "CTPFMap.addFromFile("+file+", line="+br.getLineNumber()+"): found entry with duplicate readIid=" + readIid + "), aid=" + aid;	
 		Logging.error(msg);
 		throw new IllegalArgumentException(msg);
 	    } else if (readIid >= v.size()) {
@@ -189,7 +201,7 @@ public class CTPFMap  {
 
 	
 	Descriptor d = new Descriptor(aids.size() - r0, r0, v.size());
-	Logging.info("Range descriptor: " + d);
+	Logging.info("CTPFMap.addFromFile: created range descriptor: " + d);
 
 	int invalidAidCnt = 0;
 	String invalidAidTxt = "";
@@ -197,6 +209,12 @@ public class CTPFMap  {
 	for(int r=r0; r<d.r1; r++) {
 	    String aid = v.elementAt(r);
 	    int iid = r + d.offset;
+
+	    if (aid==null) {
+		Logging.info("CTPFMap.addFromFile: gap found in map file for r="+ r+", iid=" + iid);
+		continue;
+	    }
+
 	    if (validateAids && !allAids.contains(aid)) {
 		invalidAidCnt++;
 		if (invalidAidCnt<M) invalidAidTxt += " " + aid;
@@ -210,17 +228,31 @@ public class CTPFMap  {
             aID_to_internalID.put(aid, new Integer(iid));
         }
 
-	//Logging.info("Loaded mappings: " + tmpMsg);
+	//Logging.info("CTPFMap.addFromFile: Loaded mappings: " + tmpMsg);
 
 	if (invalidAidCnt>0) {
-	    Logging.warning("CTPFFit.loadMap("+file+"): " + invalidAidCnt + " lines have been ignored, because they contained AIDs not existing in our data store, such as:  " + invalidAidTxt);
+	    Logging.warning("CTPFMap.addFromFile("+file+"): " + invalidAidCnt + " lines have been ignored, because they contained AIDs not existing in our data store, such as:  " + invalidAidTxt);
 	}
 
+	Logging.info("CTPFMap.addFromFile("+file+") loaded; descriptor=("+d+"), |aids|=" + aids.size());
+
+	if (aids.size() < d.r1 + d.offset) {
+	    // there must have been a gap (maybe due to an invalid AID) at the end of the array.
+	    d.r1 = aids.size() - d.offset;
+	    Logging.info("CTPFMap.addFromFile("+file+"): since not as many mappings have been loaded as expected, resized descriptor to ("+d+"), |aids|=" + aids.size());
+
+	}
+
+
+
 	if (!gapCheck() && !allowGaps) {
-	    String msg = "Gaps found in IID list";
+	    String msg = "CTPFMap.addFromFile: Gaps found in IID list";
 	    Logging.error(msg);
 	    throw new IllegalArgumentException(msg);	   	    
 	}
+
+	//	Logging.info("CTPFMap.addFromFile("+file+") completed; |aids|=" + aids.size());
+
 	return d;
     }
 
@@ -257,13 +289,13 @@ public class CTPFMap  {
     void possibleShrink(Descriptor desc) {
 	int properSize = desc.offset + desc.r1;
 	if (aids.size()<properSize) {
-	    throw new IllegalArgumentException("possibleShrink(" + desc +"), impossible curent size=" + aids.size());
+	    throw new IllegalArgumentException("CTPFMap.possibleShrink(" + desc +"), impossible curent size=" + aids.size() +", smaller than requested " + properSize);
 	} else if (aids.size()==properSize) {
 	    return;
 	}
 	for(int j=properSize; j<aids.size(); j++) {
 	    aID_to_internalID.remove( aids.elementAt(j));	    
-	    String msg= "removed AID=" +aids.elementAt(j)+ ", iid=" +j+", from the map";
+	    String msg= "CTPFMap.possibleShrink: removed AID=" +aids.elementAt(j)+ ", iid=" +j+", from the map";
 	    Logging.info(msg);
 
 	}
