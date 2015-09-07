@@ -245,8 +245,8 @@ public class LoadCTPFFit extends Thread {
 		// Laurent's theta files sometimes start with 0, even though
 		// items files start with 1. As per Laurent's advice,
 		// these iid=0 entries should simply be discarded.
-		String msg = "Ignoring unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", below of the expected range ("+desc+")";
-		Logging.error(msg);
+		String msg = "Ignoring unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", below the expected range ("+desc+")";
+		Logging.info(msg);
 		continue;
 	    } else if ( storedIid >= desc.r1) {
 		// This has not be seen in any examples yet, so let's error out

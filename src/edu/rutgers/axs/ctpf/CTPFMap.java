@@ -172,7 +172,6 @@ public class CTPFMap  {
         while ((line = br.readLine()) != null) {
             String[] parts = line.split("\t");
 	    int readIid = Integer.parseInt(parts[0]);
-	    //	    int iid = readIid + offset;
 	    String aid = parts[1];
 
 	    if (expectLinear) {
@@ -201,7 +200,8 @@ public class CTPFMap  {
 
 	
 	Descriptor d = new Descriptor(aids.size() - r0, r0, v.size());
-	Logging.info("CTPFMap.addFromFile: created range descriptor: " + d);
+	Logging.info("CTPFMap.addFromFile: created range descriptor: " + d +"; |v|=" + v.size());
+	if (v.size()>0) Logging.info("v["+(v.size()-1)+"]="+v.elementAt(v.size()-1) );
 
 	int invalidAidCnt = 0;
 	String invalidAidTxt = "";
@@ -217,7 +217,7 @@ public class CTPFMap  {
 
 	    if (validateAids && !allAids.contains(aid)) {
 		invalidAidCnt++;
-		if (invalidAidCnt<M) invalidAidTxt += " " + aid;
+		if (invalidAidCnt<M || r>d.r1-M) invalidAidTxt += " ["+iid+"]->" + aid;
 		else if (invalidAidCnt==M) invalidAidTxt += " ...";
 		continue;
 	    } 
@@ -235,6 +235,7 @@ public class CTPFMap  {
 	}
 
 	Logging.info("CTPFMap.addFromFile("+file+") loaded; descriptor=("+d+"), |aids|=" + aids.size());
+	if (aids.size()>0) Logging.info("aids["+(aids.size()-1)+"]=" + aids.elementAt(aids.size()-1));
 
 	if (aids.size() < d.r1 + d.offset) {
 	    // there must have been a gap (maybe due to an invalid AID) at the end of the array.
