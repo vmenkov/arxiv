@@ -38,7 +38,7 @@ public class LoadCTPFFit extends Thread {
 	have IDs ranging from 1 thru num_docs-1; IDs outside of this 
 	range can be safely disregarded.
     */
-    private int num_docs = 0; 
+    //    private int num_docs = 0; 
     /** The number of columns in each data file, not counting the
 	first 2 "header" columns. This number will be set based on the
 	content of the first data file to be read. This corresponds to
@@ -90,6 +90,16 @@ public class LoadCTPFFit extends Thread {
 	loadFit(path, new String[0]);
     }
 
+    /** An auxiliary structure to describe data loading */
+    private class LoadingInfo {
+	String name;
+	Vector<float[]> vec;
+	LoadingInfo(String _name, Vector<float[]> _vec) {
+	    name = _name;
+	    vec = _vec;
+	}
+    }
+
     /** Loads everything. 
 	@param path The directory in which the required data files (with expected names)
 	are to be found.
@@ -122,17 +132,20 @@ public class LoadCTPFFit extends Thread {
             //Logging.info("loading epsilon rate"); 
             //float [][] epsilon_rate = load(path + "epsilon_scale.tsv.gz"); // actually a rate
 
-	    // after the first load call, set this.num_docs
-	    load0(new File(dir, "epsilon_log" + suffix +".tsv.gz"), desc, ctpffit.epsilonlog);
-	    num_docs = ctpffit.epsilonlog.size();
-	    Logging.info("LoadCTPFFit: determined num_docs=" + num_docs);
-	    if (error || checkCancel()) return;
+	    // list of arrays to load
+	    LoadingInfo[] lis = {
+		new LoadingInfo( "epsilon_log", ctpffit.epsilonlog),
+		new LoadingInfo( "theta_log", ctpffit.thetalog),
+		new LoadingInfo( "epsilon_plus_theta", ctpffit.epsilon_plus_theta)};
 
-            load0(new File(dir, "theta_log" + suffix + ".tsv.gz"), desc, ctpffit.thetalog);
-	    if (error || checkCancel()) return;
-            load0(new File(dir, "epsilon_plus_theta"+suffix+".tsv.gz"), desc, ctpffit.epsilon_plus_theta); 
-	    if (error || checkCancel()) return;
-
+	    for(LoadingInfo li: lis) {
+		// after the first load call, set this.num_docs
+		load0(new File(dir, li.name + suffix +".tsv.gz"), desc, li.vec);
+		//	    num_docs = ctpffit.epsilonlog.size();
+		Logging.info("LoadCTPFFit: "+li.name+".size=" + li.vec.size() );
+		if (error || checkCancel()) return;
+	    }
+           
 	    ctpffit.map.possibleShrink(desc);
 
 
@@ -154,14 +167,15 @@ public class LoadCTPFFit extends Thread {
             //     for(int j=0; j<thetalog[0].length; ++j)
             //         epsilon_plus_theta[i][j] = epsilon_shape[i][j]/epsilon_rate[i][j] + theta_shape[i][j]/theta_rate[i][j]; 
 
+	    /*
 	    if (num_docs !=  ctpffit.map.size()) {
 		error = true;
 		errmsg = "Data mismatch: num_doc=" + num_docs + " (based on array files); map.size=" +ctpffit.map.size();
 		Logging.error(errmsg);
 		return;
 	    }
-
-	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), num_docs);
+	    */
+	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), ctpffit.map.size());
 	    if (error || checkCancel()) return;
             Logging.info("LoadCTPFFit: Loading finished");
         } catch(Exception ex) { 
@@ -193,9 +207,11 @@ public class LoadCTPFFit extends Thread {
 	id.
 	@param desc Describes how the range of (raw) internal article
 	IDs found in the file are to be mapped to the internally
-	stored IDs. If the ID range in the file is shorter than in the 
-	descriptor, the descriptor will be modified (shrunk). If null is passed,
-	a descriptor will be created based on the file content.
+	stored IDs. If the ID range in the file is shorter than in the
+	descriptor, the descriptor will be modified (shrunk); if the
+	file is longer than expected from the descriptor, the end of
+	the file will be skipped. If null is passed, a descriptor will
+	be created based on the file content.
 	@param dvec A vector of arrays (one array per document) to
 	which data are to be appended.
      */
@@ -246,7 +262,7 @@ public class LoadCTPFFit extends Thread {
 		// items files start with 1. As per Laurent's advice,
 		// these iid=0 entries should simply be discarded.
 		String msg = "Ignoring unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", below the expected range ("+desc+")";
-		Logging.info(msg);
+		Logging.warning(msg);
 		continue;
 	    } else if ( storedIid >= desc.r1) {
 		// This may happen when some of the last entries have
@@ -255,7 +271,8 @@ public class LoadCTPFFit extends Thread {
 		// effect). In those cases, the corresponding entries
 		// of the epsilon file should be discarded as well.
 		String msg = "Ignoring unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", above the expected range ("+desc+")";
-	    //throw new IOException(msg);
+		Logging.warning(msg);
+		//throw new IOException(msg);
 		
 	    }
 
