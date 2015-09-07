@@ -249,8 +249,14 @@ public class LoadCTPFFit extends Thread {
 		Logging.info(msg);
 		continue;
 	    } else if ( storedIid >= desc.r1) {
-		// This has not be seen in any examples yet, so let's error out
-		throw new IOException("Unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", above of the expected range ("+desc+")");
+		// This may happen when some of the last entries have
+		// been stripped from the map file (items.tsv) due to
+		// invalid AIDs (and the AID validity check was in
+		// effect). In those cases, the corresponding entries
+		// of the epsilon file should be discarded as well.
+		String msg = "Ignoring unexpected IID in file " + file + ", line "+br.getLineNumber()+": found stored iid="+storedIid + ", above the expected range ("+desc+")";
+	    //throw new IOException(msg);
+		
 	    }
 
 	    int iid = storedIid + desc.offset;
