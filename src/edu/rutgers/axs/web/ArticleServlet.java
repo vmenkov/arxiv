@@ -39,7 +39,9 @@ public class ArticleServlet extends BaseArxivServlet {
 
 
 	    SessionData sd =  SessionData.getSessionData(request);
-	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
+
+	    //  moved this to BaseArxivServlet.init()
+	    //edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
 
 	    ActionSource asrc = new ActionSource(request);
@@ -65,6 +67,10 @@ public class ArticleServlet extends BaseArxivServlet {
 	    ResultsBase.ensureClosed( em, false);
 	}
 
+    }
+
+    public String getServletInfo() {
+	return "My.ArXiv ArticleServlet";
     }
 
 }

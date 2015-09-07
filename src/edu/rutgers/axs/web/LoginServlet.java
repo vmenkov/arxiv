@@ -104,4 +104,8 @@ public class LoginServlet extends HttpServlet {
 
     //    static recordSession() {    }
 
+    public String getServletInfo() {
+	return "My.ArXiv LoginServlet";
+    }
+
 }

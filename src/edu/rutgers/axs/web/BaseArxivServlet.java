@@ -14,6 +14,7 @@ import javax.persistence.*;
 
 import edu.rutgers.axs.Version;
 import edu.rutgers.axs.sql.*;
+import edu.rutgers.axs.sb.SBRGWorkerCTPF;
 
 //<link rel="icon" type="image/x-icon" href="favicon.ico" />
 
@@ -46,14 +47,27 @@ public class BaseArxivServlet extends HttpServlet {
     */
     public void init(ServletConfig config)     throws ServletException {
 	super.init(config);
-	ServletContext context=config.getServletContext();
-
-	// Alas, this is only available since Servlet API 2.5 (= Tomcat 6);
-	//cp= context.getContextPath(); 
 
 	synchronized(lock) {
 	    if (startTime==null) startTime = new Date();
 	}
+
+	ServletContext context=config.getServletContext();
+	// This is only available since Servlet API 2.5 (= Tomcat 6);
+	cp= context.getContextPath(); 
+	Logging.info("BaseArxivServlet.init() for servlet with name=" + 
+		     getServletName() +", info='"+getServletInfo()+"'. cp=" + cp);
+	try {
+	    edu.cornell.cs.osmot.options.Options.init(context);
+	} catch(IOException ex) {
+	    Logging.error("Exception in Options.init(): " + ex);
+	}
+
+	// Starts the time-consuming loading thread needed for
+	// the CTPF SB recommender, if it has not been started yet.
+	// (Note that this can only be started after Options.init()!
+	SBRGWorkerCTPF.loadFitIfNeeded();
+
     }
 
     /** Every child servlet must call reinit() from its service()
@@ -62,8 +76,9 @@ public class BaseArxivServlet extends HttpServlet {
 	Servlet API.
      */
     synchronized void reinit(HttpServletRequest request) {
-	cp=  request.getContextPath();	
+	//cp=  request.getContextPath();	
 	acceptedRequestCnt++;	
+
     }
 
     String getContextPath() { return cp; }
@@ -163,5 +178,8 @@ public class BaseArxivServlet extends HttpServlet {
        return true;    
    }
 
+  public String getServletInfo() {
+	return "My.ArXiv BaseArxivServlet or a derived servlet";
+    }
 
 }

@@ -60,7 +60,8 @@ public class JudgmentServlet extends BaseArxivServlet {
 	try {
 
 	    SessionData sd =  SessionData.getSessionData(request);
-	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
+	    // Moved that to BaseArxivServlet.init()
+	    //edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
 
 	    em = sd.getEM();
@@ -236,5 +237,9 @@ public class JudgmentServlet extends BaseArxivServlet {
     //static String mkUrl(String cp, String id, Action.Op op) {
     //	return cp + "/ArticleServlet?" +  ID +"="+id + "&"+ ACTION+ "="+op;
     //}
+
+    public String getServletInfo() {
+	return "My.ArXiv JudgmentServlet";
+    }
 
 }

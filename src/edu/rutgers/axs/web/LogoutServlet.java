@@ -124,4 +124,8 @@ public class LogoutServlet extends HttpServlet {
 	}
     }
 
+
+    public String getServletInfo() {
+	return "My.ArXiv LogoutServlet";
+    }
 }

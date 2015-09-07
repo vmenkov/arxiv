@@ -180,7 +180,8 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     
 	    SessionData sd =  SessionData.getSessionData(request);
-	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
+	    // Moved that to BaseArxivServlet.init()
+	    //	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext());
 	    String user = sd.getRemoteUser(request);
 
 	    Actionable actionable = new Actionable(pi);
@@ -987,4 +988,9 @@ public class FilterServlet extends  BaseArxivServlet  {
 	}
     
     }
+
+    public String getServletInfo() {
+	return "My.ArXiv FilterServlet";
+    }
+
 }
