@@ -5,7 +5,8 @@ import java.util.*;
 
 import edu.rutgers.axs.sql.DataFile;
 
-/** Auxiliary class used for reading in assignment files */
+/** Auxiliary class used for reading in assignment files. An
+    assignment map describes documents' assignment to clusters.*/
 class AsgMap {
     HashMap<String,Integer> map = new 	HashMap<String,Integer>();
     Vector<String> list=new  Vector<String>();

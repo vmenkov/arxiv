@@ -201,6 +201,13 @@ group by x.session having count(x)>1
 that we had sessions longer than 1 op)?
 
 <tr>
+<td>
+select pl.user.user_name, pl.sbMethod, count(pl), min(pl.time), max(pl.time) from PresentedList pl where pl.type= edu.rutgers.axs.sql.Action$Source.SB group by pl.user.user_name, pl.sbMethod  order by pl.user.user_name, pl.sbMethod
+<td> 
+<td>Which users were ever shown session-based (SB) recommendation lists? How many times? During which time interval? What recommendation algorithms were used?
+
+
+<tr>
 <th colspan=3>The <tt>EnteredQuery</tt> table
 <tr>
 <td>select x from Action x where x.user.user_name='vmenkov'

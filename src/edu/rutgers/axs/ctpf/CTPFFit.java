@@ -51,7 +51,7 @@ public class CTPFFit  {
 ...
 </pre>
     */
-    void loadAvgScores(File file, int num_docs) throws Exception { 
+    void loadAvgScores(File file, CTPFMap.Description desc) throws IOException { 
 	Logging.info("CTPFFit: loading avg scores from " + file);
 	InputStream fis = new FileInputStream(file);
 	if (file.getName().endsWith(".gz")) fis = new GZIPInputStream(fis);
