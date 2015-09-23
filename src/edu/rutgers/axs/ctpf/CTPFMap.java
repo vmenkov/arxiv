@@ -32,10 +32,11 @@ public class CTPFMap  {
 	of "internal IDs" (used inside our CTPF code).
      */
     static class Descriptor {
-	/** Needs to be added to the raw IID (found in the file)
-	    to obtain the ID in the map (i.e., value's position in the array).
-	    The value may be negative (-1) on the first file, and positive
-	    on successive files.
+	/** Needs to be added to the raw IID (found in the file) to
+	    obtain the ID in the map (i.e., value's position in the
+	    array).  The value may be negative (-1) on the first file
+	    (if raw numbering starts with 1), and positive on
+	    successive files.
 	*/
 	final int offset;
 	/** Expected first raw IID to be found in the data file. (Any raws with
@@ -44,7 +45,7 @@ public class CTPFMap  {
 	final int r0;
 	/** One plus the last raw  IID to be found in the data file. This
 	    may be adjusted downwards if the data file contains few lines
-	    than expected.
+	    than expected. Thus, the number of values in the range is r1-r0.
 	*/
 	int r1;
 	Descriptor(int _offset, int _r0, int _r1) {
@@ -55,6 +56,9 @@ public class CTPFMap  {
 	public String toString() {
 	    return "Descriptor maps ["+r0+":"+r1+") to  ["+
 		(r0+offset)+":"+(r1+offset)+")";
+	}
+	public int rawToIid(int r) {
+	    return r + offset;
 	}
     }
 

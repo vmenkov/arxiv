@@ -46,7 +46,7 @@ public class Classifier {
 
 	int maxCid = cidMap.maxId();	
 	int mT[] = new int[ maxCid + 1];
-	Vocabulary voc = readVocabulary();
+	Vocabulary voc = Vocabulary.readVocabulary();
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
 
@@ -161,7 +161,7 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	int maxCid = cidMap.maxId();	
 	int mT[] = new int[ maxCid + 1];
 
-	Vocabulary voc = readVocabulary();
+	Vocabulary voc = Vocabulary.readVocabulary();
 	final int L = voc.L;
 	Logging.info("Read the vocabulary with " + voc.size() + " multiwords, L=" + L);
 	if (thread!=null) thread.pin.setK(30);
@@ -497,15 +497,6 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	a.setEe5classId(cid);   // null
 	a.setEe5missingBody(missingBody);
 	em.persist(a);
-    }
-
-    static Vocabulary readVocabulary()  throws IOException{
-	File f = Files.getWordClusterFile();
-	if (!f.canRead()) {
-	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
-	}
-	Logging.info("Reading vocabulary from file "+ f);
-	return new Vocabulary(f, 0);
     }
 
     /** Represents the content of the article as a DenseDataPoint,

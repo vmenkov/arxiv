@@ -4,13 +4,24 @@ import java.util.*;
 import java.io.*;
 import edu.rutgers.axs.sql.Logging;
 
-/** Multiword vocabulary, as prepared by Alex Alemi */
+/** Multiword vocabulary, as prepared by Alex Alemi. A vocabulary is a
+    list of "multiwords" (word sequences). In the vocabulary, each
+    multiword is assigned to one of L (L=1024) "word clusters"; this mapping is
+    used to create a low-dimensional (L-dimensional) representation of
+    a text.
+ */
 
 class Vocabulary {
 
-    /** The number of word clusters */
+    /** The number of word clusters (= the dimension of the
+	low-dimensional feature space, into which documents 
+	are mapped).
+    */
     final int L;
 
+    /** A Multiword instance describes a single "multiword" (a
+     * sequence of 1 or more words).
+     */
     static class Multiword {
 	/** Sequence of 1 or more words forming this "multiword" */
 	String [] seq;
@@ -63,7 +74,8 @@ class Vocabulary {
        arxiv/ee5/kmeans1024.csv. It is in csv format; in each line,
        the first column containing a multiword (one or several words
        joined with a '_'); the second column, the word cluster id
-       (in the range [0..L-1]).
+       (in the range [0..L-1]).   Any additional columns after the
+       first two are disregarded.
        @param _L expected number of word clusters (e.g. 1024). If 0 is 
        passed, the dimension is set as the max cluster id value 
        in the input file plus 1.
@@ -156,5 +168,17 @@ class Vocabulary {
 	}
 	return v;
     }
+
+    /** Reads a vocabulary file (actually, a word - to - word cluster assignment file) */
+    static Vocabulary readVocabulary()  throws IOException{
+	File f = Files.getWordClusterFile();
+	if (!f.canRead()) {
+	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
+	}
+	Logging.info("Reading vocabulary from file "+ f);
+	return new Vocabulary(f, 0);
+    }
+
+  
 
 }

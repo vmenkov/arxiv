@@ -75,9 +75,9 @@ import java.lang.annotation.*;
     }
 
 
-    /** Auxiliary structure which contains information of all document
+    /** Auxiliary structure which contains information about all document
 	clusters. It is used to map a local cluster ID within a category to
-	a global cluster ID */
+	a global cluster ID. */
     public static class CidMapper {
 
 	/** Maps cluster id to EE5DocClass object */

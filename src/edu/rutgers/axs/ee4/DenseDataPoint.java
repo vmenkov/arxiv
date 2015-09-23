@@ -4,7 +4,11 @@ import java.util.*;
 import java.io.*;
 import java.text.*;
 
-/** A dense vector, for use in KMeans */
+/** A dense vector, for use in KMeans. A derived class
+    (ArticleDenseDataPoint) of this class is also used in ee5,
+    to represent documents converted to low-dimensional 
+    feature space.
+ */
 public class DenseDataPoint extends DataPoint {
 
     public DenseDataPoint(int n) {

@@ -175,7 +175,7 @@ public class LoadCTPFFit extends Thread {
 		return;
 	    }
 	    */
-	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), ctpffit.map.size());
+	    ctpffit.loadAvgScores(new File(dir,  "mean_paper_scores.tsv"), desc);
 	    if (error || checkCancel()) return;
             Logging.info("LoadCTPFFit: Loading finished");
         } catch(Exception ex) { 
