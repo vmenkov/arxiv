@@ -1,97 +1,67 @@
 #!/bin/csh
 
-#---------------------------------------------------------------------------
-# This script runs the CTPF fit data updater
-#
-# Usage examples:
-# nohup ./update-fit.sh -dir ~/arxiv/runs/test
-#---------------------------------------------------------------------------
+#------------------------------------------------------------------------
+# This script pulls metadata from the ArXiv OAI2 server, and saves them into
+# a CSV file, for processing by Laurent's code. Articles are selected by
+# timestamp.
+#------------------------------------------------------------------------
+# Usage example:
+# import-csv.sh 2013 details-2013.csv
+#------------------------------------------------------------------------
 
-#-- Set the home directory as per the "-home" option. This is useful
-#-- if run as a different user.
-if ("$1" == "-home") then
-    shift
-    set home=$1
-    shift
-    echo "Setting home to $home"
-endif
+#-- the directory where this script lives
+set scriptdir=`dirname $0`
 
+#-- the assumption is that the script lives in ~xxx/arxiv/arxiv (where
+#-- xxx is the name of the user who has everything set up right), so
+#-- that scriptdir/../.. is ~xxx. 
 
-if ("$1" == "-dir") then
-    shift
-    set dir=$1
-    shift
-else 
-    set dir="."
-endif
+set home=$scriptdir/../..
 
-echo "Output directory for all runs is $dir"
+echo "Using home=$home"
 
-
-
+set opt="-DOSMOT_CONFIG=."
 
 set lib=$home/arxiv/lib
 
-#-- trying different locations for Tomcat
+#-- Not needed these Jar files in the classpath
+# $lib/mysql-connector-java-3.1.12-bin.jar:$lib/nutch-0.7.jar
+# $lib/colt.jar:$lib/commons-fileupload-1.2.1.jar:$lib/commons-io-1.4.jar:
 
-set tomcat=/usr/share/tomcat7
-set tomcat6=/usr/share/tomcat6
-
-set cp="$lib/axs.jar:$lib/colt.jar:$lib/commons-fileupload-1.2.1.jar:$lib/commons-io-1.4.jar:$lib/lucene-core-3.3.0.jar:$lib/mysql-connector-java-3.1.12-bin.jar:$lib/nutch-0.7.jar:$lib/commons-math3-3.4.1.jar"
-
-if (-e $tomcat) then
-    set cp="${cp}:$tomcat/bin/tomcat-juli.jar"
-    foreach x ($tomcat/lib/*.jar) 
-	set cp="${cp}:$x"
-    end
-else if (-e $tomcat6) then
-    set cp="${cp}:$tomcat6/bin/tomcat-juli.jar"
-    foreach x ($tomcat6/lib/*.jar) 
-	set cp="${cp}:$x"
-    end
-endif
-
-
+set cp="$lib/axs.jar:$lib/lucene-core-3.3.0.jar"
 set cp="${cp}:$lib/xercesImpl.jar:$lib/xml-apis.jar"
-set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
-set baseopt="-cp ${cp} -DOSMOT_CONFIG=${home}/arxiv/arxiv"
+# set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
+set opt="-cp ${cp} ${opt}"
+# -Dfrom=2012-01-16
+#set opt="${opt} -Ddays=1"
 
-if (! -e $dir) then
-    echo "Failed to create directory $dir. Make sure the parent directory is writeable, and try again!"
-    exit
+# echo "opt=$opt"
+
+if ("$1" == "") then
+    echo 'Usage: import-csv.sh year [outputfile]'
+    exit 1
+else
+    set year=$1
 endif
 
+set from=${year}-01-01
+set until=${year}-12-31
 
+if ("$2" == "") then
+    set out=details-${year}.csv
+else
+    set out=$2
+endif
 
-set frac=0.001
+echo "Will request metadata for articles with time stamps from $from thru $until, and save them to file $out"
 
-#echo "Exporting  fraction=$frac of new documents"
+#/usr/bin/time java $opt -Dout=$out -Dfrom=$from -Duntil=$until edu.rutgers.axs.indexer.ArxivToCsv csv
 
-#set opt="${baseopt} -Dout=$dir/mult.dat -DitemsOut=$dir/new-items.tsv"
-#echo "opt=$opt"
+/usr/bin/time java $opt -Dout=$out -Ddays=2 edu.rutgers.axs.indexer.ArxivToCsv csv
 
-#/usr/bin/time java $opt -Dfraction=0.001 edu.rutgers.axs.ctpf.CTPFUpdateFit export new 
-
-#echo "Done exporting"
-
-#-- need this on en-myarxiv to run LDA: 
-# setenv LD_LIBRARY_PATH /usr/local/lib
-
-set model=ldafit
-set topics=250
-set subdir=test_${topics}
-
-#echo "Sym-linking $model files, and runing lda in $dir"
-#(cd $dir; \
-#ln -s  /data/arxiv/ctpf/ldainit/${model}.* . ; \
-#lda --test_data mult.dat --num_topics $topics --directory $subdir/ --model_prefix $model > & lda.log )
-
-#echo "Done LDA"
-
-set opt="${baseopt} -Dtopics=250 -DitemsNew=$dir/new-items.tsv -Dstates=$dir/$subdir/ldafit-test.doc.states -DoutDir=/data/arxiv/ctpf/lda.update"
-
-echo "Runing post.lda with opt=$opt"
-
-/usr/bin/time java $opt edu.rutgers.axs.ctpf.CTPFUpdateFit post.lda 
+if ($? != 0) then
+    echo "The data importer (ArxivToCsv) apparently failed"
+    exit 1 
+endif

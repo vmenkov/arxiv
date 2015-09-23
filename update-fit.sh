@@ -62,7 +62,7 @@ set baseopt="-cp ${cp} -DOSMOT_CONFIG=${home}/arxiv/arxiv"
 
 if (-e $dir) then
     echo "Directory $dir already exists. Please specify a different (non-existent) directory with the '-dir dirname' option, or delete this directory and let the script recreate it"
-    exit
+    exit 1
 endif
 
 echo "Creating run directory $dir"
@@ -70,10 +70,10 @@ mkdir $dir
 
 if ($? != 0) then
     echo "Failed to create directory $dir (mkdir failed)"
-    exit 
+    exit 1
 else if (! -e $dir ||  ! -d $dir) then
     echo "Failed to create directory $dir. Make sure the parent directory is writeable, and try again!"
-    exit
+    exit 1
 endif
 
 set frac=0.001
@@ -88,7 +88,7 @@ echo "opt=$opt"
 
 if ($? != 0) then
     echo "Exporter apparently failed (exit code $?)"
-    exit 
+    exit 1
 endif
 
 echo "Done exporting"
@@ -110,7 +110,7 @@ lda --test_data mult.dat --num_topics $topics --directory $subdir/ --model_prefi
 
 if ($? != 0) then
     echo "LDA app apparently failed (exit code $?)"
-    exit 
+    exit 1
 endif
 
 echo "Done LDA"
@@ -128,10 +128,10 @@ mkdir $udir
 
 if ($? != 0) then
     echo "Failed to create directory $udir (mkdir failed)"
-    exit 
+    exit 1
 else if (! -e $udir || ! -d $udir) then
     echo "Failed to create directory $udir. Make sure the parent directory is writeable, and try again!"
-    exit
+    exit 1
 endif
 
 
@@ -145,7 +145,7 @@ echo "Runing post.lda with opt=$opt"
 
 if ($? != 0) then
     echo "Post-LDA data processing apparently failed (exit code $?)"
-    exit 
+    exit 1
 endif
 
 echo "Done post-processing. New data files should be in $udir"
@@ -154,7 +154,7 @@ set dirlink=$udirbase/lda.update
 if (-e $dirlink) then
     if (-d $dirlink) then 
 	echo "$dirlink is an actual directory, not a symlink; please delete it! Not doing symlink"
-	exit
+	exit 1
     endif
     rm $dirlink
 endif
@@ -168,7 +168,7 @@ ln -s $udir $dirlink
 
 if ($? != 0) then
     echo "Symbolic linking (ln -s $udir $dirlink) apparently failed; code $?"
-    exit 
+    exit 1
 endif
 
 echo "Done linking to $dirlink"

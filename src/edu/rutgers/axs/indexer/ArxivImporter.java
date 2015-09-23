@@ -546,6 +546,10 @@ public class ArxivImporter {
 	retries   for   code   500   (HTTP_INTERNAL_ERROR),   or   for
 	java.net.ConnectException     ("Connection     refused")    in
 	conn.getResponseCode(), which very occasionally happen too.
+
+	@return true if we think it's a good idea to send the same
+	HTTP request one more time
+
     */
     private static boolean mustRetry(HttpURLConnection conn ) throws IOException {
 
@@ -609,7 +613,14 @@ public class ArxivImporter {
 
     private static Date lastRequestTime = null;
 
-    /** Reads the content of a URL into an XML element */
+    /** Reads the content of a URL into an XML element. May make 
+	several attempts if necessary.
+
+	@return Content of the requested page parsed into an XML element
+
+	@throws IOException If it could not get the data, even after
+	several attempts.
+    */
     static Element getPage(String urlString ) throws IOException,  org.xml.sax.SAXException {
 	URL url = new URL(urlString);
 
@@ -800,9 +811,10 @@ http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:
     }
 
     /** No more than one option, -Dfrom=YYYY-MM-DD or -Ddays=n, can be
-	supplied. If -Dfrom is supplied, uses it; otherwise, looks for
-	-Ddays and create an equivalent "from" value. The a assumption
-	is that we're in the same timezone with the OAI2 server...
+	supplied. If -Dfrom is supplied, uses it (and ignores the
+	-Ddays option, if any); otherwise, looks for -Ddays and
+	createS an equivalent "from" value. The assumption is that
+	we're in the same timezone with the OAI2 server...
 
 	@return The value of the -Dfrom=YYYY-MM-DD, or its equivalent
 	computed from -Ddays=nnn (as today-days). Null if neither

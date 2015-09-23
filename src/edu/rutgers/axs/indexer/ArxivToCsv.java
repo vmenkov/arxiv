@@ -15,16 +15,16 @@ import org.xml.sax.SAXException;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.sql.Logging;
 
- /** The application for pulling data from the main arxiv server using
-     the OAI interface, and saving them as a CSV file, for David Blei
-     and Laurent Charlin (2013-12-15). This class is based on
-     ArxivImporter, but is streamlined into a separate, much simpler
-     application.
+ /** The application for pulling article metadata from the main arxiv
+     server using the OAI interface, and saving them as a CSV file,
+     for David Blei and Laurent Charlin (2013-12-15). This class is
+     based on ArxivImporter, but is streamlined into a separate, much
+     simpler application.
 
      <p>Unlike ArxivImporter, this application is only concerned with
-     the metadata (which are available via the OAI2 interface), and
-     does not handle document bodies (which are obtained by a more
-     convoluted process).
+     the article metadata (which are available via the OAI2
+     interface), and does not handle document bodies (which are
+     obtained by a different procedure, with the help of rsync).
 
      <p>For details, see the email threads:
      <ul>
@@ -85,7 +85,11 @@ public class ArxivToCsv {
 	@param max if max non-negative, then ...; -1 means "all"
 	@param from "YYYY-MM-DD" (inclusively), passed to OAI2 from=... option
 	@param until "YYYY-MM-DD" (inclusively), passed to OAI2 until=... option
-       	
+	@param w will write the obtained data, in CSV format, into this writer
+
+	@throws IOException if it failed to obtain all the expected
+	data from the server, or on some other errors
+
      */
     public void importAll(String tok, int max,  String from, String until, PrintWriter w)  throws IOException,  org.xml.sax.SAXException {
 	int pagecnt=0;
