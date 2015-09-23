@@ -45,7 +45,7 @@ public class TrivialCentroids {
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 
-	Vocabulary voc = Classifier.readVocabulary();
+	Vocabulary voc = Vocabulary.readVocabulary();
 	final int L = voc.L;
 
 	final int maxlen = 10000;
@@ -164,7 +164,7 @@ public class TrivialCentroids {
 	// read the general doc cluster list from the database
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
-	Vocabulary voc = Classifier.readVocabulary();
+	Vocabulary voc = Vocabulary.readVocabulary();
 	final int L = voc.L;
 
 	final int maxlen = 10000;
