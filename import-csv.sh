@@ -41,14 +41,19 @@ set opt="-cp ${cp} ${opt}"
 # echo "opt=$opt"
 
 if ("$1" == "") then
-    echo 'Usage: import-csv.sh year [outputfile]'
+    echo 'Usage: import-csv.sh year [outputfile] [from] [to]'
     exit 1
 else
     set year=$1
 endif
 
-set from=${year}-01-01
-set until=${year}-12-31
+if ($#argv == 2) then
+    set from=${year}-01-01
+    set until=${year}-12-31
+else
+    set from=$3
+    set until=$4
+endif
 
 if ("$2" == "") then
     set out=details-${year}.csv
