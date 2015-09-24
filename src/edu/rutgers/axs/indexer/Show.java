@@ -32,7 +32,6 @@ class Show {
     
     public Show()  throws IOException {
 	this(null, false);
-
     }
     public Show(boolean verbose)  throws IOException {
 	this(null, verbose);

@@ -72,6 +72,18 @@ public class Json {
 	return false;
     }
 
+    /** Is this action type one of "download" types?
+	@param x One of the action types considered "acceptable"
+	by typeIsAcceptable()
+     */
+    static private boolean typeIsDownload(String x) {
+	final String types[] = { "download", "ftp_download"};
+	for(String q: types) { 
+	    if (x.equals(q)) return true;
+	} 
+	return false;
+    }
+
     public static String canonicAid(String aid) {
 	aid = aid.replaceAll("v(\\d+)$", "");
 	//if (aid.endsWith("v")) return aid.substring(0, aid.length()-1);
@@ -274,7 +286,7 @@ public class Json {
 		continue;
 	    }
 	    //user_hash article_id date downloaded_y/n
-	    boolean down =  !(type.equals("abs") || type.equals("abstract"));
+	    boolean down = typeIsDownload(type);
 	    w.println(user + " " + aid + " " + utc + " " + (down?1:0));
 	}
 	w.flush();
