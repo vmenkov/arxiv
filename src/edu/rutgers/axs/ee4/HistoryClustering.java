@@ -340,16 +340,19 @@ public class HistoryClustering {
 		new File(dicFilePath) : null;
 
 	    doSvm(asgFile, dicFile, d, normalize, idf);
-	} else if (argv[0].equals("blei")) {	   
+	} else if (argv[0].equals("blei") || argv[0].equals("bleiExtended")) {	   
 	    // Produce output for David Blei's team, as per his 2013-11-11 msg
-	    if (argv.length != 3) usage("Command 'blei' needs infile outfile");
+	    if (argv.length != 3) usage("Commands 'blei' and 'bleiExtended' need infile outfile");
 	    ArxivUserInferrer inferrer = useCookies?
 		new CookieArxivUserInferrer(new ArxivUserTable(tcPath)):
 		new IPArxivUserInferrer();
 	    String fname = argv[1];
 	    File outfile = new File(argv[2]);
 
-	    Json.convertJsonFileBlei(fname, inferrer,  outfile);
+		if (argv[0].equals("blei"))
+			Json.convertJsonFileBlei(fname, inferrer,  outfile);
+		else
+			Json.convertJsonFileBleiExtended(fname, inferrer,  outfile);
 	} else {
 	    usage();
 	}
