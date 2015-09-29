@@ -34,7 +34,7 @@
 #-- the directory where this script lives
 set scriptdir=`dirname $0`
 set home=$scriptdir/../..
-echo "Using home=$home"
+# echo "Using home=$home"
 
 
 set opt="-DOSMOT_CONFIG=$home/arxiv/arxiv"
