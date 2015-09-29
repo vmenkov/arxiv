@@ -63,6 +63,10 @@ public class Categories {
 	}
 
 	public String toString() { return fullName(); }
+	/** Returns the name of the appropriate major cat */
+	public String getMajor() {
+	    return (parent!=null) ? parent.getMajor(): name;
+	}
     }
 
     static public Vector<Cat> majors = new Vector<Cat>();

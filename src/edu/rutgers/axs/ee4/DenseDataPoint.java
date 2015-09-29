@@ -25,6 +25,9 @@ public class DenseDataPoint extends DataPoint {
 	values = v;
     }
 
+    public double elementAt(int i) {
+	return values[i];
+    }
 
     public void add(DataPoint a) {
 	if (a instanceof SparseDataPoint) {
@@ -130,10 +133,23 @@ public class DenseDataPoint extends DataPoint {
     /** Same as above, with fewer digits */
     public void printFloat(PrintWriter w) {
 	for(double v: values) {
-	    w.print(" " + (float)v);
+	    if ((double)(int)v == v) w.print(" " + (int)v);
+	    else w.print(" " + (float)v);
 	}
     }
 
+    /** Prints the vector in the sparse feature:value format */
+    public void printAsSparse(PrintWriter w) {
+	for(int i=0; i< values.length; i++) {
+	    double v = values[i];
+	    if (v==0) continue;
+	    w.print("\t" + i);
+	    if ((double)(int)v == v) w.print(":" + (int)v);
+	    else w.print(":" + (float)v);
+	}
+    }
+
+    /** Creates an n-dimensional data point with the value of 1 in each position. */
     static public DenseDataPoint allOnes(int n) {
 	DenseDataPoint p = new DenseDataPoint(n);
 	for(int i=0; i<n; i++) p.values[i] = 1.0;
@@ -141,3 +157,4 @@ public class DenseDataPoint extends DataPoint {
     }
 
 }
+

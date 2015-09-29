@@ -30,13 +30,25 @@ public  class SubjectSearchResults extends SearchResults {
 	this( searcher, cats, since, null, maxlen);
     }
 
-    /**Performs a Lucene search. Creates an SearchResults object
-       that's a wrapper around the results array produced by Lucene (without
-       My.ArXiv's own re-ordering - that is to be done separately).
+    /**Performs a Lucene search for finding articles belonging to
+       specified categories.  The search is of the "OR" type,
+       i.e. each retrieved article should match at least one category.
+       Additional restriction by date is possible.
 
-       @param cats Array of categories.
+       <p>Note: the query used here does not have an explicit
+       hasAidQuery clause (to avoid non-ArXiv docs), because it's not
+       needed: we already have lookup by category here, and only ArXiv
+       articles have the category field.
+
+       @param cats An array of categories. It should be non-empty (otherwise,
+       an empty array is returned). The elements can be complete category
+       names, or wildcards ("physics*").
        @param since Date range start (may be null if n/a)
        @param toDate Date range end (usually null). 
+
+       @return An SearchResults object that's a wrapper around the
+       results array produced by Lucene (without My.ArXiv's own
+       re-ordering - that is to be done separately).
     */
     SubjectSearchResults(IndexSearcher searcher, String[] cats, 	
 			 Date since, Date toDate, int maxlen) 

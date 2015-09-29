@@ -1,0 +1,92 @@
+<html>
+<head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<title>Getting data from our Lucene index: low-dimensional representation</title>
+</head>
+<body>
+
+<p align=center><em>Updated: 2015-09-29</em></p>
+
+<h1>Getting data from our Lucene index: low-dimensional representation</h1>
+
+<p>This document is an addition to our main <a href="lucene-access.html">Lucene datastore guide</a>. It documents the operations of the script <tt>low-dim-export.sh</tt> used to export documents as low-dimensional feature vectors.
+
+<h2>Background</h2>
+
+<P>Documents are converted into low-dimensional vector representation (L-dimensional, with L=1024) as part of Peter Frazier's team's EE5 project. This specific set of export tools was set up on Chen Bangrui's request in September 2015.
+
+<p>The main idea of low-dimensional representation is as follows. There is a file, 
+"kmeans1024.csv", which maps words and phrases ("multiwords") to artificial features (cluster IDs), ranging from 0 to L-1. In other words, each word or phrase is assigned to one of L word clusters.
+
+<p>When converting a document, we process each of the main informational fields (TITLE, AUTHORS, ABSTRACT, ARTICLE) as follows:
+<ul>
+<li>"Multiwords" (phrases) known to the clustering scheme are identified.
+<li>Phrases and words not belonging to phrases are mapped to integer cluster IDs; so the field is represented as a vector of L integers, which correspond to the raw frequencies of word clusters in the field.
+<li>The vectors for all the fields involved are added together (which is very similar to concatenating the fields).
+</ul>
+
+<p>The main Java application for this exporter is in 
+<a href="../doc/html/api/edu/rutgers/axs/ee5/LowDimDocumentExporter.html">
+edu.rutgers.axs.ee5.LowDimDocumentExporter</a>.
+
+<h2>Exporting document frequency data</h2>
+
+<p>The document vectors exported by <tt>low-dim-export.sh</tt> contain raw feature frequencies as explained above. No IDF vectors are incorporated into them.
+
+<p>If you want to use IDF in your calculations, you can use our script to compute the DF (document frequencies) for all word clusters, and then convert the DFs to IDFs using your favorite formula.
+
+<p>To compute DF, use the <tt>df</tt> command with the script:
+
+<pre>
+~vm293/arxiv/arxiv/low-dim-export.sh df > df.tsv
+</pre>
+
+<p>This is a fairly slow process; the index is processed at the rate of 10,000-30,000 documents per minute.
+
+<p>For testing purposes (just so that you can have a quick completed run), it is also possible to run DF generation on a subset of the collection. Provide an extra integer argument to the script, and the computations will be carried out on the first N (e.g. N=100) documents from the collection:
+<pre>
+~vm293/arxiv/arxiv/low-dim-export.sh df 100 > df-100.tsv
+</pre>
+
+<p>
+The output file will contain DF values for the L features. The numbering of features is 0-based,  i.e. from 0 thru L-1 (= 1023).
+
+<p>For computing IDF, you also need to know the total number of documents in the collection over which the DF have been computed. This is reported to the stderr during the execution of the script; write down the value.
+
+<pre>
+ ./low-dim-export.sh df 100 > df.tmp
+Sep 29, 2015 12:40:40 PM edu.rutgers.axs.sql.Logging info
+INFO: Reading vocabulary from file /data/arxiv/ee5/20150415/kmeans1024.csv
+....
+INFO: Date range from the beginning of time to now; found 793345 papers
+Sep 29, 2015 12:40:47 PM edu.rutgers.axs.sql.Logging info
+<strong>INFO: Found 793345 articles in the index. Will analyze the first 100 of them</strong>
+</pre>
+
+<h2>Exporting TF for specified documents</h2>
+
+<p>To compute raw feature frequencies for a number of documents whose ArXiv IDs you know, use the <tt>aids</tt> command with the script. Put any number of ArXiv IDs on the command line after the  <tt>aids</tt> command:
+
+<pre>
+./low-dim-export.sh aids cond-mat/0004199 cond-mat/0004200  > tf.tsv
+</pre>
+
+<p>If you have a long list of AIDs in a file (see some ideas on how to list document IDs in  our main <a href="lucene-access.html">Lucene datastore guide</a>), you can use it as follows:
+<pre>
+cat id-list.txt | ./low-dim-export.sh aids -   > tf.tsv
+</pre>
+
+<h2>Exporting TF for a category and date range</h2>
+
+
+<p>For convenience, there is also a command (<tt>cat</tt>) to export
+document vectors for all documents belonging to a particular ArXiv major category (such as "physics") and a date range. For a lits of all major categories look at the source code for <a href="../doc/html/api/edu/rutgers/axs/sql/Categories.html">
+edu.rutgers.axs.sql.Categories</a> in TeamForge, 
+
+
+
+
+
+
+</body>
+</html>

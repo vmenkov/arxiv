@@ -58,7 +58,7 @@ public class Common {
 
    /** Find a document by article ID, using a given searcher. 
      @return Lucene internal doc id (which is a non-negative number; it may be 0!), or -1 if none found.
-     @throws IOException On Lucene errors (the index is not there, etc; this is passed fro IndexSearcher.search)
+     @throws IOException On Lucene errors (the index is not there, etc; this is passed from IndexSearcher.search)
     */
     static public int findOrMinus(IndexSearcher s, String aid) throws IOException {
 	TermQuery tq = new TermQuery(new Term(ArxivFields.PAPER, aid));

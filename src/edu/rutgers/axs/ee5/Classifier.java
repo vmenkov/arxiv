@@ -21,7 +21,8 @@ import edu.rutgers.axs.ee4.Categorizer;
 import edu.rutgers.axs.ee4.DenseDataPoint;
 import edu.rutgers.axs.upload.BackgroundThread;
 
-/** Document classifier.
+/** Document classifier. Classifies documents within a major cat using Xiaoting's
+    P files.
  */
 public class Classifier {
 

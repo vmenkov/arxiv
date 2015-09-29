@@ -10,13 +10,16 @@ import org.apache.lucene.search.*;
 
 import edu.rutgers.axs.indexer.ArxivFields;
 
-/** Useful Lucene queries for working with My.ArXiv's Lucene data store
+/** Useful Lucene queries for working with My.ArXiv's Lucene data store.
  */
 public class Queries {
-    /** Generates eitehr a term query (usually) or a prefix query (if there is
-	an asterisk in the query string)
+    /** Generates either a term query (usually) or a prefix query (if there is
+	an asterisk in the query string).
+	@param t The search string to match. If the string contains an asterisk
+	(*), it is interpreted as a wildcard (prefix search is done), and any
+	part of the string after the asterisk is disregarded.
      */
-    static org.apache.lucene.search.Query mkTermOrPrefixQuery(String field, String t) {
+    static public org.apache.lucene.search.Query mkTermOrPrefixQuery(String field, String t) {
 	int pos = t.indexOf('*');
 	return (pos<0) ? 
 	    new TermQuery(new Term(field, t)) :

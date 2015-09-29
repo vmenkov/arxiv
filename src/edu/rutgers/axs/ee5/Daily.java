@@ -24,7 +24,13 @@ import edu.rutgers.axs.ee4.DenseDataPoint;
  */
 public class Daily {
 
-    static private final int maxlen = 1000000;
+    /** Maximum number of documents to be retrieved by Lucene
+	searches.  This parameter is required by Lucene searches. We
+	don't actually want to impose a restriction, so set the value
+	siginificantly higher than the total number of articles in the
+	index.
+     */
+    static  final int maxlen = 10000000;
 
     private static void reportEx(Exception ex) {
 	Logging.error(ex.toString());
@@ -57,7 +63,7 @@ public class Daily {
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
 	// assign recent ArXiv articles to clusters
-	ScoreDoc[] sd = getRecentArticles( em, searcher, since, null);
+	ScoreDoc[] sd = getRecentArticles( searcher, since, null);
 	// classify all recent docs	
 	int mT[] = Classifier.classifyDocuments(em, reader, sd,cidMap);
 	recordSubmissionRates(em, cidMap, mT);
@@ -132,7 +138,7 @@ public class Daily {
 		sd[i] = new ScoreDoc(docno, 0);
 	    }
 	} else if (hasRange) {
-	    sd = getRecentArticles( em, searcher, since, to);
+	    sd = getRecentArticles( searcher, since, to);
 	} else throw new IllegalArgumentException("Either provide a list of documents, or a date range, but not both");
 
 	int mT[] = Classifier.classifyDocuments(em, reader, sd,cidMap);
@@ -148,7 +154,7 @@ public class Daily {
      */
     private static int[] updateClusters(EntityManager em, IndexSearcher searcher,
 					EE5DocClass.CidMapper cidMap, Date since) throws IOException {
-	ScoreDoc[] sd = getRecentArticles( em, searcher, since, null);
+	ScoreDoc[] sd = getRecentArticles( searcher, since, null);
 	// classify all recent docs
 	int mT[] = Classifier.classifyDocuments(em, searcher.getIndexReader(), sd,cidMap);
 	return mT;
@@ -160,7 +166,7 @@ public class Daily {
 	@param since Retrieve all ArXiv articles submitted since this date.
 	@param toDate Until this date (may be null)
      */
-    private static ScoreDoc[] getRecentArticles(EntityManager em, IndexSearcher searcher, Date since, Date toDate) throws IOException {
+    static ScoreDoc[] getRecentArticles(IndexSearcher searcher, Date since, Date toDate) throws IOException {
 	org.apache.lucene.search.Query q= 
 	    Queries.andQuery(Queries.mkDateRangeQuery(since, toDate),
 			     Queries.hasAidQuery());
@@ -171,7 +177,7 @@ public class Daily {
 	    (since ==null? "the beginning of time" : since) + 
 	    " to " + (toDate ==null? "now" : toDate);
 	msg += "; found " +  top.scoreDocs.length + " papers";	
-	System.out.println(msg);
+	Logging.info(msg);
 	
 	return top.scoreDocs;
     }
@@ -633,7 +639,7 @@ public class Daily {
 	EE5DocClass.CidMapper cidMap = new EE5DocClass.CidMapper(em);
 
 	Logging.info("(Re)Classifying documents dated since " + since);
-	ScoreDoc[] sd = getRecentArticles( em, searcher, since, null);
+	ScoreDoc[] sd = getRecentArticles( searcher, since, null);
 	Classifier.classifyDocuments(em, reader, sd,cidMap);
 
 	org.apache.lucene.search.Query q = Queries.hasUserQuery();
