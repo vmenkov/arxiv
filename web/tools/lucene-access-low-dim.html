@@ -54,7 +54,7 @@ The output file will contain DF values for the L features. The numbering of feat
 <p>For computing IDF, you also need to know the total number of documents in the collection over which the DF have been computed. This is reported to the stderr during the execution of the script; write down the value.
 
 <pre>
- ./low-dim-export.sh df 100 > df.tmp
+ ~vm293/arxiv/arxiv/low-dim-export.sh df 100 > df.tmp
 Sep 29, 2015 12:40:40 PM edu.rutgers.axs.sql.Logging info
 INFO: Reading vocabulary from file /data/arxiv/ee5/20150415/kmeans1024.csv
 ....
@@ -68,7 +68,7 @@ Sep 29, 2015 12:40:47 PM edu.rutgers.axs.sql.Logging info
 <p>To compute raw feature frequencies for a number of documents whose ArXiv IDs you know, use the <tt>aids</tt> command with the script. Put any number of ArXiv IDs on the command line after the  <tt>aids</tt> command:
 
 <pre>
-./low-dim-export.sh aids cond-mat/0004199 cond-mat/0004200  > tf.tsv
+~vm293/arxiv/arxiv/low-dim-export.sh aids cond-mat/0004199 cond-mat/0004200  > tf.tsv
 </pre>
 
 <p>If you have a long list of AIDs in a file (see some ideas on how to list document IDs in  our main <a href="lucene-access.html">Lucene datastore guide</a>), you can use it as follows:
@@ -81,11 +81,22 @@ cat id-list.txt | ./low-dim-export.sh aids -   > tf.tsv
 
 <p>For convenience, there is also a command (<tt>cat</tt>) to export
 document vectors for all documents belonging to a particular ArXiv major category (such as "physics") and a date range. For a lits of all major categories look at the source code for <a href="../doc/html/api/edu/rutgers/axs/sql/Categories.html">
-edu.rutgers.axs.sql.Categories</a> in TeamForge, 
+edu.rutgers.axs.sql.Categories</a> in Project My.ArXiv in TeamForge.
+<pre>
+ ~vm293/arxiv/arxiv/low-dim-export.sh cat physics 2013   > tf.tsv
+</pre>
+
+<p>The above is equivalent to setting the date range to 
+<pre>
+   2013-01-01 &le; date &lt 2014-01-01
+</pre>
+
+<p>
+One can use arbitrary date ranges by modifying the script ./low-dim-export.sh and supplying options -Dfrom=yyyy-mm-dd and -Dto=yyyy-mm-dd to the underlying Java app.
 
 
-
-
+<hr>
+<a href="./">[Back to the main Research Tools page]</a>
 
 
 </body>
