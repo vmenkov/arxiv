@@ -92,8 +92,15 @@ edu.rutgers.axs.sql.Categories</a> in Project My.ArXiv in TeamForge.
 </pre>
 
 <p>
-One can use arbitrary date ranges by modifying the script ./low-dim-export.sh and supplying options -Dfrom=yyyy-mm-dd and -Dto=yyyy-mm-dd to the underlying Java app.
-
+One can use arbitrary date ranges by modifying the script ./low-dim-export.sh and supplying options <tt>-Dfrom=yyyy-mm-dd</tt> and <tt>-Dto=yyyy-mm-dd</tt> to the underlying Java app. For example, using
+<pre>
+java ... -Dfrom=2013-01-01 -Dto=2014-01-01 edu.rutgers.axs.ee5.LowDimDocumentExporter
+</pre>
+is equivalent to 
+<pre>
+java ... edu.rutgers.axs.ee5.LowDimDocumentExporter 2013
+</pre>
+However, when using the -Dfrom and -Dto options, you can use arbitrary date values.
 
 <hr>
 <a href="./">[Back to the main Research Tools page]</a>
