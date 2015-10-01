@@ -18,10 +18,9 @@ import edu.rutgers.axs.search.Queries;
 import edu.rutgers.axs.ee4.Categorizer;
 import edu.rutgers.axs.ee4.DenseDataPoint;
 
-/** Document exporter (for Chen Bangrui, 2015-09). Exports documents
-    described as vectors in a low-dimensional space (words having
-    been mapped to word clusters).
-
+/** Document exporter (for Chen Bangrui in Frazier's team,
+    2015-09). Exports documents described as vectors in a
+    low-dimensional space (words having been mapped to word clusters).
  */
 public class LowDimDocumentExporter {
 
@@ -45,23 +44,46 @@ public class LowDimDocumentExporter {
 	a pretty expensive procedure, since the entire Lucene index
 	(full stored texts, too!) needs to be read; it does it at the rate of about
 	10,000-30,000 docs per minute on my laptop.
+
+	<p>Paramters maxn (if maxn&gt;0) and fraction (if fraction&lt;0)
+	can be used to only analyze some articles from the corpus, as a
+	quick sample.
+
+	@param maxn If maxn&ne;0, it is used as the restriction to the
+	total number of articles. This is used as a not very good of
+	quick sampling.
+
+	@fraction If fraction &lt; 1.0, it is used to only select some
+	percentage of articles for analysis. This is used for quick
+	sampling.
      */
-    static private void doAllDf(IndexSearcher searcher, Vocabulary voc, int maxn) throws IOException {
+    static private void doAllDf(IndexSearcher searcher, Vocabulary voc, int maxn, double fraction) throws IOException {
+
+	if (fraction <= 0 || fraction >1.0) throw new IllegalArgumentException("Illegal value of fraction=" + fraction +". The value must be in the range 0.0 < fraction <= 1.0"); 
+
 	Date since = null; 
 	ScoreDoc[] sd = Daily.getRecentArticles( searcher, since, null);
-	String msg="Found " + sd.length + " articles in the index";
+	String msg="Found " + sd.length + " articles in the index.";
+	if (fraction < 1.0) {
+	    msg += " Will only take sample of " + fraction + " of the index.";
+	}
 	if (maxn>0 &&  maxn < sd.length) {
-	    msg += ". Will analyze the first "+maxn+" of them";
+	    msg += " Will analyze no more than  "+maxn+" articles.";
 	}
 	Logging.info(msg);
 
 	int df[] = new int[voc.L];
-	for(int i=0; i<sd.length && (maxn<=0 || i<maxn); i++) {
+	int doneCnt=0;
+	for(int i=0; i<sd.length; i++) {
+	    if (doneCnt >= fraction*(i+1)) continue;
+
 	    DenseDataPoint p = Classifier.readArticle(sd[i].doc, voc.L, voc, searcher.getIndexReader());
 	    for(int k=0; k<voc.L; k++) {
 		if (p.elementAt(k)>0) df[k]++;
 	    }
-	    if ((i+1)% 50000==0) Logging.info("Done " + (i + 1) + " docs");
+	    doneCnt++;
+	    if (doneCnt% 50000==0) Logging.info("Done " + doneCnt + " docs");
+	    if (maxn>0 && doneCnt>=maxn) break;
 	}
 	for(int k=0; k<voc.L; k++) {
 	    System.out.println("" + k + "\t" + df[k]);
@@ -159,10 +181,11 @@ public class LowDimDocumentExporter {
 	} else if (cmd.equals("df")) {
 	    // compute document frequency for all word clusters
 	    int maxn=0;
+	    double fraction = ht.getDouble("fraction", 1.0);
 	    if (ja<argv.length) {
 		maxn=Integer.parseInt(argv[ja++]);
 	    }
-	    doAllDf(searcher,voc,maxn);
+	    doAllDf(searcher,voc,maxn, fraction);
 	} else {
 	    Logging.error("Unknown command: " + cmd);
 	    usage();

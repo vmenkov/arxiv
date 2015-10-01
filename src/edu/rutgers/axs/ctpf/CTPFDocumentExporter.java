@@ -26,7 +26,7 @@ import edu.rutgers.axs.recommender.*;
     <p> We only export the terms present in a specified pre-read
     vocabulary.
 
-    <P>The output file format is as outlined in http://www.cs.princeton.edu/~blei/lda-c/readme.txt :
+    <P>The output file format is somewhat similar to the one outlined in http://www.cs.princeton.edu/~blei/lda-c/readme.txt :
     <blockquote>
     <p>
 Under LDA, the words of each document are assumed exchangeable.  Thus,

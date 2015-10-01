@@ -101,9 +101,11 @@ The <a href="../LogoutServlet">logout link</a> -- use that to explicitly termina
 
 <li><A href="manual.html">JPQL and SQL query user guide</a>: explains how to use JPQL and SQL query to get the data you need. Lots of sample queries.
 
-<li><A href="accessing-actions.html">Accessing user action history</a>: special guide on extracting information on user actions, similar to what may be available in system logs on other systems. 
+<li><A href="accessing-actions.html">Accessing user action history</a>: special guide on extracting information on My.ArXiv user actions, similar to what may be available in system logs on other systems. 
 
 <li><a href="lucene-access.html">Extracting data from My.ArXiv's Lucene index</a>
+
+<li><a href="lucene-access-low-dim.html">Extracting data from My.ArXiv's Lucene index, as low-dimensional vectors</a> (for Frazier's team, esp. Chen Bangrui)
 
 <li><a href="/coaccess">Coaccess data service</a>: this is the locally deployed web service that makes use of the Coaccess database (Lucene data store) set up by Akilesh and Ziyu (<tt>/data/coaccess/round5/lucene_framework</tt>)
 
