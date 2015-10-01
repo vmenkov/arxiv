@@ -63,8 +63,17 @@ Sep 29, 2015 12:40:47 PM edu.rutgers.axs.sql.Logging info
 <strong>INFO: Found 793345 articles in the index. Will analyze the first 100 of them</strong>
 </pre>
 
+<h3>DF data file generated</h3>
 <p>A DF file generated ca. 2015-09-29 can be found in 
 /data/arxiv/ucb/df-1077209.tsv . As the name indicates, it is based on the 1077209 documents that were stored in our datastore at the time.
+
+<p>Although notionally we have L=1024 document clusters, the DF file only has non-zero DF values for 922 clusters. This is because 101 clusters are simply empty (the are no words assigned to them in kmeans1024.csv), and 1 cluster consists of a word ("</s>") that is not present in ArXiv articles stored in our data store (because we strip special characters before storing articles in the index).
+
+<p>Among the clusters present in some documents, some are much less common (i.e. have much lower DF values) than others. You can see them as follows:
+<pre>
+ grep -v '\b0$' df-1077209.tsv |sort -n -k2 non-empty.tsv |head
+</pre>
+(The above command removes zero-DF lines, and sort the rest based on the DF value).
 
 <h2>Exporting TF for specified documents</h2>
 
