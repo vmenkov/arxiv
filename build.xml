@@ -133,10 +133,9 @@
      <include name="tomcat-api.jar"/>
    </fileset>
 
-     <!-- catalina-ant.jar -->
-
-   <fileset dir="${lib}">  <!-- third-party JAR files, and our axs.jar -->
+   <fileset dir="${lib}">  <!-- from the lib directory, take all third-party JAR files, but not our axs.jar -->
      <include name="*.jar"/>
+     <exclude name="axs.jar"/>
    </fileset>
    <!-- Tomcat JAR files, local copy -->
    <!-- fileset dir="${tomcat.lib.copy}">
