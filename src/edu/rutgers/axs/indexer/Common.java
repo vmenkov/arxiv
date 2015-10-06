@@ -68,12 +68,6 @@ public class Common {
 	return  (scoreDocs.length < 1) ? -1 : scoreDocs[0].doc;
     }
 
-    /** Add (or subtract) so many days to the given date */
-    static public Date plusDays(Date d, int days) {
-	long msec = d.getTime() + days * 24L * 3600L * 1000L;
-	return new Date(msec);
-    }
-
     /** Creates a query which can be used to find a specific
 	user-uploaded document */
     public static BooleanQuery userFileQuery(String user, String file) {

@@ -1,4 +1,4 @@
-package edu.rutgers.axs.sql; //.web;
+package edu.rutgers.axs.sql; 
 
 import java.util.logging.*;
 import java.io.*;

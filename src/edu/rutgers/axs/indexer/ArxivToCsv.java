@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.io.*;
 import java.net.*;
 
-import javax.persistence.*;
+//import javax.persistence.*;
 
 // stuff for handling XML
 import org.apache.xerces.parsers.DOMParser;
@@ -13,7 +13,7 @@ import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 import edu.rutgers.axs.ParseConfig;
-import edu.rutgers.axs.sql.Logging;
+//import edu.rutgers.axs.sql.Logging;
 
  /** The application for pulling article metadata from the main arxiv
      server using the OAI interface, and saving them as a CSV file,
@@ -45,7 +45,7 @@ import edu.rutgers.axs.sql.Logging;
      20:30)"
 
  */
-public class ArxivToCsv {
+public class ArxivToCsv extends ArxivImporterBase {
 
     /*  Fields requested by Laurent: <pre>
 -id     
@@ -97,9 +97,9 @@ public class ArxivToCsv {
 	try {
 
 	    while( max<0 || pagecnt < max) 	 {
-		String us = ArxivImporter.makeURL( tok, from, until);
+		String us = makeURL( tok, from, until);
 		System.out.println("At "+new Date()+", requesting: " + us);
-		Element e = ArxivImporter.getPage(us);	    
+		Element e = getPage(us);	    
 		tok = parseResponse(e,w);
 		w.flush();
 		pagecnt++;
@@ -149,7 +149,7 @@ public class ArxivToCsv {
 	for(Node n=outer.getFirstChild(); n!=null; n=n.getNextSibling()) {
 	    if (!(n instanceof Element)) continue;
 	    String name = n.getNodeName();
-	    if (name.equals( ArxivImporter.Tags.RECORD)) {
+	    if (name.equals( Tags.RECORD)) {
 		importRecord((Element)n,w); 
 	    } else if (name.equals("resumptionToken")) {
 		// <resumptionToken cursor="0" completeListSize="702029">245357|1001</resumptionToken>
@@ -195,7 +195,7 @@ public class ArxivToCsv {
 	"header" and "metadata" elements.
      */
     public static HashMap<String,String> parseRecordElement(Element e)  throws IOException {
-	Element header = XMLUtil.findChild(e, ArxivImporter.Tags.HEADER, false);
+	Element header = XMLUtil.findChild(e, Tags.HEADER, false);
 	if (header!=null) {
 	    String status=header.getAttribute("status");
 	    if (status!=null && status.equals("deleted")) return null;
@@ -203,7 +203,7 @@ public class ArxivToCsv {
 
 	//	org.apache.lucene.document.Document
 	HashMap<String,String>	    doc = new 	HashMap<String,String>();
-	XMLUtil.assertElement(e,ArxivImporter.Tags.RECORD);
+	XMLUtil.assertElement(e, Tags.RECORD);
 
 	xml2csvMap.process(e, doc);
 	return doc;
@@ -240,7 +240,7 @@ public class ArxivToCsv {
 
    static void usage(String m) {
 	System.out.println("Arxiv-to-CSV Tool");
-	System.out.println("Usage: java [options] ArxivToCsv [max-page-cnt]");
+	System.out.println("Usage: java [options] ArxivToCsv csv [max-page-cnt]");
 	System.out.println("Options:");
 	System.out.println(" [-Dout=detail.csv]   : out file");
 	System.out.println(" [-Dfrom=2013-01-01]  : first day of the date range (inclusive), in the YYYY-MM-DD format");
@@ -264,18 +264,14 @@ public class ArxivToCsv {
 	String tok=ht.getOption("token", null);
 	// The name of the output file
 	String outfile=ht.getOption("out", "details.csv");
-	String from=ArxivImporter.getFrom(ht); // based on "from" and "days"
-	String until=ArxivImporter.getUntil(ht); // based on "until"
+	String from=getFrom(ht); // based on "from" and "days"
+	String until=getUntil(ht); // based on "until"
      
 	ArxivToCsv imp =new  ArxivToCsv();
 	
 	int ja=0;
 	if (argv.length==0) usage();
 	final String cmd =argv[ja++];
-	
-	PrintWriter fw = new PrintWriter(new FileWriter(outfile));
-	fw.println(headerToString());
-	fw.flush();
 	
 	if ( cmd.equals("help")) {
 	    usage();
@@ -287,12 +283,17 @@ public class ArxivToCsv {
 		} catch(Exception ex) {}
 	    }
 	    System.out.println("Processing web data, up to "+max + " pages; from=" + from +  " until=" + until);
+
+	    PrintWriter fw = new PrintWriter(new FileWriter(outfile));
+	    fw.println(headerToString());
+	    fw.flush();
+	
 	    imp.importAll(tok, max, from, until, fw);
+	    fw.close();
 	} else {
 	    System.out.println("Unrecognized command: " + cmd);
 	}
 	System.out.println("imported "+imp.pcnt+" docs");
-	fw.close();
     }
     
 }

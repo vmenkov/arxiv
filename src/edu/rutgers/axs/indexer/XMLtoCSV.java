@@ -1,13 +1,5 @@
 package edu.rutgers.axs.indexer;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.DateTools;
-
-import edu.cornell.cs.osmot.cache.Cache;
-import edu.cornell.cs.osmot.options.Options;
-import edu.cornell.cs.osmot.logger.Logger;
-
 import java.util.*;
 import java.util.regex.*;
 import java.io.*;
@@ -53,9 +45,9 @@ class XMLtoCSV extends XMLtoHash {
 	map.ignore("report-no");
 	map.ignore("proxy");
 
-	map.recurse(ArxivImporter.Tags.RECORD);
-	map.recurse(ArxivImporter.Tags.HEADER);
-	map.recurse(ArxivImporter.Tags.METADATA);
+	map.recurse(ArxivImporterBase.Tags.RECORD);
+	map.recurse(ArxivImporterBase.Tags.HEADER);
+	map.recurse(ArxivImporterBase.Tags.METADATA);
 	map.recurse("arXiv");
 	return map;
     }
