@@ -88,7 +88,7 @@ public class ArxivImporter extends ArxivImporterBase {
 	    Element hie = XMLUtil.findChild(e, Tags.IDENTIFIER, false);
 	    String oaiId = parseIdentifierTag(hie);
 	    if (status!=null && status.equals("deleted")) {
-		System.out.println("Found record for deleted document " + oaiId);
+		System.out.println("Found record for deleted document " +oaiId);
 		return null;
 	    }
 	}
@@ -97,7 +97,6 @@ public class ArxivImporter extends ArxivImporterBase {
 	XMLUtil.assertElement(e,Tags.RECORD);
 	xml2luceneMap.process(e, doc);
 	return doc;
-
     }
 
     private IndexWriter makeWriter() throws IOException {
@@ -577,13 +576,7 @@ public class ArxivImporter extends ArxivImporterBase {
 
 	    }
 
-	    if (optimize) {
-		System.out.println("At "+new Date()+", optimizing index...");
-		IndexWriter writer = makeWriter(); 
-		writer.optimize();
-		System.out.println("At "+new Date()+", done optimizing index.");
-		writer.close();
-	    }
+	    if (optimize) optimizeIndex();
 	} finally {
 	    //	    reader.close();
 	    //	    writer.close();
@@ -649,6 +642,29 @@ public class ArxivImporter extends ArxivImporterBase {
 	}
     }
 
+    /* Optimizes the index, using a new writer */
+    private void optimizeIndex() throws IOException {
+	System.out.println("At "+new Date()+", optimizing index...");
+	IndexWriter writer = makeWriter(); 
+	writer.optimize();
+	System.out.println("At "+new Date()+", done optimizing index.");
+	writer.close();
+    }
+
+
+    /** Writes out the list of files whose bodies were not available */
+    private void writeMissingBodyList() throws IOException {
+	File ms = (new File("missing.txt")).getAbsoluteFile();
+	if (!ms.getParentFile().canWrite() ||
+	    ms.exists() && !ms.canWrite()) {
+	    Logging.error("Cannot write to file " + ms +"; please check file and directory permissions!");
+	}
+	PrintWriter fw = new PrintWriter(new FileWriter(ms));
+	for(String s: this.missingBodyIdList){
+	    fw.println(s);
+	}
+	fw.close();
+    }
 
     static void usage() {
 	usage(null);
@@ -749,17 +765,11 @@ public class ArxivImporter extends ArxivImporterBase {
 		    writer.close();
 		} else {
 		    System.out.println("parseResponse");
-		    tok = imp.parseResponse(e, //writer, reader, 
-					    rewrite);
+		    tok = imp.parseResponse(e, rewrite);
 		    System.out.println("resumptionToken =  " + tok);
 		}
 	    }
-	    if (optimize) {
-		System.out.println("Optimizing index... ");
-		IndexWriter writer = imp.makeWriter(); 
-		writer.optimize();
-		writer.close();
-	    }
+	    if (optimize) imp.optimizeIndex();
 
 	} else if (cmd.equals("test")) {
 	    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -771,44 +781,25 @@ public class ArxivImporter extends ArxivImporterBase {
 
 	    //  DateTools.timeToString(date.getTime(),DateTools.Resolution.MINUTE),
 
-	    String b = DateTools.dateToString(b1,DateTools.Resolution.HOUR  );
+	    String b = DateTools.dateToString(b1,DateTools.Resolution.HOUR);
 
 	    // b is understood as time in GMT 
 	    Date c = DateTools.stringToDate(b);
 	    String d = dateFormat.format(c);
-	    System.out.println( a + " --> " + b1 + " --> "+ b + " --> "
- +c + " --> " +d);
+	    System.out.println( a+ " --> " +b1+ " --> "+b+ " --> "+c+" --> "+d);
 
 	} else if (cmd.equals("articles")) {
 	    // Get specified articles
-	    IndexReader reader = Common.newReader();
-	    IndexWriter writer =  imp.makeWriter(); 
 	    for(ArgvIterator it=new ArgvIterator(argv,1); it.hasNext();){
 		String aid = it.next();
 		if (aid.trim().equals("")) continue;
-		imp.importOnePage(  aid, rewrite//, reader, writer
-				    );
+		imp.importOnePage(  aid, rewrite );
 	    }
-	    if (optimize) {
-		System.out.println("Optimizing index... ");
-		writer.optimize();
-	    }
-	    reader.close();
-	    writer.close();
+	    if (optimize) imp.optimizeIndex();
 	} else {
 	    System.out.println("Unrecognized command: " + cmd);
 	}
 	System.out.println("imported "+imp.pcnt+" docs, among which missing body files for "+ imp.missingBodyIdList.size() +" docs");
-	File ms = (new File("missing.txt")).getAbsoluteFile();
-	if (!ms.getParentFile().canWrite() ||
-	    ms.exists() && !ms.canWrite()) {
-	    throw new IOException("Cannot write file " + ms +"; please check file and directory permissions!");
-	}
-	PrintWriter fw = new PrintWriter(new FileWriter(ms));
-	for(String s: imp.missingBodyIdList){
-	    fw.println(s);
-	}
-	fw.close();
+	imp.writeMissingBodyList();
     }
 }
-
