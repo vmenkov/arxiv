@@ -3,7 +3,6 @@ package edu.rutgers.axs.ee4;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-//import java.text.*;
 
 import javax.persistence.*;
 
@@ -23,7 +22,7 @@ abstract class ArxivUserInferrer {
 	action.
 
 	@return A string that identifies the user in some
-	way. Possibly null, if it think the user can't be inferred.
+	way. Possibly null, if it thinks the user can't be inferred.
      */
     abstract String inferUser(String ip_hash, String cookie_hash);
 

@@ -20,21 +20,14 @@ import edu.rutgers.axs.sql.DataFile;
 
 
 /** Auxiliary methods for processing usage logs in Json format
- */
-public class Json {
 
-    public static JSONObject readJsonFile(String fname) throws IOException, JSONException {
-	Reader fr = fname.endsWith(".gz") ?
-	    new InputStreamReader(new GZIPInputStream(new FileInputStream(fname))) :
-	    new FileReader(fname);
-	JSONTokener tok = new JSONTokener(fr);
-	JSONObject jsoOuter = new JSONObject(tok);
-	fr.close();
-	return jsoOuter;
-    }
+    <p> The usage logs show arxiv.org's entire usage history for 10+
+    years back, and are supplied by Paul Ginsparg's team via rsync.
+    The files are in JSON format; the kind of entries we find there
+    may be in one of the following two formats:
 
-
-    /**  Old format
+    <pre>
+    Old format
       {
             "referrer": "http://arxiv.org/find", 
             "ip_hash": "30505f2428eb9b6dd2617307ced6d8b3", 
@@ -55,8 +48,25 @@ public class Json {
       "user_agent": "Mozilla/5.0 (X11; U; Linux i686; en-GB; rv:1.9.0.10) Gecko/2009042523", "utc": 126230400
 2
     }
+    </pre>
+
+    <p>There is also an auxiliary file that can be used to associate multiple
+    cookies with a single user.
 
     */
+public class Json {
+
+    public static JSONObject readJsonFile(String fname) throws IOException, JSONException {
+	Reader fr = fname.endsWith(".gz") ?
+	    new InputStreamReader(new GZIPInputStream(new FileInputStream(fname))) :
+	    new FileReader(fname);
+	JSONTokener tok = new JSONTokener(fr);
+	JSONObject jsoOuter = new JSONObject(tok);
+	fr.close();
+	return jsoOuter;
+    }
+
+
 
     /** Do we process JSON records with this particular action type?
      */
@@ -72,9 +82,10 @@ public class Json {
 	return false;
     }
 
-    /** Is this action type one of "download" types?
+    /** Is this action type one of the "download" types?
 	@param x One of the action types considered "acceptable"
 	by typeIsAcceptable()
+	@return true if x is a "download" action type
      */
     static private boolean typeIsDownload(String x) {
 	final String types[] = { "download", "ftp_download"};
@@ -84,6 +95,10 @@ public class Json {
 	return false;
     }
 
+    /** Converts an ArXiv article ID to the standard format. (Removes
+	the version-indicator part, which may be found in some log
+	entries).
+     */
     public static String canonicAid(String aid) {
 	aid = aid.replaceAll("v(\\d+)$", "");
 	//if (aid.endsWith("v")) return aid.substring(0, aid.length()-1);
@@ -221,6 +236,7 @@ public class Json {
 	}
 
 	HashMap<String,PrintWriter> writers = new HashMap<String,PrintWriter>();
+	/** Saves one log entry into an appropriate file */
 	void save(String majorCat, String ip_hash, String cookie, String aid) throws IOException {
 	    PrintWriter w = writers.get(majorCat);
 	    if (w==null) {
@@ -230,7 +246,8 @@ public class Json {
 	    }
 	    w.println(ip_hash + "," + cookie + "," + aid);
 	}
-	
+	/** Must call this method once done processing input data, in order
+	 to close all output streams. */
 	void closeAll() {
 	    for(PrintWriter w: writers.values()) {
 		w.flush();
@@ -239,10 +256,12 @@ public class Json {
 	}
     }
 
-    /**  output for David Blei's team, as per his 2013-11-11 msg
+    /**  Produces output for David Blei's team, as per his 2013-11-11 msg:
+	 <pre>
 	 2. a file with user data.  each line contains
 
 	 user_hash article_id date downloaded_y/n
+	 </pre>
     */
     static void convertJsonFileBlei(String fname, ArxivUserInferrer inferrer,
 				    File outfile) throws IOException, JSONException {
@@ -294,10 +313,17 @@ public class Json {
     }
 
     /**  Keeps specific events from usage logs
-     *   modelled from convertJsonFileBlei()
-     *   - it's basically convertJsonFileBlei but it keeps a subset of events
-	 	 - output: a file with user data.  each line contains
+	 modelled from convertJsonFileBlei()
+	 - it's basically convertJsonFileBlei but it keeps a subset of events
+	 
+	 @param outfile Output file. A file with user data.  each line contains
+	 <pre>
 			 user_hash article_id date downloaded_y/n
+	 </pre>
+
+	 @author Laurent Charlin
+			 
+			 
     */
     static void convertJsonFileBleiExtended(String fname, ArxivUserInferrer inferrer,
 			File outfile) throws IOException, JSONException {

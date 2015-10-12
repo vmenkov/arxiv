@@ -3,13 +3,15 @@ package edu.rutgers.axs.ee4;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-//import java.text.*;
 
 import javax.persistence.*;
 
 import org.json.*;
 
-/** Information about registered Arxiv users, from tc.json */
+/** Information about registered Arxiv users, from tc.json. It links
+    a registered user to the list of cookies known to be associated
+    with him, and allows the reverse lookup (cookie to user) as well.
+*/
 class ArxivUserTable  {
     HashMap<String,Vector<String>> user2cookies = new HashMap<String,Vector<String>>();
     HashMap<String,String> cookie2user =  new HashMap<String,String>();

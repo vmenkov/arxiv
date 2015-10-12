@@ -211,7 +211,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 in the javac command, to make it easier for people elsewhere to use our
 code; but not anymore. -->
 <target name="compile" depends="init"
-        description="Compile the source" >
+        description="Compile the Java source code">
   <!-- Compile the java code from ${src} into ${build} -->
   <javac srcdir="${src}" destdir="${build}"
 	 includes="edu/**,org/**"  optimize="on"
@@ -224,7 +224,7 @@ code; but not anymore. -->
 
 </target>
 
-<target name="enhance">
+<target name="enhance" description="Enhance class files for OpenJPA">
   <!-- META-INF/persistence.xml should be under a directory that's 
        in the classpath; so we simply include it into the jar -->
   <copy  file="META-INF/persistence.xml" todir="${build}/META-INF"/>
@@ -376,7 +376,6 @@ Building a JAR file
     <fileset dir="doc/"/>
   </copy>
 
-
   <!-- copy todir="${arxiv.doc}/html">
     <fileset dir="sample-data/" includes="sample.xml,sample-suite-out.xml,eg-learner-param-1.xml"/>
   </copy -->
@@ -462,8 +461,6 @@ http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
   <reload url="${reload.url}" username="vmenkov2" password="vmenkov2-manager-script" path="/${app.name}"/>
 </target>
 
-
-
 <!-- Sample JPA application -->
 <target name="run-sample" depends="jar"
         description="Run the example Main program">
@@ -490,7 +487,7 @@ http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
   
   <java classname="edu.rutgers.axs.sql.ShowAnnotations" 
 	classpathref="classpath" fork="yes"   failonerror="yes">
-    <arg value="edu.rutgers.axs.sql.Respondent"/>
+    <arg value="edu.rutgers.axs.sql.User"/>
   </java>
 </target>
 
@@ -506,14 +503,7 @@ http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
   </java>
 </target>
 
-<target name="run-test-edit" depends="jar" description="test AddRespondent">
-  <java classname="edu.rutgers.axs.web.AddRespondent"
-	classpathref="classpath" fork="yes"   failonerror="yes">
-    <arg line="53"/>
-  </java>
-</target>
-
- <property name="pvt" location="../private"/>
+<property name="pvt" location="../private"/>
 
 <target name="getconf">
     <copy todir=".">
@@ -532,27 +522,6 @@ http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
       </fileset>
     </copy>
 </target>
-
-<!--
-    <target name="run-import" description="CSV import, assuming code already deployed">
-        <java classname="edu.rutgers.comminfo.icd.ImportCSV"
-	      classpathref="classpath.deployed" fork="yes"   failonerror="yes">
-	  <arg line="input.csv"/>
-          <sysproperty key="openjpa.Log"
-                value="DefaultLevel=WARN"/>
-	</java>
-    </target>
-
-    <target name="run-import-local" depends="jar" description="CSV import">
-        <java classname="edu.rutgers.comminfo.icd.ImportCSV"
-	      classpathref="classpath" fork="yes"   failonerror="yes">
-	  <arg line="input.csv"/>
-          <sysproperty key="openjpa.Log"
-                value="DefaultLevel=WARN"/>
-	</java>
-    </target>
--->
-
 
 </project>
 

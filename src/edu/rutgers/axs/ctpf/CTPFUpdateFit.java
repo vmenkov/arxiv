@@ -23,7 +23,12 @@ import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.util.Hosts;
 
-/** Partial update of the CTPF Fit data.
+/** Partial update of the CTPF Fit data. This class provides a
+    command-line application with several commands; one of them
+    ("export") causes recent documents exported in a format suitable
+    by processing by the LDA application; another ("post.lda")
+    processes the output of the LDA app, converting sample counts
+    to a theta file for use in the CTPF recommender.
  */
 public class CTPFUpdateFit {
 
