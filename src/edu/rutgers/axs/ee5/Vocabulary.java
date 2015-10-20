@@ -172,6 +172,10 @@ class Vocabulary {
     /** Reads a vocabulary file (actually, a word - to - word cluster assignment file) */
     static Vocabulary readVocabulary()  throws IOException{
 	File f = Files.getWordClusterFile();
+	return readVocabulary(f);
+    }
+
+    static Vocabulary readVocabulary(File f)  throws IOException{
 	if (!f.canRead()) {
 	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
 	}

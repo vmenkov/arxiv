@@ -142,7 +142,12 @@ public class LowDimDocumentExporter {
 
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
-	Vocabulary voc = Vocabulary.readVocabulary();
+
+
+
+	String altVoc = ht.getOption("voc",null);
+	Vocabulary voc = altVoc==null? Vocabulary.readVocabulary():
+	    Vocabulary.readVocabulary(new File(altVoc));
 
 	if (cmd.equals("aids")) { // export specified docs as feature vectors
 	    int errcnt = 0;
