@@ -47,6 +47,8 @@ set cp="${cp}:$home/apache-openjpa-2.1.1/openjpa-all-2.1.1.jar"
 
 set opt="-cp ${cp} ${opt}"
 
+# Add "-Dvoc=somefile=.csv" to use an alternative file as a vocabulary file
+
 #echo "opt=$opt"
 
 java $opt edu.rutgers.axs.ee5.LowDimDocumentExporter $argv
