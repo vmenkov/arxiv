@@ -79,7 +79,7 @@ public class TrivialCentroids {
 		    continue;
 		}
 		usedCnt++;
-		DenseDataPoint dp = Classifier.readArticle(doc, L, voc);
+		DenseDataPoint dp = ArticleDenseDataPoint.readArticle(doc, voc);
 		dp.l1normalize();
 		center.add(dp);
 	    }

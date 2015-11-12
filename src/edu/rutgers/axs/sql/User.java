@@ -180,7 +180,10 @@ import edu.rutgers.axs.bernoulli.Bernoulli;
 	    /** This is not an actual program, but simply a code to 
 		use when displaying a session-based suggestion list 
 		for an anonymous user*/
-	    SB_ANON;
+	    SB_ANON,
+	    /** Peter Frazier's and Chen Bangrui's Upper Confidence Bound */
+	    UCB
+	    ;
 
 	/** Do we need to use the Bernoulli Exploration Engine with
 	 * this program?	 */

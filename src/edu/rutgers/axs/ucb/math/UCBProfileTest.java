@@ -1,4 +1,4 @@
-package edu.rutgers.axs.ucb;
+package edu.rutgers.axs.ucb.math;
 
 import static org.junit.Assert.*;
 

@@ -102,7 +102,7 @@ public class Classifier {
 
 		    if (needAssignment) {
 			cnt++;
-			ArticleDenseDataPoint q=readArticle(doc, L, voc);
+			ArticleDenseDataPoint q=ArticleDenseDataPoint.readArticle(doc, voc);
 			int localCid = assignArticleToCluster(q, logPvecs, L);
 			EE5DocClass cluster = cidMap.getCluster(cat, localCid);
 			if (cluster==null) {
@@ -222,7 +222,7 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	    String name = doc.get(ArxivFields.PAPER);
 	    if (name==null) name=doc.get(ArxivFields.UPLOAD_FILE);
 
-	    ArticleDenseDataPoint q = readArticle(doc, L, voc);
+	    ArticleDenseDataPoint q = ArticleDenseDataPoint.readArticle(doc,  voc);
 	    int cid = assignArticleToCluster(q, cid2logPvec, L);
 	    EE5DocClass cluster = cidMap.id2dc.get(cid);
 	    assignedClusters.add(cluster);
@@ -407,38 +407,6 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	return v;
     }
       
-    /** Fields whose content we use to cluster documents */
-    final static String fields[] = {
-	ArxivFields.TITLE,
-	ArxivFields.AUTHORS,
-	ArxivFields.ABSTRACT,
-	ArxivFields.ARTICLE
-    };
-    
-    /** Reads in all relevant fields of the specified article from
-	Lucene, and converts them into a single vector in the
-	L-dimensional word2vec word cluster space.
-     */
-    static ArticleDenseDataPoint readArticle(int docno, int L, Vocabulary voc, IndexReader reader) throws IOException {
-	Document doc = reader.document(docno);
-	return readArticle(doc, L, voc);
-    }
-
-    static ArticleDenseDataPoint readArticle(Document doc, int L, Vocabulary voc) throws IOException {
-
-	boolean missingBody  = false;
-	double[] v = new double[L];
-	for(String field: fields) {
-	    String s = doc.get(field);
-	    if (s==null) {
-		if (field.equals(ArxivFields.ARTICLE))missingBody=true;
-		continue;
-	    }
-	    voc.textToVector(s, v);	    
-	}
-	return new ArticleDenseDataPoint(v, missingBody);
-    }
-
     private static Vector<DenseDataPoint> computeLogP(Vector<DenseDataPoint> pvec) {
 	Vector<DenseDataPoint> logp = new Vector<DenseDataPoint>(pvec.size());
 	//int i=0;
@@ -498,20 +466,6 @@ classifyNewDocsCategoryBlind(EntityManager em, IndexReader reader, ScoreDoc[] sc
 	a.setEe5classId(cid);   // null
 	a.setEe5missingBody(missingBody);
 	em.persist(a);
-    }
-
-    /** Represents the content of the article as a DenseDataPoint,
-	as well as some additional information about the provenance of 
-	the data.
-     */
-    static private class ArticleDenseDataPoint extends DenseDataPoint {
-	/** True if the vector was based only on the metadata, because
-	    the article body was not stored in the database */
-	final boolean missingBody;
-	ArticleDenseDataPoint(double z[], boolean _missingBody) {
-	    super(z);
-	    missingBody = _missingBody;
-	}
     }
 
 }

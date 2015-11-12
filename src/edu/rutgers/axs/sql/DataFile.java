@@ -102,13 +102,18 @@ import edu.rutgers.axs.ParseConfig;
 	    PPP_SUGGESTIONS,
 	    /** Toronto System: original PDF and text obtained by pdf2txt */
 	    UPLOAD_PDF,
-	    UPLOAD_TXT;
+	    UPLOAD_TXT,
+	    /* Peter Frazier's and Chen Bangrui's UCB recommender */
+	    UCB_USER_PROFILE,
+	    UCB_SUGGESTIONS,
+	    ;
 
 	/** Is this a user profile file? */
 	public boolean isProfile() {
 	    return this==USER_PROFILE ||
 		this==TJ_ALGO_2_USER_PROFILE ||
-		this==PPP_USER_PROFILE;
+		this==PPP_USER_PROFILE ||
+		this==UCB_USER_PROFILE;
 	}
 
 	/** What task should we run to produce this kind of data? */

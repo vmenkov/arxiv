@@ -14,7 +14,6 @@ import edu.rutgers.axs.ParseConfig;
 import edu.rutgers.axs.indexer.*;
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.search.Queries;
-//import edu.rutgers.axs.recommender.*;
 import edu.rutgers.axs.ee4.Categorizer;
 import edu.rutgers.axs.ee4.DenseDataPoint;
 
@@ -77,7 +76,7 @@ public class LowDimDocumentExporter {
 	for(int i=0; i<sd.length; i++) {
 	    if (doneCnt >= fraction*(i+1)) continue;
 
-	    DenseDataPoint p = Classifier.readArticle(sd[i].doc, voc.L, voc, searcher.getIndexReader());
+	    DenseDataPoint p = ArticleDenseDataPoint.readArticle(sd[i].doc,  voc, searcher.getIndexReader());
 	    for(int k=0; k<voc.L; k++) {
 		if (p.elementAt(k)>0) df[k]++;
 	    }
@@ -123,7 +122,7 @@ public class LowDimDocumentExporter {
 		usedCnt++;
 	    }
 
-	    DenseDataPoint p = Classifier.readArticle(docno, voc.L, voc, reader);
+	    DenseDataPoint p = ArticleDenseDataPoint.readArticle(docno, voc, reader);
 	    out.print(aid);
 	    p.printAsSparse(out);
 	    out.println();
@@ -160,8 +159,7 @@ public class LowDimDocumentExporter {
 		    errcnt++;
 		    continue;
 		}
-		//	    Classifier.ArticleDenseDataPoint p = ...
-		DenseDataPoint p = Classifier.readArticle(docno, voc.L, voc, reader);
+		DenseDataPoint p = ArticleDenseDataPoint.readArticle(docno, voc, reader);
 		out.print(aid);
 		p.printAsSparse(out);
 		out.println();

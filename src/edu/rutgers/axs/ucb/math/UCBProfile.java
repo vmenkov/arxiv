@@ -1,4 +1,6 @@
-package edu.rutgers.axs.ucb;
+package edu.rutgers.axs.ucb.math;
+
+import java.io.*;
 
 /** Represents the user's parameters in the UCB recommender
  * @author Bangrui 
@@ -99,5 +101,30 @@ public class UCBProfile {
 	// hat{x}(x) + K(k)[z(k) - C(k)hat{x}(k)]
 	for (int i = 0; i < feature_num; i++)
 	    this.mu[i] = this.mu[i] + temp_vector[i] * reward_corr;
+    }
+
+    static public UCBProfile readProfile(File f, int L) throws IOException {
+	LineNumberReader r = new LineNumberReader(new FileReader(f));
+
+	double[][]  Sigma = new double[L][];
+	double[] mu=null;
+  
+
+	String s=null;
+	int lineNo = 0;
+	while((s = r.readLine())!=null) {
+	    if (lineNo > L)  throw new IllegalArgumentException("UCBProfile.readProfile(" + f + "): found more than expected " + L + "+1 lines");
+	    String[] q=s.split("\\s+");
+	    if (q.length != L) throw new IllegalArgumentException("UCBProfile.readProfile(" + f + "): found " + q.length + " tokens on line " + r.getLineNumber() + ", while expecting " + L);
+	    double [] v = new double[L];
+	    for(int i=0; i<L; i++) {
+		v[i] = Double.valueOf(q[i]);
+	    }
+	    if (lineNo==0) mu = v;
+	    else Sigma[lineNo-1]=v;	    
+	    lineNo++;
+	}
+	if (lineNo!=L+1) throw new IllegalArgumentException("UCBProfile.readProfile(" + f + "): found onlu "+lineNo+" lines, fewer than expected " + L + "+1 lines");
+	return new UCBProfile(Sigma,mu);
     }
 }

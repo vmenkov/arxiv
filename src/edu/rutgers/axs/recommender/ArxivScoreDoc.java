@@ -41,7 +41,7 @@ public class ArxivScoreDoc implements Comparable<ArxivScoreDoc> {
 	doc=_docno;  score=_score;
     }
 
-    static ArxivScoreDoc[] toArxivScoreDoc(ScoreDoc[] a) {
+    static public ArxivScoreDoc[] toArxivScoreDoc(ScoreDoc[] a) {
 	ArxivScoreDoc[] b = new  ArxivScoreDoc[a.length];
 	for(int i=0; i<a.length; i++) {
 	    b[i] = new ArxivScoreDoc(a[i]);

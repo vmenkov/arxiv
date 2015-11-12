@@ -11,7 +11,7 @@ import edu.rutgers.axs.sql.Logging;
     a text.
  */
 
-class Vocabulary {
+public class Vocabulary {
 
     /** The number of word clusters (= the dimension of the
 	low-dimensional feature space, into which documents 
@@ -147,8 +147,15 @@ class Vocabulary {
 	return best;
     }
 
-    /** Converts a document to a vector in the word2vec word cluster
-	space */
+    /** Converts a document (a string of text) to a vector in the
+	word2vec word cluster space. A greedy method is used: a
+	longest multiword starting at the beginning of the text is found
+	and removed, with the appropriate component of the
+	result vector incremented; then the process is repeated on the
+	remainder of the document, and so on.
+	@param text The document's text to parse. 
+	@param v Output parameter: the document vector is added to v. If v is null, a new array of the size this.L is allocated.
+    */
     double[] textToVector(String text, double[] v) {
 	if (v==null) v = new double[L];
 	text=text.toLowerCase().trim();
@@ -170,12 +177,12 @@ class Vocabulary {
     }
 
     /** Reads a vocabulary file (actually, a word - to - word cluster assignment file) */
-    static Vocabulary readVocabulary()  throws IOException{
-	File f = Files.getWordClusterFile();
-	return readVocabulary(f);
+    static public Vocabulary readVocabulary()  throws IOException{
+	return readVocabulary(null);
     }
 
-    static Vocabulary readVocabulary(File f)  throws IOException{
+    static public Vocabulary readVocabulary(File f)  throws IOException{
+	if (f==null)  f = Files.getWordClusterFile();
 	if (!f.canRead()) {
 	    throw new IOException("Vocabulary clustering file " + f + " does not exist or is not readable");
 	}
