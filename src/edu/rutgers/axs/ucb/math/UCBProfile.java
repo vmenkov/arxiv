@@ -2,9 +2,17 @@ package edu.rutgers.axs.ucb.math;
 
 import java.io.*;
 
-/** Represents the user's parameters in the UCB recommender
- * @author Bangrui 
- *
+/** Represents the user's parameters in the UCB recommender.
+    
+    <h3>Saving to text files</h3> <p>This class also has methods for
+    saving a user profile into a text file and reading it back. The
+    format is as follows: the file has L lines, with L numeric values
+    in each line.  The first line represents vector mu, the remaining
+    lines, matrix Sigma.
+    
+    @author Bangrui Chen
+    @author Vladimir Menkov
+  
  */
 public class UCBProfile {
     double[][]  Sigma;
@@ -12,7 +20,7 @@ public class UCBProfile {
     // This lambda is the noise, which is predefined.
     // For test purpose, we can first set it to be 0.01.
     static double lambda = 0.1;
-    UCBProfile(double [][] _Sigma, double[] _mu)  
+    public UCBProfile(double [][] _Sigma, double[] _mu)  
     { Sigma =_Sigma; mu = _mu; }
     /** Updates this user profile, replacing the values (Sigma_t, mu_t)
 	with (Sigma_{t+1}, mu_{t+1} ).
@@ -102,6 +110,36 @@ public class UCBProfile {
 	for (int i = 0; i < feature_num; i++)
 	    this.mu[i] = this.mu[i] + temp_vector[i] * reward_corr;
     }
+
+    /** Saves the profile to the specified file. Before doing so,
+	verifies that the necessary directory exists, and if it does
+	not, tries to create it.
+     */
+    public void save(File f) throws IOException {       
+	File g = f.getParentFile();
+	if (g!=null && !g.exists()) {
+	    boolean code = g.mkdirs();
+	    //Logging.info("Creating dir " + g + "; success=" + code);
+	    if (!code) throw new IOException("Failed to create directory " + g);
+	}
+
+	PrintWriter w= new PrintWriter(new FileWriter(f));
+	save(w);
+	w.close();
+    }
+
+    public void save(PrintWriter w) throws IOException {
+	final int L = mu.length;
+	for(int i=-1; i<L; i++) {
+	    double q[] = (i<0)? mu : Sigma[i];
+	    for(int j=0; j<L; j++) {
+		if (j>0) w.print("\t");
+		w.print(q[j]);
+	    }
+	    w.println();
+	}
+    }
+
 
     static public UCBProfile readProfile(File f, int L) throws IOException {
 	LineNumberReader r = new LineNumberReader(new FileReader(f));

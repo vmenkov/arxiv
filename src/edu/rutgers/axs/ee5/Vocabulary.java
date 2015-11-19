@@ -17,7 +17,7 @@ public class Vocabulary {
 	low-dimensional feature space, into which documents 
 	are mapped).
     */
-    final int L;
+    public final int L;
 
     /** A Multiword instance describes a single "multiword" (a
      * sequence of 1 or more words).

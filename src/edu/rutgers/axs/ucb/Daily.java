@@ -18,6 +18,7 @@ import edu.rutgers.axs.recommender.*;
 import edu.rutgers.axs.ee4.DenseDataPoint;
 import edu.rutgers.axs.ee5.Vocabulary;
 import edu.rutgers.axs.ee5.ArticleDenseDataPoint;
+import edu.rutgers.axs.ucb.math.*;
 
 
 /** Daily updates for the underlying data structures, and
@@ -95,10 +96,16 @@ public class Daily {
 	    
     }
 
-
     static void  //DataFile
 	makeUCBSug(EntityManager em,  IndexSearcher searcher, Date since, 
 		   User user, Vocabulary voc) throws IOException {
+
+
+	/** The type of user profile data files */
+	//static private 
+	final DataFile.Type ptype = DataFile.Type.UCB_USER_PROFILE;
+
+
 	int uid = user.getId();
 
 	// restricting the scope by category and date,
@@ -111,19 +118,33 @@ public class Daily {
 	    return;
 	}
 
-	final DataFile.Type ptype = DataFile.Type.UCB_USER_PROFILE;
 	// update the user's profile based on his recent activity
 	DataFile oldProfileFile = DataFile.getLatestFile(em, uname, ptype);
 	System.out.println("Old user profile = " + oldProfileFile);
 
 	boolean blankPage = (oldProfileFile == null);
 
+	long lastActionId = user.getLastActionId();
+
+	if (blankPage) {
+	    lastActionId = 0;
+	    UCBProfile upro = initProfile(voc.L);
+	    DataFile outputFile=saveToFile(upro, uname, ptype, lastActionId);
+	    outputFile.setLastActionId(0);
+	    
+	    em.getTransaction().begin(); 
+	    em.persist(outputFile);
+	    em.getTransaction().commit();
+	    Logging.info("Saved initial profile: " + outputFile);
+	    return;
+	}	
+
+
 	// get suggestions from among recent ArXiv docs
 
 	SearchResults sr = 
 	    SubjectSearchResults.orderedSearch(searcher,user,since, 
 					       forcedToDate, maxlen);
-
   
 	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
 
@@ -133,7 +154,6 @@ public class Daily {
 	    DenseDataPoint p = ArticleDenseDataPoint.readArticle(docno,voc,reader);
 	}
 	
-
 	/*
 	EE5User ee5u = EE5User.getAlways( em, uid, true);
 	int lai = updateUserVote(em, id2dc, user, ee5u);
@@ -141,6 +161,46 @@ public class Daily {
 	return updateSugList(em, searcher, since, id2dc, user, ee5u, lai, nofile);
 	*/
     }
+
+    /** Initializes user profile with mu_0 and Sigma_0 computed by CBR
+	// FIXME: need to read pre-created data
+     */
+    static UCBProfile initProfile(int L) {
+	double mu[] = new double[L];
+	double sigma[][] = new double[L][];
+	for(int i=0; i<L; i++) sigma[i] =  new double[L];
+	//throw new IllegalArgumentException("Not supported yet");
+	return new UCBProfile(sigma,mu);
+    }
+
+  
+   /** Creates a disk file and a matching DataFile object to store 
+       a UCBProfile
+
+   */
+    static DataFile saveToFile(UCBProfile upro, String username, DataFile.Type type, long lastActionId) 
+	throws IOException {
+
+	DataFile uproFile=  new DataFile(username, 0, type);
+	uproFile.setLastActionId( lastActionId);
+	upro.save(uproFile.getFile());
+	return uproFile;
+    }
+
+   /** Sets the ID of the new DataFile, if appropriate.
+	@param id The new id. If 0, it is ignored and nothing is done.
+     */
+    private static void setDataFileId(EntityManager em, DataFile outputFile, long id) {
+	if (id != 0) {
+	    if (em.find(DataFile.class,id)!=null) {
+		Logging.warning("DataFile with ID="+id +" already exists; ignore the request to set new file ID this way");
+	    } else { 
+		Logging.info("Setting new DataFile's ID=" + id +", as per command-line request");
+		outputFile.setId((int)id);
+	    }
+	}
+    }
+
 
     static public void main(String[] argv) throws Exception {
 	ParseConfig ht = new ParseConfig();
