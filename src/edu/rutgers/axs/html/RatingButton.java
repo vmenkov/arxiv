@@ -123,6 +123,28 @@ public class RatingButton {
 
     };
 
+    /** Buttons for UCB, as per Chen Bangrui's specs */
+   static final RatingButton[] ucbRatingButtons = {
+ 	(new RatingButton( Action.Op.MOVE_TO_MY_FOLDER,
+			  "Interesting: move to my folder, remove from list",
+			  "This document is interesting. Move this document to your personal folder. It will not show in recommendations in the future.",
+			   "folder_page.png", false, true)).
+	setCheckedText(	"(In your <a href=\"%s/personal/viewFolder.jsp\">folder</a>)"),
+  	(new RatingButton(Action.Op.INTERESTING_AND_NEW,
+			 "Interesting; remove from list",
+			 "This document is interesting. It will not show in recommendations in the future.",
+			  "page_up.png", false, true)).
+	setCheckedText("(Interesting. Won't show in future recommendations)"),
+
+	new RatingButton( Action.Op.DONT_SHOW_AGAIN,
+			  "Not interesting; remove from list",
+			  "Permanently remove this document from recommendations and search results",
+			  "bin.png" ,  false, true).
+	setCheckedText("(Not interesting. Won't show in future recommendations)")
+
+      
+   };
+
     /** The list of buttons shown to anonymous users in the SBRL panel
      */
     static final RatingButton[] sbAnonRatingButtons = {
@@ -144,6 +166,7 @@ public class RatingButton {
 	return 
 	    program==User.Program.SB_ANON?  sbAnonRatingButtons:
 	    program==User.Program.EE4?   ee4RatingButtons: 
+	    program==User.Program.UCB?   ucbRatingButtons: 
 	    allRatingButtons;
     }
 

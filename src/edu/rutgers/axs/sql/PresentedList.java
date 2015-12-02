@@ -213,7 +213,7 @@ import edu.rutgers.axs.sb.SBRGenerator;
 	"set based" suggestion list seen by the specified user. In
 	regard to "recency", what matters for us is not how recently
 	the list was viewed, but how recently the suggestion list
-	involved was *generated*. In production mode the two criteria
+	involved was <em>generated</em>. In production mode the two criteria
 	are identical.
      */
     static public PresentedList findLatestPresentedSugList(EntityManager em, String  username) {
@@ -245,6 +245,19 @@ import edu.rutgers.axs.sb.SBRGenerator;
 	    return null;
 	}
     }
+
+    /** Finds all PresentedList objects corresponding to a specified
+	suggestion list.
+     */
+    static public List<PresentedList> findPresentedListsForSugList(EntityManager em, String  username, long dataFileId) {
+	String qs = "select m from PresentedList m where m.user is not null and m.user.user_name=:u and m.dataFileId=:d";
+	Query q = em.createQuery(qs);
+	q.setParameter("u", username);
+	q.setParameter("d", dataFileId);
+
+	List<PresentedList> res = (List<PresentedList>)q.getResultList();
+	return res;
+   }
 
     //--- The following fields are primarily used in SB
     /** This flag is true for presented lists that have never been meant to be

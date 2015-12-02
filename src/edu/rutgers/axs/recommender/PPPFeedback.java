@@ -20,10 +20,10 @@ import edu.rutgers.axs.web.ArticleEntry;
     relevant article ID, a PPPActionSummary object that contains the
     summary of relevant user actions on the article in question.
  */
-class PPPFeedback extends HashMap<String,PPPActionSummary> {	
+public class PPPFeedback extends HashMap<String,PPPActionSummary> {	
     final int sugListId;
     private long lastActionId = 0;
-    long getLastActionId() { return lastActionId; }
+    public long getLastActionId() { return lastActionId; }
      
     /** Creates an object that describes a user's feedback on a
 	particular suggestion list. A valid  PPPFeedback is always created
@@ -34,7 +34,7 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	@param actor The user whose actions we study
 	@param  sugListId DataFile.getId() for the appropriate sugg list
     */
-    PPPFeedback(EntityManager em, User actor, int _sugListId) {
+   public  PPPFeedback(EntityManager em, User actor, int _sugListId) {
 	super();
 	sugListId =  _sugListId;
 	User.ActionListTable alTable = new User.ActionListTable();
@@ -90,7 +90,7 @@ class PPPFeedback extends HashMap<String,PPPActionSummary> {
 	 particular Action belongs with a given suggestion list.
 	 The underlying structure for an AcceptMap is a HashMap that
 	 maps PresentedList ids to booleans that indicated
-	 whteher the PresentedList belongs to the given suggestion list.
+	 whether the PresentedList belongs to the given suggestion list.
      */
      private static class AcceptMap extends HashMap<Long, Boolean> {
 	 private final int  sugListId;

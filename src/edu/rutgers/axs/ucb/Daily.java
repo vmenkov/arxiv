@@ -104,6 +104,7 @@ public class Daily {
 	/** The type of user profile data files */
 	//static private 
 	final DataFile.Type ptype = DataFile.Type.UCB_USER_PROFILE;
+	final DataFile.Type stype = DataFile.Type.UCB_SUGGESTIONS;
 
 
 	int uid = user.getId();
@@ -118,7 +119,8 @@ public class Daily {
 	    return;
 	}
 
-	// update the user's profile based on his recent activity
+	// Update the user's profile based on his recent activity.
+	// First, find the most recent user profile in existence.
 	DataFile oldProfileFile = DataFile.getLatestFile(em, uname, ptype);
 	System.out.println("Old user profile = " + oldProfileFile);
 
@@ -138,6 +140,67 @@ public class Daily {
 	    Logging.info("Saved initial profile: " + outputFile);
 	    return;
 	}	
+
+	// Find all sug lists based on this old profile.
+	List<DataFile> sugLists = DataFile.getAllFilesBasedOn(em, uname, stype, oldProfileFile);
+
+	System.out.println("Found " +sugLists.size() + " applicable suggestion lists based on the user's most recent profile");
+	int cnt=0;
+	for(DataFile df: sugLists) {
+	    System.out.println("Sug list ["+cnt+"](id="+df.getId()+")=" + df);
+	    cnt ++;
+	}
+
+	cnt = 0;
+	int rocchioCnt = 0; // how many doc vectors added to profile?
+	long lid = 0;
+
+	// Feedback map: (false=0, true=1, null=presented but given no feedback)
+	HashMap<String,Boolean> fbmap = new HashMap<String,Boolean>();
+
+	for(DataFile df: sugLists) {
+
+	    System.out.println("Applying updates from sug list ["+(cnt++)+"](id="+df.getId()+")=" + df);
+
+	    List<PresentedList> pls = PresentedList.findPresentedListsForSugList(em, uname,  df.getId());
+	    if (pls==null) continue; // no lists presented, so probably no feedback either	    
+	    for(PresentedList pl: pls) {
+		Vector<PresentedListEntry> ples = pl.getDocs();
+		if (ples==null) continue;
+		for(PresentedListEntry e: ples) {
+		    String aid = e.getAid();
+		    if (!fbmap.containsKey(aid)) fbmap.put(aid, null);
+		}
+	    }
+
+	    PPPFeedback actionSummary = new PPPFeedback(em, user, df.getId());
+	    System.out.println("Found useable actions on " +  actionSummary.size() + " pages");
+	    if (actionSummary.size() == 0) continue;
+	    rocchioCnt += actionSummary.size();
+	    lid = Math.max(lid,  actionSummary.getLastActionId());
+
+	    for(String aid: actionSummary.keySet()) { 
+		PPPActionSummary actions = actionSummary.get(aid);
+		boolean positive = (actions!=PPPActionSummary.DEMOTED);
+		fbmap.put(aid, positive);
+	    }
+	}
+
+	// Create the list of presented pages in X (with the 
+	// pages on which we have positive feedabck -- those for Y --
+	// in the front of the list)
+	String[] xAids = new String[ fbmap.size()];
+	int pos = 0;
+	for(String aid: fbmap.keySet()) {
+	    Boolean val = fbmap.get(aid);
+	    if (val!=null && val.booleanValue()) xAids[pos++] = aid;
+	}
+	final int xCnt = pos;
+	for(String aid: fbmap.keySet()) {
+	    Boolean val = fbmap.get(aid);
+	    if (val==null || !val.booleanValue()) xAids[pos++] = aid;
+	}
+
 
 
 	// get suggestions from among recent ArXiv docs

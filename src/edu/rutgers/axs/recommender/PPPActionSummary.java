@@ -8,7 +8,7 @@ import edu.rutgers.axs.sql.*;
     represented by a given chronological sequence of operation(s).
     This is used during processing user feedback in the 3PR (aka PPP)
     recommendation engine.  */
-enum PPPActionSummary {
+public enum PPPActionSummary {
     PROMOTED, VIEWED, DEMOTED;
     
     /** Summarizes a sequence of operations. An explicit judgment, a
