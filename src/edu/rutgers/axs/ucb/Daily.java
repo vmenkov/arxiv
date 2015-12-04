@@ -99,13 +99,53 @@ public class Daily {
     static void  //DataFile
 	makeUCBSug(EntityManager em,  IndexSearcher searcher, Date since, 
 		   User user, Vocabulary voc) throws IOException {
+	UCBProfile upro =
+	    getUpdatedProfile( em,  searcher, since, user, voc);
+	if (upro==null) return;
+
+
+	// get suggestions from among recent ArXiv docs
+
+	SearchResults sr = 
+	    SubjectSearchResults.orderedSearch(searcher,user,since, 
+					       forcedToDate, maxlen);
+  
+	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
+
+	IndexReader reader = searcher.getIndexReader();
+	for(int i=0; i<sd.length; i++) {
+	    int docno = sd[i].doc;
+	    DenseDataPoint p = ArticleDenseDataPoint.readArticle(docno,voc,reader);
+	}
+	
+	//uprof.updateProfile(double [][] X, double [] Y);
+
+
+	/*
+	EE5User ee5u = EE5User.getAlways( em, uid, true);
+	int lai = updateUserVote(em, id2dc, user, ee5u);
+	boolean nofile = false;
+	return updateSugList(em, searcher, since, id2dc, user, ee5u, lai, nofile);
+	*/
+
+
+    }
+
+
+    /** Returns to user profile, updated as needed. This involves
+	finding the most recent user profile (or creating an initial
+	one, if none exists), and updating it using any recent user 
+	activity since the stored profile has been created.
+     */
+    private static UCBProfile
+	getUpdatedProfile(EntityManager em,  IndexSearcher searcher, Date since, 
+		   User user, Vocabulary voc) throws IOException {
 
 
 	/** The type of user profile data files */
 	//static private 
 	final DataFile.Type ptype = DataFile.Type.UCB_USER_PROFILE;
 	final DataFile.Type stype = DataFile.Type.UCB_SUGGESTIONS;
-
 
 	int uid = user.getId();
 
@@ -116,13 +156,14 @@ public class Daily {
 	if (cats.length==0) {
 	    String msg = " User "+uname+" has not chosen any categories of interest. ";
 	    Logging.warning(msg);
-	    return;
+	    return null;
 	}
 
 	// Update the user's profile based on his recent activity.
 	// First, find the most recent user profile in existence.
 	DataFile oldProfileFile = DataFile.getLatestFile(em, uname, ptype);
 	System.out.println("Old user profile = " + oldProfileFile);
+
 
 	boolean blankPage = (oldProfileFile == null);
 
@@ -138,7 +179,7 @@ public class Daily {
 	    em.persist(outputFile);
 	    em.getTransaction().commit();
 	    Logging.info("Saved initial profile: " + outputFile);
-	    return;
+	    return upro;
 	}	
 
 	// Find all sug lists based on this old profile.
@@ -186,6 +227,13 @@ public class Daily {
 	    }
 	}
 
+	UCBProfile upro =UCBProfile.readProfile(oldProfileFile.getFile(),voc.L);
+
+	if (fbmap.size()==0) {
+	    System.out.println("No useful feedback found for user " + uname + "; no need to update user profile");
+	    return upro;
+	}
+
 	// Create the list of presented pages in X (with the 
 	// pages on which we have positive feedabck -- those for Y --
 	// in the front of the list)
@@ -201,28 +249,11 @@ public class Daily {
 	    if (val==null || !val.booleanValue()) xAids[pos++] = aid;
 	}
 
-
-
-	// get suggestions from among recent ArXiv docs
-
-	SearchResults sr = 
-	    SubjectSearchResults.orderedSearch(searcher,user,since, 
-					       forcedToDate, maxlen);
-  
-	ArxivScoreDoc[] sd= ArxivScoreDoc.toArxivScoreDoc( sr.scoreDocs);
-
-	IndexReader reader = searcher.getIndexReader();
-	for(int i=0; i<sd.length; i++) {
-	    int docno = sd[i].doc;
-	    DenseDataPoint p = ArticleDenseDataPoint.readArticle(docno,voc,reader);
-	}
+	// update the profile
+	// ....
 	
-	/*
-	EE5User ee5u = EE5User.getAlways( em, uid, true);
-	int lai = updateUserVote(em, id2dc, user, ee5u);
-	boolean nofile = false;
-	return updateSugList(em, searcher, since, id2dc, user, ee5u, lai, nofile);
-	*/
+	return upro;
+
     }
 
     /** Initializes user profile with mu_0 and Sigma_0 computed by CBR

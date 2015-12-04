@@ -44,7 +44,7 @@ public class LowDimDocumentExporter {
 	(full stored texts, too!) needs to be read; it does it at the rate of about
 	10,000-30,000 docs per minute on my laptop.
 
-	<p>Paramters maxn (if maxn&gt;0) and fraction (if fraction&lt;0)
+	<p>Parameters maxn (if maxn&gt;0) and fraction (if fraction&lt;0)
 	can be used to only analyze some articles from the corpus, as a
 	quick sample.
 
@@ -142,8 +142,6 @@ public class LowDimDocumentExporter {
 	IndexReader reader = Common.newReader();
 	IndexSearcher searcher = new IndexSearcher( reader );
 
-
-
 	String altVoc = ht.getOption("voc",null);
 	Vocabulary voc = altVoc==null? Vocabulary.readVocabulary():
 	    Vocabulary.readVocabulary(new File(altVoc));
@@ -165,7 +163,7 @@ public class LowDimDocumentExporter {
 		out.println();
 	    }
 	    out.flush();
-	} else if (cmd.equals("cat")) {
+	} else if (cmd.equals("cat")) { // export docs from a specified category
 	    Date from=ht.getOptionDate("from",null);
 	    Date to=ht.getOptionDate("to",null);
 	    if (ja>=argv.length) {
@@ -181,7 +179,7 @@ public class LowDimDocumentExporter {
 	    PrintWriter out = new PrintWriter(System.out);
 	    exportByCat( searcher, voc, cat, from, to, out);
 	    out.flush();
-	} else if (cmd.equals("df")) {
+	} else if (cmd.equals("df")) { 
 	    // compute document frequency for all word clusters
 	    int maxn=0;
 	    double fraction = ht.getDouble("fraction", 1.0);
