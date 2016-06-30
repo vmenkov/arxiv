@@ -46,6 +46,10 @@ public class SessionData {
 
     public  long getSqlSessionId() { return sqlSessionId;}
 
+    public String toString() {
+	return "(SD: sqlSessionID=" + getSqlSessionId()+")";
+    }
+
     /** The session-based recommendation generator. It's created together
 	with the session, but is not actually used until the flag sd.needSBNow
 	is set.
@@ -80,15 +84,20 @@ public class SessionData {
 	session = _session;
 	sbrg=  (session!=null) ? new SBRGenerator(this, true) :
 	    new SBRGeneratorCmdLine(this);
+	Logging.info("SD.SD.A");
 	initFactory( session );
+	Logging.info("SD.SD.B");
 	// record the session in the database
 	EntityManager em=null;
 	try {
+	    Logging.info("SD.SD.C");
 	    em = getEM();
+	    Logging.info("SD.gSD.D");
 	    em.getTransaction().begin(); 
 	    Session s = new Session(_session);
 	    em.persist(s);
 	    em.getTransaction().commit(); 
+	    Logging.info("SD.SD.E");
 	    String msg ="Recorded session " +s + ";";
 	    msg += (session!=null)?
 		" web server session id=" + _session.getId() :
@@ -155,13 +164,17 @@ public class SessionData {
     static public synchronized SessionData getSessionData(HttpServletRequest request) 
 	throws WebException, IOException {
 
+	Logging.info("SD.gSD.A, request is " + (request==null? "null" : "not null"));
 	if (request==null) return new SessionData(null);
 
 	HttpSession session = request.getSession();
 	SessionData sd  = null;
+	Logging.info("SD.gSD.B");
 	synchronized(session) {
-  
+	    Logging.info("SD.gSD.C");
 	    sd  = ( SessionData) session.getAttribute(ATTRIBUTE_SD);
+
+	    Logging.info("SD.gSD.D, old sd= " + sd);
 	    if (sd == null) {
 		sd = new SessionData(session);
 		session.setAttribute(ATTRIBUTE_SD, sd);

@@ -455,11 +455,15 @@ http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html
 	 classpathref="classpath"/>
   
 <!-- The user list, with roles, is stored in /usr/local/tomcat/conf/tomcat-users.xml -->
-<target name="reload" description="Reload web application on localhost"
-        depends="deploy">
+<target name="reloadonly" description="Reload web application on localhost (without updating)">
   <echo message="reload.url=${reload.url}"/>
   <reload url="${reload.url}" username="vmenkov2" password="vmenkov2-manager-script" path="/${app.name}"/>
 </target>
+
+<target name="reload" description="Deploy and reload web application on localhost"
+        depends="deploy,reloadonly">
+</target>
+
 
 <!-- Sample JPA application -->
 <target name="run-sample" depends="jar"

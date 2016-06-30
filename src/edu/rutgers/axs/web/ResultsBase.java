@@ -160,9 +160,9 @@ public class ResultsBase implements OptionAccess {
 		String name = (String)en.nextElement();
 		infomsg += name + "=" + request.getParameter(name) + "<br>";
 	    }	    
-	    Logging.info("RB(): creating sd");
+	    Logging.info("RB(): creating sd"); // during "malfunctioning", this line fires up...
 	    sd = SessionData.getSessionData(request);	  
-	    Logging.info("RB(): created sd");
+	    Logging.info("RB(): created sd"); // ... and this one, does not!
 	    infomsg += "Session " + sd.getSqlSessionId();
 	    
 	    edu.cornell.cs.osmot.options.Options.init(sd.getServletContext() );
