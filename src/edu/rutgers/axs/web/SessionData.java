@@ -92,11 +92,11 @@ public class SessionData {
 	try {
 	    Logging.info("SD.SD.C");
 	    em = getEM();
-	    Logging.info("SD.gSD.D");
+	    Logging.info("SD.SD.D");
 	    em.getTransaction().begin(); 
 	    Session s = new Session(_session);
 	    em.persist(s);
-	    em.getTransaction().commit(); 
+	    em.getTransaction().commit(); // get java.lang.ExceptionInInitializerError here sometimes, from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server
 	    Logging.info("SD.SD.E");
 	    String msg ="Recorded session " +s + ";";
 	    msg += (session!=null)?

@@ -160,7 +160,7 @@ public class ResultsBase implements OptionAccess {
 		String name = (String)en.nextElement();
 		infomsg += name + "=" + request.getParameter(name) + "<br>";
 	    }	    
-	    Logging.info("RB(): creating sd"); // during "malfunctioning", this line fires up...
+	    Logging.info("RB(): creating sd"); // during "malfunctioning", this line fires up.... It seems that on such occasions SessionData.getSessionData() is never entered (because it's synchornized?), as not even the first breakpoint inside that method is reached. (2016-07-11)
 	    sd = SessionData.getSessionData(request);	  
 	    Logging.info("RB(): created sd"); // ... and this one, does not!
 	    infomsg += "Session " + sd.getSqlSessionId();
