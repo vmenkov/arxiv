@@ -77,8 +77,12 @@ public class SessionData {
 	sbrg.recordLinkedAids(entries);
     }
    
-    /** @param _session The underlying web session object (in a web
-     * app), or null (in a command line app)
+    /** Creates a SessionData object for a new Session. It also makes
+	a record of the session in the SQL database... so perhaps that
+	occasionally causes 
+
+	@param _session The underlying web session object (in a web
+	 app), or null (in a command line app)
      */
     private SessionData( HttpSession _session) throws WebException, IOException {
 	session = _session;
