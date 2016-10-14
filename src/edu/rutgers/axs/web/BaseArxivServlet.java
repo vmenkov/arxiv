@@ -127,6 +127,9 @@ public class BaseArxivServlet extends HttpServlet {
 	out.println("");
 	out.println("Note: FilterServlet requests are page views; JudgmentServlet requests are recorded judgments");
 
+	out.println("");
+	out.println("whoSync=" + SessionData.getWhoSync());
+
 	out.println(FilterServlet.report());
 
 	// The answer (on my dev machine) is, /var/lib/tomcat6

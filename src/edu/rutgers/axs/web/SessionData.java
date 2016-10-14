@@ -44,6 +44,17 @@ public class SessionData {
      */
     final private long sqlSessionId;
 
+    /** Used for debugging, to figure who has hogged the static-synchronized
+	methods */
+    private static String whoSync = null;
+    static String getWhoSync() { return whoSync; }
+
+    private static void addSync(String msg) {
+	Logging.info(msg);
+	whoSync += "; " + msg;	
+    }
+
+
     public  long getSqlSessionId() { return sqlSessionId;}
 
     public String toString() {
@@ -85,34 +96,39 @@ public class SessionData {
 	 app), or null (in a command line app)
      */
     private SessionData( HttpSession _session) throws WebException, IOException {
-	session = _session;
-	sbrg=  (session!=null) ? new SBRGenerator(this, true) :
-	    new SBRGeneratorCmdLine(this);
-	Logging.info("SD.SD.A");
-	initFactory( session );
-	Logging.info("SD.SD.B");
-	// record the session in the database
-	EntityManager em=null;
+	whoSync = "SessionData.in";
 	try {
-	    Logging.info("SD.SD.C");
-	    em = getEM();
-	    Logging.info("SD.SD.D");
-	    em.getTransaction().begin(); 
-	    Session s = new Session(_session);
-	    em.persist(s);
-	    em.getTransaction().commit(); // get java.lang.ExceptionInInitializerError here sometimes, from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server
-	    Logging.info("SD.SD.E");
-	    String msg ="Recorded session " +s + ";";
-	    msg += (session!=null)?
-		" web server session id=" + _session.getId() :
-		" simulated session";
-	    Logging.info(msg);
-	    sqlSessionId = s.getId();
+	    session = _session;
+	    sbrg=  (session!=null) ? new SBRGenerator(this, true) :
+		new SBRGeneratorCmdLine(this);
+	    addSync("SD.SD.A");
+	    initFactory( session );
+	    addSync("SD.SD.B");
+	    // record the session in the database
+	    EntityManager em=null;
+	    try {
+		addSync("SD.SD.C");
+		em = getEM();
+		addSync("SD.SD.D");
+		em.getTransaction().begin(); 
+		Session s = new Session(_session);
+		em.persist(s);
+		em.getTransaction().commit(); // FIXME: get java.lang.ExceptionInInitializerError here sometimes, from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server. This usually happens when the My.ArXiv server is accessed the first time after a longish period of inactivity. The problem disappears when you reload the page.
+		addSync("SD.SD.E");
+		String msg ="Recorded session " +s + ";";
+		msg += (session!=null)?
+		    " web server session id=" + _session.getId() :
+		    " simulated session";
+		addSync(msg);
+		sqlSessionId = s.getId();
 	    //	} catch (IOException ex) {
 	    //	    ex.printStackTrace(System.out); // just for debugging
 	    //	    throw ex;
+	    } finally {
+		ResultsBase.ensureClosed( em, true);
+	    }
 	} finally {
-	    ResultsBase.ensureClosed( em, true);
+	    whoSync = "SessionData.out";
 	}
     }
 
@@ -125,6 +141,8 @@ public class SessionData {
      */
     private static synchronized void initFactory(HttpSession session) 
 	throws IOException, WebException {
+	whoSync = "initFactory.in";
+	try {
 	if (factory!=null) return;
 	if (session==null) {
 	    factory = Main.getFactory();
@@ -132,6 +150,9 @@ public class SessionData {
 	    Properties p = getProperties(session.getServletContext());     
 	    factory = Persistence.
 		createEntityManagerFactory(Main.persistenceUnitName,p);
+	}
+	} finally {
+	    whoSync = "initFactory.out";
 	}
     }
 
@@ -153,7 +174,6 @@ public class SessionData {
 
     private final static String ATTRIBUTE_SD = "sd";
 
-
     /** Looks up the SessionData object already associated with the
 	current session, or creates a new one. This is done atomically,
         synchronized on the session object.
@@ -168,23 +188,30 @@ public class SessionData {
     static public synchronized SessionData getSessionData(HttpServletRequest request) 
 	throws WebException, IOException {
 
-	Logging.info("SD.gSD.A, request is " + (request==null? "null" : "not null"));
-	if (request==null) return new SessionData(null);
+	whoSync = "getSessionData.in";
+	try {
 
-	HttpSession session = request.getSession();
-	SessionData sd  = null;
-	Logging.info("SD.gSD.B");
-	synchronized(session) {
-	    Logging.info("SD.gSD.C");
-	    sd  = ( SessionData) session.getAttribute(ATTRIBUTE_SD);
+	    addSync("SD.gSD.A, request is " + (request==null? "null" : "not null"));
+	    if (request==null) return new SessionData(null);
 
-	    Logging.info("SD.gSD.D, old sd= " + sd);
-	    if (sd == null) {
-		sd = new SessionData(session);
-		session.setAttribute(ATTRIBUTE_SD, sd);
+	    HttpSession session = request.getSession();
+	    SessionData sd  = null;
+	    addSync("SD.gSD.B");
+	    synchronized(session) {
+		addSync("SD.gSD.C");
+		sd  = ( SessionData) session.getAttribute(ATTRIBUTE_SD);
+
+		addSync("SD.gSD.D, old sd= " + sd);
+		if (sd == null) {
+		    sd = new SessionData(session);
+		    session.setAttribute(ATTRIBUTE_SD, sd);
+		}
 	    }
+	    return sd;
+	} finally {
+	    whoSync = "getSessionData.out";
 	}
-	return sd;
+
     }
 
     static synchronized SessionData getSimulatedSessionData() 
@@ -207,6 +234,8 @@ public class SessionData {
     static synchronized SessionData replaceSessionData(HttpServletRequest request) 
 	throws WebException, IOException {
 
+	whoSync = "replaceSD.in";
+	try {
 	HttpSession session = request.getSession();
 	SessionData sd  = null;
 	synchronized(session) {  
@@ -214,6 +243,11 @@ public class SessionData {
 	    session.setAttribute(ATTRIBUTE_SD, sd);
 	}
 	return sd;
+
+	} finally {
+	    whoSync = "replaceSD.out";
+	}
+
      }
 
     /** Simply invalidates the HttpSession. This means that the associated 
@@ -221,8 +255,14 @@ public class SessionData {
      */
     static synchronized void discardSessionData(HttpServletRequest request) 
 	throws WebException, IOException {
-	HttpSession session = request.getSession();
-	session.invalidate();
+	whoSync = "discardSD.in";
+	try {
+	    HttpSession session = request.getSession();
+	    session.invalidate();
+	} finally {
+	    whoSync = "discardSD.out";
+	}
+
     }
 
     ServletContext getServletContext() {
@@ -240,6 +280,9 @@ public class SessionData {
     private static synchronized Properties getProperties(ServletContext context) 
 	throws WebException, IOException {
 
+	whoSync = "getProperties.in";
+	try {
+
 	if (ourProperties!=null) return ourProperties;
 	ourProperties= new Properties(); // or we can pass system prop?
 	String path = "/WEB-INF/connection.properties";
@@ -255,6 +298,9 @@ public class SessionData {
 	    //edu.rutgers.axs.sql.Logging.info("Prop["+k+"]='"+p.get(k)+"'");}
 
 	return ourProperties;
+	} finally {
+	    whoSync = "getProperties.out";
+	}
     }
 
     static private boolean stoplistLoaded = false;
