@@ -94,7 +94,8 @@ public class BaseArxivServlet extends HttpServlet {
 	PrintWriter out = new PrintWriter(ostream);
 
 	out.println("My.ArXiv server status report");
-	out.println("-----------------------------");
+	String hline ="-----------------------------";
+	out.println(hline);
 
 	out.println("getContextPath()=" + request.getContextPath()  );
 	out.println("getMethod()=" + request.getMethod()  );
@@ -127,10 +128,12 @@ public class BaseArxivServlet extends HttpServlet {
 	out.println("");
 	out.println("Note: FilterServlet requests are page views; JudgmentServlet requests are recorded judgments");
 
+	out.println(FilterServlet.report());
+
 	out.println("");
+	out.println(hline);
 	out.println("whoSync=" + SessionData.getWhoSync());
 
-	out.println(FilterServlet.report());
 
 	// The answer (on my dev machine) is, /var/lib/tomcat6
 	//String path = (new File(".").getCanonicalPath();
