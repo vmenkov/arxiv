@@ -33,10 +33,10 @@ public class FilterServlet extends  BaseArxivServlet  {
 
     /** May be changed (e.g. to export.arxiv.org) in init(), by means
 	of parameters supplied from web.xml     */
-    static String ARXIV_BASE = "http://arxiv.org";
+    static String ARXIV_BASE = "https://arxiv.org";
     /** This one stays constant.
 	FIXME: maybe we can also make it configurable */
-    private final static String ARXIV_BASE_PDF = "http://arxiv.org";
+    private final static String ARXIV_BASE_PDF = "https://arxiv.org";
 
     /** Counts 403, 404, etc. errors we have received from arxiv.org */
     static final TreeMap<Integer,MutableInt> errorCodeCount = new TreeMap<Integer,MutableInt>();
@@ -86,7 +86,7 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    browse-friendly."
 	 */
 	ARXIV_BASE = weAreBlacklisted? "http://dev.arxiv.org" : 
-	    	    "http://arxiv.org";
+	    	    "https://arxiv.org";
 	//	    "http://export.arxiv.org";
 
 	/*
