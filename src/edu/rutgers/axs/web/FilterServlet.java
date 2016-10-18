@@ -34,6 +34,12 @@ public class FilterServlet extends  BaseArxivServlet  {
     /** May be changed (e.g. to export.arxiv.org) in init(), by means
 	of parameters supplied from web.xml     */
     static String ARXIV_BASE = "https://arxiv.org";
+    /** Even though pages are served now (2016-10) from https://arxiv.org,
+	they occasionally contain links to pages on http://arxiv.org,
+	which later experience redirect. We make sure to redirect
+	them via the FilterServlet as well.
+    */
+    private static String ARXIV_BASE_ALT = "http://arxiv.org";
     /** This one stays constant.
 	FIXME: maybe we can also make it configurable */
     private final static String ARXIV_BASE_PDF = "https://arxiv.org";
@@ -772,7 +778,11 @@ public class FilterServlet extends  BaseArxivServlet  {
 		if (mayRewrite && link.startsWith( ARXIV_BASE )) {
 		    // abs link to a rewriteable target on arxiv.org
 		    recordLink(link);
-		    return link.replace( ARXIV_BASE , effectiveFs);
+		    return link.replace( ARXIV_BASE , effectiveFs); 
+		} else if (mayRewrite && link.startsWith( ARXIV_BASE_ALT )) {
+		    // abs link to a rewriteable target on arxiv.org
+		    recordLink(link);
+		    return link.replace( ARXIV_BASE_ALT , effectiveFs);
 		} else {
 		    // abs link to eslewhere, or to a non-rewriteable
 		    // file on arxiv.org; no change
