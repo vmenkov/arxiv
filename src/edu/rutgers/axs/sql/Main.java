@@ -4,6 +4,7 @@ package edu.rutgers.axs.sql;
 
 import java.io.*;
 import java.util.*;
+import java.text.DecimalFormat;
 import java.lang.reflect.*;
 import javax.persistence.*;
 
@@ -76,6 +77,10 @@ public class Main {
     public static void memory(String title) {
 	System.out.println(memoryInfo(title, true));	   	
     }
+
+    static DecimalFormat memFmt  = new DecimalFormat("#,###");
+  
+
     public static String memoryInfo(String title, boolean doGc) {
 	Runtime run =  Runtime.getRuntime();
 	if (doGc) run.gc();
@@ -84,8 +89,10 @@ public class Main {
 	long tmem = run.totalMemory();
 	long fmem = run.freeMemory();
 	long used = tmem - fmem;
-	return "[MEMORY]"+s+" max=" + mmem + ", total=" + tmem +
-	    ", free=" + fmem + ", used=" + used;	
+	return "[MEMORY]"+s+" max=" + memFmt.format(mmem) + ", total=" +  memFmt.format(tmem) +
+	    ", free=" +  memFmt.format(fmem) + ", used=" +  memFmt.format(used);	
     }
+
+    
 
 }

@@ -871,14 +871,16 @@ public class FilterServlet extends  BaseArxivServlet  {
 	    s = b.toString();
 	    
 	    // Display an additional DIV right after the opening
-	    // <body ...> element 
+	    // <body ...> element. A very high z-index value is
+	    // used to make it "overprint" other content supplied
+	    // by the Arxiv server.
 	    if (willAddNote) {
 		m = pBody.matcher(s);
 		if (m.find()) {
 		    b = new StringBuffer();
 		    s = b.toString();		    
 		    m.appendReplacement(b, m.group(0));
-		    String msg = "<div style=\"border:1px;color:#00FF00;position:fixed\">" + 
+		    String msg = "<div style=\"border:1px;color:#00FF00;position:fixed;z-index:99\">" + 
 			"Please note: You are now browsing arxiv.org via My.arXiv, "+
 			(user==null? "anonymously" : "as user <em>" +  user.getUser_name() + "</em>") +
 			". You can return to the <a href=\""+cp+"\">My.arXiv main page</a>." + 
