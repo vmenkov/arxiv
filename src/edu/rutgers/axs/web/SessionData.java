@@ -113,7 +113,8 @@ public class SessionData {
 		em.getTransaction().begin(); 
 		Session s = new Session(_session);
 		em.persist(s);
-		em.getTransaction().commit(); // FIXME: get java.lang.ExceptionInInitializerError here sometimes, from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server. This usually happens when the My.ArXiv server is accessed the first time after a longish period of inactivity. The problem disappears when you reload the page.
+		commitWithRetry(em);
+		//em.getTransaction().commit(); // FIXME: get java.lang.ExceptionInInitializerError here sometimes, from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server. This usually happens when the My.ArXiv server is accessed the first time after a longish period of inactivity. The problem disappears when you reload the page.
 		addSync("SD.SD.E");
 		String msg ="Recorded session " +s + ";";
 		msg += (session!=null)?
@@ -131,6 +132,27 @@ public class SessionData {
 	    whoSync = "SessionData.out";
 	}
     }
+
+    /** FIXME: get java.lang.ExceptionInInitializerError is sometimes thrown in 	em.getTransaction().commit(). It comes from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server. This usually happens when the My.ArXiv server is accessed the first time after a longish period of inactivity. The problem disappears when you reload the page.
+    */
+    private static void commitWithRetry(EntityManager em) {
+	for(int tryCnt = 0; tryCnt < 2; ) {
+	    tryCnt++;
+	    try {
+		em.getTransaction().commit();	
+		return;
+	    } catch (ExceptionInInitializerError ex) {
+		final long sleepMsec = 100;
+		Logging.info( "SessionData.commitWithRetry: commit failed at tryCnt="+ tryCnt+"; will wait "+sleepMsec +" msec and retry");
+		try {
+		    Thread.sleep(sleepMsec);
+		} catch (java.lang.InterruptedException e) {}
+	    }
+	}
+	// final try
+	em.getTransaction().commit();	
+    }
+
 
     /** Creates a new EntityManagerFactory using the System
 	properties. The properties are accessed via the servlet

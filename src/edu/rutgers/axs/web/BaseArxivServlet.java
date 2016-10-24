@@ -93,7 +93,7 @@ public class BaseArxivServlet extends HttpServlet {
 	OutputStream ostream = response.getOutputStream();
 	PrintWriter out = new PrintWriter(ostream);
 
-	out.println("My.ArXiv server status report");
+	out.println("My.ArXiv server status report, generated on " + new Date());
 	String hline ="-----------------------------";
 	out.println(hline);
 
