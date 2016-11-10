@@ -89,14 +89,20 @@ public class SessionData {
     }
    
     /** Creates a SessionData object for a new Session. It also makes
-	a record of the session in the SQL database... so perhaps that
-	occasionally causes 
+	a record of the session in the SQL database... 
+
+	FIXME: Occasionally, a "synchronization block" appears to
+	happen here, which may be triggered by Transaction.commit()
+	failure to return (??)
 
 	@param _session The underlying web session object (in a web
 	 app), or null (in a command line app)
      */
     private SessionData( HttpSession _session) throws WebException, IOException {
-	whoSync = "SessionData.in";
+
+	long tid=Thread.currentThread().getId();
+
+	whoSync = "SessionData.in("+tid+")";
 	try {
 	    session = _session;
 	    sbrg=  (session!=null) ? new SBRGenerator(this, true) :
@@ -114,7 +120,7 @@ public class SessionData {
 		Session s = new Session(_session);
 		em.persist(s);
 		commitWithRetry(em);
-		//em.getTransaction().commit(); // FIXME: get java.lang.ExceptionInInitializerError here sometimes, from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server. This usually happens when the My.ArXiv server is accessed the first time after a longish period of inactivity. The problem disappears when you reload the page.
+
 		addSync("SD.SD.E");
 		String msg ="Recorded session " +s + ";";
 		msg += (session!=null)?
@@ -133,17 +139,26 @@ public class SessionData {
 	}
     }
 
-    /** FIXME: get java.lang.ExceptionInInitializerError is sometimes thrown in 	em.getTransaction().commit(). It comes from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server. This usually happens when the My.ArXiv server is accessed the first time after a longish period of inactivity. The problem disappears when you reload the page.
+    /** This method solves the following problem. A java.lang.ExceptionInInitializerError is sometimes thrown in em.getTransaction().commit(). It comes from org.apache.openjpa.lib.util.ConcreteClassGenerator.newInstance, from java.io.EOFException when talking to the MySQL server. This usually happens when the My.ArXiv server is accessed the first time after a longish period of inactivity. 
+
+	In the past (until 2016-10) such an exception would come as a
+	visible error to the user; the problem would disappear when
+	you reloaded the page. Using this method (retrying commit
+	after a failure) appears to have eliminated this problem.
     */
     private static void commitWithRetry(EntityManager em) {
+
+	long tid=Thread.currentThread().getId();
+
 	for(int tryCnt = 0; tryCnt < 2; ) {
 	    tryCnt++;
 	    try {
 		em.getTransaction().commit();	
+		Logging.info("CWT("+tid+"): Commit ("+ tryCnt+") successful");
 		return;
 	    } catch (ExceptionInInitializerError ex) {
 		final long sleepMsec = 100;
-		Logging.info( "SessionData.commitWithRetry: commit failed at tryCnt="+ tryCnt+"; will wait "+sleepMsec +" msec and retry");
+		Logging.info( "SessionData.commitWithRetryT("+tid+"): commit ("+ tryCnt+") failed; will wait "+sleepMsec +" msec and retry");
 		try {
 		    Thread.sleep(sleepMsec);
 		} catch (java.lang.InterruptedException e) {}
@@ -151,6 +166,7 @@ public class SessionData {
 	}
 	// final try
 	em.getTransaction().commit();	
+	Logging.info("CWT("+tid+"): Commit (last attempt) successful");
     }
 
 

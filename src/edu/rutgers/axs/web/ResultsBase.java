@@ -142,6 +142,7 @@ public class ResultsBase implements OptionAccess {
      */
     public ResultsBase(HttpServletRequest _request, HttpServletResponse response) {
 
+	long tid=Thread.currentThread().getId();
 
 	request = _request;
 	cp = request.getContextPath(); 
@@ -160,7 +161,11 @@ public class ResultsBase implements OptionAccess {
 		String name = (String)en.nextElement();
 		infomsg += name + "=" + request.getParameter(name) + "<br>";
 	    }	    
-	    Logging.info("RB(): creating sd"); // FIXME: during "malfunctioning", this is the last line that fires up on every servlet call that fails to complete. It seems that on such occasions SessionData.getSessionData() is never entered (because it's synchronized?), as not even the first breakpoint inside that method is reached. (2016-07-11)
+	    String p = request.getPathInfo();
+	    if (p==null) p = "";
+	    String qs = request.getQueryString();
+	    if (qs != null) p+= "?" + qs;
+	    Logging.info("RB(T="+tid+"; "+p+"): creating sd"); // FIXME: during "malfunctioning", this is the last line that fires up on every servlet call that fails to complete. It seems that on such occasions SessionData.getSessionData() is never entered (because it's synchronized?), as not even the first breakpoint inside that method is reached. (2016-07-11)
 	    sd = SessionData.getSessionData(request);	  
 	    Logging.info("RB(): created sd"); // ... and this one, does not!
 	    infomsg += "Session " + sd.getSqlSessionId();
@@ -184,7 +189,6 @@ public class ResultsBase implements OptionAccess {
 		    String redirect = cp + "/login2.jsp?sp=" +
 			URLEncoder.encode( request.getServletPath(), "UTF-8");
 
-		    String qs = request.getQueryString();
 		    if (qs != null) redirect += "&qs="+	URLEncoder.encode(qs, "UTF-8");
 
 		    //String eurl = response.encodeRedirectURL(redirect);
@@ -304,7 +308,10 @@ public class ResultsBase implements OptionAccess {
 	ensureClosed( em, true);
     }
 
-    /** A hygienic way to close a connection, if it is open. This can be put into every "finally" clause. */
+    /** A hygienic way to close a connection, if it is open. This can be put into every "finally" clause.
+
+	@param commit Specifies what to do with the still-active (uncommitted) transaction that may be associated with the EntityManager. If commit==true, this transaction will be committed (or, at least, we'll try to do that); otherwise, it will be rolled back.
+ */
     public static void ensureClosed(EntityManager em, boolean commit ) {
 	if (em==null) return;
 	if (!em.isOpen()) return;
@@ -319,8 +326,11 @@ public class ResultsBase implements OptionAccess {
 	} catch (Exception _e) {}
     }
 
-    /** Closes the searcher *and* the underlying reader. Just put this
-	in everyu "finally" clause! */
+    /** Closes the Lucene index searcher *and* the underlying index reader. Just put this
+	in every "finally" clause! 
+
+	@param searcher The Lucene index searcher to close.
+    */
     public static void ensureClosedReader(IndexSearcher searcher) {
 	if (searcher==null) return;
 	try {
