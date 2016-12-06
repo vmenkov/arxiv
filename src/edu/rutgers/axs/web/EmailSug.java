@@ -399,6 +399,10 @@ public class EmailSug extends ResultsBase {
 	    Logging.info(msg);
 	    infomsg += msg;
 	    return false;
+	} else {
+	    String msg = "User " + r + " has emailDays=" + emailDays;
+	    Logging.info(msg);
+	    infomsg += msg;	    
 	}
 	PresentedList pl1 = PresentedList.findLatestEmailSugList(em,  uname);
 	PresentedList pl2 = PresentedList.findLatestPresentedSugList(em,uname);
