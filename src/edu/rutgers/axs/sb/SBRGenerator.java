@@ -142,7 +142,7 @@ public class SBRGenerator {
 	<p>It may have been more logical to put this functionality
 	into the constructor, but in our setup the constructor is
 	invoked immediately when the session is created, and merely
-	created a dummy (and disabled) SBRG object. 
+	creates a dummy (and disabled) SBRG object. 
 
 	@param rb Provides access to the query-string parameters,
 	which controls various SBRG modes and options. Since

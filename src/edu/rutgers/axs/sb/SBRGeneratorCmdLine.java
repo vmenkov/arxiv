@@ -19,7 +19,7 @@ import edu.rutgers.axs.util.Util;
 import edu.rutgers.axs.harness.TestHarness;
 
 
-/** SB recommendatin generator test harness. 
+/** SB recommendation generator test harness. 
 
     <p> An extension of SBRGenerator provided with a test harness, so
     that it can be tested from command line (instead of being part of
