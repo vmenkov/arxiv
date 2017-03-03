@@ -563,7 +563,7 @@ public class SessionData {
 		newPLid = newPL.getId();
 
 		// on SB lists, make in-memory record in the SB generator,
-		// for furture use in "maintain stable order" procedures
+		// for future use in "maintain stable order" procedures
 		if (original.getType()==Action.Source.SB) {
 		    sd.sbrg.receiveReorderedList(oplid, reorderedAids);
 		}
