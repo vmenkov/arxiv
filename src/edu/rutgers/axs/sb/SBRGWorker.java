@@ -201,6 +201,11 @@ class SBRGWorker  {
 	    distinct-article actions used for generating the rec list.
 	 */
 	int age=0;
+	/** List of ranks this article possesses in various ranked
+	    lists, in increasing order. For example (0, 1, 1, 5) means
+	    that this article has rank 0 (the top rank) in one list,
+	    rank 1 in two other lists, and rank 5 in yet another list.
+	*/
 	Vector<Integer> ranks=new Vector<Integer>();
 	public int compareTo(ArticleRanks o) {
 	    for(int i=0; i<ranks.size() && i<o.ranks.size(); i++) {
@@ -224,6 +229,14 @@ class SBRGWorker  {
 	    ranks.add(new Integer(r));
 	    score +=  deltaScore;
 	    if (_age < age) age = _age;  // old-style ages
+	}
+
+	public String toString() {
+	    String s = "(" + docno + ": " + score + " {";
+	    for(int r : ranks) s+= " " + r;
+	    s += "})";
+	    return s;
+
 	}
     }
 
@@ -285,13 +298,17 @@ class SBRGWorker  {
     }
 
 
-   static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
+    /** Computes a suggestion list based on a single article, using
+	the historical ArXiv.org coaccess data. This is used in our
+	COACCESS method. 
+
+    */
+    static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
+
+       ScoreDoc [] results =  new ScoreDoc[0];
 
        // http://my.arxiv.org/coaccess/CoaccessServlet
        // http://my.arxiv.org/coaccess/CoaccessServlet?arxiv_id=0704.0001&maxlen=5
-
-       ScoreDoc [] results =  new ScoreDoc[0];
- 
 
        String query = "arxiv_id=" + aid + "&maxlen=" + maxlen;
 
@@ -424,7 +441,12 @@ class SBRGWorker  {
 		}
 	    }
 	    ArticleRanks[] ranked = (ArticleRanks[])hr.values().toArray(new ArticleRanks[0]);
+	    System.out.println("Articles ranks (unsorted)");
+	    for(int j=0; j<ranked.length; j++) System.out.println(ranked[j]);
+
 	    Arrays.sort(ranked);
+	    System.out.println("Articles ranks (sorted) (top)");
+	    for(int j=0; j<ranked.length && j<10; j++) System.out.println(ranked[j]);
 
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 	    Vector<ScoreDoc> sd = new  Vector<ScoreDoc>();

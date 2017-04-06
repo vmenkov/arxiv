@@ -240,7 +240,7 @@ public class SBRGenerator {
 				    new SBRGWorker(Method.COACCESS, sbrg, 0));
 	} else if (sbrg.sbMethod == Method.CTPF) { 
 	    w = new SBRGWorkerCTPF(sbrg, soMode);
-    } else {
+	} else {
 	    w = new SBRGWorker(sbrg.sbMethod, sbrg, soMode);
 	}
 

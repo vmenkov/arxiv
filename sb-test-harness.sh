@@ -1,7 +1,8 @@
 #!/bin/csh
 
 # Usage examples:
-# ./import.sh files 'http://export.arxiv.org/oai2?verb=GetRecord&metadataPrefix=arXiv&identifier=oai:arXiv.org:1211.0003'
+#
+#  ./sb-test-harness.sh -sbMethod COACCESS aid-list.txt
 
 
 #-- Set the home directory as per the "-home" option. This is useful
