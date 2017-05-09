@@ -140,6 +140,7 @@ class SBRGWorker  {
 		computeRecListTrivial(em,searcher);
 	    } else if (sbMethod==SBRGenerator.Method.ABSTRACTS ||
 		       sbMethod==SBRGenerator.Method.COACCESS ||
+		       sbMethod==SBRGenerator.Method.COACCESS2 ||
 		       sbMethod==SBRGenerator.Method.SUBJECTS) {
 
 		computeRecList(em,searcher,  runID);
@@ -302,8 +303,10 @@ class SBRGWorker  {
 	the historical ArXiv.org coaccess data. This is used in our
 	COACCESS method. 
 
+	@param aid The article for which suggestions are to be computed
+	@param addLocal On for COACCESS2
     */
-    static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
+    static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen, boolean addLocal) throws Exception {
 
        ScoreDoc [] results =  new ScoreDoc[0];
 
@@ -357,6 +360,14 @@ class SBRGWorker  {
 	return results;
     }
 
+    /** For COACCESS2 */
+    /*
+    static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid, int maxlen) throws Exception {
+	
+    }
+    */
+
+
     HashSet<String> findExclusions() {
 	HashSet<String> exclusions = parent.linkedAids;
 	synchronized (exclusions) {
@@ -398,9 +409,11 @@ class SBRGWorker  {
 			z=computeArticleBasedListAbstracts(searcher,aid,maxlen);
 		    } else if (sbMethod==SBRGenerator.Method.SUBJECTS) {
 			z=computeArticleBasedListSubjects(searcher,aid,maxlen);
-		    } else if (sbMethod==SBRGenerator.Method.COACCESS) {
+		    } else if (sbMethod==SBRGenerator.Method.COACCESS ||
+			       sbMethod==SBRGenerator.Method.COACCESS2) {
+			boolean addLocal = (sbMethod==SBRGenerator.Method.COACCESS2);
 			// exception may be thrown; caught in an outer "catch"
-			z=computeArticleBasedListCoaccess(searcher,aid,maxlen);
+			z=computeArticleBasedListCoaccess(searcher,aid,maxlen, addLocal);
 		    } else {
 			error = true;
 			errmsg = "Illegal SRB generation method: " + sbMethod;
@@ -772,7 +785,7 @@ class SBRGWorker  {
 	final int maxlen = 100;
 	for(String aid: argv) {
 	    System.out.println("Generating suggestion for aid=" + aid);
-	    ScoreDoc[] z = SBRGWorker.computeArticleBasedListCoaccess(searcher, aid, maxlen);
+	    ScoreDoc[] z = SBRGWorker.computeArticleBasedListCoaccess(searcher, aid, maxlen, false);
 	    if (z!=null) {
 		for(int j=0; j<z.length && j<5; j++) {
 		    int docno = z[j].doc;

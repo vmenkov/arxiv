@@ -274,6 +274,7 @@ code; but not anymore. -->
       <include name="EE5DocClass.class" />
       <include name="EE5Uci.class" />
       <include name="Session.class" />
+      <include name="ActionWeight.class" />
     </fileset>
   </openjpac>
 

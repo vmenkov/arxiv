@@ -66,6 +66,7 @@
         <class>edu.rutgers.axs.sql.EE5DocClass</class>
         <class>edu.rutgers.axs.sql.EE5Uci</class>
         <class>edu.rutgers.axs.sql.Session</class>
+        <class>edu.rutgers.axs.sql.ActionWeight</class>
 
         <properties>
             <!--

@@ -542,7 +542,11 @@ public class SessionData {
 	command-line application. (This may be done retroactively to 
 	"fix" things after some reorganizations, or it can be done
 	in test harness experiments, when we are emulating online user activity
-	in a command-line tool)
+	in a command-line tool).
+
+	2017-04-17: On REORDER operations, the topmost promoted article
+	is now recorded in the Article field of the Action object.
+	This is for use in COACCESS2 SB recommender.
      */
     public static Action addNewAction(EntityManager em,  User u, Action.Op op, 
 				      Article art, String reorderedAids[],
@@ -561,6 +565,11 @@ public class SessionData {
 		if (sd==null) throw new IllegalArgumentException("Cannot create a REORDER action outside of a web app!");
 		PresentedList newPL = sd.saveReorderedPresentedList(em,original,u,reorderedAids,sid); 
 		newPLid = newPL.getId();
+
+		String promotedAid = original.whoWasPromoted(newPL);
+		if (promotedAid!=null) {
+		    art = Article.getArticleAlways(em, promotedAid,false);
+		}
 
 		// on SB lists, make in-memory record in the SB generator,
 		// for future use in "maintain stable order" procedures

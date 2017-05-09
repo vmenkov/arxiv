@@ -40,6 +40,11 @@ public class CreateRoles {
     }
 
 
+    /** For each role name, checks if a Role object with that name
+	already exists in the database, and if not, creates it.
+	Also, creates certain users, or, if they already exists,
+	resets their passwords.
+     */
     @SuppressWarnings("unchecked")
     public static void main(String[] args) throws WebException {
 	EntityManager em = getEM();

@@ -293,6 +293,25 @@ import edu.rutgers.axs.sb.SBRGenerator;
     public SBRGenerator.Method getSbMethod() { return sbMethod; }
     public void setSbMethod(SBRGenerator.Method x) {sbMethod =x; }
 
-
+    /** Compares this list with the new list from the top down, and
+	identifies the first article that appears in the new list at a
+	higher position than in the old list (or does not appear in
+	the old list at all). 
+	@return The AID of the first promoted element, or null if the two lists
+	are identical.
+     */
+    public String whoWasPromoted(PresentedList newList) {
+	Vector<PresentedListEntry> oldDocs = getDocs(),
+	    newDocs =  newList.getDocs();
+	int n0 = oldDocs.size();
+	int n1 = newDocs.size();
+	for(int i=0; i<n1; i++) {
+	    String newAid =newDocs.elementAt(i).getAid();
+	    if (i>=n0 || !newAid.equals(oldDocs.elementAt(i).getAid())) {
+		return newAid;
+	    }
+	}
+	return null;
+    }
 
 }
