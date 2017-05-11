@@ -305,6 +305,7 @@ class SBRGWorker  {
 
 	@param aid The article for which suggestions are to be computed
 	@param addLocal On for COACCESS2
+	@return An array each element of which contains a Lucene internal document ID and the ArXiv historic coaccess count, as obtained from the coaccess server
     */
     static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen, boolean addLocal) throws Exception {
 
@@ -360,12 +361,50 @@ class SBRGWorker  {
 	return results;
     }
 
-    /** For COACCESS2 */
-    /*
+    /** For a given article, creates a sug list based strictly on the
+	recent local (My.ArXiv) coaccess. This is used in COACCESS2.  */
     static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid, int maxlen) throws Exception {
-	
-    }
-    */
+	ScoreDoc [] results =  new ScoreDoc[0];
+
+	try {
+	    
+	    final Date t0 = SearchResults.daysAgo(365);
+
+	    String qs=  "select a2.article.aid, sum( aw1.weight * aw2.weight)  " +
+		"from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  " +
+		"where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 " +
+		"and a1.op = aw1.op and a2.op = aw2.op "+
+		"and a1.article.aid = :aid and a2.article <> a1.article " +
+		"group by a2.article.aid order by sum( aw1.weight * aw2.weight) desc";
+	    
+	    Query q = em.createQuery(qs);	
+	    q.setParameter("aid",aid);
+	    q.setParameter("t0", t0);
+	    List res = q.getResultList();
+	    Vector<ScoreDoc> v = new Vector<ScoreDoc>();
+	    for(Object o: res) {			    
+
+		if (!(o instanceof Object[])) continue;
+		Object[] oa = (Object[])o;
+		String zaid=(String)oa[0];
+		Double w = (Double)oa[1];
+
+		int docno=0;
+		try {
+		    docno= Common.find(searcher, zaid);
+		} catch(IOException ex) {
+		    continue; // FIXME
+		}
+
+		ScoreDoc sd = new ScoreDoc(docno, (float)w.doubleValue());
+		v.add(sd);
+	    }
+	    results = (ScoreDoc[])v.toArray(results);
+	} catch(Exception ex) {
+	} 
+	return results;
+   }
+
 
 
     HashSet<String> findExclusions() {

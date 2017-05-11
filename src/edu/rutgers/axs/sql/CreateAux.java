@@ -38,7 +38,6 @@ public class CreateAux
 		    em.getTransaction().rollback();
 		    continue;
 		} catch (NoResultException ex) {}
-		//} catch (Exception ex) {}
 
 		System.out.println("Creating entry for: " + op);
 		ActionWeight r=new ActionWeight();
