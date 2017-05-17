@@ -80,10 +80,6 @@ score, each line also contains brief information about the article
 (categories, title), and some numbers explaining its origin on the
 list (doc cluster ID, &xi;, and the value of <em>c<sup>*</em></sup>(<em>u</em>,&alpha;,&beta;)).
 
-
-
-
-
  */
 public class TestHarness {
 

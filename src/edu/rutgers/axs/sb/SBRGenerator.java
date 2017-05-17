@@ -85,6 +85,10 @@ public class SBRGenerator {
 	/** Recommendations are based on the article's historical
 	    coaccess data from ArXiv.org  */
 	COACCESS,
+	/** Recommendations are based on the article's local coaccess
+	    data (recent activity in My.ArXiv). This is not going to be
+	    practically useful unless we have lots of activity. */
+	COACCESS_LOCAL,
 	/** Combines coaccess data from two sources: historical data
 	    from ArXiv.org and some recent activity in My.ArXiv. This
 	    is mostly used for "crosstalk" expriments.	 */
@@ -213,6 +217,13 @@ public class SBRGenerator {
 		desc += "; CTPF.T=" + w.temperature + "; CTPF.D=" + w.D;
 	    }
 
+	    int minArticleCount = rb.getInt("minArticleCount", -1);
+	    if (minArticleCount>=0) {
+		System.out.println("Setting minArticleCount=" + minArticleCount);
+		setMinArticleCount(minArticleCount);
+	    }
+
+
 	    Logging.info("SBRG(session="+sd.getSqlSessionId()+").init(): " + desc);
 
 
@@ -283,6 +294,15 @@ public class SBRGenerator {
     }
     
 
+    /** The minimum number of pages the user needs to view in order for the
+	SB sug list to be generated.
+     */
+    private int minArticleCount = 2;
+
+    void setMinArticleCount(int _minArticleCount ) {
+	minArticleCount = _minArticleCount;
+    }
+
     /** Turns the flag on to activate the moving panel for the
 	Session-Based recommendations. Requests the suggestion
 	list generation.
@@ -303,7 +323,7 @@ public class SBRGenerator {
 	//Logging.info("sbCheck: allowedSB=" + allowedSB);
 	if (allowedSB) {
 	    int articleCnt = maintainedActionHistory.articleCount;
-	    needSBNow = 	     (articleCnt>=2);
+	    needSBNow = 	     (articleCnt>= minArticleCount);
 	    //Logging.info("sbCheck: articleCnt="+articleCnt+", needSBNow=" +needSBNow);
 	    return needSBNow ? requestRun(articleCnt) : null;
 	} else return null;

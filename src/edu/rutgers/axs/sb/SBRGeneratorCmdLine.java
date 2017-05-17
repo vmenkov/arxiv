@@ -105,6 +105,8 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	super(_sd, false);
     }
 
+    static final String simulatedUname ="simulated_sb";
+
     /** Creates a SBR generator configured based on command line
 	parameters (supplied as system properties)
 	@param ht Provides access to system properties. The properties,
@@ -119,9 +121,8 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	g.init(ht, true, true);
 
 	g.em = sd.getEM();
-	String uname = "simulated_sb";
-	g.user= TestHarness.createDummyUser( g.em, uname, User.Program.SB_ANON, null);
-	g.sd.storeUserName(uname);
+	g.user= TestHarness.createDummyUser( g.em, simulatedUname, User.Program.SB_ANON, null);
+	g.sd.storeUserName(simulatedUname);
 	g.sd.storeUserInfoInSQL(g.em, g.user);
 
 	return g;
@@ -152,10 +153,11 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
     }
 
 
-   /** This is designed for command line testing. The parameters which are
-	normally passed to the SBRGenerator via the URL query string 
-	are expected to be supplied as command line options (system properties),
-	e.g. -DsbXXXX=YYYY
+   /** This is designed for command line driven testing of the SB
+	recommendation engines. The parameters which are normally
+	passed to the SBRGenerator via the URL query string are
+	expected to be supplied as command line options (system
+	properties), e.g. -DsbXXXX=YYYY
     */
    static public void main(String[] argv) throws Exception {
        ParseConfig ht = new ParseConfig();
@@ -180,6 +182,7 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
 	boolean showScores = ht.getOption("showScores", true);
 
 	SBRGeneratorCmdLine g = SBRGeneratorCmdLine.create(ht);
+	
 
 	// figuring if we need the CTPF data
 	if (g.sbMethod == SBRGenerator.Method.CTPF) {

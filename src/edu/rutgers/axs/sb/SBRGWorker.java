@@ -140,6 +140,7 @@ class SBRGWorker  {
 		computeRecListTrivial(em,searcher);
 	    } else if (sbMethod==SBRGenerator.Method.ABSTRACTS ||
 		       sbMethod==SBRGenerator.Method.COACCESS ||
+		       sbMethod==SBRGenerator.Method.COACCESS_LOCAL ||
 		       sbMethod==SBRGenerator.Method.COACCESS2 ||
 		       sbMethod==SBRGenerator.Method.SUBJECTS) {
 
@@ -301,13 +302,13 @@ class SBRGWorker  {
 
     /** Computes a suggestion list based on a single article, using
 	the historical ArXiv.org coaccess data. This is used in our
-	COACCESS method. 
+	COACCESS method (and, by extension, in COACCESS2).
 
 	@param aid The article for which suggestions are to be computed
 	@param addLocal On for COACCESS2
 	@return An array each element of which contains a Lucene internal document ID and the ArXiv historic coaccess count, as obtained from the coaccess server
     */
-    static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen, boolean addLocal) throws Exception {
+    static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
 
        ScoreDoc [] results =  new ScoreDoc[0];
 
@@ -362,7 +363,8 @@ class SBRGWorker  {
     }
 
     /** For a given article, creates a sug list based strictly on the
-	recent local (My.ArXiv) coaccess. This is used in COACCESS2.  */
+	recent local (My.ArXiv) coaccess. This is used in COACCESS_LOCAL (and,
+	by extension, in COACCESS2).  */
     static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid, int maxlen) throws Exception {
 	ScoreDoc [] results =  new ScoreDoc[0];
 
@@ -373,6 +375,8 @@ class SBRGWorker  {
 	    String qs=  "select a2.article.aid, sum( aw1.weight * aw2.weight)  " +
 		"from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  " +
 		"where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 " +
+		"and a1.user.user_name <> :usim and a2.user.user_name <> :usim " + 
+		"and a1.article.aid is not null and a2.article.aid is not null " +
 		"and a1.op = aw1.op and a2.op = aw2.op "+
 		"and a1.article.aid = :aid and a2.article <> a1.article " +
 		"group by a2.article.aid order by sum( aw1.weight * aw2.weight) desc";
@@ -380,6 +384,7 @@ class SBRGWorker  {
 	    Query q = em.createQuery(qs);	
 	    q.setParameter("aid",aid);
 	    q.setParameter("t0", t0);
+	    q.setParameter("usim",  SBRGeneratorCmdLine.simulatedUname);
 	    List res = q.getResultList();
 	    Vector<ScoreDoc> v = new Vector<ScoreDoc>();
 	    for(Object o: res) {			    
@@ -403,9 +408,30 @@ class SBRGWorker  {
 	} catch(Exception ex) {
 	} 
 	return results;
-   }
-
-
+    }
+    
+    /** Merges two ScoreDoc arrays, by summing scores. This is used in
+	COACCESS2, to add recent "local" (My.ArXiv's) coaccess numbers
+	to the historic "global" (ArXiv.org's) coaccess numbers.
+     */
+    static private ScoreDoc[] addCoaccessLists(ScoreDoc[] list1, ScoreDoc[] list2) {
+	HashMap<Integer, ScoreDoc> map2 = new 	HashMap<Integer, ScoreDoc>();
+	for(ScoreDoc q: list2) map2.put(new Integer(q.doc), q);
+	Vector<ScoreDoc> v = new Vector<ScoreDoc>();
+	for(ScoreDoc q: list1) {
+	    Integer key = new  Integer(q.doc);
+	    ScoreDoc z = map2.get(key);
+	    if (z==null) v.add(q);
+	    else {
+		v.add( new ScoreDoc(q.doc, q.score + z.score));
+		map2.remove(key);
+	    }
+	}
+	for(ScoreDoc z: map2.values()) v.add(z);
+	ScoreDoc[] results =  (ScoreDoc[])v.toArray(new ScoreDoc[0]);
+	Arrays.sort(results, new SearchResults.SDComparator());
+	return results;
+    }
 
     HashSet<String> findExclusions() {
 	HashSet<String> exclusions = parent.linkedAids;
@@ -448,11 +474,19 @@ class SBRGWorker  {
 			z=computeArticleBasedListAbstracts(searcher,aid,maxlen);
 		    } else if (sbMethod==SBRGenerator.Method.SUBJECTS) {
 			z=computeArticleBasedListSubjects(searcher,aid,maxlen);
-		    } else if (sbMethod==SBRGenerator.Method.COACCESS ||
-			       sbMethod==SBRGenerator.Method.COACCESS2) {
-			boolean addLocal = (sbMethod==SBRGenerator.Method.COACCESS2);
+		    } else if (sbMethod==SBRGenerator.Method.COACCESS 
+			       // || sbMethod==SBRGenerator.Method.COACCESS2
+			       ) {
 			// exception may be thrown; caught in an outer "catch"
-			z=computeArticleBasedListCoaccess(searcher,aid,maxlen, addLocal);
+			z=computeArticleBasedListCoaccess(searcher,aid,maxlen);
+		    } else if (sbMethod==SBRGenerator.Method.COACCESS_LOCAL) {
+			z=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen);
+
+		    } else if (sbMethod==SBRGenerator.Method.COACCESS2) {
+			ScoreDoc[] z1=computeArticleBasedListCoaccess(searcher,aid,maxlen);
+			ScoreDoc[] z2=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen);
+			z =  addCoaccessLists(z1,z2);
+
 		    } else {
 			error = true;
 			errmsg = "Illegal SRB generation method: " + sbMethod;
@@ -493,12 +527,13 @@ class SBRGWorker  {
 		}
 	    }
 	    ArticleRanks[] ranked = (ArticleRanks[])hr.values().toArray(new ArticleRanks[0]);
-	    System.out.println("Articles ranks (unsorted)");
-	    for(int j=0; j<ranked.length; j++) System.out.println(ranked[j]);
+
+	    //System.out.println("Articles ranks (unsorted)");
+	    //for(int j=0; j<ranked.length; j++) System.out.println(ranked[j]);
 
 	    Arrays.sort(ranked);
-	    System.out.println("Articles ranks (sorted) (top)");
-	    for(int j=0; j<ranked.length && j<10; j++) System.out.println(ranked[j]);
+	    //System.out.println("Articles ranks (sorted) (top)");
+	    //for(int j=0; j<ranked.length && j<10; j++) System.out.println(ranked[j]);
 
 	    Vector<ArticleEntry> entries = new Vector<ArticleEntry>();
 	    Vector<ScoreDoc> sd = new  Vector<ScoreDoc>();
@@ -824,7 +859,7 @@ class SBRGWorker  {
 	final int maxlen = 100;
 	for(String aid: argv) {
 	    System.out.println("Generating suggestion for aid=" + aid);
-	    ScoreDoc[] z = SBRGWorker.computeArticleBasedListCoaccess(searcher, aid, maxlen, false);
+	    ScoreDoc[] z = SBRGWorker.computeArticleBasedListCoaccess(searcher, aid, maxlen);
 	    if (z!=null) {
 		for(int j=0; j<z.length && j<5; j++) {
 		    int docno = z[j].doc;

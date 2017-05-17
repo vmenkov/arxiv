@@ -64,6 +64,7 @@ endif
 
 /usr/bin/time java $opt -DsbMergeWithBaseline=false \
 -DsbMethod=$sbMethod \
+-DminArticleCount=1 \
 edu.rutgers.axs.sb.SBRGeneratorCmdLine $1 $2
 
 
