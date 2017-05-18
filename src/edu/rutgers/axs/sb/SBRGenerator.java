@@ -210,17 +210,16 @@ public class SBRGenerator {
 			}
 		    } 
 		}
+		int minArticleCount = rb.getInt("minArticleCount", -1);
+		if (minArticleCount>=0) {
+		    System.out.println("Setting minArticleCount=" + minArticleCount);
+		    setMinArticleCount(minArticleCount);
+		}
 	    }
 
 	    if (isCTPF) {
 		SBRGWorkerCTPF w = (SBRGWorkerCTPF)worker;
 		desc += "; CTPF.T=" + w.temperature + "; CTPF.D=" + w.D;
-	    }
-
-	    int minArticleCount = rb.getInt("minArticleCount", -1);
-	    if (minArticleCount>=0) {
-		System.out.println("Setting minArticleCount=" + minArticleCount);
-		setMinArticleCount(minArticleCount);
 	    }
 
 
