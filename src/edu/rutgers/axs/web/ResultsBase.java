@@ -662,6 +662,7 @@ public class ResultsBase implements OptionAccess {
      */
     public boolean needSBNow() {
 	Logging.info("RB.needSBNow: sd=" + sd);
+	if (sd==null) return false;
 	edu.rutgers.axs.sb.SBRGenerator sbrg =  sd.sbrg;
 	return  sbrg.getNeedSBNow();
     }
