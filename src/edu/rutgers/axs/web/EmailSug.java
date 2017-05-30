@@ -128,7 +128,7 @@ public class EmailSug extends ResultsBase {
 	    em.getTransaction().commit();
 
 	    if (dontSend) {		
-		System.out.println("Not sending email (dontSend flag on)");
+		System.out.println("Not actually sending email (dontSend flag on)");
 		return false;
 	    } else {
 		return sendMail(uname, email, realName);

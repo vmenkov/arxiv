@@ -58,13 +58,23 @@ Session-Based recommendation lists (SBRL), different versions:</strong></a>
 <tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS,false)%>">COACCESS</a>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS,true)%>">COACCESS + SUBJECTS</a>
-<td>Coaccess based (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data thru August 2014)
+<td>Historic coaccess based (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data for many years, thru last week or so)
 
 <tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,false)%>">ABSTRACTS + COACCESS</a>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,true)%>">(ABSTRACTS + COACCESS) + SUBJECTS</a>
 <td>Team-draft merge of ABSTRACTS and COACCESS
 
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS_LOCAL,false)%>">COACCESS_LOCAL</a>
+<td><!-- a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS_LOCAL,true)%>">COACCESS_LOCAL + SUBJECTS</a -->
+<td>Local recent coaccess based (recommendation generated using  <a href="coaccess_local.html">my.arxiv.org coaccess data</a> over the last 12 months)
+
+<tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS2,false)%>">COACCESS2</a>
+<td><!-- a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS2,true)%>">COACCESS2 + SUBJECTS</a -->
+<td>Recommnder uses "combined coaccess", which adds historic arxiv.org coaccess numbers (as in COACCESS) and [weighted] local recent coaccess (as in
+<a href="coaccess_local.html">COACCESS_LOCAL</a>)
 
 <tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.CTPF,false)%>">CTPF</a>

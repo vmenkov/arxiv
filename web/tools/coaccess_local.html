@@ -1,0 +1,27 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Local coaccess</title>
+</head>
+<body>
+
+<h1>Session-based recommender using local coaccess data</h1>
+
+<p align=center><em>Updated: 2017-05-25</em></p>
+
+<p>This document describes the COACCESS2 and COACCESS_LOCAL session-based recommenders, which have been added to the My.ArXiv in April-May 2017. While not particularly practical without a large user base, these methods have been added in order for us to be able to experiment with one user's activities influencing other user's recommendations.</p>
+
+<h2>Motivation</h2>
+
+<p>
+  We are interested in carrying out experiments where one user (A) may notice changes in the recommendations generated for him in two sessions due to the actions of another user (K) that take place between these two sessions. (The "A-K-A" scenario).</p>
+
+<P>My.ArXiv's standard session-based recommenders are not suitable for such experiments. Most of them, when producing recommendations for A, don't materially use any information about other users' recent activity. E.g. the ABSTRACT reccommender simply uses the content of the articles seen by A in the current session. The COACCESS recommender is based on other people's activity, but this activity is the activity of all ArXiv.org's users, aggregated for over a decade, and updated, at best, on daily basis (with some delay).
+
+<p>Accordingly, we have now added two new session-based recommenders. The COACCESS_LOCAL recommender is conceptually similar to COACCESS, but instead of using ArXiv.org's historical data, it is based on My.ArXiv's own recent (up-to-minute) activity data. If our web site, My.ArXiv, had a sufficiently high user activity level, this method could be an adequate replacement for the original COACCESS. Unfortunately, 
+
+  
+
+
+</body>
+</html>
