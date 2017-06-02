@@ -16,9 +16,48 @@
 <p>
   We are interested in carrying out experiments where one user (A) may notice changes in the recommendations generated for him in two sessions due to the actions of another user (K) that take place between these two sessions. (The "A-K-A" scenario).</p>
 
-<P>My.ArXiv's standard session-based recommenders are not suitable for such experiments. Most of them, when producing recommendations for A, don't materially use any information about other users' recent activity. E.g. the ABSTRACT reccommender simply uses the content of the articles seen by A in the current session. The COACCESS recommender is based on other people's activity, but this activity is the activity of all ArXiv.org's users, aggregated for over a decade, and updated, at best, on daily basis (with some delay).
+<P>My.ArXiv's standard session-based recommenders are not suitable for such experiments. Most of them, when producing recommendations for A, don't materially use any information about other users' recent activity. E.g. the ABSTRACT reccommender simply uses the content of the articles seen by A in the current session. The COACCESS recommender is based on other people's activity, but this activity is the activity of all ArXiv.org's users, aggregated for over a decade, and updated, at best, on daily basis (with some delay).</p>
 
-<p>Accordingly, we have now added two new session-based recommenders. The COACCESS_LOCAL recommender is conceptually similar to COACCESS, but instead of using ArXiv.org's historical data, it is based on My.ArXiv's own recent (up-to-minute) activity data. If our web site, My.ArXiv, had a sufficiently high user activity level, this method could be an adequate replacement for the original COACCESS. Unfortunately, 
+<p>Accordingly, we have now added two new session-based recommenders. The COACCESS_LOCAL recommender is conceptually similar to COACCESS, but instead of using ArXiv.org's historical data, it is based on My.ArXiv's own recent (up-to-minute) activity data. If our web site, My.ArXiv, had a sufficiently high user activity level, this method could be an adequate replacement for the original COACCESS. Unfortunately, few, if any, real users use My.ArXiv, and we don't have a sufficient depth of data to generate sensible recommendations in most cases. To deal with this problem, the COACCESS2 recommender has been set up; for each pair of documents, it computes a coaccess value as a weighted sum of the coaccess values from COACCESS and COACCESS_LOCAL.</p>
+
+<h2>COACCESS_LOCAL</h2>
+
+<p><strong>Actions covered.</strong>
+  In order to compute the "coaccess value" for a pair of articles, we need to define what an "access" is. For the purpose of measuring coaccess, we only consider certain operations that are deemed to represent a user's "positive interactions" with articles. The following operations are covered (as described in the SQL table ActionWeight):
+  <ul>
+    <li>"View" operations (expand abstract, view abstract, view article)     
+    <li>"Positive" ratings
+    <li>"Copy to folder"
+    <li>"SB list reordering" (as explained below)
+  </ul>
+</p>
+
+<p><strong>Treatment ot SB list reordering.</strong> For most of the operations listed above, it's pretty obvious what the operation's target (the article interacted with) is. However, ....
+
+
+
+<p>This works as follows:</p>
+
+<ul>
+  <li>
+
+    For each user operation ("action") where it makes sense, we define a single "target", i.e. the article with which the user is said to have interacted during that operation. 
+
+  </li>
+
+  <li>
+   "select a2.article.aid, sum( aw1.weight * aw2.weight)  " +
+		"from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  " +
+		"where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 " +
+		"and a1.user.user_name <> :usim and a2.user.user_name <> :usim " + 
+		"and a1.article.aid is not null and a2.article.aid is not null " +
+		"and a1.op = aw1.op and a2.op = aw2.op "+
+		"and a1.article.aid = :aid and a2.article <> a1.article " +
+		"group by a2.article.aid order by sum( aw1.weight * aw2.weight) desc";
+  </li>
+
+</ul>
+  
 
   
 
