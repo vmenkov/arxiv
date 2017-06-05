@@ -296,7 +296,9 @@ import edu.rutgers.axs.sb.SBRGenerator;
     /** Compares this list with the new list from the top down, and
 	identifies the first article that appears in the new list at a
 	higher position than in the old list (or does not appear in
-	the old list at all). 
+	the old list at all).  This is used to determine the notional
+	"target" of the REORDER action (so that it can be later used in
+	coaccess computation).
 	@return The AID of the first promoted element, or null if the two lists
 	are identical.
      */

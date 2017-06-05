@@ -32,11 +32,14 @@
   </ul>
 </p>
 
-<p><strong>Treatment ot SB list reordering.</strong> For most of the operations listed above, it's pretty obvious what the operation's target (the article interacted with) is. However, ....
+<p><strong>Treatment ot SB list reordering.</strong> For most of the user actions listed above, it's pretty obvious what the operation's target (the article interacted with) is. However, for the list reorder operation it is not quite clear which article in the recommendation list presented to the user in the SB pop-up window had attracted his attention when he chose to move articles around. In order to utilize this action in the coaccess computations, we use the following simple definition of the action target: we compare the original list and the reordered list, in the order of the reordered list, and the first article that appears in the reordered list at a higher position than it did in the original list is considered to be the user's action target.
+</P>
 
+<p><strong>Treatment ot SB list reordering - criticism.</strong>
+This is an entire sensible definition if a user picked one article and dragged it to a higher position in the list. If what happened was the opposite -- the user did not like article A<sub>j</sub> and dragged it to a lower position in the list -- then the above process will interpret the operation as the user's "positive interaction" with article A<sub>(j+1)</sub>  that was, originally, just below the "demoted"  A<sub>j</sub>. While that's not entirely silly (after all, the user must have thought that A<sub>(j+1)</sub> is, at least, not as bad as A<sub>j</sub>), we have no way of knowing whether the user really gave any positive thought to A<sub>(j+1)</sub>.
+</p>
 
-
-<p>This works as follows:</p>
+<p><strong>Computing the coaccess value.</strong> 
 
 <ul>
   <li>
@@ -46,14 +49,16 @@
   </li>
 
   <li>
-   "select a2.article.aid, sum( aw1.weight * aw2.weight)  " +
-		"from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  " +
-		"where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 " +
-		"and a1.user.user_name <> :usim and a2.user.user_name <> :usim " + 
-		"and a1.article.aid is not null and a2.article.aid is not null " +
-		"and a1.op = aw1.op and a2.op = aw2.op "+
-		"and a1.article.aid = :aid and a2.article <> a1.article " +
-		"group by a2.article.aid order by sum( aw1.weight * aw2.weight) desc";
+<pre>
+select a2.article.aid, sum( aw1.weight * aw2.weight) 
+from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  
+where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 
+and a1.user.user_name <> :usim and a2.user.user_name <> :usim 
+and a1.article.aid is not null and a2.article.aid is not null
+and a1.op = aw1.op and a2.op = aw2.op 
+and a1.article.aid = :aid and a2.article <> a1.article 
+group by a2.article.aid order by sum( aw1.weight * aw2.weight) desc
+</pre>	    
   </li>
 
 </ul>
