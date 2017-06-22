@@ -1,5 +1,6 @@
 #!/bin/csh
 
+# This is a script for comman-line testing of SB recommenders
 # Usage examples:
 #
 #  ./sb-test-harness.sh -sbMethod COACCESS aid-list.txt

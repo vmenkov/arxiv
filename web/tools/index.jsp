@@ -61,6 +61,12 @@ Session-Based recommendation lists (SBRL), different versions:</strong></a>
 <td>Historic coaccess based (recommendation generated using arxiv.org <a href="/coaccess">coaccess data</a> data for many years, thru last week or so)
 
 <tr>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS_LOCAL,false)%>">COACCESS_LOCAL</a>
+<td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.COACCESS_LOCAL,true)%>">COACCESS_LOCAL + SUBJECTS</a>
+<td>My.ArXiv coaccess based (recommendation generated using recent my.arxiv.org <a href="coaccess_local.html">coaccess data</a>)
+
+
+<tr>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,false)%>">ABSTRACTS + COACCESS</a>
 <td><a href="../index.jsp?<%=SBRGenerator.qsd(SBRGenerator.Method.ABSTRACTS_COACCESS,true)%>">(ABSTRACTS + COACCESS) + SUBJECTS</a>
 <td>Team-draft merge of ABSTRACTS and COACCESS

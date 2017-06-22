@@ -556,8 +556,14 @@ public class SBRGenerator {
     }
 
 
+    /** A record of user's actions (page views etc) in the current
+	session. This serves as the main input to the SB
+	recommender. The structure is created empty at the beginning
+	of the session (when the SBRGenerator is created) and is
+	updated with each user action. */
     private ActionHistory maintainedActionHistory = new  ActionHistory();
-    
+
+    /** Adds information about a recent user action. */
     synchronized public void addAction(Action a) {
 	maintainedActionHistory.augment(a);
 

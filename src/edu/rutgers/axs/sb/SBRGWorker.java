@@ -11,6 +11,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.commons.lang.mutable.*;
 
 import edu.rutgers.axs.sql.*;
 import edu.rutgers.axs.web.*;
@@ -362,10 +363,21 @@ class SBRGWorker  {
 	return results;
     }
 
-    /** For a given article, creates a sug list based strictly on the
+    /** (The original version now retired)
+
+	For a given article, creates a sug list based strictly on the
 	recent local (My.ArXiv) coaccess. This is used in COACCESS_LOCAL (and,
-	by extension, in COACCESS2).  */
-    static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid, int maxlen) throws Exception {
+	by extension, in COACCESS2).  
+	
+	This method summed all accesses, so the same user interacting
+	with the same article multuiple times in the same session
+	would bring in multiple contribution. To avoid this, this method
+	has been replaced by computeArticleBasedListLocalCoaccess(),
+	which used sum_{sessions} max_{within each session}, instead
+	of plain sum.
+
+    */
+    static private ScoreDoc[] computeArticleBasedListLocalCoaccessVer1(EntityManager em, IndexSearcher searcher, String aid, int maxlen, String uname) throws Exception {
 	ScoreDoc [] results =  new ScoreDoc[0];
 
 	try {
@@ -374,8 +386,13 @@ class SBRGWorker  {
 
 	    String qs=  "select a2.article.aid, sum( aw1.weight * aw2.weight)  " +
 		"from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  " +
-		"where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 " +
-		"and a1.user.user_name <> :usim and a2.user.user_name <> :usim " + 
+		"where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 ";
+	    if (uname != null) {
+		qs +=
+		    "and a1.user.user_name <> :usim and a2.user.user_name <> :usim ";
+	    }
+
+	    qs +=
 		"and a1.article.aid is not null and a2.article.aid is not null " +
 		"and a1.op = aw1.op and a2.op = aw2.op "+
 		"and a1.article.aid = :aid and a2.article <> a1.article " +
@@ -384,7 +401,9 @@ class SBRGWorker  {
 	    Query q = em.createQuery(qs);	
 	    q.setParameter("aid",aid);
 	    q.setParameter("t0", t0);
-	    q.setParameter("usim",  SBRGeneratorCmdLine.simulatedUname);
+	    if (uname != null) {
+		q.setParameter("usim",  uname);
+	    }
 	    List res = q.getResultList();
 	    Vector<ScoreDoc> v = new Vector<ScoreDoc>();
 	    for(Object o: res) {			    
@@ -405,6 +424,111 @@ class SBRGWorker  {
 		v.add(sd);
 	    }
 	    results = (ScoreDoc[])v.toArray(results);
+	} catch(Exception ex) {
+	} 
+	return results;
+    }
+
+    /*
+ 	For a given article, creates a sug list based strictly on the
+	recent local (My.ArXiv) coaccess. This is used in COACCESS_LOCAL (and,
+	by extension, in COACCESS2).  
+	
+	Unlike the simpler method  computeArticleBasedListLocalCoaccessVer1, 
+	which simply sums all accesses (so the same user interacting
+	with the same article multuiple times in the same session
+	would bring in multiple contribution), this method computes
+	sum_{sessions} max_{within each session}.
+
+	Unfortunately, in JPQL it's apparently impossible to compute sum max
+	in a single query; so unlike the ver1 method, this method uses
+	multiple queries.
+
+	FIXME: on a system with a large amount of user activity,
+	computing coaccess data "on the fly" would be unacceptably
+	expensive.  To make it possible to have a recommender like
+	COACCESS_LOCAL, we'd need to precompute most of the data (say,
+	run a script daily), only leaving the most recent sessions
+	(less than the last 24 hours) for the on-the-fly
+	computations. This is actually similar to the COACCESS2 idea.
+
+    */
+    static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid0, int maxlen, String uname) throws Exception {
+	ScoreDoc [] results =  new ScoreDoc[0];
+
+	try {
+	    
+	    final Date t0 = SearchResults.daysAgo(365);
+
+	    // get all sessions where "aid0" was involved
+	    String qs1= 
+		"select a1.session, max(aw1.weight) "+
+		"from Action a1, ActionWeight aw1 " +
+		"where a1.time > :t0 and a1.session > 0 " +
+		"and a1.op = aw1.op and a1.article.aid = :aid ";
+	    if (uname != null) {
+		qs1 +=
+		    "and (a1.user is null or a1.user.user_name <> :usim) ";
+	    }
+	    qs1 += 
+		"group by a1.session ";
+			 	    
+	    Query q = em.createQuery(qs1);	
+	    q.setParameter("aid",aid0);
+	    q.setParameter("t0", t0);
+	    List res = q.getResultList();
+
+	    Vector<Integer> sids = new Vector<Integer>();
+	    Vector<Double> aw1s = new Vector<Double>();   
+
+	    for(Object o: res) {			    
+		if (!(o instanceof Object[])) continue;
+		Object[] oa = (Object[])o;
+		Integer sid=(Integer)oa[0];
+		Double w = (Double)oa[1];
+		sids.add(sid);
+		aw1s.add(w);
+	    }
+
+	    String qs2 = "select a2.article.aid, max(aw2.weight)  " +
+		"from Action a2, ActionWeight aw2  " +
+		"where a2.session=:sid and  a2.op = aw2.op ";    
+	    q = em.createQuery(qs2);	
+	    HashMap<String, MutableDouble> pageValue = new HashMap<String, MutableDouble>();
+
+	    // now, get the numbers from all sessions
+	    for(int i=0; i< sids.size(); i++) {
+		// FIXME: Yes, it's Long in Action, but Int in Session
+		q.setParameter("sid", (int)sids.elementAt(i));
+		double w1 = aw1s.elementAt(i);
+		res = q.getResultList();
+		for(Object o: res) {			    
+		    Object[] oa = (Object[])o;
+		    String aid=(String)oa[0];
+		    Double w2 = (Double)oa[1];
+		    MutableDouble val =  pageValue.get(aid);
+		    if (val==null) pageValue.put(aid, new MutableDouble());
+		    val.add( w1 * w2);
+		}
+	    }
+
+	    // get the sums out ...
+	    Vector<ScoreDoc> v = new Vector<ScoreDoc>();
+	    for(String zaid: pageValue.keySet()) {
+		MutableDouble w = pageValue.get(zaid);
+
+		int docno=0;
+		try {
+		    docno= Common.find(searcher, zaid);
+		} catch(IOException ex) {
+		    continue; // FIXME
+		}
+
+		ScoreDoc sd = new ScoreDoc(docno, (float)w.doubleValue());
+		v.add(sd);
+	    }
+	    results = (ScoreDoc[])v.toArray(results);
+	    Arrays.sort(results, new SearchResults.SDComparator());
 	} catch(Exception ex) {
 	} 
 	return results;
@@ -469,7 +593,7 @@ class SBRGWorker  {
 		// method
 		ScoreDoc[] z = articleBasedSD.get(aid);
 		if (z==null) {
-
+		    String uname =parent.sd.getStoredUserName();
 		    if (sbMethod==SBRGenerator.Method.ABSTRACTS) {
 			z=computeArticleBasedListAbstracts(searcher,aid,maxlen);
 		    } else if (sbMethod==SBRGenerator.Method.SUBJECTS) {
@@ -480,11 +604,11 @@ class SBRGWorker  {
 			// exception may be thrown; caught in an outer "catch"
 			z=computeArticleBasedListCoaccess(searcher,aid,maxlen);
 		    } else if (sbMethod==SBRGenerator.Method.COACCESS_LOCAL) {
-			z=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen);
+			z=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen, uname);
 
 		    } else if (sbMethod==SBRGenerator.Method.COACCESS2) {
 			ScoreDoc[] z1=computeArticleBasedListCoaccess(searcher,aid,maxlen);
-			ScoreDoc[] z2=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen);
+			ScoreDoc[] z2=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen, uname);
 			z =  addCoaccessLists(z1,z2);
 
 		    } else {
