@@ -135,6 +135,9 @@ class SBRGWorker  {
 	sr=null;
 	excludedList = "";
 
+	//	Logging.info("Started SBRGWorker.work("+sbMethod+")"); 
+
+
 	try {
 	    // get the list of article IDs to recommend by some algorithm
 	    if (sbMethod==SBRGenerator.Method.TRIVIAL) {
@@ -306,7 +309,6 @@ class SBRGWorker  {
 	COACCESS method (and, by extension, in COACCESS2).
 
 	@param aid The article for which suggestions are to be computed
-	@param addLocal On for COACCESS2
 	@return An array each element of which contains a Lucene internal document ID and the ArXiv historic coaccess count, as obtained from the coaccess server
     */
     static private ScoreDoc[] computeArticleBasedListCoaccess(IndexSearcher searcher, String aid, int maxlen) throws Exception {
@@ -451,10 +453,18 @@ class SBRGWorker  {
 	run a script daily), only leaving the most recent sessions
 	(less than the last 24 hours) for the on-the-fly
 	computations. This is actually similar to the COACCESS2 idea.
+	However, if we set up this precomputing, removing user's own
+	activity from the coaccess sums will be more difficult.
 
+	@param @aid0 We're looking for the coaccess data for this page
+	@param @uname Activity of this user will be disregarded, in order
+	to provide the user with coaccess numbers based on *other* users'
+	activity.
     */
     static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid0, int maxlen, String uname) throws Exception {
 	ScoreDoc [] results =  new ScoreDoc[0];
+
+	//	Logging.info("SBRGWorker.computeArticleBasedListLocalCoaccess("+aid0+")");
 
 	try {
 	    
@@ -476,30 +486,37 @@ class SBRGWorker  {
 	    Query q = em.createQuery(qs1);	
 	    q.setParameter("aid",aid0);
 	    q.setParameter("t0", t0);
+	    if (uname != null) {
+		q.setParameter("usim", uname);
+	    }
 	    List res = q.getResultList();
 
-	    Vector<Integer> sids = new Vector<Integer>();
+	    Vector<Long> sids = new Vector<Long>();
 	    Vector<Double> aw1s = new Vector<Double>();   
 
 	    for(Object o: res) {			    
 		if (!(o instanceof Object[])) continue;
 		Object[] oa = (Object[])o;
-		Integer sid=(Integer)oa[0];
+		Long sid=(Long)oa[0];
 		Double w = (Double)oa[1];
 		sids.add(sid);
 		aw1s.add(w);
 	    }
+	    //	    Logging.info("COACCESS_LOCAL for " + aid0 + " will use " + sids.size() + " sessions");
 
 	    String qs2 = "select a2.article.aid, max(aw2.weight)  " +
 		"from Action a2, ActionWeight aw2  " +
-		"where a2.session=:sid and  a2.op = aw2.op ";    
+		"where a2.session=:sid and a2.op=aw2.op and a2.article.aid<>:aid " + 
+		"group by a2.article.aid ";    
 	    q = em.createQuery(qs2);	
 	    HashMap<String, MutableDouble> pageValue = new HashMap<String, MutableDouble>();
+	    q.setParameter("aid",aid0);
 
 	    // now, get the numbers from all sessions
 	    for(int i=0; i< sids.size(); i++) {
-		// FIXME: Yes, it's Long in Action, but Int in Session
-		q.setParameter("sid", (int)sids.elementAt(i));
+		long sid = sids.elementAt(i);
+		// FIXME: Yes, the session id is Long in Action, but Int in Session
+		q.setParameter("sid", (int)sid);
 		double w1 = aw1s.elementAt(i);
 		res = q.getResultList();
 		for(Object o: res) {			    
@@ -507,7 +524,7 @@ class SBRGWorker  {
 		    String aid=(String)oa[0];
 		    Double w2 = (Double)oa[1];
 		    MutableDouble val =  pageValue.get(aid);
-		    if (val==null) pageValue.put(aid, new MutableDouble());
+		    if (val==null) pageValue.put(aid, val=new MutableDouble());
 		    val.add( w1 * w2);
 		}
 	    }
@@ -529,7 +546,10 @@ class SBRGWorker  {
 	    }
 	    results = (ScoreDoc[])v.toArray(results);
 	    Arrays.sort(results, new SearchResults.SDComparator());
+	    Logging.info("COACCESS_LOCAL for " + aid0 + " used " + sids.size() + " sessions, found " + results.length + " articles");
 	} catch(Exception ex) {
+	    Logging.warning("Exception in SBRGWorker.computeArticleBasedListLocalCoaccess("+aid0+")" + ex);
+	    ex.printStackTrace(System.err);
 	} 
 	return results;
     }
@@ -576,6 +596,7 @@ class SBRGWorker  {
      */
     private void computeRecList(EntityManager em, IndexSearcher searcher, int runID) {
 	
+	//	Logging.info("SBRGWorker.computeRecList("+sbMethod+") for "+his.viewedArticlesActionable.size()+" articles"); 
 	try {
 	    HashSet<String> exclusions = findExclusions();
 

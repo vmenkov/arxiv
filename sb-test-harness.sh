@@ -1,10 +1,14 @@
 #!/bin/csh
 
+#---------------------------------------------------------------------
 # This is a script for comman-line testing of SB recommenders
 # Usage examples:
 #
 #  ./sb-test-harness.sh -sbMethod COACCESS aid-list.txt
-
+#
+# The input file represents the user's browing history in the current
+# session, and contains one AID per line.
+#---------------------------------------------------------------------
 
 #-- Set the home directory as per the "-home" option. This is useful
 #-- if run as a different user.
@@ -15,6 +19,7 @@ if ("$1" == "-home") then
     echo "Setting home to $home"
 endif
 
+#-- Specifies the SB recommendation generation method
 if ("$1" == "-sbMethod") then
     shift
     set sbMethod=$1
@@ -59,7 +64,7 @@ set opt="-cp ${cp} ${opt}"
 echo "opt=$opt"
 
 if ("$1" == "") then
-    echo 'Usage: sb-test-harness.sh input-file-name [output-file-name]'
+    echo 'Usage: sb-test-harness.sh [-sbMethod COACCESS] input-file-name [output-file-name]'
     exit
 endif
 

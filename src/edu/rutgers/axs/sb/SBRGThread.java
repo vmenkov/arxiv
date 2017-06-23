@@ -70,7 +70,7 @@ class SBRGThread extends Thread {
 
 	    his = new ActionHistory(em, parent.sd.getSqlSessionId());
 
-            Logging.info("launching worker from SBRGThread.run()"); 
+            Logging.info("launching worker ("+worker.sbMethod+") from SBRGThread.run()"); 
 	    worker.work(em, searcher, runID, his);
 	    if (worker.error) {
 		error=true;
