@@ -20,8 +20,6 @@ set opt="-cp ${cp} ${opt}"
 
 echo "opt=$opt"
 
-#java $opt edu.rutgers.axs.sql.CreateAux
+java $opt edu.rutgers.axs.sql.CreateAux
 
-# /usr/lib/jvm/java-7-openjdk-amd64/bin/java  $opt edu.rutgers.axs.sql.CreateAux
-
-/usr/lib/jvm/java-6-openjdk-amd64/bin/java  $opt edu.rutgers.axs.sql.CreateAux
+# /usr/lib/jvm/java-6-openjdk-amd64/bin/java  $opt edu.rutgers.axs.sql.CreateAux
