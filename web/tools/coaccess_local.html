@@ -7,7 +7,7 @@
 
 <h1>Session-based recommender using local coaccess data</h1>
 
-<p align=center><em>Updated: 2017-05-25</em></p>
+<p align=center><em>Updated: 2017-06-25</em></p>
 
 <p>This document describes the COACCESS2 and COACCESS_LOCAL session-based recommenders, which have been added to the My.ArXiv in April-May 2017. While not particularly practical without a large user base, these methods have been added in order for us to be able to experiment with one user's activities influencing other user's recommendations.</p>
 
@@ -23,14 +23,15 @@
 <h2>COACCESS_LOCAL</h2>
 
 <p><strong>Actions covered.</strong>
-  In order to compute the "coaccess value" for a pair of articles, we need to define what an "access" is. For the purpose of measuring coaccess, we only consider certain operations that are deemed to represent a user's "positive interactions" with articles. The following operations are covered (as described in the SQL table ActionWeight):
+  In order to compute the "coaccess value" for a pair of articles, we need to define what an "access" is. For the purpose of measuring coaccess, we only consider certain operations that are deemed to represent a user's "positive interactions" with articles. The following operations are covered (as described in the SQL table ActionWeight), with the following weights provisionally associated with them:
   <ul>
-    <li>"View" operations (expand abstract, view abstract, view article)     
-    <li>"Positive" ratings
-    <li>"Copy to folder"
-    <li>"SB list reordering" (as explained below)
+    <li>"View" operations (expand abstract, view abstract, view article) : 1
+    <li>"Positive" ratings : 5
+    <li>"Copy to folder" : 5
+    <li>"SB list reordering" (as explained below) : 5
   </ul>
 </p>
+
 
 <p><strong>Treatment ot SB list reordering.</strong> For most of the user actions listed above, it's pretty obvious what the operation's target (the article interacted with) is. However, for the list reorder operation it is not quite clear which article in the recommendation list presented to the user in the SB pop-up window had attracted his attention when he chose to move articles around. In order to utilize this action in the coaccess computations, we use the following simple definition of the action target: we compare the original list and the reordered list, in the order of the reordered list, and the first article that appears in the reordered list at a higher position than it did in the original list is considered to be the user's action target.
 </P>
@@ -40,29 +41,59 @@ This is an entire sensible definition if a user picked one article and dragged i
 </p>
 
 <p><strong>Computing the coaccess value.</strong> 
+For a pair of articles  <em>a</em><sub>0</sub> and  <em>a</em><sub>1</sub>, we compute the "local coaccess value" 
+Coaccess(<em>a</em><sub>0</sub>,  <em>a</em><sub>1</sub>) as
+<center>
+Coaccess( <em>a</em><sub>0</sub>,  <em>a</em><sub>1</sub>) =
+sum<sub><em>s</em> in All_Recent_Sessions of other users</sub> <em>R(a<sub>0</sub>,s) R(a<sub>1</sub>,s)</em>,
+</center>
+where <em>R(a,s)</em> is the highest action value associated with article <em>a</em> in session <em>s</em>:
+<center>
+ <em>R(a,s)</em> = max<sub>Action <em>q</em> in session <em>s</em>, and article(<em>q</em>)=<em>a</em></sub> value(<em>q</em>).
+</center>
+</p>
 
-<ul>
-  <li>
+<p>
+Value(<em>q</em>) for operation <em>q</em> is defined as the "operation's weight", as per section "Actions covered" above. If session <em>s</em> did not include any "positive interactions" with article  <em>a</em>, then  <em>R(a,s)</em> = 0. Therefore, the summation above only involves those sessions in which the user positively interacted with both  <em>a0</em> and  <em>a1</em>.
+</p>
 
-    For each user operation ("action") where it makes sense, we define a single "target", i.e. the article with which the user is said to have interacted during that operation. 
+<p><strong>User's own activity excluded.</strong> The summation over sessions above excludes user's own sessions. For logged-in registered user, this means exclduing every session by the same registered user. For anonymous users, it simply means excluding the current session.
+</p>
 
-  </li>
+<p><strong>Recency.</strong> The "recent past" is defined (fairly arbitrary) as 1 year till the moment of computation. In principle, My.ArXiv's old activity is just as valuable as recent activity, although some discount for less recent activity may be introduced.
+</p>
 
-  <li>
+<p><strong>Critique.</strong> The definition of coaccess value used in COACCESS_LOCAL relies only on short-term correlation (within a session, rather than over a one's entire history as a My.ArXiv user, or at least a substantial period of activity). This means that articles will often have high coaccess value not because they are genuinely linked by their content and the interests of their readers, but simply because they happened to be released on the same day, and showed up in users' new articles feed on the same day. Even worse, perhaps, the coaccess value linking two articles may be increased due to our own recommenders (nightly or session-based) recommending the two articles together. This may result in a fairly silly positive feedback loop: the COACCESS_LOCAL recommends A2 to go with A1 because it (or other recommenders) recommended A2 to go with A1 before...
+</p>
+
+<p><strong>Implementation.</strong> A simpler formula for the coaccess value (one that uses a simple <tt>sum<sub>all actions</sub></tt> rather than  <tt>sum<sub>all sessions</sub> max<sub>within each session</sub></tt> can be implemented with a single JPQL query (sort of like we did a lot of computations completely within SQL in AntWorld!). Unfortunately, the <tt>sum max</tt> formula, as far as I can see, can't be implemented with a single JPQL query. (I think it can be implemented with a complicated SQL query, with nesting subqueries, but since the My.ArXiv server is mostly using JPQL to interact with its database, I prefer not to add raw SQL into the mix). Instead, a series of JPQL queries are used to obtain the list of articles that have coaccess with a given article <em>a</em><sub>0</sub>.
+</p>
+
+
+<h2>Testing</h2>
+
+<p>There is a script, sb-test-harness.sh, for command-line testing of various recommenders. Given a list of ArXiv article IDs (one per line) in the input file, the script runs an application that simulates a user session in which these URLs are viewed successively, and a new SB-based recommendation lists is generated after each page view. 
+</P>
+
+<p>Example:</p>
+
 <pre>
-select a2.article.aid, sum( aw1.weight * aw2.weight) 
-from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  
-where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 
-and a1.user.user_name <> :usim and a2.user.user_name <> :usim 
-and a1.article.aid is not null and a2.article.aid is not null
-and a1.op = aw1.op and a2.op = aw2.op 
-and a1.article.aid = :aid and a2.article <> a1.article 
-group by a2.article.aid order by sum( aw1.weight * aw2.weight) desc
-</pre>	    
-  </li>
+#!/bin/csh
+cd ~vm293/arxiv/arxiv/sb-harness
+set in=sb.in5
+set date=20170627-c
 
-</ul>
-  
+../sb-test-harness.sh -sbMethod COACCESS $in.dat &gt; $in.$date.COACCESS.out
+../sb-test-harness.sh -sbMethod COACCESS_LOCAL $in.dat &gt; $in.$date.COACCESS_LOCAL.out
+../sb-test-harness.sh -sbMethod COACCESS2 $in.dat &gt; $in.$date.COACCESS2.out
+</pre>
+
+<p>With COACCESS</p>, running sb-test-harness.sh on the same list of URLs several times during the day will always produce the same results. (The historical data at the coaccess server are updated at night, no more than once in 24 hours). With COACCESS_LOCAL or COACCESS2, one can run the script twice, with some user activity in between, and obtain different results. 
+</p>
+
+<p>
+Note that the effect of the "keep stable order" rule is very visible in the output files.
+</P>
 
   
 

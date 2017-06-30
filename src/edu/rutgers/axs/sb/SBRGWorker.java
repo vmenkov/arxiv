@@ -379,16 +379,20 @@ class SBRGWorker  {
 	of plain sum.
 
     */
-    static private ScoreDoc[] computeArticleBasedListLocalCoaccessVer1(EntityManager em, IndexSearcher searcher, String aid, int maxlen, String uname) throws Exception {
+    static private ScoreDoc[] computeArticleBasedListLocalCoaccessVer1(EntityManager em, IndexSearcher searcher, String aid0, int maxlen, SessionData thisSession) throws Exception {
+
+	String uname = thisSession.getStoredUserName();
+	long thisSid = thisSession.getSqlSessionId();
+
 	ScoreDoc [] results =  new ScoreDoc[0];
 
 	try {
 	    
 	    final Date t0 = SearchResults.daysAgo(365);
 
-	    String qs=  "select a2.article.aid, sum( aw1.weight * aw2.weight)  " +
+	    String qs= "select a2.article.aid, sum( aw1.weight * aw2.weight)  "+
 		"from Action a1, Action a2, ActionWeight aw1,  ActionWeight aw2  " +
-		"where a1.session=a2.session and a1.time > :t0 and a2.time > :t0 ";
+		"where a1.session=a2.session and a1.time>:t0 and a2.time>:t0 ";
 	    if (uname != null) {
 		qs +=
 		    "and a1.user.user_name <> :usim and a2.user.user_name <> :usim ";
@@ -401,7 +405,7 @@ class SBRGWorker  {
 		"group by a2.article.aid order by sum( aw1.weight * aw2.weight) desc";
 	    
 	    Query q = em.createQuery(qs);	
-	    q.setParameter("aid",aid);
+	    q.setParameter("aid",aid0);
 	    q.setParameter("t0", t0);
 	    if (uname != null) {
 		q.setParameter("usim",  uname);
@@ -427,6 +431,8 @@ class SBRGWorker  {
 	    }
 	    results = (ScoreDoc[])v.toArray(results);
 	} catch(Exception ex) {
+	    Logging.warning("Exception in SBRGWorker.computeArticleBasedListLocalCoaccessVer1("+aid0+")" + ex);
+	    ex.printStackTrace(System.err);
 	} 
 	return results;
     }
@@ -456,38 +462,49 @@ class SBRGWorker  {
 	However, if we set up this precomputing, removing user's own
 	activity from the coaccess sums will be more difficult.
 
-	@param @aid0 We're looking for the coaccess data for this page
-	@param @uname Activity of this user will be disregarded, in order
-	to provide the user with coaccess numbers based on *other* users'
-	activity.
+	@param aid0 We're looking for the coaccess data for this page
+	@param sd A link to the SessionData object for the current
+	session. Used to obtain the user name (uname), so that the
+	ctivity of this user will be disregarded, in order to provide
+	the user with coaccess numbers based on *other* users'
+	activity. If an anon user, at least the activity within the current 
+	session can be excluded.
     */
-    static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid0, int maxlen, String uname) throws Exception {
+    static private ScoreDoc[] computeArticleBasedListLocalCoaccess(EntityManager em, IndexSearcher searcher, String aid0, int maxlen, SessionData thisSession) throws Exception {
+
+	String uname = thisSession.getStoredUserName();
+	long thisSid = thisSession.getSqlSessionId();
+
 	ScoreDoc [] results =  new ScoreDoc[0];
 
 	//	Logging.info("SBRGWorker.computeArticleBasedListLocalCoaccess("+aid0+")");
 
 	try {
+
+	    final String usim =  SBRGeneratorCmdLine.simulatedUname;
+	    boolean needUname = (uname!=null) && !uname.equals(usim);
 	    
 	    final Date t0 = SearchResults.daysAgo(365);
 
-	    // get all sessions where "aid0" was involved
+	    // Get all sessions where "aid0" was involved. Sessions
+	    // by the simulated user, and by the current user are
+	    // ignored.
 	    String qs1= 
 		"select a1.session, max(aw1.weight) "+
 		"from Action a1, ActionWeight aw1 " +
 		"where a1.time > :t0 and a1.session > 0 " +
-		"and a1.op = aw1.op and a1.article.aid = :aid ";
-	    if (uname != null) {
-		qs1 +=
-		    "and (a1.user is null or a1.user.user_name <> :usim) ";
-	    }
-	    qs1 += 
+		"and a1.op = aw1.op and a1.article.aid = :aid " +
+		"and (a1.user is null or a1.user.user_name <> :usim " +
+		(needUname ? "and a1.user.user_name <> :uname" : "") +
+		") " +
 		"group by a1.session ";
 			 	    
 	    Query q = em.createQuery(qs1);	
 	    q.setParameter("aid",aid0);
 	    q.setParameter("t0", t0);
-	    if (uname != null) {
-		q.setParameter("usim", uname);
+	    q.setParameter("usim", usim);
+	    if (needUname) {
+		q.setParameter("uname", uname);
 	    }
 	    List res = q.getResultList();
 
@@ -499,6 +516,7 @@ class SBRGWorker  {
 		Object[] oa = (Object[])o;
 		Long sid=(Long)oa[0];
 		Double w = (Double)oa[1];
+		if (sid.longValue() == thisSid) continue; // skip this session
 		sids.add(sid);
 		aw1s.add(w);
 	    }
@@ -506,7 +524,8 @@ class SBRGWorker  {
 
 	    String qs2 = "select a2.article.aid, max(aw2.weight)  " +
 		"from Action a2, ActionWeight aw2  " +
-		"where a2.session=:sid and a2.op=aw2.op and a2.article.aid<>:aid " + 
+		"where a2.session=:sid and a2.op=aw2.op " +
+		"and a2.article.aid is not null and a2.article.aid<>:aid " + 
 		"group by a2.article.aid ";    
 	    q = em.createQuery(qs2);	
 	    HashMap<String, MutableDouble> pageValue = new HashMap<String, MutableDouble>();
@@ -614,7 +633,7 @@ class SBRGWorker  {
 		// method
 		ScoreDoc[] z = articleBasedSD.get(aid);
 		if (z==null) {
-		    String uname =parent.sd.getStoredUserName();
+		    //String uname =parent.sd.getStoredUserName();
 		    if (sbMethod==SBRGenerator.Method.ABSTRACTS) {
 			z=computeArticleBasedListAbstracts(searcher,aid,maxlen);
 		    } else if (sbMethod==SBRGenerator.Method.SUBJECTS) {
@@ -625,11 +644,11 @@ class SBRGWorker  {
 			// exception may be thrown; caught in an outer "catch"
 			z=computeArticleBasedListCoaccess(searcher,aid,maxlen);
 		    } else if (sbMethod==SBRGenerator.Method.COACCESS_LOCAL) {
-			z=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen, uname);
+			z=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen, parent.sd);
 
 		    } else if (sbMethod==SBRGenerator.Method.COACCESS2) {
 			ScoreDoc[] z1=computeArticleBasedListCoaccess(searcher,aid,maxlen);
-			ScoreDoc[] z2=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen, uname);
+			ScoreDoc[] z2=computeArticleBasedListLocalCoaccess(em, searcher,aid,maxlen, parent.sd);
 			z =  addCoaccessLists(z1,z2);
 
 		    } else {

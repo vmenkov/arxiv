@@ -104,7 +104,11 @@ public class SBRGeneratorCmdLine extends SBRGenerator {
     public SBRGeneratorCmdLine(SessionData _sd) throws WebException, IOException {
 	super(_sd, false);
     }
-
+    
+    /** The user name under which the command line operator
+	operates. This user's recorded activity can be later excluded
+	from various analytics, such as computing local coaccess numbers.
+     */
     static final String simulatedUname ="simulated_sb";
 
     /** Creates a SBR generator configured based on command line
