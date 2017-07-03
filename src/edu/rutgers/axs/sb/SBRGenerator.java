@@ -54,6 +54,8 @@ public class SBRGenerator {
     */
     public int sbStableOrderMode = 1;
 
+    /** The legal values are 0, 1, 2
+     */
     void validateSbStableOrderMode() throws WebException {
 	if (sbStableOrderMode<0 || sbStableOrderMode>2) throw new WebException("Illegal SB merge mode = " + sbStableOrderMode);
     }
@@ -161,6 +163,9 @@ public class SBRGenerator {
 	init(rb, rb!=null && rb.runByResearcher(), false);
     }
 
+    /** Initializes SB Recommendaton Generator's parameters
+	@param rb Contains parameters passed via the command line or via the web URL
+     */
     synchronized void init(OptionAccess rb, boolean runByResearcher, boolean cmdLine) throws WebException {
 	setAllowedSB(true);
 	if (rb!=null) sbStableOrderMode = rb.getInt("sbStableOrder", sbStableOrderMode);

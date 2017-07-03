@@ -15,6 +15,7 @@ public class FileIterator implements Iterator<String> {
     public FileIterator() {
 	r = new LineNumberReader(new InputStreamReader(System.in));
     }
+    /** Will read data from a file */
     public FileIterator(File f) throws IOException {
 	r = new LineNumberReader(new FileReader(f));
     }

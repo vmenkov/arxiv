@@ -6,6 +6,8 @@
 #
 #  ./sb-test-harness.sh -sbMethod COACCESS aid-list.txt
 #
+#  echo 1706.06996 | ./sb-test-harness.sh -sbMethod COACCESS -
+#
 # The input file represents the user's browing history in the current
 # session, and contains one AID per line.
 #---------------------------------------------------------------------

@@ -749,6 +749,13 @@ class SBRGWorker  {
 	
 	<p>FIXME: no ScoreDoc here, thus not suitable for
 	merging. (Normally this does not matter)       
+
+	@param entries The newly generated rec list, which needs to be
+	integrated with the old list
+
+	@return The new integrated list, which includes elements from
+	both the new list and the old list, in the order based on the
+	old list
      */
     private Vector<ArticleEntry> maintainStableOrder2( Vector<ArticleEntry> entries, int maxRecLen) {
 
@@ -760,22 +767,24 @@ class SBRGWorker  {
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
 
-	HashSet<String> old=new HashSet<String>();
+	HashMap<String,ArticleEntry> old=new HashMap<String,ArticleEntry>();
 	// Old elements (not excluded)
 	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
 	for(ArticleEntry e: previouslyDisplayedEntries) {
 	    if (exclusions.contains(e.id)) continue;
-	    try {  // We use clone() because we're going to modify e.i and e.age
+	    try {  // Use clone(), because we'll modify e.i, e.age, e.score
 		ArticleEntry q = (ArticleEntry)e.clone();
 		q.age ++;
 		a.add(q);
-		old.add(q.id);
+		old.put(q.id, q);
 	    }  catch (CloneNotSupportedException ex) {}
 	}
 	// new elements not found in the old list
 	Vector<ArticleEntry> b = new Vector<ArticleEntry>();
 	for(ArticleEntry e: entries) {
-	    if (!old.contains(e.id)) {
+	    if (old.containsKey(e.id)) {
+		old.get(e.id).score = e.score; // update score
+	    } else {
 		b.add(e);
 	    }
 	}
