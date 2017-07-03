@@ -759,38 +759,40 @@ class SBRGWorker  {
      */
     private Vector<ArticleEntry> maintainStableOrder2( Vector<ArticleEntry> entries, int maxRecLen) {
 
+	HashMap<String,ArticleEntry> allNew=new HashMap<String,ArticleEntry>();	
+
 	for(ArticleEntry e: entries) {
 	    e.age=0;
+	    allNew.put(e.id, e);
 	}
-
+	
 	Vector<ArticleEntry> previouslyDisplayedEntries = parent.getBaseList();
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
 
-	HashMap<String,ArticleEntry> old=new HashMap<String,ArticleEntry>();
-	// Old elements (not excluded)
+	HashSet<String> old=new HashSet<String>();
+	// a[] = Old elements (not excluded under current exclusion criteria)
 	Vector<ArticleEntry> a = new 	Vector<ArticleEntry>();
 	for(ArticleEntry e: previouslyDisplayedEntries) {
 	    if (exclusions.contains(e.id)) continue;
 	    try {  // Use clone(), because we'll modify e.i, e.age, e.score
 		ArticleEntry q = (ArticleEntry)e.clone();
 		q.age ++;
+		if (allNew.containsKey(q.id)) q.score = allNew.get(q.id).score;
 		a.add(q);
-		old.put(q.id, q);
+		old.add(q.id);
 	    }  catch (CloneNotSupportedException ex) {}
 	}
-	// new elements not found in the old list
+	// b[] = New elements not found in the old list
 	Vector<ArticleEntry> b = new Vector<ArticleEntry>();
 	for(ArticleEntry e: entries) {
-	    if (old.containsKey(e.id)) {
-		old.get(e.id).score = e.score; // update score
-	    } else {
+	    if (!old.contains(e.id)) {
 		b.add(e);
 	    }
 	}
 	double bRatio = b.size() / (double)(b.size() + a.size());
 	
-	Vector<ArticleEntry> v = new 	Vector<ArticleEntry>();
+	Vector<ArticleEntry> v = new Vector<ArticleEntry>();
 	int na=0, nb=0;
 	while( v.size() <  maxRecLen &&
 	       (na < a.size() || nb < b.size())) {
@@ -887,22 +889,26 @@ class SBRGWorker  {
      */
     private Vector<ArticleEntry> maintainStableOrder1( Vector<ArticleEntry> entries, int maxRecLen) {
 
+	HashMap<String,ArticleEntry> allNew=new HashMap<String,ArticleEntry>();	
+
 	for(ArticleEntry e: entries) {
 	    e.age=0;
+	    allNew.put(e.id, e);
 	}
 	
 	Vector<ArticleEntry> previouslyDisplayedEntries = parent.getBaseList();
 	if (previouslyDisplayedEntries==null) return entries;
 	HashSet<String> exclusions = parent.linkedAids;
 	
-	// Make a list and hashtable of all old elements which are excluded
+	// Make a list and hashtable of all old elements which are not excluded
 	HashSet<String> old=new HashSet<String>();
 	Vector<ArticleEntry> a = new Vector<ArticleEntry>();
 	for(ArticleEntry e: previouslyDisplayedEntries) {
 	    if (exclusions.contains(e.id)) continue;
-	    try {  // We use clone() because we're going to modify e.i and e.age
+	    try {  // We use clone() because we'll modify e.i, e.age, e.score
 		ArticleEntry q = (ArticleEntry)e.clone();
 		q.age++;
+		if (allNew.containsKey(q.id)) q.score = allNew.get(q.id).score;
 		a.add(q);
 		old.add(q.id);
 	    }  catch (CloneNotSupportedException ex) {}
