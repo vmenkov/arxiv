@@ -1,0 +1,60 @@
+<html>
+<head><title>
+Coaccess score distribution
+</title></head>
+
+<body>
+<p>
+This report describes the distribution of the coaccess scores of ArXiv documents as <a href="coaccess.html">computed by our Coaccess Server</a>, with all its quirks. The coaccess score for a document pair (a0,a1) is approximately equaly to the number of ArXiv.org user who have viewed both a0 and a1; in practice, due to the way coaccess data are generated, the number may be somewhat different. These scores are not normalized, so more popular articles generally have higher scores.
+
+<p>For a given document a0, the "rank-1" coaccess score is the highest coaccess score for a pair (a1,*); the "rank-2" score is the second highest score, etc.
+
+<p>The stats were computed on all documents that we had in our Lucene index in early July 2017. That included 1,278,728 documents for which at least one coaccess partner (and, thus, a rank-1 socre) existed. The number of documents for which rank-2, rank-3 etc scores were slightly lower, as some (very few) documents only have a small number of coaccess partners. E.g 
+rank-5 scores were available for 1,278,719 documents, and rank-10 scores were available for 1,278,718 documents.
+
+<p>For each document, we retrieved the 10 highest coaccess values associated with it (i.e., the number for the 10 documents "most coaccessed" with the given document). As mentioned above, for a few documents (just 10 out of 1.2 mln), fewer than 10 values were avalable. Then, for each rank from 1 to 10, two distributions were considered:
+<ol>
+<li><a href="coaccess-count.dat">The distribution of scores</a>. For example, out of all  1,278,728 documents, we have 193 for whom the top score (the rank-1 score) equals to 1; 3668 documents for which the rank-1 score = 2, 10,718 documents for which it is = 3, etc. The <a href="coaccess-count-cumul.dat">cumulative function</a> of this distribution was computed as well. It shows that e.g. for 51% of all documents, the rank-1 score was &le; 26, and for 90%, it was  &le; 88.
+Gor 50%  of all documents, the rank-10 score was &le; 10, and for 90%, the rank-10 score was &le; 32. 
+
+<li><a href="coaccess-diff.dat">The distribution of the difference of scores</a>. It is some importance to the <a href="../coaccess_local.html">COACCESS2</a> recommender. For a given document, its rank-1 difference is defined as the difference between the document's rank-1 score and the rank-2 score, and so on. According to the stats, the rank-1 difference was = 0	for 139,914 documents (i.e. for these documents the coaccess scores of the top 2 coaccess partners were the same); it was =2 for 201,502 documents;  as per the <a href="coaccess-diff-cumul.dat">cumulative distribuition function</a>, 52% of documents had rank-1 difference of &le; 4, and 90%, of &le; 26. The rank-10 diff is 0 for 789999 documents, and 1 for 356001; thus, for 90% of all documents, it is &le; 1 (and for 99% of documents, &le; 7).
+</ol>
+
+<p>
+<h2>Graphs</h2>
+<strong>Click on any image to view the raw data</strong>
+
+<p>Below, the distribution of the scores and score differences is shown on the log-log scale, so that one could clearly see both the situation with very low scores (where the majority of the documents are) and the very low frequencies for the high scores (the far end of the distribution, where a few very popular documents are). This shows that score differences (and scores themselves, toward the larger values) appear to mostly follow a Pareto distribution.
+
+<p>For the cumulative distribution, the log scale in the x axis (the score, or score difference) is used.
+
+<p>Note that using the log scale for score differences makes it impossible to display the bucket for score diff = 0, which typically contains the largest (or, for rank-1, the second largest) number of pairs among all buckets. It also makes it impossible to see the difference between empty buckets and those with just one pair, toward the right end of the distribution graph.
+
+<p>Since, for large score values (or score difference value), each bucket is either empty or contains very few pairs (typically, just one), the graph in that area looks very jagged. (Of course, if the logscale wasn't used for the Y axis, the "jagging" would not be visible). This could have been cured (and made the display more sensible) by averaging the right end of the graph over larger buckerts.
+
+<h3>Distribution of scores</h3>
+<p>
+<a href="coaccess-count.dat"><img src="coaccess-count.png"></a>
+<a href="coaccess-count-cumul.dat"><img src="coaccess-count-cumul.png"></a>
+
+<h3>Distribution of score differences</h3>
+<p>
+<a href="coaccess-diff.dat"><img src="coaccess-diff.png"></a>
+<a href="coaccess-diff-cumul.dat"><img src="coaccess-diff-cumul.png"></a>
+
+<h2>Implications for COACCESS2</h2>
+
+<p>What are the implications of these distributions for the  <a href="../coaccess_local.html">COACCESS2</a> recommender? 
+
+<p>As the cumulative distribution data for score differences show, for the rank-3 score difference (i.e. the difference between the rank-4 and rank-3 scores) is &le; 1 in 57% cases. This means that, for 57% of all articles, in the K-A-K scenario, if A views that article (article <em>a0</em>) and the document <em>a4</em> that appears in the 4th position of the coaccess-based recommendation list based on  <em>a0</em>, then A's session may be able to visible affect the recommendation list presented to K (assuming, of course, that K vies  <em>a0</em> too). This will happen even if recent local actions (from My.ArXiv's own record) are weighted with the same weight as historical actions from ArXiv.org.
+
+<p>The rank-5 score difference is &le; 1 for 73% of articles. This means that for 73% of articles, A's co-viewing of <em>a0</em> and its rank-6 coaccess partner   <em>a6</em> may be able to bump <em>a6</em> to the 5th position in the list presented to K.
+
+<p>If COACCESS2 weights local recent coaccess data at higher weight than ArXiv.org's historical coaccess (e.g., with weight 5), then A's actions may be visible even more frequently. The rank-5 difference is &le;4 for 92% of documents (thus, A's viewing  f <em>a0</em> and <em>a6</em> will bump  <em>a6</em> above  <em>a5</em>, if <em>a0</em> is within these 92%).  The rank-5 difference is &le;5 for 95% of documents, so for the additional 3% of documents A's action may at least create a new tie for the 5th position.
+
+<p>While the percentages given above appear high, one should realize that e.g. 73% of all articles in ArXiv do not amount to 73% of all artricle views, because these are primarily the less popular articles.
+
+<hr>
+<center>  
+<a href="../">Back to the main research tools page</a>
+<center>  
