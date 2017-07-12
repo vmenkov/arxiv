@@ -125,6 +125,8 @@ The <a href="../LogoutServlet">logout link</a> -- use that to explicitly termina
 
 <li><a href="/coaccess">Coaccess data service</a>: this is the locally deployed web service that makes use of the Coaccess database (Lucene data store) set up by Akilesh and Ziyu (<tt>/data/coaccess/round5/lucene_framework</tt>)
 
+<li><a href="coaccess_stats/coaccess_stats.html">Distribution of coaccess scores</a>
+
 </ul>
 
 
