@@ -51,5 +51,15 @@ public class ArgvIterator implements Iterator<String> {
     public void remove() throws UnsupportedOperationException {
 	throw new  UnsupportedOperationException();
     }
+
+    /** Reads all data into a single Vector of Strings */
+    Vector<String> readAll() {
+	Vector<String> v = new Vector<String>();
+	while(hasNext()) {
+	    v.add(next());
+	}
+	return v;
+    }
+
 }
 
