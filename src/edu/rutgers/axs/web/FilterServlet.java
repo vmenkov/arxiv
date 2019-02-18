@@ -788,6 +788,10 @@ public class FilterServlet extends  BaseArxivServlet  {
 		    // file on arxiv.org; no change
 		    return link;
 		}
+	    } else if (link.startsWith("//")) {
+		// This was first detected on 2019-02-17, with
+		// link rel="stylesheet" ... href="//static.arxiv.org/css/arXiv-20190208.css?v=20190208"
+		return "https:" + link;
 	    } else if (link.startsWith("/")) {
 		// absolute URL on the same host
 		if (mayRewrite) {
